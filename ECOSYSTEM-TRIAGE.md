@@ -102,19 +102,19 @@ Core mathematical content is authentic. Jan-Feb 2026 commits show Claude-assiste
 
 | ID | Directory | Pages | Claude-Era Changes |
 |----|-----------|-------|--------------------|
-| A1 | `Maximizing-Confidentiality-*` | 51 | Jan 2026: "Improve paper clarity and repository structure" |
-| A3+A4 | `cipher_maps_unified` | 17 | Feb 2026: Merged from two papers, two review cycles, DESIGN doc for trapdoor reframing. Most actively Claude-edited. |
-| A5 | `crypto-perf-hash` | 16 | Jan 2026: citation metadata added |
+| A1 | `trapdoor-computing/papers/maximizing-confidentiality` | 51 | Jan 2026: "Improve paper clarity and repository structure". Moved to trapdoor-computing; trapdoor reframing pending. |
+| A3+A4 | `trapdoor-computing/papers/cipher-maps` | 17 | Feb 2026: Merged from two papers, two review cycles, DESIGN doc for trapdoor reframing. Most actively Claude-edited. Moved to trapdoor-computing. |
+| A5 | `trapdoor-computing/papers/crypto-perf-hash` | 16 | Jan 2026: citation metadata added. Moved to trapdoor-computing. |
 | A6 | `encrypted-search-ob-types` | 20 | Jan 2026: repo restructuring |
 | A7 | `encrypted_search_confidentiality` | 17 | Jan 2026: repo restructuring |
-| A9 | `known_plaintext_attack_time_series_analysis` | 24 | Jan 2026: "Add theoretical depth, pedagogical content" |
-| A10 | `estimating_es_conf_moving_avg_bootstrap` | 8 | Published (IEEE CloudCom 2016). Minimal Claude-era changes. |
+| A9 | `~/github/papers/known-plaintext-attack-time-series-analysis` | 24 | Jan 2026: "Add theoretical depth, pedagogical content". Moved out of oblivious-computing (not trapdoor formalism). |
+| A10 | `~/github/papers/estimating-es-conf-mab` | 8 | Published (IEEE CloudCom 2016). Minimal Claude-era changes. Moved out of oblivious-computing. |
 
 ### Thesis (AUTHENTIC)
 
 | ID | Directory | Pages | Notes |
 |----|-----------|-------|-------|
-| A8 | `encrypted_search_thesis` | 106 | Published MS thesis (2014). Jan 2026: reorganized as archive. Content authentic. |
+| A8 | `~/github/papers/encrypted-search-thesis` | 106 | Published MS thesis (2014). Jan 2026: reorganized as archive. Content authentic. Moved out of oblivious-computing. |
 
 ---
 
@@ -122,6 +122,7 @@ Core mathematical content is authentic. Jan-Feb 2026 commits show Claude-assiste
 
 ### boolean-algebra-over-trapdoor-sets (DRIFTED)
 
+**Location**: `trapdoor-computing/papers/boolean-algebra-over-trapdoor-sets` (moved from oblivious-computing)
 **Repo**: github.com/queelius/boolean-algebra-over-trapdoor-sets
 **Pre-Claude boundary**: commit 549091a (2024-07-07)
 

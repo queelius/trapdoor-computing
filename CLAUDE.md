@@ -30,8 +30,8 @@ This repo collects the authentic formalism and develops it into papers. The Bern
 Build systems vary per paper:
 
 ```bash
-# cipher-maps-unified (Makefile at paper root, builds from paper/ subdir)
-cd papers/cipher-maps-unified && make
+# cipher-maps (Makefile at paper root, builds from paper/ subdir)
+cd papers/cipher-maps && make
 
 # maximizing-confidentiality (Makefile at paper root, main.tex at root)
 cd papers/maximizing-confidentiality && make
@@ -62,7 +62,7 @@ trapdoor-computing/
     cipher-map-formalism.md   # Precise definitions and composition theorem
     DESIGN-trapdoor-reframing.md  # Four properties, parameter decomposition
   papers/               # Papers developed from the formalism
-    cipher-maps-unified/      # Most developed paper (on hold pending formalism)
+    cipher-maps/              # Core cipher maps paper (rebuilt from formalism)
     maximizing-confidentiality/  # USENIX target, 51pp entropy optimization
     boolean-algebra-over-trapdoor-sets/  # Pre-July-2024 authentic only
     crypto-perf-hash/         # Hash construction space analysis

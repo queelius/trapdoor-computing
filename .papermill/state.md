@@ -58,7 +58,7 @@ review_history:
       - "Result set entropy included in joint formula despite being deterministic given query"
 
 related_papers:
-  - path: ~/github/trapdoor-computing/papers/cipher-maps-unified
+  - path: ~/github/trapdoor-computing/papers/cipher-maps
     rel: supersedes
     label: "Most developed paper, on hold pending trapdoor formalism rewrite. Moved from oblivious-computing."
   - path: ~/github/trapdoor-computing/papers/boolean-algebra-over-trapdoor-sets
@@ -131,7 +131,7 @@ Defined in `DESIGN-trapdoor-reframing.md`:
 
 Full classification in `ECOSYSTEM-TRIAGE.md`. Key relationships:
 
-- **cipher-maps-unified** (`papers/cipher-maps-unified/`): Most developed paper. On hold pending trapdoor formalism rewrite. Review 3 (2026-03-19): 8 MAJOR issues, 6 proof errors found. Rewrite required from formalism/cipher-map-formalism.md.
+- **cipher-maps** (`papers/cipher-maps/`): Most developed paper. On hold pending trapdoor formalism rewrite. Review 3 (2026-03-19): 8 MAJOR issues, 6 proof errors found. Rewrite required from formalism/cipher-map-formalism.md.
 - **maximizing-confidentiality** (`papers/maximizing-confidentiality/`): Entropy ratio metric for encrypted search confidentiality. Review (2026-03-19): 5 MAJOR issues (no formal adversary model, no experiments, 3x too long for USENIX). Proofs: 8/15 correct, 2 errors, 3 incomplete. 59%->85% case study is strongest result.
 - **boolean-algebra-over-trapdoor-sets** (`papers/boolean-algebra-over-trapdoor-sets/`): Pre-July 2024 commits (549091a) authentic; later drifted with ORAM formalism.
 - **crypto-perf-hash** (`papers/crypto-perf-hash/`): Hash constructions underpinning the encoding scheme.

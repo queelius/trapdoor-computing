@@ -1,4 +1,4 @@
-# Iteration Review: cipher-maps-unified (second pass)
+# Iteration Review: cipher-maps (second pass)
 Date: 2026-03-20
 Reviewer: Claude Opus 4.6 (1M context)
 Previous: verification-2026-03-20.md (first pass, 8 PASS / 1 MINOR-ISSUE)

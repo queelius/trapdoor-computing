@@ -1,4 +1,4 @@
-# Verification Report: cipher-maps-unified (rebuilt)
+# Verification Report: cipher-maps (rebuilt)
 Date: 2026-03-20
 
 ## Proof Verification
