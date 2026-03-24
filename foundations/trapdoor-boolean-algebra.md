@@ -10,8 +10,9 @@ draft: false
 linked_project:
 - bernoulli_data_type
 math: true
+series_weight: 3
 series:
-- oblivious-approximate-computing
+- trapdoor-computing
 slug: trapdoor-boolean-model
 tags:
 - cryptography

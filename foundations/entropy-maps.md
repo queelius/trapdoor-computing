@@ -21,8 +21,9 @@ tags: ["entropy-map", "rate-distortion", "bernoulli-map", "probabilistic-data-st
 description: "Entropy maps use prefix-free hash codes to approximate functions without storing the domain, achieving information-theoretic space bounds with controllable error."
 linked_project:
 - bernoulli_data_type
+series_weight: 4
 series:
-- oblivious-approximate-computing
+- trapdoor-computing
 slug: entropy-map
 title: Entropy Maps
 ---

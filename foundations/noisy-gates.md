@@ -3,8 +3,9 @@ title: "Noisy Turing Machines: Noisy Logic Gates"
 date: 2023-06-17
 draft: false
 math: true
+series_weight: 2
 series:
-  - oblivious-approximate-computing
+  - trapdoor-computing
 tags:
   - probabilistic-data-structures
   - probability

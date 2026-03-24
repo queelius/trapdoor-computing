@@ -8,8 +8,9 @@ description: The Bernoulli Model is a framework for reasoning about probabilisti
   of latent values, from Booleans to set-indicator functions.
 draft: false
 math: true
+series_weight: 1
 series:
-- oblivious-approximate-computing
+- trapdoor-computing
 slug: bernoulli-boolean-model
 tags:
 - probabilistic-data-structures
