@@ -1,0 +1,27 @@
+{
+  "title": "Cipher Maps: A Unified Framework for Oblivious Function Approximation Through Algebraic Structures and Bernoulli Models",
+  "description": "A theoretical framework unifying oblivious function approximation, algebraic cipher types, and Bernoulli data models for privacy-preserving computation. Formalizes cipher functors as proper functors on monoids, develops encoding set theory, introduces the space-optimal Singular Hash Map, and proves composition theorems for layered security.",
+  "creators": [
+    {
+      "name": "Towell, Alexander",
+      "affiliation": "Southern Illinois University Edwardsville",
+      "orcid": "0000-0001-6443-9897"
+    }
+  ],
+  "keywords": [
+    "oblivious computation",
+    "Bernoulli approximation",
+    "cipher types",
+    "cipher functor",
+    "category theory",
+    "privacy-preserving computation",
+    "probabilistic data structures",
+    "homomorphic encryption",
+    "encrypted search",
+    "secure multi-party computation"
+  ],
+  "license": "CC-BY-4.0",
+  "upload_type": "publication",
+  "publication_type": "article",
+  "access_right": "open"
+}
