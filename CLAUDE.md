@@ -16,11 +16,20 @@ This repo collects the authentic formalism and develops it into papers. The Bern
 - **Parameters**: η (correctness), ε (noise decode probability / space), μ = H(Y) (value encoding cost), δ (representation uniformity)
 - **Two construction strategies**: batch (seed search, e.g. HashSet/entropy map) vs online (algebraic, e.g. trapdoor boolean algebra)
 
+## Core Principles
+
+1. **Bernoulli Axiom**: Element-wise independence + conditional independence of block error rates collapse exponential error models to 2 parameters per element. This is why composition is tractable.
+2. **Space-Accuracy Duality**: bits/element = -log2(epsilon) + mu. Three independent derivations (bernoulli_entropy, bernoulli-hash-function, crypto-perf-hash) converge on this. -log2(epsilon) is the cost of hiding; mu = H(Y) is the cost of encoding values.
+3. **Composition Predictability**: eta_total = 1 - prod(1 - eta_i). Errors multiply independently; for small eta, approximately sum(eta_i). Appears in noisy-gates, bernoulli_composition, bernoulli_maps, and cipher-map-formalism.
+4. **Totality as Privacy**: The untrusted machine sees a total function on bit strings. It cannot distinguish real queries from filler, one encoding from another, or correct results from noise. This is NOT ORAM, FHE, or simulation-based security.
+5. **Encoding Granularity Trade-off**: Joint encoding hides correlations; component-wise encoding leaks them. The entanglement parameter p controls the spectrum from marginal uniformity (p=1) to full correlation hiding (p=k, space O(|Y|^k)).
+6. **Boolean Asymmetry**: AND/OR are exact at the bit level; NOT is approximate (complement non-preservation via pigeonhole). This structural constraint applies to all systems built on this framework.
+
 ## Provenance and Authenticity
 
 **This is critical.** Prior Claude sessions drifted the formalism toward ORAM-style access-pattern indistinguishability, which is NOT this framework's privacy model. Privacy here comes from one-way hash + uniform representation, not access-pattern hiding.
 
-- **Source of truth**: `foundations/` (authentic 2023–2024 blog posts)
+- **Source of truth**: `foundations/` (authentic 2023-2024 blog posts)
 - **Formalism**: `formalism/DESIGN-trapdoor-reframing.md` (four properties, parameter decomposition) and `formalism/cipher-map-formalism.md` (precise definitions, constructions, composition theorem)
 - **Full classification**: `ECOSYSTEM-TRIAGE.md` maps every paper/repo as AUTHENTIC, CLAUDE-EXPANDED, MIXED, or DRIFTED
 - **Do NOT** import ORAM, differential privacy, simulation-based, or game-based crypto definitions. If you find yourself writing `\Adv`, `\Simulator`, `\Trace`, or `\PPT`, stop. That's the wrong formalism.
@@ -61,7 +70,7 @@ trapdoor-computing/
   formalism/            # Design docs and formal development
     cipher-map-formalism.md   # Precise definitions and composition theorem
     DESIGN-trapdoor-reframing.md  # Four properties, parameter decomposition
-  papers/               # Papers developed from the formalism
+  papers/               # Git subtrees, each with its own GitHub remote
     cipher-maps/              # Core cipher maps paper (rebuilt from formalism)
     maximizing-confidentiality/  # USENIX target, 51pp entropy optimization
     boolean-algebra-over-trapdoor-sets/  # Pre-July-2024 authentic only
@@ -71,6 +80,8 @@ trapdoor-computing/
   ECOSYSTEM-TRIAGE.md   # Classification of all related papers/code
   .papermill/state.md   # Papermill project state (stage, thesis, next actions)
 ```
+
+**Subtree workflow**: Each paper under `papers/` is a git subtree with its own remote (e.g., `cipher-maps -> queelius/cipher-maps.git`). Edit in place and commit normally. To push changes back to a paper's own repo: `git subtree push --prefix=papers/<name> <remote> main`. To pull upstream changes: `git subtree pull --prefix=papers/<name> <remote> main --squash`.
 
 ## Relationship to Bernoulli Ecosystem
 
@@ -85,7 +96,9 @@ The Bernoulli model at `~/github/bernoulli/` provides the mathematical foundatio
 | `bernoulli_data_type/` | Type-theoretic generalization: Bool, sum, product types. Algebraic cipher types build on this. |
 | `bernoulli_classification_measures/` | PPV, accuracy, Youden's J. Measures for evaluating cipher map correctness. |
 
-**Key conceptual link**: A cipher map's correctness parameter η IS the Bernoulli model's false negative rate (β) for the hash-based construction. The Bernoulli composition theorem η_total = 1 - (1-η_f)(1-η_g) from `bernoulli_composition/` is Property 4.
+**Key conceptual link**: A cipher map's correctness parameter eta IS the Bernoulli model's false negative rate (beta) for the hash-based construction. The Bernoulli composition theorem eta_total = 1 - (1-eta_f)(1-eta_g) from `bernoulli_composition/` is Property 4.
+
+The Bernoulli side provides quantitative error theory. The trapdoor side adds cryptographic hiding (one-way hash, trusted/untrusted model, representation uniformity). Bernoulli without trapdoor is approximate computing; trapdoor without Bernoulli has no error model.
 
 ### Other Related Repos
 

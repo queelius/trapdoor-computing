@@ -147,6 +147,61 @@ This is information-theoretic: $-\log_2 \varepsilon$ bits to distinguish signal 
 
 ---
 
+## 1A. Bernoulli Foundation
+
+The cipher map abstraction rests on the Bernoulli model developed in a separate paper family (`bernoulli_sets`, `bernoulli_composition`, `bernoulli_maps`). This section makes the dependency explicit.
+
+### 1A.1 The Two Axioms and Kronecker Factorization
+
+The Bernoulli model is built on two axioms:
+
+1. **Element-wise independence (Axiom 1).** For distinct elements $x_i, x_j \in X$, the errors $\mathbf{1}[\hat{f}(\mathrm{enc}(x_i)) \text{ incorrect}]$ and $\mathbf{1}[\hat{f}(\mathrm{enc}(x_j)) \text{ incorrect}]$ are independent Bernoulli random variables.
+
+2. **Conditional independence of block error rates (Axiom 2).** Conditioned on the error rate parameter $\eta$, the per-element error indicators are i.i.d. Bernoulli($\eta$).
+
+These axioms are what make cipher map composition *tractable*. Without them, a joint confusion matrix for $m$ elements in an $n$-th order model has $n(2^m - 1)$ free parameters, exponential in the number of elements.
+
+**Theorem (Kronecker factorization, from `bernoulli_sets`).** Under Axioms 1 and 2, the joint confusion matrix for $m$ independent Bernoulli tests factors as the tensor product of per-element channels:
+$$C_{\text{joint}} = C_1 \otimes C_2 \otimes \cdots \otimes C_m$$
+where each $C_i$ is a $2 \times 2$ confusion matrix with at most 2 free parameters ($\eta_i, \varepsilon_i$). The total parameter count reduces from $n(2^m - 1)$ to at most $2m$.
+
+**Consequence for cipher maps.** This factorization is the reason that correctness composes multiplicatively: the probability that a chain of $m$ cipher maps is correct equals $\prod_{i=1}^m (1 - \eta_i)$, because each map's error is independent. Without element-wise independence, the composition theorem (§3) would require tracking exponentially many joint failure modes.
+
+### 1A.2 Parameter Correspondence
+
+The cipher map parameters are not independent inventions; they are the Bernoulli model parameters under different names.
+
+| Cipher map parameter | Bernoulli model source | Paper |
+|---|---|---|
+| $\eta$ (correctness) | $\beta$ (FNR) for batch constructions; the false negative rate of the Bernoulli set/map | `bernoulli_sets` |
+| $\varepsilon$ (noise decode) | $\alpha$ (FPR); the false positive rate governing space via $-\log_2 \alpha$ bits/element | `bernoulli_sets`, `bernoulli_entropy` |
+| $\mu = H(Y)$ (value cost) | Shannon entropy of the output distribution; the information-theoretic cost per element beyond the noise budget | `bernoulli_entropy`, `bernoulli_maps` |
+| $\eta_{\text{total}} = 1 - \prod(1-\eta_i)$ | Composition closure theorem for Bernoulli set operations | `bernoulli_composition` |
+
+For batch constructions (HashSet, entropy map), $\eta$ IS the Bernoulli FNR ($\beta$): the fraction of in-domain elements whose hash does not land in the correct codeword region. The space formula $-\log_2 \varepsilon + H(Y)$ is derived in `bernoulli_entropy` as the information-theoretic lower bound and achieved by the Bernoulli hash function construction.
+
+### 1A.3 The Two Ecosystems
+
+The Bernoulli model and trapdoor computing are complementary halves of a single framework:
+
+- **Bernoulli provides the error theory.** How errors arise (hash collisions), how they propagate (composition theorem), how they trade against space ($-\log_2 \varepsilon + \mu$), and how they decompose (Kronecker factorization). This is the *accuracy* axis.
+
+- **Trapdoor adds the hiding theory.** Why the untrusted machine cannot decode (one-way hash), why all queries look alike (totality + representation uniformity), and why composition preserves hiding (noise closure). This is the *confidentiality* axis.
+
+Neither is complete without the other. A Bernoulli set without trapdoor hiding is a Bloom filter: space-efficient but not private. A trapdoor construction without Bernoulli error analysis has no quantitative correctness guarantees.
+
+The layered type hierarchy from `bernoulli_maps` ($\mathrm{Bool} \to \mathrm{Set} \to \mathrm{Map} \to \mathrm{Relation} \to \mathrm{Type}$) maps directly to increasingly complex cipher map constructions:
+
+| Bernoulli layer | Cipher map construction | Example |
+|---|---|---|
+| $B_{\mathrm{bool}}$ (Bernoulli Boolean) | Cipher membership predicate | HashSet: $\hat{f}(c) \in \{0^n, \text{other}\}$ |
+| $B_{X \to \mathrm{bool}}$ (Bernoulli set) | Cipher set (multiple predicates) | Trapdoor boolean algebra: $F(A) = h(x_1) \mathbin{|} \cdots \mathbin{|} h(x_k)$ |
+| $B_{X \to Y}$ (Bernoulli map) | Cipher map (general function) | Entropy map: prefix-free hash codes |
+| $B_{X \times Y \to \mathrm{bool}}$ (Bernoulli relation) | Cipher relation | Cipher join/project (future work) |
+
+
+---
+
 ## 2. Concrete Constructions
 
 We instantiate the cipher map abstraction against three constructions from the blog posts. For each, we identify which properties are satisfied and with what parameter values.
@@ -404,6 +459,32 @@ $$\eta_{\text{total}} = 1 - (1 - 10^{-6})^{100} \approx 10^{-4}$$
 **Interval refinement.** For tighter bounds on specific circuits, use the case-by-case analysis from §3.1 with interval arithmetic, tracking $[\eta_{\min}, \eta_{\max}]$ through each gate. This gives input-dependent bounds rather than worst-case.
 
 
+### 3.4 The Boolean Thread
+
+The AND gate analysis in §3.1 is not merely an illustrative example. It reveals the structural constraints on composition at the bit level, constraints that apply to all cipher map systems built on bitwise operations.
+
+**AND and OR are exact.** For Boolean cipher values encoded as bit positions in an $n$-bit string (the trapdoor boolean algebra construction), $F(A \cup B) = F(A) \mathbin{|} F(B)$ and $F(A) \mathbin{\&} F(B) \supseteq F(A \cap B)$. Union is exact because OR-ing bit vectors preserves all set bits from both operands. Intersection is approximate but only in one direction (spurious bits from cross-element collisions; never missing bits).
+
+**NOT is approximate, and this is structural.** The complement ${\sim}F(A)$ flips the bits of $F(A)$, but $F(A^\complement)$ is the OR of hashes of all elements *not* in $A$. By the pigeonhole principle, for any universe larger than $2^n$, every bit position has some element hashing to it, so $F(A^\complement) = 1^n$ while ${\sim}F(A) \neq 1^n$ in general. This is not an implementation deficiency; it is a consequence of compressing an infinite (or large) universe into $n$ bits. No finite-width bitwise construction can make NOT exact.
+
+**Consequence.** Any system that composes cipher maps through Boolean operations inherits the asymmetry: AND/OR chains accumulate error only through the composition theorem ($\eta_{\text{total}} = 1 - \prod(1-\eta_i)$), while NOT introduces additional structural error that depends on the ratio $|A|/2^n$. Circuits with many NOT operations degrade faster than circuits with only AND/OR.
+
+
+### 3.5 Convergence of the Composition Formula
+
+The formula $\eta_{\text{total}} = 1 - \prod_{i=1}^{m}(1 - \eta_i)$ appears independently in four places across the two ecosystems:
+
+1. **`noisy-gates.md` (foundations).** Derived from the AND gate case analysis: $\Pr[\text{both correct}] = p_1 \cdot p_2$, giving $\eta = 1 - (1-\eta_1)(1-\eta_2)$ (§3.1 above).
+
+2. **`bernoulli_composition`.** Derived as the composition closure theorem for Bernoulli set operations: the probability that a chain of $m$ independent approximate tests all succeed is $\prod(1-\eta_i)$.
+
+3. **`bernoulli_maps`.** Derived for the function space $B_{X \to Y}$: composing Bernoulli maps $\hat{g} \circ \hat{f}$ with independent seeds yields the same multiplicative survival formula.
+
+4. **This document (§3.2, Theorem 3.1).** Derived from the union bound refined by independence.
+
+The four derivations use different starting points (case analysis, set-theoretic composition, function-space composition, probabilistic union bound) but arrive at the identical formula. This convergence is evidence that the result is not an artifact of any particular proof technique but a structural property of independent approximate computations. The underlying fact is elementary: for independent events $A_1, \ldots, A_m$, $\Pr[\bigcap A_i] = \prod \Pr[A_i]$.
+
+
 ---
 
 ## 4. Representation Uniformity and Encoding Granularity
@@ -597,9 +678,11 @@ $T$ holds the seed $s$ and therefore can:
 | **G1: Totality definition** | Definition 1.1 and Property 1 (§1.3): $\hat{f} : \{0,1\}^n \to \{0,1\}^n$ total, out-of-domain outputs uniform under ROM. Instantiated for all three constructions (§2). Construction layers (§1.2) show totality arises from the noise layer. |
 | **G2: $\delta$ undefined** | Definition: $d_{\mathrm{TV}}(Q, \mathrm{Uniform})$ (§4.1). Parameterized by entanglement $p$ (§4.3). Honest limitation: marginal only at $p=1$ (§4.4). |
 | **G3: Parameter instantiation** | Table in §2.4 gives $\eta, \varepsilon, \mu, \delta$ for HashSet, entropy map, trapdoor boolean algebra. Entanglement parameter $p$ added (§1.4, §4.3). |
-| **G4: Composition not derived** | Derived in §3: from AND gate case analysis (§3.1) to general theorem (§3.2) to chains (§3.3). |
+| **G4: Composition not derived** | Derived in §3: from AND gate case analysis (§3.1) to general theorem (§3.2) to chains (§3.3). Boolean thread (§3.4) and cross-ecosystem convergence (§3.5) strengthen the result. |
 | **G5: Trusted/untrusted model** | Formalized in §5: definitions of $T$ and $U$, information flow, what each can/cannot do. Flagged as extending blog post ideas. |
 | **G6: Construction unification** | §2 shows each construction as instance of Definition 1.1. Batch vs. online strategies distinguished (Definition 1.1, §2.4). Construction layers (§1.2) provide conceptual decomposition. |
+| **G7: Bernoulli connection** | §1A makes the dependency explicit: Kronecker factorization (§1A.1), parameter correspondence (§1A.2), two-ecosystem relationship (§1A.3). |
+| **G8: Unformalized frontier** | §7 catalogs six open problems identified across the ecosystem, with sources and precise problem statements. |
 
 
 ### 6.2 Verification Checklist
@@ -616,16 +699,80 @@ $T$ holds the seed $s$ and therefore can:
 - [x] Intersection corrected from "exact" to "approximate" with derivation (§2.3).
 - [x] NOT corrected: degrades with set size, not improves (§2.3).
 - [x] Values-as-constant-functions unification noted (Remark after Definition 1.1).
+- [x] Bernoulli foundation section connects cipher map parameters to Bernoulli model (§1A).
+- [x] Kronecker factorization theorem stated with consequence for composition (§1A.1).
+- [x] Boolean thread: AND/OR exact, NOT approximate and structural (§3.4).
+- [x] Composition formula convergence across four independent derivations documented (§3.5).
+- [x] Unformalized frontier catalogs open problems with sources (§7).
 
 
 ### 6.3 Open Questions
 
+Items 1--5 below are retained from the original draft. Section 7 expands on items 2, 3, and 4 with additional context from the cross-ecosystem analysis and adds new open problems (sum-type trade-off, orbit closure, cipher TM).
+
 1. **Max-divergence vs. TV distance for $\delta$.** TV distance gives an operational bound on distinguishing advantage. Max-divergence ($D_\infty$) would give per-element bounds. Which is the right metric depends on the threat model.
 
-2. **Noise-to-signal probability under composition.** Through a chain of $m$ cipher maps, what is the probability that a filler query produces a decodable output at the end? Naively $1 - (1 - \varepsilon)^m$, but this assumes independence of the $\varepsilon$ events across maps, which may not hold if the maps share structure.
+2. **Noise-to-signal probability under composition.** See §7.5 for expanded treatment.
 
-3. **Tight bounds for intersection and NOT.** The intersection false positive rate from cross-element collisions needs a closed-form expression as a function of $|A|$, $|B|$, $|A \cap B|$, and $n$. For NOT, derive $\eta_{\mathrm{NOT}}(|A|, n)$ to complete the parameter instantiation for the trapdoor boolean algebra construction.
+3. **Tight bounds for intersection and NOT.** See §7.6 for expanded treatment.
 
-4. **Adaptive encoding granularity.** Can the entanglement parameter $p$ be made adaptive — e.g., encoding pairs only for correlated values, while encoding independent values separately? This would give a finer privacy/efficiency trade-off than uniform $p$ across all values.
+4. **Adaptive encoding granularity.** See §7.4 for expanded treatment.
 
 5. **Layered construction laws.** Do the three construction layers (undef, noise, cipher) satisfy formal algebraic laws (e.g., monad laws, naturality) in the approximate setting? If so, this would enable equational reasoning about cipher map constructions. If not, identify which laws fail and whether weaker algebraic structures apply.
+
+
+---
+
+## 7. Unformalized Frontier
+
+The following ideas have been identified across the ecosystem but lack formal treatment. Each is a concrete open problem, not speculative.
+
+### 7.1 Sum-Type Confidentiality Trade-Off
+
+Source: `algebraic_cipher_types` (2019-2022 notebook).
+
+For a sum type $X + Y$, there are two cipher constructions with incompatible guarantees:
+
+- $\mathrm{OT}(X + Y)$: encode the tagged union as a single cipher value. This hides the tag (adversary cannot determine whether the value is from $X$ or $Y$) but breaks composability with functions typed over $\mathrm{OT}(X)$ or $\mathrm{OT}(Y)$ individually, because pattern matching on the tag requires the trapdoor.
+
+- $\mathrm{OT}(X) + \mathrm{OT}(Y)$: encode each branch separately and expose the tag. This preserves composability (functions on $\mathrm{OT}(X)$ apply directly to the left branch) but leaks the tag bit.
+
+This trade-off is structural: no construction can simultaneously hide the tag and support pattern matching without the trapdoor. A formal proof would show that any cipher type satisfying both properties implies a trapdoor inversion, contradicting the one-way assumption.
+
+### 7.2 Orbit/Closure Information Leak Bounds
+
+Source: `algebraic_cipher_types`.
+
+Given a computational basis $F$ (a set of operations on cipher type $\mathrm{OT}(T)$), the *orbit closure* of a known cipher value $c$ under $F$ is the set of all cipher values reachable from $c$ by applying operations in $F$. Examples: $\mathrm{and}(x, \mathrm{not}(x)) = \mathrm{false}$ reveals $\mathrm{OT}(\mathrm{false})$; successor cascades from $\mathrm{OT}(0)$ reveal the entire integer type.
+
+**Open problem.** Formalize orbit closure for cipher types. Prove monotonicity (more operations yield larger orbit closure yield less confidentiality). Give a quantitative bound: residual confidentiality $\leq 1 - |\mathrm{orbit}(c, F)| / |\mathrm{OT}(T)|$.
+
+### 7.3 Cipher Turing Machine
+
+Source: `algebraic_cipher_types`.
+
+Cipher maps as defined here are lookup tables with space $O(|X|)$. A cipher Turing machine replaces states, alphabet symbols, and transition functions with their cipher counterparts, divorcing space complexity from domain cardinality. Space becomes $O(|\text{program}|)$ rather than $O(|X|)$, at the cost of revealing execution patterns (head movements, step count).
+
+**Open problem.** Define the cipher TM formally. Characterize the information leaked by execution patterns. Determine whether multiple TM implementations indexed by cipher tags can mitigate pattern leakage.
+
+### 7.4 Adaptive Encoding Granularity
+
+The entanglement parameter $p$ (§4.3) is currently uniform: all $p$-tuples of values are encoded jointly. In practice, some values are correlated and others are independent.
+
+**Open problem.** Define an adaptive scheme where $p$ varies per value pair based on measured or known correlation. The scheme should encode correlated values jointly ($p = 2$ or higher) and independent values separately ($p = 1$), achieving a finer privacy/efficiency trade-off. The challenge is that the choice of $p$ for each pair is itself a signal that may leak correlation structure to the adversary.
+
+### 7.5 Noise-to-Signal Under Composition
+
+Through a chain of $m$ cipher maps, garbage input has probability $\varepsilon$ of landing in a valid codeword at each stage. The naive bound $1 - (1-\varepsilon)^m$ assumes independence across stages.
+
+**Open problem.** Determine the exact noise-to-signal probability when maps share structure (e.g., common hash family, overlapping codeword spaces). Characterize conditions under which garbage propagating through a chain accidentally produces a valid, decodable output at the end. This matters for the trusted machine's ability to distinguish real results from noise artifacts.
+
+### 7.6 Tight Closed-Form Bounds
+
+Two error rates in the trapdoor boolean algebra lack closed-form expressions:
+
+1. **Intersection FPR.** The probability that $F(A) \mathbin{\&} F(B)$ has spurious bits (cross-element collisions from $A \setminus B$ and $B \setminus A$) as a function of $|A|$, $|B|$, $|A \cap B|$, and $n$.
+
+2. **NOT error rate.** $\eta_{\mathrm{NOT}}(|A|, n)$: the fraction of bit positions where ${\sim}F(A)$ disagrees with $F(A^\complement)$, as a function of set size and bit width.
+
+Both are computable in principle from the bit-occupation probability $(1 - 2^{-k})$ per position, but the existing analysis stops at asymptotic bounds. Closed-form expressions would complete the parameter instantiation for the trapdoor boolean algebra (§2.3).

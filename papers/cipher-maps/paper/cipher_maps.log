@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex 2025.2.2)  21 MAR 2026 16:25
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex 2025.2.2)  24 MAR 2026 15:17
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -516,57 +516,52 @@ File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 dvips/cm-super/cm-super-ts1.enc}] [2]
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 223.
+(hyperref)                removing `math shift' on input line 234.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `\delta' on input line 223.
+(hyperref)                removing `\delta' on input line 234.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 223.
+(hyperref)                removing `math shift' on input line 234.
+
+[3]
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 265.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 254.
+(hyperref)                removing `\eta' on input line 265.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `\eta' on input line 254.
+(hyperref)                removing `math shift' on input line 265.
 
-
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 254.
-
-[3] [4
+[4] [5
 pdfTeX warning (ext4): destination with the same identifier (name{table.1}) has
  been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.350 \subsection
-                 {HashSet}] [5] [6] [7] [8] [9
+l.413 \end{remark}
+                  ] [6] [7] [8] [9
 pdfTeX warning (ext4): destination with the same identifier (name{table.2}) has
  been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.711 \item $
-             U$ evaluates $\fhat$ on each cipher value and returns results.]
-[10
+l.719 \item D
+             istinguish real encodings from filler (by Property~1).] [10
 pdfTeX warning (ext4): destination with the same identifier (name{table.3}) has
  been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.787 
-      ]
+l.789 \end{equation}
+                    ]
 Package hyperref Info: bookmark level for unknown algorithm defaults to 0 on in
-put line 808.
- [11] [12] [13] [14] [15] (./cipher_maps.bbl [16]) [17]
-(./cipher_maps.aux
-
-Package natbib Warning: Citation(s) may have changed.
-(natbib)                Rerun to get citations correct.
-
-)
+put line 830.
+ [11] [12] [13] [14] [15] [16] (./cipher_maps.bbl)
+[17] (./cipher_maps.aux)
  ***********
 LaTeX2e <2023-11-01> patch level 1
 L3 programming layer <2024-01-22>
@@ -575,13 +570,13 @@ Package rerunfilecheck Info: File `cipher_maps.out' has not changed.
 (rerunfilecheck)             Checksum: 292ADEA72A25D2B17D75D9D42E4CBC02;6096.
  ) 
 Here is how much of TeX's memory you used:
- 13888 strings out of 474222
- 224083 string characters out of 5748734
+ 13896 strings out of 474222
+ 224235 string characters out of 5748734
  1940975 words of memory out of 5000000
- 35798 multiletter control sequences out of 15000+600000
+ 35802 multiletter control sequences out of 15000+600000
  570925 words of font info for 84 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 75i,10n,79p,366b,612s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 75i,10n,79p,366b,641s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb></us
 r/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb></usr/shar
 e/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmbxti10.pfb></usr/share/te
@@ -602,10 +597,10 @@ mf-dist/fonts/type1/public/amsfonts/cm/cmsy8.pfb></usr/share/texlive/texmf-dist
 /type1/public/amsfonts/cm/cmtt12.pfb></usr/share/texlive/texmf-dist/fonts/type1
 /public/amsfonts/symbols/msam10.pfb></usr/share/texmf/fonts/type1/public/cm-sup
 er/sfrm1095.pfb>
-Output written on cipher_maps.pdf (17 pages, 332496 bytes).
+Output written on cipher_maps.pdf (17 pages, 334745 bytes).
 PDF statistics:
- 515 PDF objects out of 1000 (max. 8388607)
- 449 compressed objects within 5 object streams
- 174 named destinations out of 1000 (max. 500000)
+ 522 PDF objects out of 1000 (max. 8388607)
+ 456 compressed objects within 5 object streams
+ 178 named destinations out of 1000 (max. 500000)
  281 words of extra memory for PDF output out of 10000 (max. 10000000)
 

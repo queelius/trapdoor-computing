@@ -264,6 +264,12 @@ For independent approximate Booleans $\obs{b}_1, \obs{b}_2$ with error rates $(\
 Negation swaps the meaning of false positive and false negative. For conjunction, a false positive requires both operands to err (independent), while a false negative occurs if either errs. Disjunction is dual by De Morgan's laws.
 \end{proof}
 
+% IMPROVED: Added Bernoulli axiom connection (cross-ecosystem insight)
+\begin{remark}[Bernoulli Model Foundation]
+\label{rem:bernoulli-foundation}
+The closed-form error rates for AND, OR, NOT, and their compositions above are consequences of the Bernoulli model's element-wise independence axiom: each element's membership error is an independent channel. Formally, the joint confusion matrix for a $t$-element operation factors as a Kronecker (tensor) product of per-element confusion matrices $\ConfMat^{\otimes t}$, so that composed error rates reduce to scalar arithmetic on $(\fpr, \fnr)$ pairs. This factorization is what makes the error propagation rules tractable---without independence, composed error bounds would require the full joint distribution over all elements.
+\end{remark}
+
 % FIXED (BA-5): The original corollary gave a vague linear bound without
 % distinguishing OR vs AND composition. Also renamed n -> t to avoid
 % collision with hash width n used elsewhere.
@@ -507,6 +513,12 @@ $$n = \frac{\log \varepsilon}{\log(1 - 2^{-(k+1)})} \approx \frac{\log \varepsil
 Thus $n = \mathcal{O}(2^k)$ for fixed $\varepsilon$.
 \end{proof}
 
+% IMPROVED: Connected space complexity to information-theoretic bound
+\begin{remark}[Information-Theoretic Consistency]
+\label{rem:info-theoretic-bound}
+This exponential growth in $k$ is consistent with the information-theoretic lower bound of $-\log_2(\varepsilon)$ bits per element from the Bernoulli entropy analysis. For the trapdoor Boolean algebra (online construction), the space budget $n$ is fixed at construction time, forcing $\varepsilon$ to degrade as $k$ grows. Equivalently, each inserted element consumes $\mathcal{O}(1)$ bits of the fixed-size representation, leaving fewer bits to distinguish non-members, which is why $\varepsilon$ increases monotonically with the set size $k$ for fixed $n$.
+\end{remark}
+
 \begin{figure}[t]
 \centering
 \includegraphics[width=\columnwidth]{combined_fpr_vs_size.png}
@@ -526,6 +538,12 @@ for any enumeration $\{y_1, y_2, \ldots\} \subseteq \neg_A x$.
 
 However, $\neg_B F(x) = \mathord{\sim}(h(x_1) \,|\, \cdots \,|\, h(x_k))$ for finite $x = \{x_1, \ldots, x_k\}$. Since $F(x)$ is a finite OR of $k$ hash values, some bit positions will remain 0 in $F(x)$, making those positions 1 in $\neg_B F(x)$ but also making some positions 0. Thus $\neg_B F(x) \neq 1^n = F(\neg_A x)$.
 \end{proof}
+
+% IMPROVED: Strengthened complement non-preservation with structural argument
+\begin{remark}[Structural Necessity of Complement Failure]
+\label{rem:complement-structural}
+This asymmetry---AND/OR preserved (at least approximately), NOT not preserved---is structural, not an artifact of the hash construction. Any approximate Boolean algebra homomorphism from an infinite source algebra to a finite target algebra must fail to preserve complement, since the complement of a finite set in an infinite domain covers all hash values by pigeonhole. More precisely, for any finite codomain of size $2^m$ and any finite set $x$ with $|\neg_A x| = \infty$, the image $F(\neg_A x)$ saturates to the maximal element $1^m$, while $\neg_B F(x)$ is strictly submaximal whenever $F(x) \neq 0^m$. This obstruction is independent of the choice of hash function or encoding scheme.
+\end{remark}
 
 \begin{remark}[Boolean Ring Alternative]
 \label{rem:boolean-ring}

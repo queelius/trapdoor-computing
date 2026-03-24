@@ -86,6 +86,17 @@ Singular Hash Map achieving space-optimal performance
 (\S\ref{sec:singular-hash}), and prove the composition theorem governing
 error accumulation (\S\ref{sec:composition}).
 
+% IMPROVED: Connect to Bernoulli model error framework
+\paragraph{Bernoulli error model.}
+The error framework underlying cipher maps is the Bernoulli
+model~\cite{bernoulli-types}.  Two axioms (element-wise independence and
+conditional independence of block error rates) reduce the error model from
+exponential complexity to two parameters per element.  This tractability is
+what makes the composition theorem (Property~4) possible: errors combine
+predictably because they are independent across elements.  The Bernoulli
+model is developed independently; we reference it here only for the error
+accounting that cipher maps inherit.
+
 \paragraph{What this is not.}
 Cipher maps are not oblivious RAM~\cite{goldreich1996software}: ORAM
 reshuffles storage to hide access patterns with polylogarithmic overhead,
@@ -628,6 +639,17 @@ Remark~\ref{rem:marginal-only} and \S\ref{subsec:granularity}).
 Correctness: \textbf{partial} (union exact; intersection/NOT approximate).
 Composability: \textbf{yes} (Boolean operations compose; error propagates
 via interval arithmetic).
+
+% IMPROVED: Boolean asymmetry remark — structural constraint on complement
+\begin{remark}[Boolean asymmetry]
+\label{rem:boolean-asymmetry}
+The Boolean algebra homomorphism $F$ preserves union and intersection at the
+bit level but does not preserve complement: the complement of a finite set in
+the infinite free semigroup $X^*$ covers all hash values (by pigeonhole,
+$F(A^\complement) = 1^n$ for any non-trivial $A$).  This asymmetry is
+structural, not an artifact of the construction, and constrains all cipher map
+systems that compose Boolean operations over hash-based set representations.
+\end{remark}
 
 \subsection{Construction Comparison}
 
@@ -1187,6 +1209,17 @@ over Bernoulli Booleans.  This is not coincidental: a cipher map \emph{is} a
 Bernoulli approximation, viewed through the lens of hash-based total
 functions.
 
+% IMPROVED: Type hierarchy and scope of the present formalism
+The Bernoulli framework organizes approximation into a layered type hierarchy:
+$\mathrm{Bool} \to \mathrm{Set} \to \mathrm{Map} \to \mathrm{Relation} \to
+\mathrm{Type}$, where each level inherits the error model from the level
+below.  The formalism presented here covers maps ($X \to Y$); relations and
+algebraic types (sum types, product types) require the extensions developed in
+the Bernoulli relations and algebraic types work~\cite{bernoulli-types}.
+The BHF (Bernoulli Hash Function) construction from that framework is the
+optimal cipher map for the batch strategy: it achieves the
+$-\log_2 \varepsilon + H(Y)$ lower bound with $O(1)$ query time.
+
 \subsection{Algebraic Structure}
 
 The cipher map abstraction relates to algebraic concepts from the theory of
@@ -1232,6 +1265,15 @@ representatives.
     Do the three construction layers (undef, noise, cipher) satisfy formal
     algebraic laws in the approximate setting?  If so, this would enable
     equational reasoning about cipher map constructions.
+
+% IMPROVED: Sum-type confidentiality trade-off
+\item \textbf{Sum-type confidentiality.}
+    Encoding $\mathrm{OT}(X+Y)$ (the sum type as a single opaque value) hides
+    which branch was taken but breaks composability, since downstream cipher
+    maps cannot dispatch on the branch without decoding.  Encoding
+    $\mathrm{OT}(X)+\mathrm{OT}(Y)$ (separate opaque values with a visible
+    tag) preserves composability but leaks the branch tag to the untrusted
+    machine.  Whether this trade-off is inherent requires formal proof.
 \end{enumerate}
 
 \subsection{What This Framework Is Not}
