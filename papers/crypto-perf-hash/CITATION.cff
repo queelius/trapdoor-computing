@@ -1,0 +1,30 @@
+cff-version: 1.2.0
+title: "Cryptographic Perfect Hash Functions: A Theoretical Analysis on Space Efficiency and Algebraic Composition"
+message: "If you use this work, please cite it using the metadata from this file."
+type: article
+authors:
+  - family-names: Towell
+    given-names: Alexander
+    alias: Alex Towell
+    orcid: "https://orcid.org/0000-0001-6443-9897"
+    affiliation: "Southern Illinois University Edwardsville"
+    website: "https://metafunctor.com"
+repository-code: "https://github.com/queelius/crypto-perf-hash"
+url: "https://metafunctor.com"
+abstract: >-
+  We analyze a theoretical perfect hash function that has three desirable
+  properties: (1) it is a cryptographic hash function; (2) its in-place
+  encoding obtains the theoretical lower-bound for the expected space
+  complexity; and (3) its in-place encoding is a random bit string with
+  maximum entropy. The expected space complexity is log₂(e) - (1/r - 1)log₂(1/(1-r))
+  bits/element, achieving 1.44 bits/element for minimal perfect hash functions
+  with load factor r=1.
+keywords:
+  - perfect hash function
+  - random oracle
+  - space complexity
+  - maximum entropy
+  - cryptographic hash function
+  - minimal perfect hash
+  - information theory
+license: CC-BY-4.0
