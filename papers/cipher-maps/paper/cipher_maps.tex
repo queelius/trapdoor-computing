@@ -111,6 +111,79 @@ and approximate with noise closure.
 
 
 %% ============================================================
+\section{Related Work}
+\label{sec:related}
+
+Cipher maps draw on and differ from several lines of work in data
+structures, cryptography, and secure computation.
+
+\paragraph{Membership data structures.}
+Bloom filters~\cite{bloom1970space} are the canonical approximate membership
+structure: a bit array with $k$ hash functions, trading false positives for
+space.  Quotient filters~\cite{bender2012quotient} and cuckoo
+filters~\cite{fan2014cuckoo} improve cache locality and support deletion,
+respectively, but share the same basic model.  The HashSet construction
+(\S\ref{subsec:hashset}) subsumes Bloom filters as a special case: a single
+hash function ($k=1$), exact correctness ($\eta=0$), and the same
+information-theoretic space bound of $-\log_2\varepsilon$ bits per element.
+The difference is that the HashSet is a cipher map---a total function on bit
+strings with a trapdoor---while Bloom filters expose their output directly.
+
+\paragraph{Perfect hash functions.}
+Fredman, Koml\'{o}s, and Szemer\'{e}di~\cite{fredman1984storing} introduced
+FKS perfect hashing with $O(n)$ space and $O(1)$ lookup.
+Belazzougui, Botelho, and Dietzfelbinger~\cite{belazzougui2009hash} achieved
+minimal perfect hash functions near the information-theoretic lower bound.
+The Singular Hash Map (\S\ref{sec:singular-hash}) is a perfect hash function
+with a different optimization target: it maps domain elements to
+prefix-free codewords (not to consecutive integers) and trades correctness
+($\eta > 0$) for space, achieving $(1-\eta)(-\log_2\varepsilon + H(Y))$
+bits per element.
+
+\paragraph{Property-preserving encryption.}
+Order-preserving encryption (OPE)~\cite{agrawal2004order,boldyreva2009order}
+and deterministic encryption~\cite{bellare2007deterministic} enable
+computation on ciphertexts by preserving algebraic structure (order,
+equality).  Cipher maps differ fundamentally: rather than preserving
+structure at the cost of leakage, cipher maps hide structure behind a total
+function.  The untrusted machine cannot distinguish domain elements from
+noise, and the output distribution is controlled by the representation
+uniformity parameter $\delta$.
+
+\paragraph{Searchable symmetric encryption.}
+Song, Wagner, and Perrig~\cite{song2000practical} introduced practical
+encrypted keyword search.  Curtmola et al.~\cite{curtmola2006searchable}
+formalized SSE with simulation-based security (IND-CKA).  Cash et
+al.~\cite{cash2013highly} extended SSE to Boolean queries with sublinear
+search.  SSE constructions use inverted indices and game-based security
+definitions; cipher maps use total functions with information-theoretic
+parameters ($\eta$, $\varepsilon$, $\delta$).  The approaches address
+different threat models: SSE hides query results from the server (up to
+leakage profiles), while cipher maps hide function identity and domain
+membership through totality and noise closure.
+
+\paragraph{Garbled circuits and fully homomorphic encryption.}
+Yao's garbled circuits~\cite{yao1982protocols} evaluate arbitrary functions
+on encrypted inputs via encrypted lookup tables.  Gentry's fully homomorphic
+encryption~\cite{gentry2009fully} enables exact computation on ciphertexts
+without interaction.  Both achieve exact computation on encrypted data.
+Cipher maps trade exactness for simplicity: a cipher map is a static lookup
+table (one hash evaluation per query) with tunable error $\eta$, whereas
+garbled circuits require per-gate encryption and are single-use, and FHE
+incurs substantial computational overhead from noise management in lattice
+operations.
+
+\paragraph{Homophonic substitution.}
+The representation uniformity property (multiple encodings per value,
+$K(x) \propto 1/D(x)$) is a modern instance of homophonic
+substitution~\cite{simmons1979symmetric}, in which frequent plaintext
+symbols are assigned multiple ciphertext equivalents to flatten frequency
+distributions.  The connection is direct: representation uniformity
+generalizes homophonic substitution from substitution ciphers to arbitrary
+total functions.
+
+
+%% ============================================================
 \section{The Cipher Map Abstraction}
 \label{sec:abstraction}
 
@@ -285,21 +358,32 @@ deterministic; with $\eta > 0$, each answer carries ambiguity.
 
 \begin{definition}[Composability]
 \label{def:composability}
-Let $\fhat$ be a cipher map for $f : X \to Y$ with correctness $\eta_f$,
-and $\ghat$ a cipher map for $g : Y \to Z$ with correctness $\eta_g$.
-Define $\ghat \circ \fhat : \{0,1\}^n \to \{0,1\}^n$ by
-$(\ghat \circ \fhat)(c) = \ghat(\fhat(c))$.  Then $\ghat \circ \fhat$ is a
-cipher map for $g \circ f$ with correctness:
-\begin{equation}
-\label{eq:composition}
-\eta_{g \circ f} = 1 - (1-\eta_f)(1-\eta_g) = \eta_f + \eta_g - \eta_f \eta_g.
-\end{equation}
+The composition of two cipher maps is again a cipher map.  Specifically: let
+$(\fhat, \enc_f, \dec_f, s_f)$ be a cipher map for $f : X \to Y$ and
+$(\ghat, \enc_g, \dec_g, s_g)$ a cipher map for $g : Y \to Z$.  Then
+$\ghat \circ \fhat : \{0,1\}^n \to \{0,1\}^n$, defined by
+$(\ghat \circ \fhat)(c) = \ghat(\fhat(c))$, with encoding $\enc_f$ and
+decoding $\dec_g$, is a cipher map for $g \circ f : X \to Z$.
 \end{definition}
 
 Composability is enabled by totality: since $\fhat$ is total, its output is
 always a valid $n$-bit input to $\ghat$.  The untrusted machine can chain
-cipher maps without needing to decode intermediate results.  The proof of
-\eqref{eq:composition} is given in \S\ref{sec:composition}.
+cipher maps without needing to decode intermediate results.
+
+\begin{theorem}[Composition correctness]
+\label{thm:composition-correctness}
+Under the hypotheses of Definition~\ref{def:composability}, if $\fhat$ has
+correctness $\eta_f$ and $\ghat$ has correctness $\eta_g$, then
+$\ghat \circ \fhat$ has correctness:
+\begin{equation}
+\label{eq:composition}
+\eta_{g \circ f} = 1 - (1-\eta_f)(1-\eta_g) = \eta_f + \eta_g - \eta_f \eta_g.
+\end{equation}
+\end{theorem}
+
+\begin{proof}
+See \S\ref{sec:composition} (Theorem~\ref{thm:composition}).
+\end{proof}
 
 \begin{remark}[Noise under composition]
 Noise input to $\fhat$ produces random output (by totality).  With
@@ -1205,6 +1289,63 @@ framing (cipher functors lifting monoids to cipher monoids) is a natural
 extension but requires careful treatment of the approximate setting: the
 functor laws hold exactly on the quotient but only approximately on
 representatives.
+
+\subsection{Application: Encrypted Search}
+\label{subsec:encrypted-search}
+
+Encrypted search---information retrieval over confidential data by an
+untrusted provider---is a direct application of the cipher map abstraction.
+The domain-specific vocabulary maps to the general framework as follows.
+
+\begin{description}
+\item[Search agent] $=$ trusted machine $T$.  Holds the trapdoor $s$,
+    encodes queries, decodes results.
+\item[Encrypted search provider] $=$ untrusted machine $U$.  Holds cipher
+    maps and cipher values; evaluates $\fhat(c)$ for any
+    $c \in \{0,1\}^n$ without decoding.
+\item[Information need] $=$ latent function $f : X \to Y$.  For keyword
+    search, $f = \mathbf{1}_A$ (set indicator); for ranked retrieval, $f$
+    is a scoring function.
+\item[Hidden query] $=$ cipher value $\enc(x, k)$.  The provider evaluates
+    the cipher map on this value without learning $x$.
+\item[Secure index] $=$ cipher map $\fhat$ stored on the provider.
+\end{description}
+
+\noindent
+The four properties specialize to encrypted search:
+\begin{enumerate}
+\item \textbf{Totality}: The provider can evaluate the index on any bit
+    string; filler queries produce output indistinguishable from real queries.
+\item \textbf{Representation uniformity}: Hidden queries are $\delta$-close
+    to uniform; frequency analysis of query traffic is bounded by $\delta$.
+\item \textbf{Correctness}: The search agent recovers the correct answer
+    with probability $\geq 1 - \eta$; nonzero $\eta$ provides plausible
+    deniability.
+\item \textbf{Composability}: Boolean combinations of queries (AND, OR, NOT)
+    compose as cipher map chains with predictable error accumulation.
+\end{enumerate}
+
+The correctness parameter $\eta$ has a precise deniability interpretation
+for Boolean-valued cipher maps.
+
+\begin{proposition}[Bayesian deniability]
+\label{prop:deniability}
+Let $\fhat$ be a cipher map for $f : X \to \{0,1\}$ with correctness
+$\eta$, and let $\pi = \Pr[f(x) = 1]$ be the prior.  If the adversary
+observes the decoded output $y = 1$, then
+\begin{equation}
+\Pr[f(x) = 1 \mid y = 1]
+    = \frac{\pi(1-\eta)}{\pi(1-\eta) + (1-\pi)\eta}.
+\end{equation}
+For $\eta = 0$, the posterior equals $1$ (no deniability).  For
+$\eta = 1/2$, the posterior equals $\pi$ (observation is useless).
+\end{proposition}
+
+\begin{proof}
+By Bayes' rule: $\Pr[y=1 \mid f(x)=1] = 1-\eta$ (correct positive) and
+$\Pr[y=1 \mid f(x)=0] = \eta$ (false positive).  Applying Bayes' theorem
+with prior $\pi$ gives the stated formula.
+\end{proof}
 
 \subsection{Open Questions}
 

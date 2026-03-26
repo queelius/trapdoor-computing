@@ -3,47 +3,44 @@ Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
 The top-level auxiliary file: cipher_maps.aux
 The style file: plainnat.bst
 Database file #1: references.bib
-Warning--empty booktitle in goldreich1996software
-Warning--can't use both volume and number fields in goldreich1996software
-You've used 4 entries,
+You've used 16 entries,
             2773 wiz_defined-function locations,
-            615 strings with 5359 characters,
-and the built_in function-call counts, 1881 in all, are:
-= -- 181
-> -- 51
-< -- 8
-+ -- 19
-- -- 15
-* -- 109
-:= -- 261
-add.period$ -- 12
-call.type$ -- 4
-change.case$ -- 17
-chr.to.int$ -- 4
-cite$ -- 10
-duplicate$ -- 108
-empty$ -- 177
-format.name$ -- 21
-if$ -- 420
+            688 strings with 7761 characters,
+and the built_in function-call counts, 9173 in all, are:
+= -- 845
+> -- 497
+< -- 16
++ -- 169
+- -- 153
+* -- 711
+:= -- 1319
+add.period$ -- 51
+call.type$ -- 16
+change.case$ -- 99
+chr.to.int$ -- 16
+cite$ -- 32
+duplicate$ -- 437
+empty$ -- 753
+format.name$ -- 171
+if$ -- 1999
 int.to.chr$ -- 1
 int.to.str$ -- 1
-missing$ -- 3
-newline$ -- 28
-num.names$ -- 16
-pop$ -- 40
+missing$ -- 15
+newline$ -- 88
+num.names$ -- 64
+pop$ -- 215
 preamble$ -- 1
-purify$ -- 13
+purify$ -- 83
 quote$ -- 0
-skip$ -- 94
+skip$ -- 362
 stack$ -- 0
-substring$ -- 104
-swap$ -- 34
-text.length$ -- 4
+substring$ -- 459
+swap$ -- 109
+text.length$ -- 10
 text.prefix$ -- 0
 top$ -- 0
-type$ -- 44
-warning$ -- 2
-while$ -- 21
+type$ -- 176
+warning$ -- 0
+while$ -- 88
 width$ -- 0
-write$ -- 58
-(There were 2 warnings)
+write$ -- 217

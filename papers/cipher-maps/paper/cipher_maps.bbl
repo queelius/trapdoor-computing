@@ -1,9 +1,81 @@
-\begin{thebibliography}{4}
+\begin{thebibliography}{16}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
   \providecommand{\doi}[1]{doi: #1}\else
   \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Agrawal et~al.(2004)Agrawal, Kiernan, Srikant, and
+  Xu]{agrawal2004order}
+Rakesh Agrawal, Jerry Kiernan, Ramakrishnan Srikant, and Yirong Xu.
+\newblock Order preserving encryption for numeric data.
+\newblock In \emph{Proceedings of the 2004 ACM SIGMOD International Conference
+  on Management of Data}, pages 563--574, 2004.
+
+\bibitem[Belazzougui et~al.(2009)Belazzougui, Botelho, and
+  Dietzfelbinger]{belazzougui2009hash}
+Djamal Belazzougui, Fabiano~C Botelho, and Martin Dietzfelbinger.
+\newblock Hash, displace, and compress.
+\newblock In \emph{European Symposium on Algorithms}, pages 682--693. Springer,
+  2009.
+
+\bibitem[Bellare et~al.(2007)Bellare, Boldyreva, and
+  O'Neill]{bellare2007deterministic}
+Mihir Bellare, Alexandra Boldyreva, and Adam O'Neill.
+\newblock Deterministic and efficiently searchable encryption.
+\newblock In \emph{Advances in Cryptology--CRYPTO 2007}, pages 535--552.
+  Springer, 2007.
+
+\bibitem[Bender et~al.(2012)Bender, Farach-Colton, Johnson, Kraner, Kuszmaul,
+  Medjedovic, Montes, Shetty, Spillane, and Zadok]{bender2012quotient}
+Michael~A Bender, Martin Farach-Colton, Rob Johnson, Russell Kraner, Bradley~C
+  Kuszmaul, Dzejla Medjedovic, Pablo Montes, Pradeep Shetty, Richard~P
+  Spillane, and Erez Zadok.
+\newblock Don't thrash: How to cache your hash on flash.
+\newblock \emph{Proceedings of the VLDB Endowment}, 5\penalty0 (11):\penalty0
+  1627--1637, 2012.
+
+\bibitem[Bloom(1970)]{bloom1970space}
+Burton~H Bloom.
+\newblock Space/time trade-offs in hash coding with allowable errors.
+\newblock \emph{Communications of the ACM}, 13\penalty0 (7):\penalty0 422--426,
+  1970.
+
+\bibitem[Boldyreva et~al.(2009)Boldyreva, Chenette, Lee, and
+  O'Neill]{boldyreva2009order}
+Alexandra Boldyreva, Nathan Chenette, Younho Lee, and Adam O'Neill.
+\newblock Order-preserving symmetric encryption.
+\newblock In \emph{Advances in Cryptology--EUROCRYPT 2009}, pages 224--241.
+  Springer, 2009.
+
+\bibitem[Cash et~al.(2013)Cash, Jarecki, Jutla, Krawczyk, Ro{\c{s}}u, and
+  Steiner]{cash2013highly}
+David Cash, Stanislaw Jarecki, Charanjit Jutla, Hugo Krawczyk,
+  Marcel-C{\u{a}}t{\u{a}}lin Ro{\c{s}}u, and Michael Steiner.
+\newblock Highly-scalable searchable symmetric encryption with support for
+  boolean queries.
+\newblock In \emph{Advances in Cryptology--CRYPTO 2013}, pages 353--373, 2013.
+
+\bibitem[Curtmola et~al.(2006)Curtmola, Garay, Kamara, and
+  Ostrovsky]{curtmola2006searchable}
+Reza Curtmola, Juan Garay, Seny Kamara, and Rafail Ostrovsky.
+\newblock Searchable symmetric encryption: Improved definitions and efficient
+  constructions.
+\newblock In \emph{Proceedings of the 13th ACM Conference on Computer and
+  Communications Security}, pages 79--88, 2006.
+
+\bibitem[Fan et~al.(2014)Fan, Andersen, Kaminsky, and
+  Mitzenmacher]{fan2014cuckoo}
+Bin Fan, Dave~G Andersen, Michael Kaminsky, and Michael~D Mitzenmacher.
+\newblock Cuckoo filter: Practically better than {Bloom}.
+\newblock In \emph{Proceedings of the 10th ACM International Conference on
+  emerging Networking Experiments and Technologies}, pages 75--88, 2014.
+
+\bibitem[Fredman et~al.(1984)Fredman, Koml{\'o}s, and
+  Szemer{\'e}di]{fredman1984storing}
+Michael~L Fredman, J{\'a}nos Koml{\'o}s, and Endre Szemer{\'e}di.
+\newblock Storing a sparse table with {$O(1)$} worst case access time.
+\newblock \emph{Journal of the ACM}, 31\penalty0 (3):\penalty0 538--544, 1984.
 
 \bibitem[Gentry(2009)]{gentry2009fully}
 Craig Gentry.
@@ -13,8 +85,20 @@ Craig Gentry.
 
 \bibitem[Goldreich and Ostrovsky(1996)]{goldreich1996software}
 Oded Goldreich and Rafail Ostrovsky.
-\newblock Software protection and simulation on oblivious rams.
-\newblock volume~43, pages 431--473, 1996.
+\newblock Software protection and simulation on oblivious {RAMs}.
+\newblock \emph{Journal of the ACM}, 43\penalty0 (3):\penalty0 431--473, 1996.
+
+\bibitem[Simmons(1979)]{simmons1979symmetric}
+Gustavus~J Simmons.
+\newblock Symmetric and asymmetric encryption.
+\newblock \emph{ACM Computing Surveys}, 11\penalty0 (4):\penalty0 305--330,
+  1979.
+
+\bibitem[Song et~al.(2000)Song, Wagner, and Perrig]{song2000practical}
+Dawn~Xiaodong Song, David Wagner, and Adrian Perrig.
+\newblock Practical techniques for searches on encrypted data.
+\newblock In \emph{Proceedings of the 2000 IEEE Symposium on Security and
+  Privacy}, pages 44--55, 2000.
 
 \bibitem[Towell(2024)]{bernoulli-types}
 Alexander Towell.

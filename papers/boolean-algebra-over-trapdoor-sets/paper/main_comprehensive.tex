@@ -19,7 +19,7 @@
 
 % Code listing settings
 \lstset{
-  language=C++,
+  language=Python,
   basicstyle=\footnotesize\ttfamily,
   keywordstyle=\color{blue},
   commentstyle=\color{gray},
@@ -62,11 +62,11 @@ Email: atowell@siue.edu}}
 \begin{abstract}
 We present Hash-Based Trapdoor Sets (HBTS), a practical framework for privacy-preserving set operations that combines cryptographic hash functions with probabilistic data structures. Unlike traditional approaches using fully homomorphic encryption or secure multi-party computation, HBTS achieves microsecond-scale performance by embracing approximate operations with explicitly managed error rates.
 
-HBTS provides \emph{trapdoor representation} through one-way hash transformations---the underlying data cannot be recovered from hash values. Operations return \emph{Bernoulli Booleans}: plaintext approximate results with explicit error rates (false positive rate $\alpha$, false negative rate $\beta$). This layered model accepts observable query results in exchange for practical efficiency, making it suitable for applications where query patterns are not sensitive or results are shared.
+HBTS provides \emph{trapdoor representation}\footnote{We use ``trapdoor'' to mean a one-way encoding keyed by a secret, not a trapdoor permutation in the standard cryptographic sense. The hash key $k$ enables creation of encodings but does not permit recovery of inputs---there is no efficient inversion.} through one-way hash transformations---the underlying data cannot be recovered from hash values. Operations return \emph{Bernoulli Booleans}: plaintext approximate results with explicit error rates (false positive rate $\alpha$, false negative rate $\beta$). This layered model accepts observable query results in exchange for practical efficiency, making it suitable for applications where query patterns are not sensitive or results are shared.
 
 Our framework provides: (1) a systematic approach to propagating error bounds through composed set operations using Bernoulli type composition rules, (2) efficient Boolean and symmetric difference operations on hash-transformed data with quantifiable false positive rates, and (3) practical implementations of privacy-preserving primitives including private set intersection and secure aggregation. We build upon established techniques from probabilistic data structures (Bloom filters, HyperLogLog) while adding cryptographic privacy through one-way hash transformations.
 
-Experimental evaluation demonstrates that HBTS operations complete in 0.4-2.1 microseconds for typical workloads, offering 1000-10000× speedup over homomorphic encryption approaches. The framework provides false positive rates bounded by hash collision probability (e.g., $2^{-256}$ for SHA-256), with privacy guarantees that depend on input entropy and threat model assumptions. We validate HBTS through implementations of private set intersection, secure deduplication, and federated learning aggregation, showing practical applicability where approximate results with explicit error bounds are acceptable.
+Since HBTS operations reduce to standard hash computations and set operations, they are orders of magnitude faster than homomorphic encryption or MPC approaches. The framework provides false positive rates bounded by hash collision probability (e.g., $2^{-256}$ for SHA-256), with privacy guarantees that depend on input entropy and threat model assumptions. We provide a reference Python implementation and validate HBTS through applications to private set intersection, secure deduplication, and federated learning aggregation, showing practical applicability where approximate results with explicit error bounds are acceptable.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -102,7 +102,7 @@ This paper makes the following contributions:
 \begin{itemize}
 \item \textbf{Systematic Error Propagation}: We provide a formal framework for propagating error bounds through composed set operations on hash-transformed data, enabling applications to reason about accuracy-privacy trade-offs.
 
-\item \textbf{Practical Implementation}: We demonstrate that combining cryptographic hashing with probabilistic data structures achieves microsecond-scale performance for privacy-preserving set operations, offering 1000-10000× speedup over homomorphic encryption.
+\item \textbf{Reference Implementation}: We provide a Python reference implementation demonstrating that combining cryptographic hashing with probabilistic data structures yields practical privacy-preserving set operations using only standard-library primitives.
 
 \item \textbf{Integration of Existing Techniques}: We show how established algorithms (Bloom filters, HyperLogLog) can be enhanced with cryptographic privacy guarantees through systematic application of hash transformations.
 
@@ -204,6 +204,7 @@ HBTS provides two primary set implementations with different algebraic propertie
 A key aspect of HBTS is systematic error propagation through operations. For Boolean operations, we derive tight bounds:
 
 \begin{theorem}[Union Error Bound]
+\label{thm:union}
 For sets $A$ and $B$ with false positive rates $\alpha_A, \alpha_B$ and false negative rates $\beta_A, \beta_B$:
 \begin{align}
 \alpha_{A \cup B} &\leq \alpha_A + \alpha_B - \alpha_A \cdot \alpha_B \\
@@ -211,7 +212,12 @@ For sets $A$ and $B$ with false positive rates $\alpha_A, \alpha_B$ and false ne
 \end{align}
 \end{theorem}
 
+\begin{proof}
+Dual to Theorem~\ref{thm:intersection} by De Morgan's laws: $A \cup B = \overline{\bar{A} \cap \bar{B}}$. Complement swaps error rates ($\alpha \leftrightarrow \beta$), and intersection multiplies false positive rates while accumulating false negative rates via inclusion-exclusion. Equivalently: a false positive in the union occurs if \emph{either} set reports a false positive (independent events, yielding the inclusion-exclusion bound $\alpha_A + \alpha_B - \alpha_A \alpha_B$), while a false negative requires \emph{both} sets to miss the element (yielding the product $\beta_A \cdot \beta_B$).
+\end{proof}
+
 \begin{theorem}[Intersection Error Bound]
+\label{thm:intersection}
 For sets $A$ and $B$ with false positive rates $\alpha_A, \alpha_B$ and false negative rates $\beta_A, \beta_B$:
 \begin{align}
 \alpha_{A \cap B} &= \alpha_A \cdot \alpha_B \\
@@ -226,6 +232,7 @@ For intersection, a false positive requires \emph{both} sets to report false pos
 Note that intersection \emph{reduces} false positive rates (multiplicative) while union \emph{increases} them (sub-additive).
 
 \begin{theorem}[Boolean Error Composition]
+\label{thm:boolean-composition}
 For independent approximate Booleans $\obs{b}_1, \obs{b}_2$ with error rates $(\alpha_1, \beta_1)$ and $(\alpha_2, \beta_2)$:
 \begin{align}
 \neg\obs{b}: &\quad (\beta, \alpha) \text{ (rates swap)} \\
@@ -389,15 +396,15 @@ which tends to 0 exponentially as $s \to \infty$ (since $\log_2 \alpha(s) \to 0$
 
 \subsection{Security Analysis}
 
-We formalize HBTS's security in the random oracle model. In the one-wayness game $\mathcal{G}_{OW}$, a challenger selects random $x \in \{0,1\}^*$ and key $k$, sends $h = H(k||x)$ to the adversary, and the adversary wins if it recovers $x$.
+The privacy guarantee of HBTS is hash preimage resistance under the random oracle model.
 
 \begin{theorem}[Privacy Preservation]
-Let $H: \{0,1\}^* \rightarrow \{0,1\}^n$ be a random oracle. For any PPT adversary $\mathcal{A}$, the probability of winning $\mathcal{G}_{OW}$ is negligible:
-$$\Pr[\mathcal{A} \text{ wins } \mathcal{G}_{OW}] \leq 2^{-n} + \text{negl}(n)$$
+\label{thm:privacy}
+Let $H: \{0,1\}^* \rightarrow \{0,1\}^n$ be modeled as a random oracle. Under the random oracle model, recovering $x$ from $H(k \| x)$ requires expected $O(2^n)$ hash evaluations when $k$ is secret and uniformly random. No efficient algorithm can determine the input $x$ from the hash output with non-negligible probability.
 \end{theorem}
 
 \begin{proof}
-In the random oracle model, $H(k||x)$ is uniformly distributed over $\{0,1\}^n$. Without knowledge of $k$, the adversary's view is independent of $x$, reducing to random guessing with success probability $2^{-n}$.
+In the random oracle model, $H(k \| x)$ is uniformly distributed over $\{0,1\}^n$ and independent of $x$ from the adversary's perspective (since $k$ is unknown). Each hash evaluation tests one candidate input, and the probability of matching the target output is $2^{-n}$ per evaluation. After $q$ queries, the success probability is at most $q \cdot 2^{-n}$, which is negligible for $q$ polynomial in $n$.
 \end{proof}
 
 \subsection{Approximate Algebraic Properties}
@@ -591,74 +598,45 @@ The algorithm achieves relative error $1.04/\sqrt{m}$ using $O(m \log \log n)$ b
 \section{Implementation}
 \label{sec:implementation}
 
-We implemented HBTS as a header-only C++20 library, using modern language features for type safety and performance. The implementation uses template metaprogramming for compile-time optimization and C++20 concepts for type constraints. We employ several optimization techniques including SIMD instructions for batch hashing, memory pooling for allocation efficiency, and cache-aligned data structures.
+We implemented HBTS as a Python library (\texttt{cts}, approximately 200 lines of code) using only the standard library. The implementation provides four core modules:
 
-The library provides flexible key management supporting key derivation for different contexts, periodic key rotation, and threshold secret sharing for distributed deployments. Implementation details including code structure, optimization techniques, and API design are provided in Appendix A.
+\begin{itemize}
+\item \texttt{HashValue}: Fixed-size byte arrays with bitwise Boolean operations (AND, OR, XOR, NOT), providing the carrier for Bernoulli set operations.
+\item \texttt{BernoulliBoolean}: Boolean values carrying explicit error rates $(\alpha, \beta)$, with confusion matrix computation, Bayesian posterior updates, and mutual information calculation.
+\item \texttt{Trapdoor}/\texttt{TrapdoorFactory}: One-way transformation $T_k(v) = H(k \| v)$ using HMAC-SHA256, with key fingerprinting for compatibility checking across sets.
+\item \texttt{BooleanSet}: Full Boolean algebra over sets of trapdoors, supporting union (\texttt{|}), intersection (\texttt{\&}), symmetric difference (\texttt{\^{}}), and set difference (\texttt{-}), with automatic error rate propagation and cardinality bound tracking through operations.
+\end{itemize}
+
+The library requires Python 3.10+ and has no external dependencies. All operations return \texttt{BernoulliBoolean} results with explicit error rates, and set operations propagate error bounds using the composition rules from Section~\ref{sec:design}. Implementation details including code listings are provided in Appendix~A.
 
 \section{Evaluation}
 \label{sec:evaluation}
 
-\subsection{Experimental Setup}
+\subsection{Complexity Analysis}
 
-We evaluate HBTS on:
-\begin{itemize}
-\item Intel Core i9-12900K (16 cores, 24 threads)
-\item 64GB DDR5 RAM
-\item Ubuntu 22.04, GCC 12.2
-\item Compiled with -O3 -march=native
-\end{itemize}
-
-\subsection{Performance Benchmarks}
+The asymptotic complexity of HBTS operations is determined by the underlying hash computation and set operations:
 
 \begin{table}[h]
 \centering
-\caption{Projected Operation Latency (microseconds)$^\dagger$}
-\label{tab:performance}
-\begin{tabular}{lrr}
+\caption{Operation Complexity}
+\label{tab:complexity}
+\begin{tabular}{lcc}
 \toprule
-Operation & Mean & Std Dev \\
+Operation & Time & Space \\
 \midrule
-Trapdoor creation & 0.42 & 0.03 \\
-Set insertion (1K elements) & 420 & 12 \\
-Set membership test & 0.45 & 0.02 \\
-Set intersection (1K each) & 892 & 28 \\
-Set union (1K each) & 856 & 24 \\
-Cardinality estimation & 1.2 & 0.1 \\
-Jaccard similarity & 2.1 & 0.2 \\
+Trapdoor creation & $O(1)$ & $O(n)$ bits \\
+Set membership test & $O(1)$ expected & $O(1)$ \\
+Set intersection ($k_1, k_2$) & $O(\min(k_1, k_2))$ & $O(\min(k_1, k_2))$ \\
+Set union ($k_1, k_2$) & $O(k_1 + k_2)$ & $O(k_1 + k_2)$ \\
 \bottomrule
 \end{tabular}
-\vspace{0.5em}
-
-{\footnotesize $^\dagger$Based on algorithm complexity analysis; formal benchmark validation in progress.}
 \end{table}
 
-HBTS achieves microsecond-scale performance for common operations, making it suitable for real-time applications.
-
-\subsection{Scalability Analysis}
-
-\begin{figure}[h]
-\centering
-\begin{lstlisting}[language={},basicstyle=\scriptsize\ttfamily,frame=none]
-Throughput (ops/sec) vs Set Size
-10^7 |       *
-     |     *
-10^6 |   *
-     | *
-10^5 |*_____________
-     10^2  10^4  10^6
-        Set Size
-\end{lstlisting}
-\caption{Throughput scaling with set size}
-\label{fig:scalability}
-\end{figure}
-
-Throughput remains constant for small sets and decreases logarithmically for large sets due to cache effects.
+All operations are dominated by hash computation cost. Since HBTS uses standard cryptographic hashing (SHA-256), individual hash evaluations complete in the sub-microsecond range on modern hardware, making HBTS orders of magnitude faster than homomorphic encryption or MPC-based alternatives for set operations.
 
 \subsection{Security Evaluation}
 
-We validate security properties through:
-
-\textbf{Collision Testing}: No collisions found in $2^{40}$ random inputs with 256-bit hashes, consistent with expected collision probability of $2^{-256}$.
+The security of HBTS rests on the collision resistance and preimage resistance of the underlying hash function. For SHA-256, the expected collision probability is $2^{-256}$ per pair, providing a negligible false positive rate for practical set sizes.
 
 \subsection{Limitations and Attack Vectors}
 
@@ -771,13 +749,13 @@ Recent advances include mechanism design via differential privacy~\cite{mcsherry
 \section{Conclusion}
 \label{sec:conclusion}
 
-We presented Hash-Based Trapdoor Sets (HBTS), a practical framework for privacy-preserving set operations that combines cryptographic hash functions with probabilistic data structures. By explicitly managing error rates and embracing approximation, HBTS achieves microsecond-scale performance while providing privacy bounded by hash collision probabilities.
+We presented Hash-Based Trapdoor Sets (HBTS), a practical framework for privacy-preserving set operations that combines cryptographic hash functions with probabilistic data structures. By explicitly managing error rates and embracing approximation, HBTS achieves efficient performance---bounded by the cost of standard hash computations---while providing privacy bounded by hash collision probabilities.
 
 Our contributions include:
 \begin{itemize}
 \item A systematic framework for error propagation through composed set operations on hash-transformed data
 \item Integration of established probabilistic algorithms (Bloom filters, HyperLogLog) with cryptographic privacy guarantees
-\item Practical demonstrations achieving 1000-10000× speedup over homomorphic encryption approaches
+\item A reference Python implementation with operations reducible to standard hash computations
 \item Validation through real-world applications in private set intersection, secure aggregation, and federated learning
 \end{itemize}
 
@@ -791,18 +769,14 @@ Future directions include:
 
 \subsection{Current Limitations}
 
-The current implementation provides core trapdoor and set operations. The following features are designed but not yet implemented:
+The current Python reference implementation provides core trapdoor and set operations with full error propagation. The following features are not yet implemented:
 
 \begin{itemize}
-\item \textbf{Cryptographic key derivation}: The current implementation uses simplified hashing; production deployment requires HKDF or Argon2 for proper key derivation
-\item \textbf{Differential privacy integration}: The Laplace mechanism is designed but not implemented
-\item \textbf{Threshold secret sharing}: Algorithm specified in the API, implementation pending
-\item \textbf{Formal verification}: Coq proofs are planned for future work
-\item \textbf{Constant-time primitives}: Required for side-channel resistance in adversarial environments
-\item \textbf{NIST-validated randomness}: Output distribution testing against NIST SP 800-22 not yet performed
+\item \textbf{Cryptographic key derivation}: The implementation uses direct SHA-256 concatenation ($H(k \| v)$); production deployment would benefit from HKDF or Argon2 for proper key derivation
+\item \textbf{Differential privacy integration}: Combining HBTS with calibrated noise addition is a natural extension but not yet implemented
+\item \textbf{Constant-time primitives}: The Python implementation does not guarantee constant-time execution; side-channel resistance would require a lower-level language
+\item \textbf{Performance optimization}: The reference implementation prioritizes clarity over performance; a production implementation in C or Rust would benefit from SIMD hashing and memory pooling
 \end{itemize}
-
-\noindent Performance figures in this paper are based on algorithm complexity analysis and microbenchmark design; comprehensive benchmarking with validated measurements is ongoing.
 
 HBTS demonstrates that practical privacy-preserving computation is achievable when applications can accept approximate results with explicit error bounds.
 
@@ -813,178 +787,95 @@ HBTS demonstrates that practical privacy-preserving computation is achievable wh
 
 \section{Implementation Details}
 
-This appendix provides implementation details for the HBTS framework that were omitted from the main text for clarity.
+This appendix provides implementation details for the \texttt{cts} Python library that accompanies this paper. The library is approximately 200 lines of code with no external dependencies beyond the Python standard library.
 
 \subsection{Core Data Structures}
 
-\subsubsection{Hash-Trapdoor Value Implementation}
+\subsubsection{Trapdoor Implementation}
 
-The hash-trapdoor value class encapsulates the one-way transformation:
+The trapdoor factory creates one-way transformations using keyed SHA-256:
 
-\begin{lstlisting}[caption={Hash-trapdoor value implementation}]
-template <typename T, size_t N = 32>
-class hash_trapdoor {
-  hash_value<N> value_hash_;
-  size_t key_fingerprint_;
-public:
-  approximate_bool equals(
-    const hash_trapdoor& other) const {
-    bool same = (value_hash_ ==
-                 other.value_hash_);
-    double fpr = pow(2.0, -N*8);
-    return approximate_bool(
-      same, fpr, 0.0);
-  }
-};
+\begin{lstlisting}[caption={Trapdoor factory (trapdoor.py)}]
+class TrapdoorFactory:
+    def __init__(self, key=None, hash_size=32):
+        self._key = key or secrets.token_bytes(32)
+        self._hash_size = hash_size
+        self._fingerprint = hashlib.sha256(
+            self._key).digest()[:8]
+
+    def create(self, value):
+        """T_k(v) = H(k || v)"""
+        if isinstance(value, str):
+            value = value.encode('utf-8')
+        h = hashlib.sha256(self._key + value)
+        return Trapdoor(
+            hash=HashValue(h.digest()[:self._hash_size]),
+            key_fingerprint=self._fingerprint)
 \end{lstlisting}
 
-\subsubsection{Approximate Value Implementation}
+\subsubsection{Bernoulli Boolean Implementation}
 
-\begin{lstlisting}[caption={Approximate value with error tracking}]
-template <typename T>
-class approximate {
-  T value_;
-  double false_positive_rate_;
-  double false_negative_rate_;
-public:
-  T value() const { return value_; }
-  double confidence() const {
-    return 1.0 - false_positive_rate_
-               - false_negative_rate_;
-  }
+\begin{lstlisting}[caption={Bernoulli Boolean with error tracking (approximate.py)}]
+@dataclass(frozen=True, slots=True)
+class BernoulliBoolean:
+    """Boolean with explicit error rates."""
+    value: bool
+    alpha: float = 0.0  # FPR
+    beta: float = 0.0   # FNR
 
-  // Error propagation for AND operation
-  // FIXED: FPR for AND = product (both must be false positives),
-  //        FNR for AND = inclusion-exclusion (either can be false negative).
-  //        Previously used min(fpr1,fpr2) and b1+b2, which were wrong.
-  approximate operator&&(
-    const approximate& other) const {
-    return approximate(
-      value_ && other.value_,
-      false_positive_rate_ *
-          other.false_positive_rate_,
-      false_negative_rate_ +
-        other.false_negative_rate_ -
-        false_negative_rate_ *
-          other.false_negative_rate_);
-  }
-};
+    @property
+    def confidence(self):
+        return max(0.0, 1.0 - self.alpha - self.beta)
+
+    @property
+    def confusion_matrix(self):
+        return ((1 - self.alpha, self.alpha),
+                (self.beta, 1 - self.beta))
 \end{lstlisting}
 
-\subsection{Optimization Techniques}
+\subsection{Error Composition Functions}
 
-\subsubsection{SIMD Hash Computation}
+\begin{lstlisting}[caption={Error propagation rules (approximate.py)}]
+def compose_and(a1, b1, a2, b2):
+    """AND: FPR = product, FNR = inclusion-exclusion."""
+    return (a1 * a2, b1 + b2 - b1 * b2)
 
-We use vector instructions for parallel hash computation:
+def compose_or(a1, b1, a2, b2):
+    """OR: FPR = inclusion-exclusion, FNR = product."""
+    return (a1 + a2 - a1 * a2, b1 * b2)
 
-\begin{lstlisting}[caption={SIMD-accelerated hashing}]
-template <typename T>
-void batch_hash(const T* input,
-                hash_value* output,
-                size_t count) {
-  #pragma omp simd
-  for (size_t i = 0; i < count; ++i) {
-    output[i] = compute_hash(input[i]);
-  }
-}
+def compose_not(alpha, beta):
+    """NOT: rates swap."""
+    return (beta, alpha)
 \end{lstlisting}
 
-\subsubsection{Memory Pool Allocation}
+\subsection{Boolean Set Operations}
 
-\begin{lstlisting}[caption={Memory pool for temporary values}]
-template <typename T>
-class memory_pool {
-  std::vector<T> pool_;
-  std::stack<T*> available_;
-public:
-  T* allocate() {
-    if (available_.empty()) {
-      pool_.emplace_back();
-      return &pool_.back();
-    }
-    T* ptr = available_.top();
-    available_.pop();
-    return ptr;
-  }
+\begin{lstlisting}[caption={Set operations with error propagation (boolean\_set.py)}]
+class BooleanSet:
+    def __or__(self, other):
+        """Union with FPR propagation."""
+        self._check_compatible(other)
+        new_alpha, new_beta = compose_or(
+            self.alpha, self.beta,
+            other.alpha, other.beta)
+        return BooleanSet(
+            _elements=self._elements | other._elements,
+            alpha=new_alpha, beta=new_beta,
+            _low_k=max(self._low_k, other._low_k),
+            _high_k=self._high_k + other._high_k)
 
-  void deallocate(T* ptr) {
-    available_.push(ptr);
-  }
-};
-\end{lstlisting}
-
-\subsection{Key Management Implementation}
-
-\begin{lstlisting}[caption={Key derivation and management}]
-class key_manager {
-  std::array<uint8_t, 32> master_key_;
-
-public:
-  // Derive context-specific keys
-  auto derive_key(string_view context) {
-    return hmac_sha256(master_key_,
-                       context);
-  }
-
-  // Periodic key rotation
-  void rotate_keys() {
-    auto new_key = generate_random_key();
-    secure_overwrite(master_key_);
-    master_key_ = new_key;
-  }
-
-  // Shamir's secret sharing
-  auto split_key(int threshold, int shares) {
-    return shamir_split(master_key_,
-                        threshold, shares);
-  }
-};
-\end{lstlisting}
-
-\subsection{C++20 Concepts}
-
-We use concepts for compile-time type checking:
-
-\begin{lstlisting}[caption={Type constraints using concepts}]
-template <typename T>
-concept Hashable = requires(T t) {
-  { std::hash<T>{}(t) } ->
-    std::convertible_to<size_t>;
-};
-
-template <typename T>
-concept TrapdoorSet = requires(T t) {
-  typename T::value_type;
-  { t.insert(std::declval<
-    typename T::value_type>()) };
-  { t.contains(std::declval<
-    typename T::value_type>()) } ->
-    std::convertible_to<approximate_bool>;
-};
-\end{lstlisting}
-
-\subsection{Parallel Execution}
-
-Using C++20 parallel algorithms:
-
-\begin{lstlisting}[caption={Parallel set operations}]
-template <TrapdoorSet S>
-auto parallel_union(const S& a, const S& b) {
-  S result;
-  std::for_each(
-    std::execution::par_unseq,
-    a.begin(), a.end(),
-    [&result](const auto& elem) {
-      result.insert(elem);
-    });
-  std::for_each(
-    std::execution::par_unseq,
-    b.begin(), b.end(),
-    [&result](const auto& elem) {
-      result.insert(elem);
-    });
-  return result;
-}
+    def __and__(self, other):
+        """Intersection with FPR propagation."""
+        self._check_compatible(other)
+        new_alpha, new_beta = compose_and(
+            self.alpha, self.beta,
+            other.alpha, other.beta)
+        return BooleanSet(
+            _elements=self._elements & other._elements,
+            alpha=new_alpha, beta=new_beta,
+            _low_k=0,
+            _high_k=min(self._high_k, other._high_k))
 \end{lstlisting}
 
 \end{document}
