@@ -1,3 +1,4 @@
+% SIMPLIFIED: Notation reduction pass (2026-03-25)
 \documentclass[11pt]{article}
 
 % Essential packages
@@ -133,13 +134,10 @@ The untrusted machine holds $\fhat$.  The trusted machine holds $\enc$,
 $\dec$, and $s$.
 \end{definition}
 
-\begin{remark}[Values as constant functions]
-\label{rem:values-as-functions}
 A cipher value $\enc(v, k)$ can be viewed as a cipher map for the constant
-function $f_v(x) = v$ for all $x$.  Under this view, cipher values and
-cipher maps are the same kind of object---a total function on bit
-strings---simplifying the untrusted machine's interface.
-\end{remark}
+function $f_v(x) = v$: under this view, cipher values and cipher maps are
+the same kind of object---a total function on bit strings---simplifying the
+untrusted machine's interface.
 
 \subsection{Two Construction Strategies}
 
@@ -200,12 +198,9 @@ Properties~3 (Correctness) and~4 (Composability) are emergent: correctness
 depends on the construction method; composability depends on the totality
 guarantee enabling chained evaluation.
 
-\begin{remark}[Layers as conceptual scaffolding]
-We present these as conceptual layers explaining \emph{why} each property
-exists, not as algebraic monads.  Whether the layers satisfy formal monad
-laws in the approximate setting is an open question that we do not need to
-resolve.
-\end{remark}
+These layers are conceptual scaffolding explaining \emph{why} each property
+exists, not algebraic monads.  Whether the layers satisfy formal monad
+laws in the approximate setting is an open question (see \S\ref{sec:discussion}).
 
 
 %% ============================================================
@@ -244,7 +239,7 @@ The cipher map has \emph{$\delta$-representation uniformity} if
 \begin{equation}
 \TV(Q,\, \Uniform(\{0,1\}^n)) \leq \delta,
 \end{equation}
-where $\TV$ denotes total variation distance.
+where $\TV$ is total variation distance.
 \end{definition}
 
 Total variation distance has the operational interpretation that no
@@ -407,10 +402,8 @@ domain elements).  Correctness: \textbf{yes} ($\eta = 0$).  Composability:
 \textbf{yes} (intersection of HashSets: $x \in A \cap B$ iff
 $h(x\|s_A) = 0^n$ and $h(x\|s_B) = 0^n$).
 
-\begin{remark}
 The HashSet demonstrates that the four properties are independent: a
 construction can satisfy some without others.
-\end{remark}
 
 % FIXED: CM-4: clarify that "bits per element" is amortized information content
 \begin{remark}[Bits per element]
@@ -1083,42 +1076,19 @@ Theorem~\ref{thm:composition}.
 \section{Representation Uniformity and Encoding Granularity}
 \label{sec:uniformity}
 
-\subsection{Total Variation Distance}
-
-\begin{definition}[Total variation distance]
-\label{def:tv-distance}
-Let $P$ and $Q$ be distributions on a finite set $\Omega$.  The total
-variation distance is:
-\begin{equation}
-\TV(P, Q) = \frac{1}{2} \sum_{\omega \in \Omega} |P(\omega) - Q(\omega)|
-= \max_{A \subseteq \Omega} |P(A) - Q(A)|.
-\end{equation}
-\end{definition}
-
-TV distance has the operational interpretation: no test can distinguish $P$
-from $Q$ with advantage greater than $\TV(P, Q)$.  This directly bounds
-what an adversary observing cipher values can learn.
-
-\begin{remark}
-Max-divergence ($D_\infty$) would give a stronger guarantee (bounding the
-\emph{ratio} of probabilities rather than the difference) but is harder to
-achieve.  We use TV distance because the constructions are designed around
-frequency equalization, which naturally yields TV bounds.
-\end{remark}
+We measure representation uniformity using total variation distance $\TV$,
+which bounds the distinguishing advantage of any statistical test.
+We use TV rather than max-divergence ($D_\infty$) because the constructions
+are designed around frequency equalization, which naturally yields TV bounds.
 
 \subsection{The Encoding Granularity Principle}
 \label{subsec:granularity}
 
-Representation uniformity is defined \emph{per cipher map}.  What
-correlations it hides depends on what is encoded as a unit.
-
-\begin{definition}[Encoding granularity]
-The \emph{encoding granularity} of a cipher map $\fhat$ for $f : X \to Y$
-is the type $X$.  Representation uniformity applies to the distribution over
-encodings of individual elements of $X$.
-\end{definition}
-
-Consider encrypting a pair of Boolean values $(a, b)$ where $a$ and $b$ are
+Representation uniformity is defined \emph{per cipher map}: the
+\emph{encoding granularity} is the domain type $X$, and uniformity applies
+to the distribution over encodings of individual elements of $X$.  What
+correlations are hidden depends on what is encoded as a unit.  Consider
+encrypting a pair of Boolean values $(a, b)$ where $a$ and $b$ are
 correlated.
 
 \begin{description}

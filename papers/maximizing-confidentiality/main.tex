@@ -1,3 +1,4 @@
+% SIMPLIFIED: Notation reduction pass (2026-03-25)
 \documentclass[final,11pt]{article}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
@@ -8,7 +9,6 @@
 \usepackage{algorithm2e}
 \usepackage{enumitem}
 \usepackage{caption}
-\usepackage{bbm}
 \usepackage{pgfplots}
 \usepackage{amsmath}
 \usepackage{amsthm}
@@ -153,92 +153,47 @@
 \SetKwInOut{KwOut}{output}
 \SetKwInOut{parameters}{params}
 
+% Active algorithm keywords (dead ones removed in notation pass)
 \SetKwFunction{BL}{BL}
-\SetKwFunction{containsfn}{contains}
-\SetKwFunction{diffn}{difference}
-\SetKwFunction{andfn}{and}
-\SetKwFunction{orfn}{or}
-\SetKwFunction{notfn}{not}
-\SetKwFunction{PowerSetFn}{powerset}
-\SetKwFunction{perfecthash}{ph}
-\SetKwFunction{cryptohash}{ch}
-\SetKwFunction{encrypt}{encrypt}
-\SetKwFunction{Decrypt}{decrypt}
-\SetKwFunction{Encrypt}{Encrypt}
-\SetKwFunction{Dim}{dim}
-\SetKwFunction{ph}{ph}
-\SetKwFunction{ro}{h$^*$}
 \SetKwFunction{hash}{h}
 \SetKwFunction{HiddenQueryGenerator}{hidden\_query\_generator}
 \SetKwFunction{HiddenQueryNoiseDecorator}{hidden\_query\_noise\_decorator}
 \SetKwFunction{sampler}{obfuscated\_time\_series\_sampler}
 \SetKwFunction{Compress}{compress}
-\SetKwFunction{Powerset}{powerset}
-\SetKwFunction{Decompress}{decompress}
 \SetKwFunction{Encode}{encode}
-\SetKwFunction{Decode}{decode}
-\SetKwFunction{Doc}{doc}
-\SetKwFunction{Ref}{ref}
 \SetKwFunction{SecureIndexMaker}{secure\_index\_maker}
 \SetKwFunction{SecureIndex}{secure\_index}
 \SetKwFunction{HiddenQueryMapper}{hidden\_query\_mapper}
 \SetKwFunction{substitutions}{substitutions}
 \SetKwFunction{Concat}{concat}
-
 \SetKwFunction{MakeSecureIndex}{make\_secure\_index}
+\SetKwFunction{PowerSetFn}{powerset}
+\SetKwFunction{Dim}{dim}
+\SetKwFunction{Powerset}{powerset}
 
 \newcommand{\catop}{{+\!\!+}}
-\newcommand{\derivative}[1]{\frac {\mathrm{d}}{\mathrm{d}#1}}
-\newcommand{\pderivative}[1]{\frac {\mathrm{\partial}}{\mathrm{\partial}#1}}
+% Core notation (dead commands removed in notation pass)
 \newcommand{\rv}[1]{\mathrm{#1}}
-\newcommand{\likelihood}{\mathcal{L}}
 \newcommand{\entropy}{\operatorname{\mathcal{H}}}
 \newcommand{\info}{\operatorname{\mathcal{I}}}
-\newcommand{\cdf}{\operatorname{F}}
 \newcommand{\pdf}{\operatorname{f}}
-\newcommand{\haz}{\operatorname{h}}
-\newcommand{\srv}{\operatorname{R}}
 \newcommand{\pmf}{\operatorname{p}}
 \newcommand{\prob}{\Pr}
 \newcommand{\kth}{$k^{\text{th }}$}
 \newcommand{\ith}{$i^{\text{th }}$}
 \newcommand{\jth}{$j^{\text{th }}$}
-\newcommand{\nth}{$n^{\text{th }}$}
-\newcommand{\rth}{$r^{\text{th }}$}
-\newcommand{\pth}{$p^{\text{th }}$}
-\newcommand{\mvndist}{\operatorname{\rm{MVN}}}
 \newcommand{\expdist}{\operatorname{\rm{EXP}}}
-\newcommand{\zipf}{\operatorname{\rm{Zipf}}}
 \newcommand{\geodist}{\operatorname{\rm{GEO}}}
 \newcommand{\dudist}{\operatorname{\rm{DU}}}
 \newcommand{\poissondist}{\operatorname{\rm{Poisson}}}
-\newcommand{\var}{\operatorname{\rm{Var}}}
-\newcommand{\infi}{\operatorname{\rm{inf}}}
-\newcommand{\mse}{\operatorname{\rm{MSE}}}
-\newcommand{\cov}{\operatorname{\matrx{\mathlarger{\Sigma_n}}}}
-\newcommand{\trace}{\operatorname{tr}}
 \newcommand{\card}[1]{\left\vert{#1}\right\vert}
-\newcommand{\true}{\textproc{True}}
-\newcommand{\false}{\textproc{False}}
-\newcommand{\bool}{\textproc{Boolean}}
 \newcommand{\given}{{\,|\,}}
-\newcommand{\indicator}[1]{\operatorname{\mathbbm{1}_{#1}}}
 \renewcommand{\vec}[1]{\boldsymbol{\mathbf{#1}}}
-\newcommand{\veclist}[1]{ \left (#1 \right )}
-\newcommand{\matrx}[1]{\boldsymbol{#1}}
-\newcommand{\cardinality}[1]{\left\vert #1 \right\vert}
-\newcommand*{\euler}{\mathrm{e}}
-\newcommand{\mvn}{\operatorname{\rm{MVN}}}
 \newcommand\concatop{\mathbin{+\mkern-10mu+}}
 
-\DeclareMathOperator{\likeli}{\mathcal{L}}
 \DeclareMathOperator{\expectation}{\mathbb{E}}
 \DeclareMathOperator*{\argmax}{arg\,max}
 \DeclareMathOperator*{\argmin}{arg\,min}
-\DeclareMathOperator{\hessian}{\mathcal{H}}
-\DeclareMathOperator{\jacobian}{\mathcal{J}}
-
-\newcommand{\pfam}{\mathcal{P}}
 \newcommand{\cisb}{\mathbb{B}}
 
 \numberwithin{equation}{section}
@@ -378,34 +333,9 @@ An encrypted search system consists of three stages:
     \item \textbf{Encrypted retrieval}: The provider obliviously maps each hidden query to a set of secure indexes representing confidential objects that satisfy the query.
 \end{enumerate}
 
-We now formalize each component of this system. A set is an unordered collection of distinct elements. A set of particular interest is given by the following definition.
-\begin{definition}
-The finite set of all bit strings of length $n$ is denoted by
-\begin{equation}
-    \cisb_n = \left\{b \colon b \in \left\{0,1\right\}^n\right\}
-\end{equation}
-with a cardinality given by
-\begin{equation}
-    \card{\cisb_n} = 2^n\,.
-\end{equation}
-\end{definition}
-The set of bit strings of length $n$ may be put in one-to-one correspondence with any set having $2^n$ or more elements.
+We now formalize each component. We write $\cisb_n = \{0,1\}^n$ for bit strings of length $n$, $\cisb = \{0,1\}^*$ for bit strings of any length, and $\BL(x)$ for the bit length of $x$. A \emph{confidential object} (e.g., a document) is one that only authorized search agents should comprehend.
 
-The bit length of an object $x$ is denoted by
-\begin{equation}
-    \BL(x)\,,
-\end{equation}
-e.g., the bit length of a bit string $x \in \cisb_n$ is $\BL(x) = n$. The countably infinite set of all bit strings of any length is denoted by
-\begin{equation}
-    \cisb = \left\{b \colon b \in \left\{0,1\right\}^*\right\}\,,
-\end{equation}
-where $*$ denotes any non-negative integer.
-
-\begin{definition}[Confidential object]
-A \emph{confidential} object, like a document, is an object that only an authorized set of search agents should be able to comprehend.
-\end{definition}
-
-The objective of an encrypted search system is to satisfy the \emph{information needs}, as represented by queries, of authorized search agents by retrieving a set of \emph{relevant} documents from the document store.
+The system satisfies \emph{information needs} (queries) of authorized search agents by retrieving relevant documents.
 \begin{definition}[Secure index]
 A \emph{queryable} representation of a confidential object is denoted a secure index if it meets the following conditions:
 \begin{enumerate}
@@ -429,7 +359,6 @@ A query submitted to a encrypted search system should only be understood by the 
 A hidden query represents a confidential \emph{information need} of an authorized search agent, where the query is suppose to be incomprehensible to everyone except the indicated search agent.
 \end{definition}
 
-Before we define how a plaintext bag-of-words query is transformed into a hidden query, we need to define the trapdoor function.
 \begin{definition}[Trapdoor]
 \label{def:trapdoorfunc}
 Given a secret $s \in \cisb$ and a word $x \in \cisb$, a trapdoor of $x$ is a \emph{one-way} transformation to a word $y \in \cisb_m$ as given by
@@ -442,20 +371,16 @@ By \emph{one-way}, we mean that given a word $y$, finding an $x$ such that
 \begin{equation*}
     y = \hash(x)
 \end{equation*}
-is not tractable. The \emph{one-way} property of the transformation is the reason we call it a trapdoor function.
-\begin{definition}
-A random oracle is an idealized cryptographic primitive that maps inputs to uniformly random outputs in an unpredictable manner.
-\end{definition}
+is not tractable.
 \begin{assumption}
 \label{asm:trapdoor}
-The one-way function $\hash \colon \cisb \mapsto \cisb_m$ approximates\footnote{Generally, \hash is a \emph{cryptographic hash function}.} a random oracle.
+The one-way function $\hash \colon \cisb \mapsto \cisb_m$ approximates a random oracle (i.e., $\hash$ is a cryptographic hash function).
 \end{assumption}
 If a collision between plaintext words $x$ and $y$ were to occur, they would be aliased--i.e., indistinguishable--in the encrypted search system. We make the following simplifying assumption about the trapdoor function.
 \begin{assumption}
 The codomain of \hash, the set of bit strings of length $m$, is sufficiently large such that collisions between words that represent information needs are negligible and may be ignored.
 \end{assumption}
 
-The function that transforms a plaintext bag-of-words into a trapdoor bag-of-words is given by the following definition.
 \begin{definition}[hidden query cryptographic protocol]
 \label{def:hq_prot}
 The cryptographic protocol that transforms a plaintext query $\qb$ into a hidden query $\hqb$ is given by
@@ -559,7 +484,6 @@ The secure index document model is an \emph{approximate map}\cite{shmap,pmf} wit
 \end{definition}
 In a \emph{bag-of-words} document model, the value is whether a word exists in a document. In this case, a special-case of the approximate map, the \emph{approximate set}, is used.\cite{shs,phf}
 
-The function that transforms a plaintext document into a secure index is given by the following definition.
 \begin{definition}[Secure index construction cryptographic protocol]
 \label{def:si_prot}
 The cryptographic protocol that transforms a plaintext document into a secure index is given by
@@ -617,14 +541,7 @@ If each \emph{queryable} word $x$ has multiple possible substitutions and the do
 %talk about information retrieval techniques here, but only briefly. IR is a separate paper i'm working on, so you can cite that work here, or other people's work, or my thesis.
 Algorithm~\ref{alg:simaker} may also be used to support \emph{phrase searching} by also including the \emph{bigrams} in a document $\mathbb{D}$. This is known as a \emph{biword model} for \emph{phrase search}\cite{manning2008introduction}. A \emph{phrase} is assumed to be in the document if all the bigrams in the \emph{phrase} are in the approximate set. Note that \emph{false positives} on phrases with more than two words occur at a different rate than the false positive rate of the \emph{approximate set}. Other variations may also be supported, e.g., fuzzy searches or wildcard searches, at the cost of increased space and time complexity.
 
-\begin{definition}[Adversary]
-The adversary is an \emph{untrusted} agent that tries to extract \emph{confidential} information about encrypted search activities.
-\end{definition}
-
-\begin{definition}[Kerckhoffs's principle]
-A cryptosystem should be secure even if everything about the system, except the \emph{secret}, is known to the adversary. If the secret is compromised, the cryptosystem is compromised.
-\end{definition}
-In our encrypted search model, the \emph{secret} is a set of well-defined \emph{parameterizations}.
+The \emph{adversary} is an untrusted agent that tries to extract confidential information about encrypted search activities. Following Kerckhoffs's principle, the system is secure even if everything except the \emph{secret} is known to the adversary.
 \begin{assumption}
 \label{asm:sec_params}
 The adversary knows everything about the system except a well-defined set of paramterizations.
@@ -641,15 +558,11 @@ There are many ways an adversary might gain insight into encrypted search activi
 %
 %In \cite{}, an \emph{insider} adversary that also \emph{knows} the %secret is considered, in which case \glspl{gls-preimageattack} and %\emph{secure index reconstruction} attacks become possible.\cite{}
 
-The \emph{secret} is given by the following definition.
 \begin{assumption}
-The set of parameters considered to be the secret is given by the following:
-\begin{enumerate}
-    \item A \emph{secret key} used to generate trapdoors.
-\end{enumerate}
+The secret consists of a single \emph{secret key} used to generate trapdoors.
 \end{assumption}
 
-There are two primary components in an encrypted search system, the obfuscator and the encrypted search provider. The obfuscator is given by the following definition.
+The system has two primary components.
 \begin{definition}[obfuscator]
 The obfuscator receives plaintext queries from authorized search agents, transforms them into hidden queries using some set of cryptographic protocols\footnote{One of which is given by Definition~\ref{def:hq_prot}.}, and transmits the hidden queries to the encrypted search provider.\footnote{In practice, the obfuscator may transmit the hidden queries back to the search agents and they may then transmit the hidden queries directly to the encrypted search provider.}
 \end{definition}
@@ -658,7 +571,7 @@ The obfuscator may reside on a search agent's host computer or a physically sepa
 \label{asm:obfuscator_secure}
 The authorized search agents have access to the obfuscator through a \emph{secure communications channel}.
 \end{assumption}
-By Assumption~\ref{asm:obfuscator_secure}, confidential plaintext queries may be securely transported to the obfuscator without being compromised by the adversary. The encrypted search provider is given by the following definition.
+By Assumption~\ref{asm:obfuscator_secure}, plaintext queries reach the obfuscator without compromise.
 \begin{definition}[encrypted search provider]
 The encrypted search provider receives hidden queries that are the output of the obfuscator and maps them to a set of confidential objects. The mapping is given by some function
 \begin{equation}
@@ -679,7 +592,6 @@ The adversary may modify the result sets or the hidden queries (such that the se
 The search agents receive \emph{truthful} results to their \emph{information needs}.
 \end{assumption}
 
-The \emph{information} that flows across the \emph{untrusted} channel is given by the following definition.
 \begin{definition}[hidden query stream]
 The hidden queries and result sets flowing across the \emph{untrusted} communications channel is an ordered sequence of tuples. The \kth tuple is given by
 \begin{equation}
@@ -695,7 +607,7 @@ where
 \end{definition}
 The \emph{time stamps} observed in a stream of hidden queries provides a partial ordering such that if time stamp $t_j$ of the \jth hidden query is \emph{earlier in time} than time stamp $t_k$ of the \kth query, then $t_j$ comes before $t_k$ in the ordered sequence of tuples.
 
-Two search agents interacting with an encrypted search provider is given by the following example.
+We illustrate with two search agents.
 \begin{example}
 \label{ex:es_act}
 In Figure~\ref{fig:transmission_model_simple}, we depict the following situation. There are two search agents, denoted by SA$_1$ and SA$_2$, generating plaintext queries expressing some \emph{information need} that is to be met by the encrypted search provider.
@@ -736,23 +648,7 @@ The system has several characteristics given by the following table.
     \end{tabular}
 \end{table}
 
-To transmit the hidden queries across the \emph{untrusted} channel, some encoding is needed. The hidden query encoder is given by the following definition.
-\begin{definition}
-The encoder of the set of trapdoors $\hqb$ consisting of trapdoors is given by
-\begin{equation}
-    \Encode \colon [\mathbb{Y}] \mapsto \cisb\,,
-\end{equation}
-which produces a uniquely decodable bit string.
-\end{definition}
-
-The result sets encoder is given by the following definition.
-\begin{definition}
-The encoder of the set of document identifiers $[\mathbb{D}]$ is given by
-\begin{equation}
-\Encode \colon [\mathbb{D}] \mapsto \cisb\,,
-\end{equation}
-which produces a uniquely decodable bit string.
-\end{definition}
+To transmit hidden queries and result sets across the untrusted channel, we use uniquely decodable encoders $\Encode \colon [\mathbb{Y}] \mapsto \cisb$ (for trapdoor sets) and $\Encode \colon [\mathbb{D}] \mapsto \cisb$ (for document identifier sets).
 
 \begin{theorem}
 The average bit rate of the sum of the hidden query and result set streams is given by
@@ -790,30 +686,10 @@ The number of hidden query arriving per second is given by $\lambda$, and thus t
 
 The \emph{primary} interest of the adversary is in extracting \emph{information} from the stream of hidden queries going from obfuscator to the encrypted search provider and from the stream of result sets going from the encrypted search provider to the search agents. For instance, the adversary may use a known-plaintext attack to map the trapdoors to their plaintext counterparts to ascertain the \emph{confidential} information needs of search agents.
 
-In what follows, we provide a theoretical treatment on the \emph{information disclosure} of the hidden query and result set streams and explore strategies that increase their \emph{entropy} by transforming the streams.
+We now analyze the information disclosure of these streams and explore strategies to increase their entropy.
 \section{Probabilistic model}
 \label{sec:probabilistic}
-A probabilistic model is specified by equations involving random variables which make assumptions about how observable data about the system is generated.  In what follows, we describe our model and observable data.
-
-The probability mass function is given by the following definition.
-\begin{definition}
-\label{def:pdf}
-Let $\rv{X}$ be some discrete random variable. The probability mass function, denoted by
-\begin{equation}
-    \pmf_{\rv{X}}(x)\,,
-\end{equation}
-calculates the probability that $\rv{X}$ realizes some value $x$.
-\end{definition}
-If a random variable $\rv{X}$ has a probability mass function $\pmf_{\rv{X}}(\,\cdot\,)$, we say that
-\begin{equation}
-    \rv{X} \sim \pmf_{\rv{X}}(\,\cdot\,)\,.
-\end{equation}
-
-The \emph{joint} probability mass function of $\rv{X_1},\ldots, \rv{X_n}$ is given by
-\begin{equation}
-    \pmf_{\rv{X_1}, \cdots, \rv{X_n}}(x_1, \ldots, x_n)\,,
-\end{equation}
-which calculates the joint probability that $\rv{X_1} = x_1,\ldots,\rv{X_n}=x_n$.
+We model encrypted search activities as random processes. We use standard notation: $\pmf_{\rv{X}}(x)$ is the probability mass function of discrete random variable $\rv{X}$, and $\pmf_{\rv{X_1}, \ldots, \rv{X_n}}(x_1, \ldots, x_n)$ is the joint PMF.
 
 The \emph{arrival rate} is given by the reciprocal of the \emph{inter-arrival} time. In an observed time series $\ts[1],\ldots,\ts[n]$, the sample mean arrival rate is given by
 \begin{equation}
@@ -824,21 +700,18 @@ We model the \emph{inter-arrival} times between successive queries as random var
 The \emph{inter-arrival} time between the $(j-1)$-th and the \jth query is a continuous random variable $\rvts[j]$ with a support set $\mathbb{R}_{>0}$ and a mean arrival rate $\lambda$.
 \end{definition}
 
-\begin{remark}
-An estimator of the \emph{distribution} of the inter-arrival times is provided by time series estimators like \emph{exponential smoothing}.
-\end{remark}
+The distribution of inter-arrival times can be estimated by time series methods such as exponential smoothing.
 
-Suppose it is known that there are $k$ \emph{search agents} that may generate the plaintext queries. In a time series of the queries, the frequency of the search agents may vary. Thus, we may model the distribution as a discrete random variable as given by the following definition.
+Suppose there are $k$ search agents generating queries, with varying frequencies.
 \begin{definition}
-The search agent responsible for the \jth query is a discrete random variable $\rvsa[j]$ with a support set given by
+The search agent responsible for the \jth query is a discrete random variable $\rvsa[j]$ with support
 \begin{equation}
     \left\{1,2,3,\ldots,k\right\}\,.
 \end{equation}
 \end{definition}
 
-The distribution of plaintext queries is given by the following definition.
 \begin{definition}
-The \jth random bag-of-words (set) in the plaintext query time series is denoted by $\rvqb[j]$ with a support given by
+The \jth random bag-of-words in the plaintext query time series is $\rvqb[j]$ with support
 \begin{equation}
     \left\{
         \mathbb{X} \in \Powerset(\mathbb{K}) \given 0 < \card{\mathbb{X}} \leq p
@@ -861,9 +734,8 @@ The \jth random bag-of-words (set) in the plaintext query time series is denoted
 
 The process that generates queries may be too complex to model. However, as the famous statistician George Box observed, ``$\ldots$ all models are wrong, but some are useful.'' The adversary does not need an accurate model, only a \emph{useful} model. A very useful model is one which enables the adversary to map the observed trapdoors to their corresponding plaintext counterparts.
 
-The random tuples in the hidden query and result set streams are given by the following definition.
 \begin{definition}
-We denote the \emph{random tuple} of the \jth plaintext query by
+The \emph{random tuple} of the \jth plaintext query is
 \begin{equation}
     \rvtup[j] = \bigl(\rvts[j], \rvsa[j], \rvqb[j]\bigr)\,,
 \end{equation}
@@ -878,9 +750,8 @@ where
 \subsection{Hidden query and result set streams}
 By Assumption~\ref{asm:untrusted_channel}, the plaintext random tuples $\rvqb[1], \ldots, \rvqb[n]$ are not observable. However, these random tuples induce an \emph{observable} hidden query stream.
 
-The \emph{inter-arrival} times between hidden queries is uncertain and therefore we may model them as random variables as given by the following definition.
 \begin{definition}
-The \emph{inter-arrival} time between the of the $(j-1)$-th and the \jth hidden query is a discrete random variable $\rvhts[j]$ with a support set given by
+The inter-arrival time between the $(j-1)$-th and \jth hidden query is a discrete random variable $\rvhts[j]$ with support
 \begin{equation}
     \left\{1,2,3,\ldots\right\}\,.
 \end{equation}
@@ -892,9 +763,9 @@ The \emph{mean} arrival rate of hidden queries is given by
 \end{equation}
 The \emph{mean} arrival rate of hidden queries is not necessarily the same as the \emph{mean} arrival rate of plaintext queries since the obfuscator transforms the incoming plaintext queries to obfuscate encrypted search activities, e.g., it may inject \emph{artificial} hidden queries at uncertain times and at any desired rate. Thus, in general, $\check{\lambda} \neq \lambda$.
 
-The search agents generate the \emph{legitimate} queries. However, the obfuscator may generate artificial queries by either artificial or legitimate search agents to \emph{perturb} the hidden query stream. Regardless, the particular search agent that generated a query in the stream cannot be predetermined and thus we may model this uncertainty as a discrete random variable as given by the following definition.
+The obfuscator may inject artificial queries to perturb the stream, so the agent responsible for each query is uncertain.
 \begin{definition}
-The search agent responsible for the \jth hidden query is a discrete random variable $\rvhsa[j]$ with a support set given by
+The search agent responsible for the \jth hidden query is a discrete random variable $\rvhsa[j]$ with support
 \begin{equation}
     \left\{1,2,3,\ldots,\check{k}\right\}\,.
 \end{equation}
@@ -921,9 +792,9 @@ Note that $\rvhqb[j]$ does not (necessarily) correspond to $\rvqb[j]$ since the 
 %Collisions are so rare that we may ignore them in our analysis.
 %\end{assumption}
 
-There are $N$ \emph{unique} confidential objects (and $N' - N$ obfuscated or artificial objects) for a total of $N'$ objects. The random set $\rvhqb[j]$ induces a distribution of result sets. Since the result sets are uncertain we may model them as random result sets as given by the following definition.
+There are $N$ \emph{unique} confidential objects (and $N' - N$ obfuscated or artificial objects) for a total of $N'$ objects. The random query $\rvhqb[j]$ induces a distribution over result sets.
 \begin{definition}
-The \kth random result set corresponding to the \kth random hidden query is denoted by $\rvhrs[k]$ with a support set given by the power set of
+The \kth random result set $\rvhrs[k]$ has support given by the power set of
 \begin{equation}
     \left\{1,2,3,\ldots,\check{N}\right\}
 \end{equation}
@@ -934,10 +805,9 @@ with a mean cardinality given by
 \end{definition}
 Given $\rvhqb[i] = \hqb[i]$, $\rvhrs[i]$ is \emph{degenerate} since the same hidden query must always map to the same result set (assuming the confidential database is immutable).
 
-In summary, the random tuples in the hidden query and result set streams are given by the following definition.
 \begin{definition}
 \label{def:hq_res_streams}
-We denote the \emph{random tuple} of the \jth hidden query and the corresponding \jth result set by
+The \emph{random tuple} of the \jth hidden query and result set is
 \begin{equation}
     \rvhtup[j] = \left\langle \rvhts[j], \rvhsa[j], \rvhqb[j], \rvhrs[j] \right\rangle\,,
 \end{equation}
@@ -1049,45 +919,15 @@ The \emph{plaintext} time series of queries \emph{induces} the hidden query time
 
 \section{Entropy fundamentals}
 \label{sec:entropy_fundamentals}
-The greater the entropy of the hidden query stream, the fewer patterns an adversary can exploit. In what follows, we define the entropy quantities used throughout the paper.
-
-\begin{definition}[Entropy]
-The entropy of the \jth random tuple $\rvhtup[j]$ is given by
-\begin{equation}
-\label{eq:entropy}
-    \entropy\!\left(\rvhtup[j]\right) =
-        \mathlarger{\expectation}
-        \left[
-            \log_2 \pmf_{\mathsmaller{\rvhtup[j]}}\!\left(\rvhtup[j]\right)
-        \right]\,,
-\end{equation}
-where $\pmf_{\mathsmaller{\rvhtup[j]}}\!\left(\,\cdot\,\right)$ is the marginal distribution of $\rvhtup[j]$.
-\end{definition}
-
-\begin{definition}[Conditional entropy]
-The conditional entropy of the \jth random tuple $\rvhtup[j]$ given the previous $j-1$ random tuples $\rvhtup[<j] \equiv \rvhtup[1],\ldots,\rvhtup[j-1]$ is given by
-\begin{equation}
-\label{eq:condentropy}
-    \entropy\!\left(\rvhtup[j] \given \rvhtup[<j]\right) =
-        \mathlarger{\expectation}
-        \left[
-            \log_2 \pmf_{\mathsmaller{\rvhtup[j] \given \rvhtup[<j]}}
-            \left(\rvhtup[j] \given \rvhtup[<j]\right)
-        \right]\,.
-\end{equation}
-\end{definition}
-
-\begin{definition}[Joint entropy]
-The joint entropy of $\rvhtup[1], \ldots, \rvhtup[n]$ is given by
+The greater the entropy of the hidden query stream, the fewer patterns an adversary can exploit. We use standard Shannon entropy $\entropy(\rv{X}) = -\sum_x \pmf_{\rv{X}}(x) \log_2 \pmf_{\rv{X}}(x)$, conditional entropy $\entropy(\rv{X} \given \rv{Y})$, and joint entropy decomposed via the chain rule:
 \begin{equation}
 \label{eq:jointentropy}
     \entropy(\rvhtup[1], \ldots, \rvhtup[n]) =
         \entropy\left(\rvhtup[1]\right) +
         \sum_{j=2}^{n} \entropy\left(\rvhtup[j] \given \rvhtup[<j]\right)\,.
 \end{equation}
-\end{definition}
 
-The joint entropy is less than (or equal to) the sum of the marginal entropies as given by
+The joint entropy is at most the sum of marginal entropies:
 \begin{equation}
     \entropy\!\left(\rvhtup[1], \ldots, \rvhtup[n]\right) \leq \sum_{j=1}^{n} \entropy\!\left(\rvhtup[j]\right)\,,
 \end{equation}
@@ -1293,9 +1133,9 @@ This provides a lower bound on information leakage determined by the fundamental
 
 \subsection{Performance Measure and Estimation}
 
-\paragraph{Performance measure.} The performance measure of an encrypted search system is given by the following definition.
+\paragraph{Performance measure.}
 \begin{definition}
-The performance of an encrypted search system with entropy $\entropy_n$ is given by
+The \emph{confidentiality efficiency} of an encrypted search system with entropy $\entropy_n$ is
 \begin{equation}
     e(m,k,\lambda,\mu)=\frac{\entropy_n\left(m, k, \lambda, \mu\right)}{\entropy_n^*(m, k, \lambda, \mu)}\,.
 \end{equation}
@@ -1361,7 +1201,7 @@ By the plug-in principle: if $\hat{\theta}$ is the MLE of $\theta$, then $g(\hat
 A central idea in this paper is that \emph{compression} is equivalent to \emph{probabilistic} data modeling since a good compressor tends to be a good predictor of the data. Thus, we may delegate the data modeling task to good compressors of encrypted search activities. The more noise-like the activities are, the larger the compressed output.
 \section{Increasing the \emph{entropy} of the system}
 \label{sec:techniques}
-Assuming that the confidential collection of documents is immutable, a given hidden query always maps to the same result set. That is to say, given a hidden query, the corresponding random result set is \emph{degenerate}. Consquently, the \emph{entropy} of the joint distribution of hidden queries and result sets is just the entropy of either distribution,
+Since the document collection is immutable, a given hidden query always maps to the same result set (the result set is degenerate given the query). Consequently,
 \begin{equation}
     \entropy(\rvhqb[i], \rvhrs[i]) = \entropy(\rvhqb[i]) = \entropy(\rvhrs[i])\,.
 \end{equation}
@@ -1560,9 +1400,7 @@ Flattening the \emph{marginal} distribution does not prevent adversaries from le
 \subsection{Query aggregation}
 Instead of submitting a single query consisting of $k$ search keys, we can reduce it to $y$ queries where the \jth query has $k_j$ search keys for $j=1,\ldots,y$ such that $k_1 + \cdots + k_y = k$ and then apply the \emph{set-intersection} operation on the $y$ result sets on a \emph{trusted machine}, such as the search agent's host computer rather than the untrusted encrypted search provider.
 
-\begin{remark}
-A query model that includes the full set-theoretic model\cite{manning2008introduction} may reveal significantly more information about a search agent's information need. Thus, if a full set-theoretic model is desired, a strong case can be made that it should be implemented using a variation of query aggregation, where set-theoretic operations (with possibly the exception of set-intersection) are applied to the result sets on a \emph{trusted} machine rather than the \emph{untrusted} encrypted search provider.
-\end{remark}
+A full set-theoretic query model\cite{manning2008introduction} reveals more about information needs, so set-theoretic operations beyond intersection should be applied on the trusted machine rather than the untrusted provider.
 
 \subsection{\emph{Artificial} trapdoors}
 The effectiveness of artificial trapdoors depends critically on the encrypted search provider's ranking mechanism. In boolean search systems where all query terms must be present for document retrieval, artificial trapdoors will cause no matching documents to be returned, making this technique ineffective. However, for rank-ordered retrieval systems using scoring functions such as BM25 or TF-IDF, artificial trapdoors integrate seamlessly with authentic trapdoors. In such systems, artificial trapdoors affect result sets only when: (1) they trigger false positives in secure indexes due to the approximate nature of structures like Bloom filters, or (2) they coincidentally collide with authentic trapdoors due to the finite trapdoor space.
@@ -1583,7 +1421,7 @@ Let the random variable corresponding to the artificial trapdoor be given by
 \end{equation}
 where $m_{\rv{Y}}$ is the number of unique artificial trapdoors.
 
-The maximum entropy of the joint distribution of $\rv{L}$ and $\rv{Y}$ is given by the following theorem.
+The maximum entropy of $(\rv{L}, \rv{Y})$ is:
 \begin{theorem}
 \begin{equation}
     \entropy^*(\rv{L},\rv{Y}) = \entropy^*(\rv{L} \given \mu_{\rv{L}},\rv{Y})
@@ -1732,9 +1570,7 @@ Since a Poisson process has exponentially distributed inter-arrival times, the c
 
 
 
-\begin{remark}
-Intuitively, the \emph{no-memory property} of the exponential distribution is indicative of its maximum entropy. However, if we allow the support to be constrained over $0$ to $2 / \lambda$, then the uniform distribution obtains the same entropy $\ln \lambda$ such that $\expectation[\rvhts] = 1 / \lambda$. 
-\end{remark}
+The memoryless property of the exponential distribution reflects its maximum entropy. If the support is constrained to $[0, 2/\lambda]$, the uniform distribution also achieves entropy $\ln \lambda$ with $\expectation[\rvhts] = 1/\lambda$.
 
 
 \subsubsection{Estimating search agent arrival rates}
@@ -2110,20 +1946,7 @@ The differential entropy is:
 Note that we use natural logarithm for differential entropy of continuous distributions, while discrete entropy uses logarithm base 2.
 
 \subsection{Joint Entropy Decomposition}
-For random variables $\rv{X}_1, \ldots, \rv{X}_n$, the joint entropy can be decomposed using the chain rule:
-\begin{equation}
-    \entropy(\rv{X}_1, \ldots, \rv{X}_n) = \sum_{i=1}^{n} \entropy(\rv{X}_i \mid \rv{X}_1, \ldots, \rv{X}_{i-1})\,.
-\end{equation}
-
-When the random variables are independent:
-\begin{equation}
-    \entropy(\rv{X}_1, \ldots, \rv{X}_n) = \sum_{i=1}^{n} \entropy(\rv{X}_i)\,.
-\end{equation}
-
-For independent and identically distributed random variables:
-\begin{equation}
-    \entropy(\rv{X}_1, \ldots, \rv{X}_n) = n \cdot \entropy(\rv{X})\,.
-\end{equation}
+By the chain rule, $\entropy(\rv{X}_1, \ldots, \rv{X}_n) = \sum_{i=1}^{n} \entropy(\rv{X}_i \mid \rv{X}_{<i})$, which reduces to $\sum_i \entropy(\rv{X}_i)$ under independence and to $n \entropy(\rv{X})$ under i.i.d.
 
 \section{Compression-Based Entropy Estimation}
 \label{app:compression_estimation}
@@ -2197,38 +2020,28 @@ Variance can be estimated using bootstrap resampling or theoretical formulas spe
 \section{Notation Reference}
 \label{app:notation}
 
-\subsection{Random Variables and Distributions}
-\begin{itemize}
-    \item $\rv{X}$: Random variable (capital letters)
-    \item $x$: Realization of random variable (lowercase letters)
-    \item $\pmf_{\rv{X}}(x)$: Probability mass function
-    \item $\pdf_{\rv{X}}(x)$: Probability density function
-    \item $\entropy(\rv{X})$: Shannon entropy
-    \item $\info(\rv{X}; \rv{Y})$: Mutual information
-    \item $\expectation[\rv{X}]$: Expected value
-\end{itemize}
-
-\subsection{Encrypted Search Components}
-\begin{itemize}
-    \item $\qb$: Plaintext query (bag-of-words)
-    \item $\hqb$: Hidden query (encrypted)
-    \item $\vec{d}$: Document
-    \item $\hrs$: Result set
-    \item $\lambda$: Query arrival rate
-    \item $\mu$: Mean trapdoors per query
-    \item $k$: Number of search agents
-    \item $m$: Vocabulary size
-    \item $N$: Number of documents
-\end{itemize}
-
-\subsection{Entropy and Information Measures}
-\begin{itemize}
-    \item $\entropy(\rv{X})$: Entropy of $\rv{X}$
-    \item $\entropy^*(\rv{X})$: Maximum possible entropy
-    \item $e$: Efficiency ratio $\entropy/\entropy^*$
-    \item $\info(\rv{X}; \rv{Y})$: Mutual information
-    \item $\BL(x)$: Bit length of $x$
-\end{itemize}
+\begin{table}[h]
+\centering
+\begin{tabular}{@{} l l @{}}
+\toprule
+\textbf{Symbol} & \textbf{Meaning}\\
+\midrule
+$\rv{X}$, $x$ & Random variable, its realization\\
+$\pmf_{\rv{X}}(x)$, $\pdf_{\rv{X}}(x)$ & Probability mass/density function\\
+$\entropy(\rv{X})$, $\entropy^*(\rv{X})$ & Shannon entropy, maximum entropy\\
+$\info(\rv{X}; \rv{Y})$ & Mutual information\\
+$\expectation[\rv{X}]$ & Expected value\\
+$\BL(x)$ & Bit length of $x$\\
+$e = \entropy/\entropy^*$ & Confidentiality efficiency\\
+\midrule
+$\qb$, $\hqb$ & Plaintext query, hidden query\\
+$\vec{d}$, $\hrs$ & Document, result set\\
+$\lambda$ & Query arrival rate\\
+$\mu$ & Mean trapdoors per query\\
+$k$, $m$, $N$ & Search agents, vocabulary size, documents\\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \bibliography{references}
 

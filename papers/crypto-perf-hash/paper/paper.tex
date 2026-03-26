@@ -293,57 +293,23 @@ The set of perfect hash functions over $\mathbbm{A}$ has a cardinality
 %####################################################################################################
 
 \section{A theoretical \emph{cryptographic} perfect hash function}
-The bit set $\{0,1\}$ is denoted by $\{0,1\}$.
-The set of all bit strings of length $n$ is therefore $\{0,1\}^n$.
-The cardinality of $\{0,1\}^n$ is $2^n$.
-In the case of $\{0,1\}$, we denote $\{0,1\}^0$ by $\epsilon$.
-The set of all bit strings of length $n$ or less is denoted by $\{0,1\}^{\leq n}$ with a cardinality $2^{n+1}-1$, e.g., $\{0,1\}^{\leq 2} = \epsilon \cup \{0,1\} \cup \{0,1\}^2$.
-The countably infinite set of all bit strings, $\lim_{n \to \infty} \{0,1\}^{\leq n}$, is denoted by $\{0,1\}^{*}$.
-A tuple $(x_1,x_2\ldots) \in \{0,1\}^{*}$ is denoted a \emph{bit string}, and we typically drop the angle brackets when specifying strings, e.g., $(x_1,x_2) \equiv x_1 x_2$.
 
-An important operation that is closed over the free semigroup of $\{0,1\}$ is \emph{concatentation}, $\cat : \{0,1\}^* \times \{0,1\}^* \mapsto \{0,1\}^*$, which is defined as $a_1 \ldots a_n \cat b_1 \ldots b_m = a_1 \ldots a_n b_1 \ldots b_m$ with special cases $x \cat \epsilon = \epsilon \cat x = x$.
+\subsection{Notation}
 
-Most hash functions are of the type $\{0,1\}^* \mapsto \{0,1\}^n$ where $n$ is some finite natural number.
+We write $\{0,1\}^n$ for bit strings of length $n$, $\{0,1\}^*$ for the set of all finite bit strings, and $\epsilon$ for the empty string. We write $x \cat y$ for concatenation, $\BL(x)$ for the bit length of $x$, and $\mathrm{trunc}(x,k)$ for the first $k$ bits of $x$.
 
-Another useful function is the binary \emph{padding} function
-$\mathrm{pad} : \{0,1\}^* \times \mathbbm{Z}_{\geq 0} \mapsto \{0,1\}^*$ is defined as $\mathrm{pad}(x,k) = x \cat 0^{k-\mathrm{BL}(x)}$ with the special case $\mathrm{pad}(x,0) = \epsilon$.
+We identify bit strings with natural numbers via the standard bijection
+\begin{equation}
+\label{def:mapping}
+b_1 \ldots b_m \longleftrightarrow 2^m + \sum_{j=1}^{m} 2^{m-j}\, b_j,
+\end{equation}
+writing $n'$ for the bit string of a natural number $n$ and $x'$ for the natural number of a bit string $x$. Note that $\BL(n') = \lfloor \log_2 n \rfloor$.
 
+\subsection{Random oracle model}
 
-The binary \emph{truncation} function $\mathrm{trunc} : \{0,1\}^* \times \mathbbm{N} \mapsto \{0,1\}^*$ is defined as $\mathrm{trunc}(a_1 \ldots a_k \ldots a_n, k) = a_1 \ldots a_k$, with the special case $\mathrm{trunc}(x,0) = \epsilon$.
-
-The \emph{bit length} function $\mathrm{BL} : \{0,1\}^* \mapsto \mathbbm{N}$ is defined as $\BL(a_1 \ldots a_n) = n$, e.g., if $b \in \{0,1\}^{n}$ then $\mathrm{BL}(b) = n$.
-
-Since $\{0,1\}^* \cong \mathbbm{N}$, they may put into one-to-one correspondence.
-A convenient one-to-one correspondence between them is given by the following definition.
-\begin{definition}
-	\label{def:mapping}
-	The sets $\{0,1\}^*$ and $\mathbbm{N}$ have a bijection given by
-	\begin{equation}
-	b_1,\ldots,b_m \longleftrightarrow 2^m + \sum_{j=1}^{m} 2^{m - j} b_j.
-	\end{equation}
-\end{definition}
-
-We denote the mapping described by Definition~\ref{def:mapping} with the postfix function $' : \{0,1\}^* \mapsto \mathbbm{N}$ and $' : \mathbbm{N} \mapsto \{0,1\}^*$, which are inverse functions, i.e., $x'' = x$.
-An important observation of this mapping is that a natural number $n$ maps to a bit string $n'$ of length $\BL(n') = \lfloor \log_2 n \rfloor$.
-
-More generally, if we have some set $\mathbbm{U}$, in a physical computer there must be a way to map the elements of $\mathbbm{U}$ to bit strings that \emph{represent} the values.
-We provide this mapping with \emph{encoder} and \emph{decoder} functions denoted respectively by $\Fun{e}[\mathbbm{U}] : \mathbbm{U} \mapsto \{0,1\}^*$ and $\Fun{d}[\mathbbm{U}] : \{0,1\}^* \mapsto \mathbbm{U}$ such that $\Fun{d}[\mathbbm{U}] \circ e_\mathbbm{U} = \mathrm{id}_\mathbbm{U}$ and $e_\mathbbm{U} \circ d_\mathbbm{U} = \mathrm{id}_{\{0,1\}^*}$.
-
-A special case of the encoder and decoder is given by letting any bit string represent either the sequence of bits $a_1 \ldots a_n$ or as the binary coded decimal (BCD), e.g., $010 \longleftrightarrow 4$.
-Thus, any operation on non-negative integers may be applied to bit strings without ambiguity, e.g., $010 + 01 = 11$.
-
-Given a function of $g : \mathbbm{X} \mapsto \mathbbm{Y}$, the \emph{domain} of $g$ may be denoted by $\mathrm{dom}(g) = \mathbbm{X}$ and the \emph{codomain} may be denoted by $\mathrm{codom}(g) = \mathbbm{Y}$.
-
-A random oracle as given by the following definition.
-\begin{definition}
-\label{def:randomoracle}
-A random oracle in the family $\{0,1\}^{*} \mapsto \{0,1\}^{\infty}$ is a theoretical \emph{hash function} whose output is uniformly distributed over its codomain.
-\end{definition}
-
-The theoretical analysis of the perfect hash function makes the following assumption.
 \begin{assumption}
 \label{asm:ro_approx}
-The hash function $\mathrm{hash} : \{0,1\}^{*} \mapsto \{0,1\}^{\infty}$ is a random oracle.
+The hash function $\mathrm{hash} : \{0,1\}^* \to \{0,1\}^\infty$ is a random oracle: for each input, the output is an independently and uniformly distributed infinite bit string.
 \end{assumption}
 
 %\begin{assumption}

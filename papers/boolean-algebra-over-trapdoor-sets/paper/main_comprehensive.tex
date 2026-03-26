@@ -1,3 +1,4 @@
+% SIMPLIFIED: Notation reduction pass (2026-03-25)
 % REFRAMED: Replaced "oblivious" with "trapdoor" throughout (2026-03-22)
 \documentclass[10pt,conference]{IEEEtran}
 \IEEEoverridecommandlockouts
@@ -41,7 +42,6 @@
 \newcommand{\fpr}{\alpha}                   % False positive rate
 \newcommand{\fnr}{\beta}                    % False negative rate
 \newcommand{\obs}[1]{\tilde{#1}}            % Observed/approximate value
-\newcommand{\lat}[1]{#1}                    % Latent/true value
 \newcommand{\Bool}{\mathbb{B}}              % Boolean type
 \newcommand{\Bernoulli}[1]{\mathcal{B}\langle #1 \rangle}  % Bernoulli type
 % \Oblivious macro removed during trapdoor reframing (was unused)
@@ -79,7 +79,7 @@ The proliferation of cloud computing and data analytics has created an urgent ne
 
 We present Hash-Based Trapdoor Sets (HBTS), a practical framework that achieves efficient privacy-preserving set operations by combining cryptographic hash functions with probabilistic data structures. Our approach differs from existing solutions by explicitly embracing approximation, making error rates transparent throughout the computational pipeline. This design choice enables HBTS to achieve microsecond-scale performance while providing privacy bounded by hash collision probabilities.
 
-The core insight underlying HBTS is that many real-world applications can tolerate controlled error rates in exchange for efficiency and privacy. By using cryptographic hash functions as one-way transformations, we map sensitive data into a hash domain where equality testing is preserved probabilistically while the original values remain computationally hidden. All subsequent operations work exclusively on these hash values, never requiring access to the plaintext. This approach builds upon well-established techniques from probabilistic data structures while adding cryptographic privacy guarantees.
+The core insight is that many applications can tolerate controlled error rates in exchange for efficiency and privacy. Cryptographic hash functions serve as one-way transformations: sensitive data is mapped into a hash domain where equality testing is preserved probabilistically while original values remain computationally hidden. All subsequent operations work exclusively on hash values, never requiring access to plaintext.
 
 HBTS embodies a \emph{layered privacy model}: the hash representation is a \emph{trapdoor} (underlying values cannot be recovered), while operations return \emph{Bernoulli Booleans}---plaintext approximate results with explicit error rates. This separation is key to understanding HBTS's guarantees: we hide what the data \emph{is}, but not the pattern of query \emph{results}. The framework draws on Bernoulli type theory~\cite{bernoulli-types}, which provides systematic error propagation rules for composed approximate operations.
 
@@ -94,8 +94,6 @@ Using HBTS, each hospital can:
 \item Obtain results with explicit error bounds (e.g., hash collision rate $< 2^{-256}$)
 \item Complete the entire operation in milliseconds rather than minutes
 \end{enumerate}
-
-This example illustrates HBTS's key advantage: practical performance with quantifiable privacy guarantees.
 
 \subsection{Contributions}
 
@@ -113,38 +111,16 @@ This paper makes the following contributions:
 \item \textbf{Security Analysis}: We provide formal analysis showing that privacy is bounded by the collision probability of the underlying hash function, with explicit quantification of error rates.
 \end{itemize}
 
-\subsection{Paper Organization}
-
-The remainder of this paper is organized as follows. Section~\ref{sec:background} provides background on cryptographic hash functions, Bernoulli Booleans, and threat model. Section~\ref{sec:design} presents the HBTS framework design, including the layered privacy model distinguishing trapdoor representation from Bernoulli query results. Section~\ref{sec:theory} develops the mathematical foundations and security analysis. Section~\ref{sec:implementation} describes our implementation and optimization techniques. Section~\ref{sec:evaluation} evaluates performance and security properties. Section~\ref{sec:applications} explores applications across multiple domains. Section~\ref{sec:related} discusses related work. Section~\ref{sec:conclusion} concludes.
-
 \section{Background and Threat Model}
 \label{sec:background}
 
 \subsection{Cryptographic Hash Functions}
 
-A cryptographic hash function $H: \{0,1\}^* \rightarrow \{0,1\}^n$ maps arbitrary-length inputs to fixed-size outputs while satisfying three key properties:
-
-\begin{definition}[Preimage Resistance]
-Given hash value $h$, finding any $x$ such that $H(x) = h$ requires $O(2^n)$ operations.
-\end{definition}
-
-\begin{definition}[Second Preimage Resistance]
-Given $x_1$, finding $x_2 \neq x_1$ such that $H(x_1) = H(x_2)$ requires $O(2^n)$ operations.
-\end{definition}
-
-\begin{definition}[Collision Resistance]
-Finding any pair $(x_1, x_2)$ where $x_1 \neq x_2$ and $H(x_1) = H(x_2)$ requires $O(2^{n/2})$ operations.
-\end{definition}
-
-HBTS exploits these properties to create one-way transformations that preserve equality testing probabilistically while preventing recovery of original values.
+A cryptographic hash function $H: \{0,1\}^* \rightarrow \{0,1\}^n$ maps arbitrary-length inputs to fixed-size outputs satisfying the standard properties: preimage resistance ($O(2^n)$ to invert), second preimage resistance ($O(2^n)$ to find a collision for a given input), and collision resistance ($O(2^{n/2})$ to find any collision). HBTS exploits these properties to create one-way transformations that preserve equality testing probabilistically while preventing recovery of original values.
 
 \subsection{Approximate Data Structures}
 
 Approximate data structures trade perfect accuracy for improved space or time complexity. The canonical example is the Bloom filter~\cite{bloom1970space}, which supports membership queries with false positives but no false negatives. HBTS builds upon these well-established techniques, adding cryptographic privacy through hash transformations while maintaining explicit error bounds.
-
-\begin{definition}[Approximate Boolean]
-An approximate Boolean value is a tuple $(v, \alpha, \beta)$ where $v \in \{\mathsf{true}, \mathsf{false}\}$ is the observed value, $\alpha$ is the false positive rate (probability of observing true when latent value is false), and $\beta$ is the false negative rate (probability of observing false when latent value is true).
-\end{definition}
 
 \begin{definition}[Bernoulli Boolean]
 \label{def:bernoulli-boolean}
@@ -169,9 +145,7 @@ where $\ConfMat_{ij} = \mathbb{P}[\obs{b} = j \mid b = i]$ gives the probability
 For HBTS with $\fpr = 2^{-n}$ and $\fnr = 0$, the confusion matrix is nearly identity---high utility but query results are observable (the ``concession'' discussed in Section~\ref{sec:layered-privacy}).
 \end{definition}
 
-\begin{remark}[Latent vs. Observed Values]
-We distinguish \emph{latent} values (true mathematical objects, denoted $b, S, f$) from \emph{observed} values (computed approximations with error rates, denoted $\obs{b}, \obs{S}, \obs{f}$). This duality is fundamental: HBTS operates entirely on observed values while reasoning about their relationship to latent values through error bounds.
-\end{remark}
+Throughout, we distinguish \emph{latent} values ($b, S, f$) from \emph{observed} approximations ($\obs{b}, \obs{S}, \obs{f}$) carrying explicit error rates.
 
 \subsection{Threat Model}
 
@@ -199,11 +173,11 @@ HBTS is built around three core abstractions that compose to enable complex priv
 
 \subsubsection{Hash-Trapdoor Values}
 
-A hash-trapdoor value encapsulates the one-way transformation of sensitive data through cryptographic hashing. The key insight is that equality testing on hash values preserves the equality relation probabilistically while preventing recovery of original values. For equality testing, the false positive rate (reporting equality when values differ) equals the hash collision probability (e.g., $2^{-256}$ for SHA-256). Note that this bounds \emph{collision errors}, not privacy---privacy depends on input entropy and resistance to dictionary attacks. Implementation details are provided in Appendix A.
+A hash-trapdoor value is a one-way transformation of sensitive data: equality testing is preserved probabilistically (FPR equals hash collision probability, e.g., $2^{-256}$ for SHA-256) while original values cannot be recovered. Note that this bounds \emph{collision errors}, not privacy---privacy depends on input entropy and resistance to dictionary attacks. Implementation details are in Appendix A.
 
 \subsubsection{Approximate Values}
 
-All operations in HBTS return approximate values with explicit error rates. Each approximate value maintains both the computed result and its associated false positive and false negative rates. This design makes uncertainty explicit and enables informed decision-making about accuracy-privacy trade-offs. When $\alpha + \beta \leq 1$, the confidence in a result equals $1 - \alpha - \beta$ where $\alpha$ and $\beta$ are the false positive and negative rates respectively.
+All operations in HBTS return approximate values carrying both the computed result and its false positive and false negative rates $(\alpha, \beta)$, with confidence $1 - \alpha - \beta$ when $\alpha + \beta \leq 1$.
 
 \subsubsection{Set Operations}
 
@@ -249,7 +223,7 @@ For sets $A$ and $B$ with false positive rates $\alpha_A, \alpha_B$ and false ne
 For intersection, a false positive requires \emph{both} sets to report false positives (independent events). A false negative occurs if \emph{either} set reports a false negative for an element truly in the intersection.
 \end{proof}
 
-These bounds enable applications to predict error accumulation through complex operations. Note that intersection \emph{reduces} false positive rates (multiplicative) while union \emph{increases} them (sub-additive).
+Note that intersection \emph{reduces} false positive rates (multiplicative) while union \emph{increases} them (sub-additive).
 
 \begin{theorem}[Boolean Error Composition]
 For independent approximate Booleans $\obs{b}_1, \obs{b}_2$ with error rates $(\alpha_1, \beta_1)$ and $(\alpha_2, \beta_2)$:
@@ -286,7 +260,7 @@ Dually, for FNR $\fnr$: $t$-fold AND accumulates as $\fnr_{\text{total}} = 1 - (
 \subsection{Layered Privacy: Trapdoor Representation, Bernoulli Results}
 \label{sec:layered-privacy}
 
-HBTS exhibits a layered privacy model combining two distinct mechanisms: \emph{trapdoor representation} through one-way hash transformations, and \emph{Bernoulli query results} that are plaintext but approximate. Understanding this layered structure is essential for correctly reasoning about HBTS's privacy guarantees.
+HBTS exhibits a layered privacy model combining two distinct mechanisms: \emph{trapdoor representation} through one-way hash transformations, and \emph{Bernoulli query results} that are plaintext but approximate.
 
 \subsubsection{Trapdoor Representation Layer}
 
@@ -296,7 +270,6 @@ The hash transformation $T_k(v) = H(k \| v)$ creates a \emph{trapdoor representa
 \item \textbf{Key-dependent hiding}: Without knowledge of $k$, an adversary cannot verify membership guesses
 \item \textbf{Representation uniformity}: Hash values appear uniformly random, hiding structural properties of inputs
 \end{itemize}
-The representation layer is the trapdoor at the heart of HBTS---the hash values themselves reveal nothing about the original data.
 
 \subsubsection{Bernoulli Query Layer}
 
@@ -319,7 +292,7 @@ The \texttt{HashValue} type with bitwise operations ($\land$, $\lor$, $\oplus$, 
 \fpr &= 2^{-n} \quad \text{(hash collision probability for $n$-bit hash)} \\
 \fnr &= 0 \quad \text{(no false negatives for hash equality)}
 \end{align}
-This asymmetry ($\fpr > 0$, $\fnr = 0$) is characteristic of hash-based data structures and propagates through composed operations according to the error composition rules.
+This asymmetry ($\fpr > 0$, $\fnr = 0$) propagates through composed operations via the error composition rules above.
 
 \subsection{Architecture}
 
@@ -349,27 +322,13 @@ HBTS follows a layered architecture as shown in Figure~\ref{fig:architecture}:
 \label{fig:architecture}
 \end{figure}
 
-This design enables modularity and allows applications to work at the appropriate abstraction level.
-
 \section{Mathematical Foundations}
 \label{sec:theory}
 
 \subsection{Boolean Algebra Framework}
 \label{sec:boolean-algebra}
 
-HBTS is grounded in a homomorphism between two Boolean algebras: the algebra of sets over arbitrary bit strings, and the algebra of fixed-size bit vectors. This section formalizes this relationship.
-
-\begin{definition}[Set Boolean Algebra]
-The \emph{set Boolean algebra} is the structure
-$$A := \left(\mathcal{P}(\{0,1\}^*), \cup, \cap, \neg, \emptyset, \{0,1\}^*\right)$$
-where $\mathcal{P}(\{0,1\}^*)$ is the power set of all finite bit strings, with union, intersection, complement, empty set, and universal set.
-\end{definition}
-
-\begin{definition}[Bit Vector Boolean Algebra]
-The \emph{bit vector Boolean algebra} is the structure
-$$B := \left(\{0,1\}^m, \lor, \land, \neg, 0^m, 1^m\right)$$
-where $\{0,1\}^m$ consists of $m$-bit vectors with bitwise OR, AND, negation, zero vector, and all-ones vector.
-\end{definition}
+HBTS is grounded in a homomorphism between two Boolean algebras: the \emph{set algebra} $A := (\mathcal{P}(\{0,1\}^*), \cup, \cap, \neg, \emptyset, \{0,1\}^*)$ over arbitrary bit strings, and the \emph{bit vector algebra} $B := (\{0,1\}^m, \lor, \land, \neg, 0^m, 1^m)$ of $m$-bit vectors with bitwise operations.
 
 % FIXED (BA-2): Added caveat that intersection mapping (\cap -> \land) is only
 % a superset: F(A) & F(B) \supseteq F(A \cap B), with extra 1-bits possible
@@ -404,8 +363,6 @@ The homomorphism $F$ is one-way for two independent reasons:
 \end{enumerate}
 \end{theorem}
 
-These two properties combine to provide computational one-wayness: even though the mapping is many-to-one, finding any preimage remains computationally hard.
-
 % FIXED: Replaced Corollary 1 (Bit-Rate Formula) with correct derivation.
 % The original used the wrong approximation log_2(alpha) ~ -(alpha) for alpha close to 1.
 % Correct: log_2(1 - delta) ~ -delta/ln(2) for small delta.
@@ -432,17 +389,7 @@ which tends to 0 exponentially as $s \to \infty$ (since $\log_2 \alpha(s) \to 0$
 
 \subsection{Security Analysis}
 
-We formalize HBTS's security properties using the random oracle model for hash functions.
-
-\begin{definition}[One-Wayness Game]
-The one-wayness game $\mathcal{G}_{OW}$ between challenger $\mathcal{C}$ and adversary $\mathcal{A}$:
-\begin{enumerate}
-\item $\mathcal{C}$ selects random $x \in \{0,1\}^*$ and key $k$
-\item $\mathcal{C}$ computes $h = H(k||x)$ and sends $h$ to $\mathcal{A}$
-\item $\mathcal{A}$ outputs $x'$
-\item $\mathcal{A}$ wins if $x' = x$
-\end{enumerate}
-\end{definition}
+We formalize HBTS's security in the random oracle model. In the one-wayness game $\mathcal{G}_{OW}$, a challenger selects random $x \in \{0,1\}^*$ and key $k$, sends $h = H(k||x)$ to the adversary, and the adversary wins if it recovers $x$.
 
 \begin{theorem}[Privacy Preservation]
 Let $H: \{0,1\}^* \rightarrow \{0,1\}^n$ be a random oracle. For any PPT adversary $\mathcal{A}$, the probability of winning $\mathcal{G}_{OW}$ is negligible:
@@ -462,15 +409,13 @@ HBTS exhibits approximate algebraic properties with explicit error bounds:
 % 1-bits from cross-element hash collisions (element in A\setminus B colliding
 % with element in B\setminus A). This means intersection has a false positive rate.
 \begin{definition}[Approximate Set Operations]
-For hash-transformed sets $H(A)$ and $H(B)$ (represented as OR of hash values per Definition~8), operations preserve set relationships as follows:
+For hash-transformed sets $H(A)$ and $H(B)$ (represented as OR of per-element hash values), operations preserve set relationships as follows:
 \begin{itemize}
 \item Union: $H(A) \lor H(B) = H(A \cup B)$ (exact by definition of bitwise OR)
 \item Intersection: $H(A) \land H(B) \supseteq H(A \cap B)$, i.e., the bitwise AND is a superset of the true intersection encoding. Equality holds when there are no cross-element hash collisions between $A \setminus B$ and $B \setminus A$. Each extra 1-bit arises with probability at most $|A \setminus B| \cdot |B \setminus A| / 2^n$ per bit position, yielding a per-element false positive rate bounded by $(1 - (1-2^{-n})^{|A \setminus B| \cdot |B \setminus A|})$.
 \item Symmetric difference: $H(A) \oplus H(B) = H(A \triangle B)$ (exact for disjoint sets)
 \end{itemize}
 \end{definition}
-
-\textbf{Important Note}: Union is exact (OR preserves all set bits), but intersection via AND is only a superset---extra 1-bits from cross-element collisions produce false positives. These are \emph{not} true homomorphic properties in general; the framework provides practical privacy-preserving computation where approximate results with explicit error bounds are acceptable.
 
 \subsection{Size-Dependent False Positive Analysis}
 \label{sec:fpr-analysis}
@@ -616,10 +561,6 @@ With encoding sizes $|\ValidEnc{y}| = c/\text{freq}(y)$ for constant $c$:
 $$P[\text{Output} = y] = \frac{|\ValidEnc{y}|}{2^m} = \text{constant}$$
 achieving uniform output distribution without explicit randomization.
 \end{theorem}
-
-\begin{remark}[Theoretical Foundation]
-The 1/p(y) principle explains why hash-based constructions achieve privacy: by mapping inputs through a uniform hash function, high-entropy inputs produce uniformly distributed outputs regardless of the original distribution. This is an instance of the more general principle that encoding sizes inversely proportional to frequency yield privacy without explicit randomization.
-\end{remark}
 
 HBTS uses uniform-sized encodings (a middle ground), providing practical privacy at constant space cost per element. Each element receives a fixed-size hash representation, offering computational privacy when the input domain has sufficient entropy.
 
@@ -863,7 +804,7 @@ The current implementation provides core trapdoor and set operations. The follow
 
 \noindent Performance figures in this paper are based on algorithm complexity analysis and microbenchmark design; comprehensive benchmarking with validated measurements is ongoing.
 
-HBTS demonstrates that practical privacy-preserving computation is achievable when applications can accept approximate results with explicit error bounds. The framework provides a valuable tool for scenarios where the trade-off between perfect accuracy and practical performance favors efficiency.
+HBTS demonstrates that practical privacy-preserving computation is achievable when applications can accept approximate results with explicit error bounds.
 
 \bibliographystyle{IEEEtran}
 \bibliography{references}
