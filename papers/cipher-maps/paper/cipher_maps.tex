@@ -911,25 +911,65 @@ not reduce the entropy of the value assignment, since the values
 $(f(x_1), \ldots, f(x_n))$ are an independent degree of freedom.
 \end{proof}
 
+\subsection{Acceptance Predicates}
+\label{subsec:acceptance}
+
+The construction depends on a rule for deciding whether a hash value
+encodes a particular output.  We abstract this as an \emph{acceptance
+predicate}.
+
+\begin{definition}[Acceptance predicate]
+\label{def:acceptance}
+An acceptance predicate for codomain $Y$ is a family of disjoint sets
+$\{A(y) \subseteq \{0,1\}^n : y \in Y\}$.  The decoder is
+$\dec(\text{hash}) = y$ if $\text{hash} \in A(y)$, and $\bot$ otherwise.
+The acceptance probability for value $y$ is $\alpha(y) = |A(y)| / 2^n$,
+and the noise-decode probability is
+$\varepsilon = \sum_y \alpha(y) = |\bigcup_y A(y)| / 2^n$.
+\end{definition}
+
+Different predicates give different space and construction-time trade-offs:
+\begin{itemize}
+\item \textbf{Prefix-free code.}
+    $A(y) = \{c \in \{0,1\}^n : c \text{ starts with codeword}(y)\}$.
+    Acceptance probability $\alpha(y) = 2^{-|\text{code}(y)|}$.
+    Shannon-optimal when $|\text{code}(y)| \approx -\log_2 p_y$.
+    This is the entropy map construction.
+\item \textbf{Threshold.}
+    $A(y) = \{c : c < t(y)\}$ for thresholds $0 = t_0 < t_1 < \cdots$.
+    Acceptance probability $\alpha(y) = (t_{y+1} - t_y) / 2^n$.
+    Allows fine-grained control of per-value acceptance rates.
+\item \textbf{Range partition.}
+    Partition $[0, 2^n)$ into contiguous ranges $[l_y, l_y + w_y)$.
+    Setting $w_y \propto p_y$ achieves Shannon-optimal allocation with
+    uniform acceptance probability.
+\end{itemize}
+
+All three achieve the same space bound $-\log_2 \varepsilon + H(Y)$
+bits per element when acceptance probabilities are Shannon-optimal
+($\alpha(y) \propto p_y$).  They differ in construction time and
+implementation simplicity.
+
 \subsection{Construction}
 
 \begin{algorithm}
 \caption{Singular Hash Map Construction}
 \label{alg:singular-hash}
 \begin{algorithmic}[1]
-\Function{BuildCipherMap}{$M$, $\enc$, $\dec$, $h$}
+\Function{BuildCipherMap}{$M$, $A$, $h$}
+    \Comment{$A$ is an acceptance predicate}
     \State $\ell \gets 0$
     \While{true}
         \State $\text{success} \gets \text{true}$
         \For{$(x, y) \in M$}
             \State $\text{hash} \gets h(\ell) \oplus h(x)$
                 \Comment{XOR combines seed with key}
-            \If{$\dec(\text{hash}) \neq y$}
+            \If{$\text{hash} \notin A(y)$}
                 \State $\text{success} \gets \text{false}$; \textbf{break}
             \EndIf
         \EndFor
         \If{success}
-            \State \Return $\text{CipherMap}(h, \dec, \ell)$
+            \State \Return $\text{CipherMap}(h, A, \ell)$
         \EndIf
         \State $\ell \gets \ell + 1$
     \EndWhile
@@ -938,17 +978,15 @@ $(f(x_1), \ldots, f(x_n))$ are an independent degree of freedom.
 \end{algorithm}
 
 The construction searches for a seed $\ell$ such that for every
-$(x, y) \in M$, the hash $h(\ell) \oplus h(x)$ decodes to $y$ under the
-prefix-free code.  Query evaluation computes
-$\fhat(c) = h(\ell) \oplus h(c)$ and decodes the result.
+$(x, y) \in M$, the hash $h(\ell) \oplus h(x)$ falls in the acceptance
+set $A(y)$.  Query evaluation computes $\fhat(c) = h(\ell) \oplus h(c)$
+and decodes via the acceptance predicate.
 
-% FIXED: CM-2: clarify that Algorithm 1 implements eta=0; describe eta>0 relaxation
-\begin{remark}[Construction with $\eta > 0$]
-Algorithm~\ref{alg:singular-hash} implements the $\eta = 0$ special case.
-For $\eta > 0$, the search accepts any seed for which at most
-$\lfloor \eta \cdot m \rfloor$ elements fail correctness.  This relaxation
-reduces expected construction time since fewer constraints must be
-simultaneously satisfied.
+\begin{remark}[Relaxed correctness, $\eta > 0$]
+Algorithm~\ref{alg:singular-hash} implements the $\eta = 0$ case.
+For $\eta > 0$, accept any seed for which at most
+$\lfloor \eta \cdot m \rfloor$ elements fail.  This dramatically reduces
+construction time (see \S\ref{subsec:tractability}).
 \end{remark}
 
 \subsection{Space Optimality}
@@ -969,20 +1007,20 @@ When false negatives are permitted at rate $\eta$, only $(1-\eta)n$ of the
 $n$ elements must decode correctly, reducing the effective element count.
 
 \emph{Step 2: Per-element bit cost.}
-For each stored element $x_i$, the hash $h(\ell) \oplus h(x_i)$ must decode
-to $f(x_i)$ under the prefix-free code.  Under the random oracle model, the
-probability of correct decode for element $x_i$ with target value $y_i$ is
-$2^{-|c_{y_i}|}$, where $|c_{y_i}|$ is the code length.  By
-Shannon-optimal coding, $|c_{y_i}| \approx -\log_2 p_{y_i}$, so the
-expected code length per element is
-$\sum_y p_y |c_y| = \mu = H(Y)$.
+For each stored element $x_i$, the hash $h(\ell) \oplus h(x_i)$ must fall
+in the acceptance set $A(y_i)$ (Definition~\ref{def:acceptance}).  Under the
+random oracle model, this occurs with probability $\alpha(y_i)$.  Shannon-optimal
+allocation sets $\alpha(y_i) \propto p_{y_i}$, giving per-element
+information cost $-\log_2 \alpha(y_i) \approx -\log_2 p_{y_i}$ and expected
+cost per element $\sum_y p_y (-\log_2 \alpha(y)) = \mu = H(Y)$.
 
 \emph{Step 3: False positive control.}
 For non-stored elements $x \notin M$, the hash $h(\ell) \oplus h(x)$ is
 uniformly distributed under the random oracle model.  The probability of
-decoding to \emph{any} valid output is $\varepsilon$ (the total probability
-mass of the prefix-free code).  Achieving target rate $\varepsilon$ requires
-$-\log_2 \varepsilon$ bits of hash beyond the value encoding.
+falling in \emph{any} acceptance set is
+$\varepsilon = \sum_y \alpha(y)$, the noise-decode probability.  Achieving
+target rate $\varepsilon$ requires $-\log_2 \varepsilon$ bits of hash
+beyond the value encoding.
 
 \emph{Step 4: Combining.}
 Each stored element costs $-\log_2 \varepsilon + \mu$ bits, and
@@ -996,26 +1034,75 @@ bits per element, matching the information-theoretic lower bound.
 \end{corollary}
 
 \subsection{Construction Time}
+\label{subsec:tractability}
 
-\begin{proposition}[Expected construction trials]
+\begin{proposition}[Per-seed success probability]
 \label{prop:construction-time}
-For $m = (1-\eta)n$ stored elements, the probability of successful
-construction for a given seed $\ell$ is:
+For $m$ stored elements with acceptance predicate $A$, the probability of
+successful construction for a given seed $\ell$ is:
 \begin{equation}
-p = \prod_{i=1}^{m} (1 - e_i),
+p = \prod_{i=1}^{m} \alpha(y_i),
 \end{equation}
-where $e_i = 1 - 2^{-|c_{y_i}|}$ is the per-element failure probability.
-The expected number of trials is $1/p$.
+where $\alpha(y_i) = |A(y_i)| / 2^n$ is the acceptance probability for the
+$i$-th element's target value.  The expected number of trials is $1/p$.
 \end{proposition}
 
 \begin{proof}
 Under the random oracle model, the hash values $h(\ell) \oplus h(x_i)$ for
 distinct $x_i$ are independent uniformly distributed bit strings.  For
-element $x_i$ with target value $y_i$, correct decoding requires the hash
-prefix to match code $c_{y_i}$, which occurs with probability
-$2^{-|c_{y_i}|}$.  Independence across elements gives the product formula.
+element $x_i$, the hash falls in $A(y_i)$ with probability $\alpha(y_i)$.
+Independence across elements gives the product formula.
 The number of trials is geometric with success probability $p$.
 \end{proof}
+
+For uniform acceptance probability $\alpha(y) = \varepsilon / |Y|$, this
+gives $p = (\varepsilon / |Y|)^m$ and expected trials
+$(|Y| / \varepsilon)^m$---intractable for even modest $m$.
+
+\paragraph{Bucketed construction.}
+The intractability of the global seed search is not inherent.  Partition
+the $m$ elements into $k$ buckets (e.g., by
+$h(x) \bmod k$) and find a separate seed $\ell_j$ for each bucket.
+
+\begin{proposition}[Bucketed construction time]
+\label{prop:bucketed}
+With $k$ buckets of expected size $m/k$, the expected total construction
+time is
+\begin{equation}
+T(k) = k \cdot \left(\frac{1}{\bar{\alpha}}\right)^{m/k},
+\end{equation}
+where $\bar{\alpha} = \bigl(\prod_i \alpha(y_i)\bigr)^{1/m}$ is the
+geometric mean acceptance probability.
+\end{proposition}
+
+\begin{proof}
+Each bucket has $m/k$ elements (in expectation).  The per-bucket success
+probability is $\bar{\alpha}^{m/k}$ by
+Proposition~\ref{prop:construction-time}.  Expected trials per bucket:
+$(1/\bar{\alpha})^{m/k}$.  Summing over $k$ independent buckets gives the
+result.
+\end{proof}
+
+The trade-off between construction time and space is controlled by $k$:
+
+\begin{center}
+\begin{tabular}{@{}llll@{}}
+\toprule
+Buckets $k$ & Seeds stored & Construction time & Space overhead \\
+\midrule
+1 (global) & 1 & $(1/\bar{\alpha})^m$ & $O(\log m) / m$ bits/elem \\
+$\sqrt{m}$ & $\sqrt{m}$ & $\sqrt{m} \cdot (1/\bar{\alpha})^{\sqrt{m}}$
+    & $O(\log m / \sqrt{m})$ bits/elem \\
+$m$ (per-element) & $m$ & $m / \bar{\alpha}$ (linear)
+    & $O(\log(1/\bar{\alpha}))$ bits/elem \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+At $k = m$, each bucket has one element, construction is linear in $m$,
+and the overhead is $\log_2(1/\bar{\alpha})$ bits per element for the
+per-element seed---the same order as the hash width.  This is the regime
+of practical perfect hash functions~\cite{belazzougui2009hash}.
 
 
 %% ============================================================
