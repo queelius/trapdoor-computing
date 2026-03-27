@@ -44,18 +44,19 @@
 \maketitle
 
 \begin{abstract}
-A cipher map is a total function on bit strings that approximates a latent
-function through a one-way trapdoor.  We define four properties---totality,
-representation uniformity, correctness, composability---and show how they
-trace to three conceptual construction layers (undefined injection, noise
-closure, multiple representations).  We instantiate the abstraction against
-three concrete constructions: the HashSet (a space-optimal set membership
-structure), the entropy map (achieving Shannon-entropy-optimal value encoding),
-and the trapdoor Boolean algebra (an online construction supporting set
-operations via bitwise logic).  We derive the composition theorem with proof,
-formalize the trusted/untrusted machine model, and present the Singular Hash
-Map---a construction achieving the information-theoretic lower bound of
-$-\log_2 \varepsilon + H(Y)$ bits per element.
+Privacy in encrypted computation need not come from access-pattern hiding
+(ORAM), exact algebraic homomorphism (FHE), or simulation-based security
+(garbled circuits).  We show that a \emph{cipher map}---a total function on
+bit strings where the concepts of domain, correctness, and function identity
+exist only behind a one-way trapdoor---provides a distinct, quantifiable
+privacy model with predictable composition and information-theoretically
+optimal space.  We characterize cipher maps by four independent, measurable
+properties (totality, representation uniformity, correctness, composability),
+prove the composition theorem governing error accumulation, and present three
+constructions---HashSet, entropy map, and trapdoor Boolean algebra---spanning
+batch and online strategies.  The Singular Hash Map achieves the
+information-theoretic lower bound of $-\log_2 \varepsilon + H(Y)$ bits per
+element.
 \end{abstract}
 
 
