@@ -1083,8 +1083,8 @@ $\alpha$ and $m = 100$:
 \toprule
 $\alpha$ & $\eta = 0$ & $\eta = 0.01$ & $\eta = 0.05$ \\
 \midrule
-0.5 & $2^{100}$ & $2^{93}$ & $2^{71}$ \\
-0.9 & $7.4 \times 10^4$ & $1.1 \times 10^4$ & $4.1 \times 10^2$ \\
+0.5 & $2^{100}$ & $2^{93}$ & $2^{74}$ \\
+0.9 & $3.8 \times 10^4$ & $3.1 \times 10^3$ & $17$ \\
 0.99 & 2.7 & 1.5 & 1.0 \\
 \bottomrule
 \end{tabular}
@@ -1100,10 +1100,10 @@ The intractability of the global seed search is not inherent.  Partition
 the $m$ elements into $k$ buckets (e.g., by
 $h(x) \bmod k$) and find a separate seed $\ell_j$ for each bucket.
 
-\begin{proposition}[Bucketed construction time]
+\begin{proposition}[Bucketed construction time ($\eta = 0$)]
 \label{prop:bucketed}
-With $k$ buckets of expected size $m/k$, the expected total construction
-time is
+With $k$ buckets of expected size $m/k$ and $\eta = 0$, the expected total
+construction time is
 \begin{equation}
 T(k) = k \cdot \left(\frac{1}{\bar{\alpha}}\right)^{m/k},
 \end{equation}
@@ -1204,22 +1204,26 @@ was correct (the re-randomization condition).
 \end{theorem}
 
 \begin{proof}
-The composition is correct when \emph{both} maps produce correct results.
+The composition is incorrect when at least one map errs.  Let
+$A = \{\fhat \text{ errs}\}$ and $B = \{\ghat \text{ errs}\}$.
+By inclusion-exclusion,
+$\Pr[A \cup B] = \Pr[A] + \Pr[B] - \Pr[A \cap B]$.
 
-\emph{Upper bound.}  By the union bound,
-$\Pr[\text{incorrect}] \leq \eta_f + \eta_g$.
-Since $\eta_f \eta_g \geq 0$, the tighter bound
-$\eta_f + \eta_g - \eta_f \eta_g$ also holds.
+\emph{Loose bound.}  Dropping $\Pr[A \cap B] \geq 0$ gives the union bound
+$\eta_{g \circ f} \leq \eta_f + \eta_g$.
 
-\emph{Equality under re-randomization.}
-If the re-randomization condition holds,
-$\Pr[\text{both correct}] = (1-\eta_f)(1-\eta_g)$,
-giving $\eta_{g \circ f} = 1 - (1-\eta_f)(1-\eta_g)$.
+\emph{Under re-randomization.}
+If the errors are independent ($\Pr[A \cap B] = \eta_f \eta_g$),
+inclusion-exclusion gives
+$\eta_{g \circ f} = \eta_f + \eta_g - \eta_f \eta_g
+  = 1 - (1-\eta_f)(1-\eta_g)$.
 
-In practice, $\fhat$ produces a \emph{specific} encoding of $f(x)$, not a
+In practice, $\fhat$ produces a specific encoding of $f(x)$, not a
 uniformly random one.  If $\ghat$'s correctness depends on which encoding
-it receives, the errors may be positively correlated, making the inequality
-strict.  For specific circuits, the case-by-case interval arithmetic from
+it receives, the errors may be positively correlated
+($\Pr[A \cap B] \leq \eta_f \eta_g$), making the bound
+$\eta_f + \eta_g - \eta_f \eta_g$ conservative.
+For specific circuits, the case-by-case interval arithmetic from
 \S\ref{subsec:and-gate} gives tighter bounds.
 \end{proof}
 
@@ -1453,9 +1457,10 @@ for Boolean-valued cipher maps.
 
 \begin{proposition}[Bayesian deniability]
 \label{prop:deniability}
-Let $\fhat$ be a cipher map for $f : X \to \{0,1\}$ with correctness
-$\eta$, and let $\pi = \Pr[f(x) = 1]$ be the prior.  If the adversary
-observes the decoded output $y = 1$, then
+Let $\fhat$ be a cipher map for $f : X \to \{0,1\}$ with symmetric error
+rate $\eta$ (i.e., $\Pr[y=1 \mid f(x)=0] = \Pr[y=0 \mid f(x)=1] = \eta$),
+and let $\pi = \Pr[f(x) = 1]$ be the prior.  If the adversary observes the
+decoded output $y = 1$, then
 \begin{equation}
 \Pr[f(x) = 1 \mid y = 1]
     = \frac{\pi(1-\eta)}{\pi(1-\eta) + (1-\pi)\eta}.

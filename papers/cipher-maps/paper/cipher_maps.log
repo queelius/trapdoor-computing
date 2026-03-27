@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex 2025.2.2)  27 MAR 2026 13:49
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex 2025.2.2)  27 MAR 2026 16:15
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -574,7 +574,7 @@ Package rerunfilecheck Info: File `cipher_maps.out' has not changed.
 Here is how much of TeX's memory you used:
  13991 strings out of 474222
  226222 string characters out of 5748734
- 1940975 words of memory out of 5000000
+ 1941975 words of memory out of 5000000
  35871 multiletter control sequences out of 15000+600000
  571271 words of font info for 85 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
@@ -599,7 +599,7 @@ mf-dist/fonts/type1/public/amsfonts/cm/cmsy8.pfb></usr/share/texlive/texmf-dist
 /type1/public/amsfonts/cm/cmtt12.pfb></usr/share/texlive/texmf-dist/fonts/type1
 /public/amsfonts/symbols/msam10.pfb></usr/share/texmf/fonts/type1/public/cm-sup
 er/sfrm1095.pfb>
-Output written on cipher_maps.pdf (21 pages, 355719 bytes).
+Output written on cipher_maps.pdf (21 pages, 356056 bytes).
 PDF statistics:
  599 PDF objects out of 1000 (max. 8388607)
  528 compressed objects within 6 object streams
