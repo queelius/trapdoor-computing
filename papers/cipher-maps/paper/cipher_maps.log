@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex 2025.2.2)  27 MAR 2026 13:11
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex 2025.2.2)  27 MAR 2026 13:49
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -513,12 +513,7 @@ File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 ) [1
 
 {/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}{/usr/share/texmf/fonts/enc/
-dvips/cm-super/cm-super-ts1.enc}] [2]
-
-Package natbib Warning: Citation `bellare1993random' on page 3 undefined on inp
-ut line 194.
-
-[3]
+dvips/cm-super/cm-super-ts1.enc}] [2] [3]
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
 (hyperref)                removing `math shift' on input line 312.
@@ -558,17 +553,7 @@ pdfTeX warning (ext4): destination with the same identifier (name{table.2}) has
                                                   \__shipout_drop_firstpage_...
 l.561 \item $
              \fhat(c) = h(c \| s)$, a total function on all bit strings.]
-[8]
-
-Package natbib Warning: Citation `shannon1948mathematical' on page 9 undefined 
-on input line 690.
-
-[9] [10] [11]
-
-Package natbib Warning: Citation `shannon1948mathematical' on page 12 undefined
- on input line 899.
-
-[12
+[8] [9] [10] [11] [12
 pdfTeX warning (ext4): destination with the same identifier (name{table.3}) has
  been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
@@ -577,48 +562,23 @@ l.946 \end{itemize}
                    ]
 Package hyperref Info: bookmark level for unknown algorithm defaults to 0 on in
 put line 956.
-
-
-LaTeX Warning: Reference `subsec:tractability' on page 13 undefined on input li
-ne 989.
-
-
-LaTeX Warning: Reference `def:acceptance' on page 13 undefined on input line 10
-11.
-
-[13] [14] [15] [16] [17] [18] (./cipher_maps.bbl [19] [20])
-
-Package natbib Warning: There were undefined citations.
-
-[21] (./cipher_maps.aux)
+ [13] [14] [15] [16] [17] [18] [19] (./cipher_maps.bbl
+[20]) [21] (./cipher_maps.aux)
  ***********
 LaTeX2e <2023-11-01> patch level 1
 L3 programming layer <2024-01-22>
  ***********
-
-
-LaTeX Warning: There were undefined references.
-
-
-LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
-
-
-Package rerunfilecheck Warning: File `cipher_maps.out' has changed.
-(rerunfilecheck)                Rerun to get outlines right
-(rerunfilecheck)                or use package `bookmark'.
-
-Package rerunfilecheck Info: Checksums for `cipher_maps.out':
-(rerunfilecheck)             Before: B2493645AAFE9685B80F5F58A80A6DFE;6362
-(rerunfilecheck)             After:  3636D72BFA2028BB14DD32F296320F93;6528.
+Package rerunfilecheck Info: File `cipher_maps.out' has not changed.
+(rerunfilecheck)             Checksum: 3636D72BFA2028BB14DD32F296320F93;6528.
  ) 
 Here is how much of TeX's memory you used:
- 13977 strings out of 474222
- 225907 string characters out of 5748734
+ 13991 strings out of 474222
+ 226222 string characters out of 5748734
  1940975 words of memory out of 5000000
- 35857 multiletter control sequences out of 15000+600000
+ 35871 multiletter control sequences out of 15000+600000
  571271 words of font info for 85 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 75i,10n,79p,367b,587s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 75i,10n,79p,367b,573s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb></us
 r/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb></usr/shar
 e/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmbxti10.pfb></usr/share/te
@@ -639,10 +599,10 @@ mf-dist/fonts/type1/public/amsfonts/cm/cmsy8.pfb></usr/share/texlive/texmf-dist
 /type1/public/amsfonts/cm/cmtt12.pfb></usr/share/texlive/texmf-dist/fonts/type1
 /public/amsfonts/symbols/msam10.pfb></usr/share/texmf/fonts/type1/public/cm-sup
 er/sfrm1095.pfb>
-Output written on cipher_maps.pdf (21 pages, 354043 bytes).
+Output written on cipher_maps.pdf (21 pages, 355719 bytes).
 PDF statistics:
- 593 PDF objects out of 1000 (max. 8388607)
- 522 compressed objects within 6 object streams
+ 599 PDF objects out of 1000 (max. 8388607)
+ 528 compressed objects within 6 object streams
  204 named destinations out of 1000 (max. 500000)
- 297 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 305 words of extra memory for PDF output out of 10000 (max. 10000000)
 

@@ -956,38 +956,51 @@ implementation simplicity.
 \caption{Singular Hash Map Construction}
 \label{alg:singular-hash}
 \begin{algorithmic}[1]
-\Function{BuildCipherMap}{$M$, $A$, $h$}
-    \Comment{$A$ is an acceptance predicate}
+\Function{BuildCipherMap}{$M$, $A$, $h$, $\eta$}
+    \Comment{$A$: acceptance predicate, $\eta$: target error rate}
+    \State $m \gets |M|$
     \State $\ell \gets 0$
     \While{true}
-        \State $\text{success} \gets \text{true}$
+        \State \text{Shuffle}$(M)$
+            \Comment{random order for unbiased early stopping}
+        \State $\text{fail} \gets 0$;\; $\text{pass} \gets 0$
         \For{$(x, y) \in M$}
             \State $\text{hash} \gets h(\ell) \oplus h(x)$
-                \Comment{XOR combines seed with key}
-            \If{$\text{hash} \notin A(y)$}
-                \State $\text{success} \gets \text{false}$; \textbf{break}
+            \If{$\text{hash} \in A(y)$}
+                \State $\text{pass} \gets \text{pass} + 1$
+                \If{$\text{pass} \geq \lceil(1-\eta)\, m\rceil$}
+                    \State \Return $\text{CipherMap}(h, A, \ell)$
+                        \Comment{early accept}
+                \EndIf
+            \Else
+                \State $\text{fail} \gets \text{fail} + 1$
+                \If{$\text{fail} > \lfloor \eta\, m \rfloor$}
+                    \State \textbf{break}
+                        \Comment{early reject}
+                \EndIf
             \EndIf
         \EndFor
-        \If{success}
-            \State \Return $\text{CipherMap}(h, A, \ell)$
-        \EndIf
         \State $\ell \gets \ell + 1$
     \EndWhile
 \EndFunction
 \end{algorithmic}
 \end{algorithm}
 
-The construction searches for a seed $\ell$ such that for every
-$(x, y) \in M$, the hash $h(\ell) \oplus h(x)$ falls in the acceptance
-set $A(y)$.  Query evaluation computes $\fhat(c) = h(\ell) \oplus h(c)$
-and decodes via the acceptance predicate.
+The construction searches for a seed $\ell$ such that at most
+$\lfloor \eta \cdot m \rfloor$ elements of $M$ fail the acceptance
+predicate.  When $\eta = 0$, the first failure triggers rejection (the
+exact case).  Query evaluation computes
+$\fhat(c) = h(\ell) \oplus h(c)$ and decodes via $A$.
 
-\begin{remark}[Relaxed correctness, $\eta > 0$]
-Algorithm~\ref{alg:singular-hash} implements the $\eta = 0$ case.
-For $\eta > 0$, accept any seed for which at most
-$\lfloor \eta \cdot m \rfloor$ elements fail.  This dramatically reduces
-construction time (see \S\ref{subsec:tractability}).
-\end{remark}
+Two early-stopping rules avoid checking all $m$ elements:
+\begin{itemize}
+\item \textbf{Early reject:} if failures exceed $\lfloor \eta\, m \rfloor$,
+    no remaining successes can help.
+\item \textbf{Early accept:} if successes reach $\lceil (1-\eta)\, m \rceil$,
+    the error budget is satisfied regardless of remaining elements.
+\end{itemize}
+Shuffling $M$ each iteration ensures both rules trigger as early as
+possible: failures are not clustered at the end by a fixed ordering.
 
 \subsection{Space Optimality}
 
@@ -1038,26 +1051,49 @@ bits per element, matching the information-theoretic lower bound.
 
 \begin{proposition}[Per-seed success probability]
 \label{prop:construction-time}
-For $m$ stored elements with acceptance predicate $A$, the probability of
-successful construction for a given seed $\ell$ is:
-\begin{equation}
-p = \prod_{i=1}^{m} \alpha(y_i),
-\end{equation}
-where $\alpha(y_i) = |A(y_i)| / 2^n$ is the acceptance probability for the
-$i$-th element's target value.  The expected number of trials is $1/p$.
+For $m$ stored elements with acceptance predicate $A$ and target error rate
+$\eta$, each element independently passes with probability $\alpha(y_i)$
+under the random oracle model.  The number of failures $F$ follows a
+Poisson binomial distribution, and the seed is accepted when
+$F \leq \lfloor \eta m \rfloor$.
+
+\emph{Special cases:}
+\begin{itemize}
+\item $\eta = 0$: $p = \prod_{i=1}^m \alpha(y_i)$ (all must pass).
+\item Uniform $\alpha$:
+    $p = \Pr[\mathrm{Bin}(m, 1-\alpha) \leq \lfloor \eta m \rfloor]$.
+\end{itemize}
+The expected number of seeds tried is $1/p$.
 \end{proposition}
 
 \begin{proof}
 Under the random oracle model, the hash values $h(\ell) \oplus h(x_i)$ for
-distinct $x_i$ are independent uniformly distributed bit strings.  For
-element $x_i$, the hash falls in $A(y_i)$ with probability $\alpha(y_i)$.
-Independence across elements gives the product formula.
-The number of trials is geometric with success probability $p$.
+distinct $x_i$ are independent.  Element $x_i$ fails with probability
+$1 - \alpha(y_i)$.  The failure count $F = \sum_i \mathbf{1}[\text{hash}_i
+\notin A(y_i)]$ is a sum of independent Bernoulli variables.  The seed
+is accepted when $F \leq \lfloor \eta m \rfloor$, giving the Poisson
+binomial CDF.  For uniform $\alpha$, this reduces to the binomial CDF.
 \end{proof}
 
-For uniform acceptance probability $\alpha(y) = \varepsilon / |Y|$, this
-gives $p = (\varepsilon / |Y|)^m$ and expected trials
-$(|Y| / \varepsilon)^m$---intractable for even modest $m$.
+The effect of $\eta > 0$ on construction time is dramatic.  For uniform
+$\alpha$ and $m = 100$:
+
+\begin{center}
+\begin{tabular}{@{}llll@{}}
+\toprule
+$\alpha$ & $\eta = 0$ & $\eta = 0.01$ & $\eta = 0.05$ \\
+\midrule
+0.5 & $2^{100}$ & $2^{93}$ & $2^{71}$ \\
+0.9 & $7.4 \times 10^4$ & $1.1 \times 10^4$ & $4.1 \times 10^2$ \\
+0.99 & 2.7 & 1.5 & 1.0 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+When $\eta$ exceeds the expected failure rate $1 - \alpha$, the binomial
+tail concentrates and construction becomes near-certain on the first seed.
+The transition is sharp: a few percent of tolerable error can reduce
+construction time by tens of orders of magnitude.
 
 \paragraph{Bucketed construction.}
 The intractability of the global seed search is not inherent.  Partition

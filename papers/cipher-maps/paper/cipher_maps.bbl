@@ -1,4 +1,4 @@
-\begin{thebibliography}{16}
+\begin{thebibliography}{18}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -18,6 +18,13 @@ Djamal Belazzougui, Fabiano~C Botelho, and Martin Dietzfelbinger.
 \newblock Hash, displace, and compress.
 \newblock In \emph{European Symposium on Algorithms}, pages 682--693. Springer,
   2009.
+
+\bibitem[Bellare and Rogaway(1993)]{bellare1993random}
+Mihir Bellare and Phillip Rogaway.
+\newblock Random oracles are practical: A paradigm for designing efficient
+  protocols.
+\newblock In \emph{Proceedings of the 1st ACM Conference on Computer and
+  Communications Security}, pages 62--73, 1993.
 
 \bibitem[Bellare et~al.(2007)Bellare, Boldyreva, and
   O'Neill]{bellare2007deterministic}
@@ -87,6 +94,12 @@ Craig Gentry.
 Oded Goldreich and Rafail Ostrovsky.
 \newblock Software protection and simulation on oblivious {RAMs}.
 \newblock \emph{Journal of the ACM}, 43\penalty0 (3):\penalty0 431--473, 1996.
+
+\bibitem[Shannon(1948)]{shannon1948mathematical}
+Claude~E Shannon.
+\newblock A mathematical theory of communication.
+\newblock \emph{Bell System Technical Journal}, 27\penalty0 (3):\penalty0
+  379--423, 1948.
 
 \bibitem[Simmons(1979)]{simmons1979symmetric}
 Gustavus~J Simmons.
