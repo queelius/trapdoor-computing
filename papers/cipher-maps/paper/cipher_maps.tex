@@ -37,7 +37,7 @@
 
 \title{Cipher Maps: Total Functions as Trapdoor Approximations}
 \author{Alexander Towell\\\texttt{lex@metafunctor.com}}
-\date{\today}
+\date{March 2026}
 
 \begin{document}
 
@@ -47,7 +47,7 @@
 A cipher map is a total function on bit strings that approximates a latent
 function through a one-way trapdoor.  We define four properties---totality,
 representation uniformity, correctness, composability---and show how they
-arise from three orthogonal construction layers (undefined injection, noise
+trace to three conceptual construction layers (undefined injection, noise
 closure, multiple representations).  We instantiate the abstraction against
 three concrete constructions: the HashSet (a space-optimal set membership
 structure), the entropy map (achieving Shannon-entropy-optimal value encoding),
@@ -186,6 +186,15 @@ total functions.
 %% ============================================================
 \section{The Cipher Map Abstraction}
 \label{sec:abstraction}
+
+\subsection{Preliminaries}
+
+Throughout, $h : \{0,1\}^* \to \{0,1\}^n$ denotes a cryptographic hash
+function modeled as a \emph{random oracle}~\cite{bellare1993random}: a
+truly random function accessible to all parties via oracle queries.
+Results stated ``under the random oracle model'' assume $h$ has this
+property.  Elements of any finite type are encoded as bit strings before
+hashing.
 
 \subsection{Definition}
 
@@ -430,6 +439,96 @@ information-theoretic.
 
 
 %% ============================================================
+\section{The Trusted/Untrusted Machine Model}
+\label{sec:trust-model}
+
+The four properties take operational meaning through a two-party model.
+
+\begin{definition}[Trusted machine $T$]
+\label{def:trusted}
+The trusted machine $T$ holds: the seed $s$ (trapdoor), the encoding
+function $\enc$, the decoding function $\dec$, and knowledge of which
+queries are real vs.\ filler.
+
+$T$ can:
+\begin{enumerate}
+\item Encode plaintext values: $x \mapsto \enc(x, k)$ for chosen $k$.
+\item Decode cipher results: $r \mapsto \dec(r)$.
+\item Inject noise: generate random $c \gets \{0,1\}^n$ as filler queries.
+\item Verify results: check $\dec(\fhat(\enc(x,k))) = f(x)$.
+\item Reseed: construct a new cipher map with fresh $s'$ when leakage accumulates.
+\end{enumerate}
+\end{definition}
+
+\begin{definition}[Untrusted machine $U$]
+\label{def:untrusted}
+The untrusted machine $U$ holds: the cipher map $\fhat$ (a total function on
+bit strings) and a collection of cipher values (encodings + filler,
+indistinguishable to $U$).
+
+$U$ can:
+\begin{enumerate}
+\item Evaluate cipher maps: $c \mapsto \fhat(c)$ for any
+    $c \in \{0,1\}^n$.
+\item Return results to $T$.
+\end{enumerate}
+
+$U$ cannot:
+\begin{enumerate}
+\item Decode cipher values (does not hold $s$ or $\dec$).
+\item Distinguish real encodings from filler (by Property~1).
+\item Determine the domain $X$ or function $f$ (by Property~2, cipher
+    values are $\delta$-close to uniform).
+\item Enumerate which inputs are ``in-domain'' (by totality, every input
+    produces output).
+\end{enumerate}
+\end{definition}
+
+\paragraph{Protocol.}
+The information flow is:
+\begin{enumerate}
+\item $T$ encodes inputs: $\enc(x_1, k_1), \ldots, \enc(x_m, k_m)$.
+\item $T$ generates filler: $c_1, \ldots, c_r \gets \{0,1\}^n$.
+\item $T$ sends all cipher values (real + filler, shuffled) to $U$.
+\item $U$ evaluates $\fhat$ on each cipher value and returns results.
+\item $T$ decodes the results it cares about; discards filler results.
+\end{enumerate}
+
+What $U$ observes is a sequence of $n$-bit strings as input and a sequence
+of $n$-bit strings as output.  Under the four properties:
+\begin{itemize}
+\item Totality: every input produces output; no error signals leak domain
+    information.
+\item Representation uniformity: cipher values are $\delta$-close to
+    uniform; frequency analysis is bounded by $\delta$.
+\item Correctness: irrelevant to $U$ (only $T$ decodes).
+\item Composability: $U$ can chain cipher maps without decoding intermediate
+    results.
+\end{itemize}
+
+\begin{table}[ht]
+\centering
+\caption{What the four properties guarantee against $U$.}
+\label{tab:guarantees}
+\begin{tabular}{@{}lll@{}}
+\toprule
+Adversary capability & Prevented by & Mechanism \\
+\midrule
+Distinguish real from filler & Totality & All queries produce output \\
+Frequency analysis & Rep.\ uniformity & Values $\delta$-close to uniform \\
+Learn function values & Trapdoor & Cannot invert $h$ without $s$ \\
+Enumerate domain $X$ & Totality + trapdoor & Cannot test membership \\
+Detect query correlations & \textbf{Not fully} & Only marginal uniformity \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The last row is the honest limitation: the four properties do not provide
+full correlation hiding unless the encoding granularity encompasses the
+correlated values (\S\ref{subsec:granularity}).
+
+
+%% ============================================================
 \section{Concrete Constructions}
 \label{sec:constructions}
 
@@ -587,7 +686,7 @@ signal from noise: each stored element requires that its hash prefix match a
 valid codeword, which occurs with probability $\varepsilon$ for random
 inputs.  The term $H(Y)$ is the expected code length under
 Shannon-optimal prefix-free coding, which equals the entropy of the output
-distribution by Shannon's source coding theorem.  These two components are
+distribution by Shannon's source coding theorem~\cite{shannon1948mathematical}.  These two components are
 additive because the noise-rejection bits and the value-encoding bits occupy
 disjoint portions of the hash output.
 \end{proof}
@@ -756,96 +855,6 @@ Space/element & $-\log_2\varepsilon$ &
 
 
 %% ============================================================
-\section{The Trusted/Untrusted Machine Model}
-\label{sec:trust-model}
-
-This section formalizes the trust model implicit in the constructions above.
-
-\begin{definition}[Trusted machine $T$]
-\label{def:trusted}
-The trusted machine $T$ holds: the seed $s$ (trapdoor), the encoding
-function $\enc$, the decoding function $\dec$, and knowledge of which
-queries are real vs.\ filler.
-
-$T$ can:
-\begin{enumerate}
-\item Encode plaintext values: $x \mapsto \enc(x, k)$ for chosen $k$.
-\item Decode cipher results: $r \mapsto \dec(r)$.
-\item Inject noise: generate random $c \gets \{0,1\}^n$ as filler queries.
-\item Verify results: check $\dec(\fhat(\enc(x,k))) = f(x)$.
-\item Reseed: construct a new cipher map with fresh $s'$ when leakage accumulates.
-\end{enumerate}
-\end{definition}
-
-\begin{definition}[Untrusted machine $U$]
-\label{def:untrusted}
-The untrusted machine $U$ holds: the cipher map $\fhat$ (a total function on
-bit strings) and a collection of cipher values (encodings + filler,
-indistinguishable to $U$).
-
-$U$ can:
-\begin{enumerate}
-\item Evaluate cipher maps: $c \mapsto \fhat(c)$ for any
-    $c \in \{0,1\}^n$.
-\item Return results to $T$.
-\end{enumerate}
-
-$U$ cannot:
-\begin{enumerate}
-\item Decode cipher values (does not hold $s$ or $\dec$).
-\item Distinguish real encodings from filler (by Property~1).
-\item Determine the domain $X$ or function $f$ (by Property~2, cipher
-    values are $\delta$-close to uniform).
-\item Enumerate which inputs are ``in-domain'' (by totality, every input
-    produces output).
-\end{enumerate}
-\end{definition}
-
-\paragraph{Protocol.}
-The information flow is:
-\begin{enumerate}
-\item $T$ encodes inputs: $\enc(x_1, k_1), \ldots, \enc(x_m, k_m)$.
-\item $T$ generates filler: $c_1, \ldots, c_r \gets \{0,1\}^n$.
-\item $T$ sends all cipher values (real + filler, shuffled) to $U$.
-\item $U$ evaluates $\fhat$ on each cipher value and returns results.
-\item $T$ decodes the results it cares about; discards filler results.
-\end{enumerate}
-
-What $U$ observes is a sequence of $n$-bit strings as input and a sequence
-of $n$-bit strings as output.  Under the four properties:
-\begin{itemize}
-\item Totality: every input produces output; no error signals leak domain
-    information.
-\item Representation uniformity: cipher values are $\delta$-close to
-    uniform; frequency analysis is bounded by $\delta$.
-\item Correctness: irrelevant to $U$ (only $T$ decodes).
-\item Composability: $U$ can chain cipher maps without decoding intermediate
-    results.
-\end{itemize}
-
-\begin{table}[ht]
-\centering
-\caption{What the four properties guarantee against $U$.}
-\label{tab:guarantees}
-\begin{tabular}{@{}lll@{}}
-\toprule
-Adversary capability & Prevented by & Mechanism \\
-\midrule
-Distinguish real from filler & Totality & All queries produce output \\
-Frequency analysis & Rep.\ uniformity & Values $\delta$-close to uniform \\
-Learn function values & Trapdoor & Cannot invert $h$ without $s$ \\
-Enumerate domain $X$ & Totality + trapdoor & Cannot test membership \\
-Detect query correlations & \textbf{Not fully} & Only marginal uniformity \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-The last row is the honest limitation: the four properties do not provide
-full correlation hiding unless the encoding granularity encompasses the
-correlated values (\S\ref{subsec:granularity}).
-
-
-%% ============================================================
 \section{The Singular Hash Map}
 \label{sec:singular-hash}
 
@@ -886,7 +895,7 @@ $n \log_2(1/\varepsilon)$ bits.
 
 \emph{Value component.}
 Independently of membership, the structure must encode the function values
-$(f(x_1), \ldots, f(x_n))$.  By Shannon's source coding theorem, encoding
+$(f(x_1), \ldots, f(x_n))$.  By Shannon's source coding theorem~\cite{shannon1948mathematical}, encoding
 $n$ independent draws from the distribution $(p_y)$ requires at least
 $n H(Y)$ bits.
 
@@ -1060,45 +1069,35 @@ maximum $p_1 + p_2 - p_1 p_2$ (case $(0,0)$).
 \label{thm:composition}
 Let $\fhat$ be a cipher map for $f : X \to Y$ with correctness $\eta_f$,
 and $\ghat$ a cipher map for $g : Y \to Z$ with correctness $\eta_g$.  Then
-$\ghat \circ \fhat$ is a cipher map for $g \circ f$ with correctness:
+$\ghat \circ \fhat$ is a cipher map for $g \circ f$ with correctness
 \begin{equation}
-\eta_{g \circ f} = 1 - (1 - \eta_f)(1 - \eta_g) = \eta_f + \eta_g -
-\eta_f \eta_g.
+\eta_{g \circ f} \leq \eta_f + \eta_g - \eta_f \eta_g
+  = 1 - (1 - \eta_f)(1 - \eta_g).
 \end{equation}
+Equality holds when $\fhat$ and $\ghat$ use independent seeds and
+$\ghat$'s correctness on $\fhat(c)$ is independent of whether $\fhat$
+was correct (the re-randomization condition).
 \end{theorem}
 
 \begin{proof}
 The composition is correct when \emph{both} maps produce correct results.
-We establish two bounds.
 
-\emph{Upper bound (union bound).}
-\begin{equation}
-\Pr[\text{incorrect}] \leq \Pr[\fhat \text{ incorrect}] +
-    \Pr[\ghat \text{ incorrect}] = \eta_f + \eta_g.
-\end{equation}
+\emph{Upper bound.}  By the union bound,
+$\Pr[\text{incorrect}] \leq \eta_f + \eta_g$.
+Since $\eta_f \eta_g \geq 0$, the tighter bound
+$\eta_f + \eta_g - \eta_f \eta_g$ also holds.
 
-\emph{Tight bound (independence).}
-Assume: (i)~$\fhat$ and $\ghat$ use independent seeds, and
-(ii)~$\ghat$'s correctness on $\fhat(c)$ is independent of whether $\fhat$
-was correct (re-randomization: the encoding fed to $\ghat$ is a fresh
-random valid encoding of $f(x)$).  Then
-\begin{equation}
-\Pr[\text{both correct}] = (1-\eta_f)(1-\eta_g),
-\end{equation}
-giving
-$\eta_{g \circ f} = 1 - (1-\eta_f)(1-\eta_g) = \eta_f + \eta_g -
-\eta_f \eta_g$.
+\emph{Equality under re-randomization.}
+If the re-randomization condition holds,
+$\Pr[\text{both correct}] = (1-\eta_f)(1-\eta_g)$,
+giving $\eta_{g \circ f} = 1 - (1-\eta_f)(1-\eta_g)$.
+
+In practice, $\fhat$ produces a \emph{specific} encoding of $f(x)$, not a
+uniformly random one.  If $\ghat$'s correctness depends on which encoding
+it receives, the errors may be positively correlated, making the inequality
+strict.  For specific circuits, the case-by-case interval arithmetic from
+\S\ref{subsec:and-gate} gives tighter bounds.
 \end{proof}
-
-\begin{remark}[Independence assumption]
-Condition~(ii) (re-randomization) deserves care.  In practice, $\fhat$
-produces a \emph{specific} encoding of $f(x)$, not a uniformly random one.
-If $\ghat$'s correctness depends on \emph{which} encoding it receives, the
-errors may be correlated.  The formula is therefore best understood as an
-upper bound under the weaker assumption that errors are positively
-correlated.  For specific circuits, the case-by-case analysis from
-\S\ref{subsec:and-gate} (interval arithmetic) gives tighter bounds.
-\end{remark}
 
 % FIXED: CM-3: address garbage propagation when f-hat fails
 \begin{remark}[Garbage propagation]

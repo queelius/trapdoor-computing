@@ -32,17 +32,19 @@
 \@writefile{toc}{\contentsline {paragraph}{Searchable symmetric encryption.}{2}{section*.6}\protected@file@percent }
 \@writefile{toc}{\contentsline {paragraph}{Garbled circuits and fully homomorphic encryption.}{2}{section*.7}\protected@file@percent }
 \citation{simmons1979symmetric}
+\citation{bellare1993random}
 \@writefile{toc}{\contentsline {paragraph}{Homophonic substitution.}{3}{section*.8}\protected@file@percent }
 \@writefile{toc}{\contentsline {section}{\numberline {3}The Cipher Map Abstraction}{3}{section.3}\protected@file@percent }
 \newlabel{sec:abstraction}{{3}{3}{The Cipher Map Abstraction}{section.3}{}}
 \newlabel{sec:abstraction@cref}{{[section][3][]3}{[1][3][]3}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Definition}{3}{subsection.3.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Preliminaries}{3}{subsection.3.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Definition}{3}{subsection.3.2}\protected@file@percent }
 \newlabel{def:cipher-map}{{3.1}{3}{Cipher map}{definition.3.1}{}}
 \newlabel{def:cipher-map@cref}{{[definition][1][3]3.1}{[1][3][]3}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Two Construction Strategies}{3}{subsection.3.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Construction Layers}{3}{subsection.3.3}\protected@file@percent }
-\newlabel{subsec:layers}{{3.3}{3}{Construction Layers}{subsection.3.3}{}}
-\newlabel{subsec:layers@cref}{{[subsection][3][3]3.3}{[1][3][]3}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Two Construction Strategies}{3}{subsection.3.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.4}Construction Layers}{4}{subsection.3.4}\protected@file@percent }
+\newlabel{subsec:layers}{{3.4}{4}{Construction Layers}{subsection.3.4}{}}
+\newlabel{subsec:layers@cref}{{[subsection][4][3]3.4}{[1][3][]4}}
 \@writefile{toc}{\contentsline {paragraph}{Layer 1: Undefined injection.}{4}{section*.9}\protected@file@percent }
 \@writefile{toc}{\contentsline {paragraph}{Layer 2: Noise closure.}{4}{section*.10}\protected@file@percent }
 \@writefile{toc}{\contentsline {paragraph}{Layer 3: Multiple representations.}{4}{section*.11}\protected@file@percent }
@@ -67,82 +69,84 @@
 \newlabel{thm:composition-correctness@cref}{{[theorem][1][4]4.1}{[1][5][]5}}
 \newlabel{eq:composition}{{4}{5}{Composition correctness}{equation.4.4}{}}
 \newlabel{eq:composition@cref}{{[equation][4][]4}{[1][5][]5}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.5}Parameter Decomposition}{5}{subsection.4.5}\protected@file@percent }
-\newlabel{eq:space}{{5}{5}{Parameter Decomposition}{equation.4.5}{}}
-\newlabel{eq:space@cref}{{[equation][5][]5}{[1][5][]5}}
 \@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Cipher map parameters.}}{6}{table.1}\protected@file@percent }
 \newlabel{tab:params}{{1}{6}{Cipher map parameters}{table.1}{}}
 \newlabel{tab:params@cref}{{[table][1][]1}{[1][5][]6}}
-\@writefile{toc}{\contentsline {section}{\numberline {5}Concrete Constructions}{6}{section.5}\protected@file@percent }
-\newlabel{sec:constructions}{{5}{6}{Concrete Constructions}{section.5}{}}
-\newlabel{sec:constructions@cref}{{[section][5][]5}{[1][5][]6}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.1}HashSet}{6}{subsection.5.1}\protected@file@percent }
-\newlabel{subsec:hashset}{{5.1}{6}{HashSet}{subsection.5.1}{}}
-\newlabel{subsec:hashset@cref}{{[subsection][1][5]5.1}{[1][6][]6}}
-\@writefile{toc}{\contentsline {paragraph}{Latent function.}{6}{section*.12}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Construction.}{6}{section*.13}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Mapping to cipher map abstraction.}{6}{section*.14}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Parameter instantiation.}{6}{section*.15}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Property status.}{7}{section*.16}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Construction complexity.}{7}{section*.17}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.2}Entropy Map}{7}{subsection.5.2}\protected@file@percent }
-\newlabel{subsec:entropy-map}{{5.2}{7}{Entropy Map}{subsection.5.2}{}}
-\newlabel{subsec:entropy-map@cref}{{[subsection][2][5]5.2}{[1][7][]7}}
-\@writefile{toc}{\contentsline {paragraph}{Latent function.}{7}{section*.18}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Construction.}{7}{section*.19}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Two-level hash (practical algorithm).}{7}{section*.20}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Construction time.}{7}{section*.21}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Mapping to cipher map abstraction.}{7}{section*.22}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Parameter instantiation.}{8}{section*.23}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Property status.}{8}{section*.24}\protected@file@percent }
-\newlabel{prop:entropy-space}{{5.1}{8}{Entropy map space}{theorem.5.1}{}}
-\newlabel{prop:entropy-space@cref}{{[proposition][1][5]5.1}{[1][8][]8}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.3}Trapdoor Boolean Algebra}{8}{subsection.5.3}\protected@file@percent }
-\newlabel{subsec:trapdoor-bool}{{5.3}{8}{Trapdoor Boolean Algebra}{subsection.5.3}{}}
-\newlabel{subsec:trapdoor-bool@cref}{{[subsection][3][5]5.3}{[1][8][]8}}
-\@writefile{toc}{\contentsline {paragraph}{Latent function.}{8}{section*.25}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Construction.}{8}{section*.26}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Why intersection is approximate.}{9}{section*.27}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Why NOT degrades with set size.}{9}{section*.28}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Relational predicates.}{9}{section*.29}\protected@file@percent }
-\newlabel{prop:membership-fp}{{5.2}{9}{Membership false positive rate}{theorem.5.2}{}}
-\newlabel{prop:membership-fp@cref}{{[proposition][2][5]5.2}{[1][9][]9}}
-\@writefile{toc}{\contentsline {paragraph}{Space complexity.}{9}{section*.30}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Mapping to cipher map abstraction.}{9}{section*.31}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Parameter instantiation}{9}{section*.32}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Property status.}{10}{section*.33}\protected@file@percent }
-\newlabel{rem:boolean-asymmetry}{{5.3}{10}{Boolean asymmetry}{remark.5.3}{}}
-\newlabel{rem:boolean-asymmetry@cref}{{[remark][3][5]5.3}{[1][9][]10}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.4}Construction Comparison}{10}{subsection.5.4}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Comparison of the three constructions.}}{10}{table.2}\protected@file@percent }
-\newlabel{tab:comparison}{{2}{10}{Comparison of the three constructions}{table.2}{}}
-\newlabel{tab:comparison@cref}{{[table][2][]2}{[1][10][]10}}
-\@writefile{toc}{\contentsline {section}{\numberline {6}The Trusted/Untrusted Machine Model}{10}{section.6}\protected@file@percent }
-\newlabel{sec:trust-model}{{6}{10}{The Trusted/Untrusted Machine Model}{section.6}{}}
-\newlabel{sec:trust-model@cref}{{[section][6][]6}{[1][10][]10}}
-\newlabel{def:trusted}{{6.1}{10}{Trusted machine $T$}{definition.6.1}{}}
-\newlabel{def:trusted@cref}{{[definition][1][6]6.1}{[1][10][]10}}
-\newlabel{def:untrusted}{{6.2}{10}{Untrusted machine $U$}{definition.6.2}{}}
-\newlabel{def:untrusted@cref}{{[definition][2][6]6.2}{[1][10][]10}}
-\@writefile{toc}{\contentsline {paragraph}{Protocol.}{11}{section*.34}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces What the four properties guarantee against $U$.}}{11}{table.3}\protected@file@percent }
-\newlabel{tab:guarantees}{{3}{11}{What the four properties guarantee against $U$}{table.3}{}}
-\newlabel{tab:guarantees@cref}{{[table][3][]3}{[1][11][]11}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.5}Parameter Decomposition}{6}{subsection.4.5}\protected@file@percent }
+\newlabel{eq:space}{{5}{6}{Parameter Decomposition}{equation.4.5}{}}
+\newlabel{eq:space@cref}{{[equation][5][]5}{[1][5][]6}}
+\@writefile{toc}{\contentsline {section}{\numberline {5}The Trusted/Untrusted Machine Model}{6}{section.5}\protected@file@percent }
+\newlabel{sec:trust-model}{{5}{6}{The Trusted/Untrusted Machine Model}{section.5}{}}
+\newlabel{sec:trust-model@cref}{{[section][5][]5}{[1][6][]6}}
+\newlabel{def:trusted}{{5.1}{6}{Trusted machine $T$}{definition.5.1}{}}
+\newlabel{def:trusted@cref}{{[definition][1][5]5.1}{[1][6][]6}}
+\newlabel{def:untrusted}{{5.2}{6}{Untrusted machine $U$}{definition.5.2}{}}
+\newlabel{def:untrusted@cref}{{[definition][2][5]5.2}{[1][6][]6}}
+\@writefile{toc}{\contentsline {paragraph}{Protocol.}{7}{section*.12}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces What the four properties guarantee against $U$.}}{7}{table.2}\protected@file@percent }
+\newlabel{tab:guarantees}{{2}{7}{What the four properties guarantee against $U$}{table.2}{}}
+\newlabel{tab:guarantees@cref}{{[table][2][]2}{[1][7][]7}}
+\@writefile{toc}{\contentsline {section}{\numberline {6}Concrete Constructions}{7}{section.6}\protected@file@percent }
+\newlabel{sec:constructions}{{6}{7}{Concrete Constructions}{section.6}{}}
+\newlabel{sec:constructions@cref}{{[section][6][]6}{[1][7][]7}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.1}HashSet}{7}{subsection.6.1}\protected@file@percent }
+\newlabel{subsec:hashset}{{6.1}{7}{HashSet}{subsection.6.1}{}}
+\newlabel{subsec:hashset@cref}{{[subsection][1][6]6.1}{[1][7][]7}}
+\@writefile{toc}{\contentsline {paragraph}{Latent function.}{7}{section*.13}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Construction.}{8}{section*.14}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Mapping to cipher map abstraction.}{8}{section*.15}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Parameter instantiation.}{8}{section*.16}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Property status.}{8}{section*.17}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Construction complexity.}{8}{section*.18}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.2}Entropy Map}{8}{subsection.6.2}\protected@file@percent }
+\newlabel{subsec:entropy-map}{{6.2}{8}{Entropy Map}{subsection.6.2}{}}
+\newlabel{subsec:entropy-map@cref}{{[subsection][2][6]6.2}{[1][8][]8}}
+\@writefile{toc}{\contentsline {paragraph}{Latent function.}{8}{section*.19}\protected@file@percent }
+\citation{shannon1948mathematical}
+\@writefile{toc}{\contentsline {paragraph}{Construction.}{9}{section*.20}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Two-level hash (practical algorithm).}{9}{section*.21}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Construction time.}{9}{section*.22}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Mapping to cipher map abstraction.}{9}{section*.23}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Parameter instantiation.}{9}{section*.24}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Property status.}{9}{section*.25}\protected@file@percent }
+\newlabel{prop:entropy-space}{{6.1}{9}{Entropy map space}{theorem.6.1}{}}
+\newlabel{prop:entropy-space@cref}{{[proposition][1][6]6.1}{[1][9][]9}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.3}Trapdoor Boolean Algebra}{10}{subsection.6.3}\protected@file@percent }
+\newlabel{subsec:trapdoor-bool}{{6.3}{10}{Trapdoor Boolean Algebra}{subsection.6.3}{}}
+\newlabel{subsec:trapdoor-bool@cref}{{[subsection][3][6]6.3}{[1][10][]10}}
+\@writefile{toc}{\contentsline {paragraph}{Latent function.}{10}{section*.26}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Construction.}{10}{section*.27}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Why intersection is approximate.}{10}{section*.28}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Why NOT degrades with set size.}{10}{section*.29}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Relational predicates.}{10}{section*.30}\protected@file@percent }
+\newlabel{prop:membership-fp}{{6.2}{10}{Membership false positive rate}{theorem.6.2}{}}
+\newlabel{prop:membership-fp@cref}{{[proposition][2][6]6.2}{[1][10][]10}}
+\@writefile{toc}{\contentsline {paragraph}{Space complexity.}{11}{section*.31}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Mapping to cipher map abstraction.}{11}{section*.32}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Parameter instantiation}{11}{section*.33}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Property status.}{11}{section*.34}\protected@file@percent }
+\newlabel{rem:boolean-asymmetry}{{6.3}{11}{Boolean asymmetry}{remark.6.3}{}}
+\newlabel{rem:boolean-asymmetry@cref}{{[remark][3][6]6.3}{[1][11][]11}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.4}Construction Comparison}{11}{subsection.6.4}\protected@file@percent }
 \@writefile{toc}{\contentsline {section}{\numberline {7}The Singular Hash Map}{11}{section.7}\protected@file@percent }
 \newlabel{sec:singular-hash}{{7}{11}{The Singular Hash Map}{section.7}{}}
 \newlabel{sec:singular-hash@cref}{{[section][7][]7}{[1][11][]11}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {7.1}Information-Theoretic Lower Bound}{12}{subsection.7.1}\protected@file@percent }
-\newlabel{subsec:lower-bound}{{7.1}{12}{Information-Theoretic Lower Bound}{subsection.7.1}{}}
-\newlabel{subsec:lower-bound@cref}{{[subsection][1][7]7.1}{[1][11][]12}}
-\newlabel{thm:lower-bound}{{7.1}{12}{Lower bound}{theorem.7.1}{}}
-\newlabel{thm:lower-bound@cref}{{[theorem][1][7]7.1}{[1][11][]12}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.1}Information-Theoretic Lower Bound}{11}{subsection.7.1}\protected@file@percent }
+\newlabel{subsec:lower-bound}{{7.1}{11}{Information-Theoretic Lower Bound}{subsection.7.1}{}}
+\newlabel{subsec:lower-bound@cref}{{[subsection][1][7]7.1}{[1][11][]11}}
+\newlabel{thm:lower-bound}{{7.1}{11}{Lower bound}{theorem.7.1}{}}
+\newlabel{thm:lower-bound@cref}{{[theorem][1][7]7.1}{[1][11][]11}}
+\citation{shannon1948mathematical}
+\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces Comparison of the three constructions.}}{12}{table.3}\protected@file@percent }
+\newlabel{tab:comparison}{{3}{12}{Comparison of the three constructions}{table.3}{}}
+\newlabel{tab:comparison@cref}{{[table][3][]3}{[1][11][]12}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {7.2}Construction}{12}{subsection.7.2}\protected@file@percent }
-\@writefile{loa}{\contentsline {algorithm}{\numberline {1}{\ignorespaces Singular Hash Map Construction}}{12}{algorithm.1}\protected@file@percent }
-\newlabel{alg:singular-hash}{{1}{12}{Construction}{algorithm.1}{}}
-\newlabel{alg:singular-hash@cref}{{[algorithm][1][]1}{[1][12][]12}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {7.3}Space Optimality}{13}{subsection.7.3}\protected@file@percent }
-\newlabel{thm:space-optimal}{{7.2}{13}{Space complexity}{theorem.7.2}{}}
-\newlabel{thm:space-optimal@cref}{{[theorem][2][7]7.2}{[1][13][]13}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.3}Space Optimality}{12}{subsection.7.3}\protected@file@percent }
+\newlabel{thm:space-optimal}{{7.2}{12}{Space complexity}{theorem.7.2}{}}
+\newlabel{thm:space-optimal@cref}{{[theorem][2][7]7.2}{[1][12][]12}}
+\@writefile{loa}{\contentsline {algorithm}{\numberline {1}{\ignorespaces Singular Hash Map Construction}}{13}{algorithm.1}\protected@file@percent }
+\newlabel{alg:singular-hash}{{1}{13}{Construction}{algorithm.1}{}}
+\newlabel{alg:singular-hash@cref}{{[algorithm][1][]1}{[1][12][]13}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {7.4}Construction Time}{13}{subsection.7.4}\protected@file@percent }
 \newlabel{prop:construction-time}{{7.4}{13}{Expected construction trials}{theorem.7.4}{}}
 \newlabel{prop:construction-time@cref}{{[proposition][4][7]7.4}{[1][13][]13}}
@@ -159,7 +163,7 @@
 \newlabel{thm:composition@cref}{{[theorem][2][8]8.2}{[1][14][]14}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {8.3}Composition Chains}{15}{subsection.8.3}\protected@file@percent }
 \newlabel{cor:chain}{{8.3}{15}{Chain composition}{theorem.8.3}{}}
-\newlabel{cor:chain@cref}{{[corollary][3][8]8.3}{[1][15][]15}}
+\newlabel{cor:chain@cref}{{[corollary][3][8]8.3}{[1][14][]15}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {8.4}Error Accumulation by Gate Type}{15}{subsection.8.4}\protected@file@percent }
 \@writefile{toc}{\contentsline {section}{\numberline {9}Representation Uniformity and Encoding Granularity}{15}{section.9}\protected@file@percent }
 \newlabel{sec:uniformity}{{9}{15}{Representation Uniformity and Encoding Granularity}{section.9}{}}
@@ -169,7 +173,7 @@
 \newlabel{subsec:granularity@cref}{{[subsection][1][9]9.1}{[1][15][]15}}
 \citation{bernoulli-types}
 \newlabel{prop:granularity}{{9.1}{16}{Granularity and privacy}{theorem.9.1}{}}
-\newlabel{prop:granularity@cref}{{[proposition][1][9]9.1}{[1][16][]16}}
+\newlabel{prop:granularity@cref}{{[proposition][1][9]9.1}{[1][15][]16}}
 \@writefile{toc}{\contentsline {paragraph}{The trade-off.}{16}{section*.35}\protected@file@percent }
 \@writefile{toc}{\contentsline {paragraph}{Honest limitations.}{16}{section*.36}\protected@file@percent }
 \@writefile{toc}{\contentsline {section}{\numberline {10}Discussion}{16}{section.10}\protected@file@percent }
@@ -180,13 +184,13 @@
 \@writefile{toc}{\contentsline {subsection}{\numberline {10.3}Application: Encrypted Search}{17}{subsection.10.3}\protected@file@percent }
 \newlabel{subsec:encrypted-search}{{10.3}{17}{Application: Encrypted Search}{subsection.10.3}{}}
 \newlabel{subsec:encrypted-search@cref}{{[subsection][3][10]10.3}{[1][17][]17}}
+\newlabel{prop:deniability}{{10.1}{17}{Bayesian deniability}{theorem.10.1}{}}
+\newlabel{prop:deniability@cref}{{[proposition][1][10]10.1}{[1][17][]17}}
 \bibstyle{plainnat}
 \bibdata{references}
-\newlabel{prop:deniability}{{10.1}{18}{Bayesian deniability}{theorem.10.1}{}}
-\newlabel{prop:deniability@cref}{{[proposition][1][10]10.1}{[1][17][]18}}
+\bibcite{agrawal2004order}{{1}{2004}{{Agrawal et~al.}}{{Agrawal, Kiernan, Srikant, and Xu}}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {10.4}Open Questions}{18}{subsection.10.4}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {10.5}What This Framework Is Not}{18}{subsection.10.5}\protected@file@percent }
-\bibcite{agrawal2004order}{{1}{2004}{{Agrawal et~al.}}{{Agrawal, Kiernan, Srikant, and Xu}}}
 \bibcite{belazzougui2009hash}{{2}{2009}{{Belazzougui et~al.}}{{Belazzougui, Botelho, and Dietzfelbinger}}}
 \bibcite{bellare2007deterministic}{{3}{2007}{{Bellare et~al.}}{{Bellare, Boldyreva, and O'Neill}}}
 \bibcite{bender2012quotient}{{4}{2012}{{Bender et~al.}}{{Bender, Farach-Colton, Johnson, Kraner, Kuszmaul, Medjedovic, Montes, Shetty, Spillane, and Zadok}}}
