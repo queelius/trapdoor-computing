@@ -49,12 +49,6 @@ cd papers/maximizing-confidentiality && make
 # boolean-algebra-over-trapdoor-sets (Makefile inside paper/ subdir)
 cd papers/boolean-algebra-over-trapdoor-sets/paper && make
 
-# crypto-perf-hash (Makefile inside paper/ subdir)
-cd papers/crypto-perf-hash/paper && make
-
-# encrypted-search (Makefile inside paper/ subdir)
-cd papers/encrypted-search/paper && make
-
 # algebraic_cipher_types (Makefile inside src/ subdir, not paper/)
 cd papers/algebraic_cipher_types/src && make
 
@@ -72,10 +66,8 @@ trapdoor-computing/
     DESIGN-trapdoor-reframing.md  # Four properties, parameter decomposition
   papers/               # Git subtrees, each with its own GitHub remote
     cipher-maps/              # Core cipher maps paper (rebuilt from formalism)
-    maximizing-confidentiality/  # USENIX target, 51pp entropy optimization
+    maximizing-confidentiality/  # USENIX target, 43pp entropy optimization
     boolean-algebra-over-trapdoor-sets/  # Pre-July-2024 authentic only
-    crypto-perf-hash/         # Hash construction space analysis
-    encrypted-search/         # Encrypted search with Bernoulli types
     algebraic_cipher_types/   # Original 2022 algebraic types paper
   ECOSYSTEM-TRIAGE.md   # Classification of all related papers/code
   .papermill/state.md   # Papermill project state (stage, thesis, next actions)
@@ -104,6 +96,10 @@ The Bernoulli side provides quantitative error theory. The trapdoor side adds cr
 
 - `oblivious-computing/`: Legacy monorepo. Foundational papers (F1-F4) and extensions (E1-E2). F2 is DRIFTED (wrong ORAM formalism). Application papers are MIXED.
 - `boolean-algebra-over-trapdoor-sets/`: Pre-July-2024 commits (up to 549091a) are authentic. Later commits are Claude-drifted.
+
+## Writing Style
+
+Prefer plain English over notation when it's equally precise. Don't define standard concepts (entropy, conditional entropy, TV distance) from scratch. Don't give full type signatures for functions the reader already knows. Lead with the result, not the formalism.
 
 ## Author
 
