@@ -1146,12 +1146,12 @@ even when $\delta = 0$.
 \begin{proof}
 The first part follows directly from Definition~\ref{def:rep-uniformity}
 applied to the joint cipher map.  For the second part: even with $\delta=0$
-(perfect marginal uniformity), $\enc_i$ is a deterministic function of
-$(x_i, k_i)$.  An adversary observing $N$ draws of
-$(\enc_1(x_1, k_1), \enc_2(x_2, k_2))$ can estimate the joint distribution
-and recover the correlation structure of $(x_1, x_2)$, because the
-correlation structure under $D$ is preserved in the joint distribution of
-cipher value pairs.
+(perfect marginal uniformity), $\enc_i$ is injective for each fixed $k_i$.
+The joint distribution of $(\enc_1(x_1, k_1), \enc_2(x_2, k_2))$ is
+therefore a bijective image of the joint distribution of
+$((x_1, k_1), (x_2, k_2))$, preserving all statistical dependence between
+$x_1$ and $x_2$.  An adversary observing $N$ draws can estimate this joint
+distribution and recover the correlation structure of $(x_1, x_2)$.
 \end{proof}
 
 \paragraph{The trade-off.}
