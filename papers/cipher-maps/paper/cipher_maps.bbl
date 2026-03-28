@@ -113,10 +113,12 @@ Dawn~Xiaodong Song, David Wagner, and Adrian Perrig.
 \newblock In \emph{Proceedings of the 2000 IEEE Symposium on Security and
   Privacy}, pages 44--55, 2000.
 
-\bibitem[Towell(2024)]{bernoulli-types}
+\bibitem[Towell(2026)]{bernoulli-types}
 Alexander Towell.
-\newblock Bernoulli types: A framework for approximate computation.
-\newblock Working paper, 2024.
+\newblock Bernoulli sets and maps: A probabilistic framework for approximate
+  data structures, 2026.
+\newblock Manuscript in preparation. See
+  \url{https://github.com/queelius/bernoulli_sets}.
 
 \bibitem[Yao(1982)]{yao1982protocols}
 Andrew~C Yao.
