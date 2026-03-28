@@ -1,0 +1,44 @@
+\begin{thebibliography}{6}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Bellare and Rogaway(1993)]{bellare1993random}
+Mihir Bellare and Phillip Rogaway.
+\newblock Random oracles are practical: A paradigm for designing efficient
+  protocols.
+\newblock In \emph{Proceedings of the 1st ACM Conference on Computer and
+  Communications Security}, pages 62--73, 1993.
+
+\bibitem[Gentry(2009)]{gentry2009fully}
+Craig Gentry.
+\newblock Fully homomorphic encryption using ideal lattices.
+\newblock In \emph{Proceedings of the 41st Annual ACM Symposium on Theory of
+  Computing}, pages 169--178, 2009.
+
+\bibitem[Goldreich and Ostrovsky(1996)]{goldreich1996software}
+Oded Goldreich and Rafail Ostrovsky.
+\newblock Software protection and simulation on oblivious {RAMs}.
+\newblock \emph{Journal of the ACM}, 43\penalty0 (3):\penalty0 431--473, 1996.
+
+\bibitem[Towell(2026{\natexlab{a}})]{towell2026bernoulli}
+Alexander Towell.
+\newblock Bernoulli data types: Approximate algebraic types with quantitative
+  error, 2026{\natexlab{a}}.
+\newblock Manuscript in preparation.
+
+\bibitem[Towell(2026{\natexlab{b}})]{towell2026cipher}
+Alexander Towell.
+\newblock Cipher maps: Total functions as trapdoor approximations,
+  2026{\natexlab{b}}.
+\newblock Manuscript in preparation.
+
+\bibitem[Yao(1982)]{yao1982protocols}
+Andrew~C Yao.
+\newblock Protocols for secure computations.
+\newblock In \emph{23rd Annual Symposium on Foundations of Computer Science},
+  pages 160--164, 1982.
+
+\end{thebibliography}

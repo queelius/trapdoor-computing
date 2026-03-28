@@ -1,0 +1,1019 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{mathtools}
+\usepackage[numbers,square]{natbib}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\hypersetup{hypertexnames=false}
+\usepackage{cleveref}
+
+% Theorem environments
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{lemma}[theorem]{Lemma}
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}[section]
+\newtheorem{example}{Example}[section]
+
+\newcommand{\enc}{\mathrm{enc}}
+\newcommand{\dec}{\mathrm{dec}}
+\newcommand{\fhat}{\hat{f}}
+\newcommand{\cipher}[1]{\mathsf{C}(#1)}
+\newcommand{\orbitF}{\mathrm{orbit}_F}
+\newcommand{\B}{\{0,1\}}
+
+\title{Algebraic Cipher Types: Confidentiality Trade-offs\\in Type Constructors over Trapdoor Computing}
+\author{Alexander Towell\\\texttt{lex@metafunctor.com}}
+\date{March 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+A cipher map is a total function on bit strings that implements a trapdoor
+approximation of a latent function: the untrusted machine evaluates it
+blindly; only the trusted machine, holding the secret, can encode inputs
+and decode outputs.
+We study what happens when algebraic type constructors---products, sums,
+and exponentials---are applied to cipher values.
+Each constructor forces a specific confidentiality/functionality trade-off
+that is absent in plaintext programming.
+Our main result is a sum-type impossibility: for $A + B$, either the tag
+(which variant) is hidden and pattern matching requires the trapdoor, or
+pattern matching is available to the untrusted machine and the tag is
+leaked.
+No encoding achieves both simultaneously.
+We introduce the \emph{orbit closure} of a cipher value under a set of
+available operations and prove that confidentiality is bounded by the
+fraction of the cipher space reachable from any single value.
+Finally, we define a cipher Turing machine whose space complexity is
+$O(|Q| \cdot |\Gamma|)$, independent of the input domain size, contrasting
+with the $O(|X|)$ space of a cipher map---but at the cost of leaking head
+movement patterns.
+\end{abstract}
+
+
+%% ====================================================================
+\section{Introduction}
+\label{sec:intro}
+%% ====================================================================
+
+Trapdoor computing is a paradigm for evaluating functions on data whose
+meaning is hidden behind a one-way trapdoor (a cryptographic hash).
+A trusted machine encodes plaintext values into cipher values---opaque bit
+strings---and hands them, together with cipher maps (total functions on
+bit strings), to an untrusted machine.
+The untrusted machine evaluates the cipher maps and returns results.
+Without the trapdoor (the secret seed), it cannot decode the results or
+determine what function it computed.
+The formal framework of cipher maps, their four defining properties (totality,
+representation uniformity, correctness, composability), and three concrete
+constructions (HashSet, entropy map, trapdoor boolean algebra) are developed
+in~\cite{towell2026cipher}.
+
+Ordinary programming languages build complex types from simpler ones
+using a small set of type constructors: products ($A \times B$, pairs and
+records), sums ($A + B$, tagged unions and variants), and exponentials
+($A \to B$, functions).
+In plaintext computing, these constructors are transparent: a product
+exposes both components, a sum carries a tag that enables pattern matching,
+and a function is called by providing an argument.
+When values are hidden behind a trapdoor, each of these operations
+introduces a confidentiality cost that has no plaintext analogue.
+
+This paper identifies and formalizes those costs.
+The main contributions are:
+
+\begin{enumerate}
+\item \textbf{Sum-type impossibility} (\Cref{thm:sum-impossibility}).
+  For cipher values of sum type $A + B$, tag hiding and pattern matching
+  by the untrusted machine are mutually exclusive.
+  This is an information-theoretic result, independent of the cipher map
+  construction.
+
+\item \textbf{Orbit closure and confidentiality bound}
+  (\Cref{sec:orbit}).
+  We define the orbit closure of a cipher value under
+  available operations, prove monotonicity
+  (\Cref{thm:monotonicity}), and derive an upper bound on
+  confidentiality in terms of orbit size
+  (\Cref{thm:confidentiality-bound}).
+
+\item \textbf{Cipher Turing machine} (\Cref{sec:cipher-tm}).
+  We exhibit a model of computation on cipher values whose space complexity
+  is $O(|Q| \cdot |\Gamma|)$---depending on the program, not the data---but
+  which leaks the head movement pattern.
+\end{enumerate}
+
+We deliberately avoid game-based or simulation-based cryptographic
+definitions.
+Privacy in trapdoor computing comes from the one-way hash and the
+representation uniformity of cipher values, not from access-pattern
+indistinguishability.
+This is not ORAM~\cite{goldreich1996software}, FHE~\cite{gentry2009fully},
+or garbled circuits~\cite{yao1982protocols}; it is a distinct paradigm
+where totality and noise closure provide the confidentiality guarantees.
+
+
+%% ====================================================================
+\section{Preliminaries}
+\label{sec:prelim}
+%% ====================================================================
+
+We recall the cipher map abstraction from~\cite{towell2026cipher}.
+All notation follows that paper; we cite rather than re-derive.
+
+\begin{definition}[Cipher map~{\cite[Def.~1.1]{towell2026cipher}}]
+\label{def:cipher-map}
+A \emph{cipher map} for a latent function $f : X \to Y$ is a tuple
+$(\fhat, \enc, \dec, s)$ where
+$\fhat : \B^n \to \B^n$ is a total function on $n$-bit strings,
+$\enc : X \times \{0,\ldots,K{-}1\} \to \B^n$ is an encoding function,
+$\dec : \B^n \to Y \cup \{\bot\}$ is a decoding function, and
+$s$ is a secret (the trapdoor).
+The untrusted machine holds $\fhat$.
+The trusted machine holds $\enc$, $\dec$, and $s$.
+\end{definition}
+
+A cipher map satisfies four properties, parameterized by
+$(\eta, \varepsilon, \mu, \delta)$~\cite[Sec.~4]{towell2026cipher}:
+
+\begin{enumerate}
+\item \textbf{Totality.} $\fhat$ is defined on all $2^n$ inputs.
+  Out-of-domain outputs are indistinguishable from uniform under the
+  random oracle model~\cite{bellare1993random}.
+
+\item \textbf{Representation uniformity} ($\delta$-bounded).
+  The marginal distribution of cipher values is $\delta$-close (in total
+  variation distance) to uniform over $\B^n$.
+
+\item \textbf{Correctness} ($\eta$-bounded).
+  For a random in-domain element $x$ and random representation index $k$,
+  $\Pr[\dec(\fhat(\enc(x,k))) \neq f(x)] \leq \eta$.
+
+\item \textbf{Composability.}
+  For cipher maps $\fhat$ (correctness $\eta_f$) and $\hat{g}$ (correctness
+  $\eta_g$), the composition $\hat{g} \circ \fhat$ has correctness
+  $\eta_{g \circ f} = 1 - (1-\eta_f)(1-\eta_g)$.
+\end{enumerate}
+
+The Bernoulli error model~\cite{towell2026bernoulli} provides the
+quantitative foundation: element-wise independence of errors reduces the
+composition analysis from exponentially many joint failure modes to
+per-element Bernoulli parameters.
+We use $h : \B^* \to \B^n$ throughout to denote a cryptographic hash
+modeled as a random oracle.
+
+A cipher value $\enc(v, k)$ is a cipher map for the constant function
+$f_v(x) = v$; we use ``cipher value'' and ``cipher map from a trivial
+domain'' interchangeably.
+
+\begin{definition}[Trusted and untrusted machines~{\cite[Sec.~5]{towell2026cipher}}]
+\label{def:machines}
+The \emph{trusted machine} $T$ holds the trapdoor $s$, $\enc$, $\dec$, and
+can encode, decode, and inject filler queries.
+The \emph{untrusted machine} $U$ holds $\fhat$ and a collection of cipher
+values.
+$U$ can evaluate $\fhat$ on any bit string; it cannot decode, distinguish
+real from filler queries, or determine the domain $X$.
+\end{definition}
+
+
+%% ====================================================================
+\section{Cipher Type Constructors}
+\label{sec:types}
+%% ====================================================================
+
+We now examine how the standard algebraic type constructors interact with
+cipher values.
+For each constructor, there is a choice: apply the cipher operation to the
+entire constructed type, or construct from already-ciphered components.
+These two strategies yield different confidentiality and functionality
+properties.
+We write $\cipher{X}$ for the type of cipher values encoding elements of
+$X$.
+
+
+%% --------------------------------------------------------------------
+\subsection{Void and Unit}
+\label{sec:void-unit}
+%% --------------------------------------------------------------------
+
+The void type $\mathbf{0}$ has no values.
+A cipher map $\fhat$ for a function with domain $\mathbf{0}$ is vacuously
+correct ($\eta = 0$) and carries no information---it is a total function
+on $\B^n$ that is never queried on a valid encoding.
+From the untrusted machine's perspective, $\fhat$ is indistinguishable from
+a random function.
+
+The unit type $\mathbf{1}$ has exactly one value, $\star$.
+A cipher value $\enc(\star, k) \in \B^n$ encodes $\star$; with $K(\star) \geq 1$
+representations, all cipher values are representations of the same
+underlying value.
+The untrusted machine knows that every valid cipher value encodes $\star$
+but cannot distinguish valid encodings from noise (by totality).
+A cipher map $\fhat : \B^n \to \B^n$ for a function from $\mathbf{1}$ is
+a cipher constant: it maps every valid encoding of $\star$ to a cipher
+encoding of $f(\star)$.
+
+
+%% --------------------------------------------------------------------
+\subsection{Product Types}
+\label{sec:products}
+%% --------------------------------------------------------------------
+
+The product type $A \times B$ consists of pairs $(a, b)$ with $a \in A$ and
+$b \in B$.
+In plaintext computing, a product comes with two projections
+$\pi_1 : A \times B \to A$ and $\pi_2 : A \times B \to B$.
+Under cipher encoding, we have two choices.
+
+\paragraph{Joint encoding: $\cipher{A \times B}$.}
+Encode the pair $(a, b)$ as a single cipher value $\enc((a,b), k) \in \B^n$.
+The untrusted machine sees one opaque bit string.
+It cannot determine $a$ or $b$ individually, nor can it detect correlations
+between $a$ and $b$.
+But the projections $\pi_1, \pi_2$ are not available: to extract $a$ from a
+cipher encoding of $(a,b)$, one would need a cipher map
+$\hat{\pi}_1 : \B^n \to \B^n$ such that
+$\dec_A(\hat{\pi}_1(\enc((a,b),k))) = a$---which requires a separate cipher
+map construction for each projection.
+
+\paragraph{Component-wise encoding:
+$\cipher{A} \times \cipher{B}$.}
+Encode $a$ and $b$ independently as
+$(\enc_A(a, k_1),\allowbreak \enc_B(b, k_2))$.
+The untrusted machine sees a pair of cipher values.
+Projections are trivially available (just take the first or second
+component).
+But the joint distribution of $(a, b)$ is no longer hidden: even if each
+component has marginal representation uniformity ($\delta \approx 0$),
+the correlation between $a$ and $b$ is preserved in the joint distribution
+of the cipher pair.
+This is the encoding granularity principle
+of~\cite[Sec.~9]{towell2026cipher}: coarser encoding hides more
+correlations but blocks more operations.
+
+\begin{proposition}[Product confidentiality trade-off]
+\label{prop:product-tradeoff}
+Let $A$ and $B$ be finite types.
+\begin{enumerate}
+\item Under joint encoding $\cipher{A \times B}$, the untrusted machine
+  cannot distinguish $(a_1, b_1)$ from $(a_2, b_2)$ (up to $\delta$),
+  but projections require a cipher map (and thus a separate construction
+  by the trusted machine).
+\item Under component-wise encoding $\cipher{A} \times \cipher{B}$,
+  projections are free, but an adversary observing $N$ pairs
+  $(\enc_A(a_i, k_{1i}), \enc_B(b_i, k_{2i}))$ can estimate the joint
+  distribution of $(A, B)$ to arbitrary precision as $N \to \infty$.
+\end{enumerate}
+\end{proposition}
+
+\begin{proof}
+Part~(1): Under joint encoding with representation uniformity $\delta$,
+each cipher value is $\delta$-close to uniform over $\B^n$.
+Without the trapdoor, the untrusted machine cannot decode.
+Projections require mapping a cipher encoding of $(a,b)$ to a cipher
+encoding of $a$; this is a function from the code space of $A \times B$ to
+the code space of $A$, which is exactly a cipher map and requires
+construction by the trusted machine.
+
+Part~(2): Under component-wise encoding, the $i$-th observation is
+$(\enc_A(a_i, k_{1i}),\allowbreak \enc_B(b_i, k_{2i}))$.
+Even with perfect marginal uniformity ($\delta = 0$), each $\enc_A$ is a
+deterministic function of $(a_i, k_{1i})$.
+If the same representation index is reused, repeated values produce
+identical cipher values; even without reuse, the number of distinct cipher
+values associated with each latent value is finite ($K(a)$ for each $a$).
+Given $N$ observations, the adversary builds the empirical joint distribution
+over cipher-value pairs.
+Since each cipher value maps to at most one latent value (given a fixed
+representation index), the empirical joint distribution of cipher pairs
+converges to a mixture of the latent joint distribution.
+By standard convergence results, $N = O(|A| \cdot |B| / \xi^2)$
+observations suffice to estimate the joint to accuracy $\xi$ in total
+variation distance.
+\end{proof}
+
+
+%% --------------------------------------------------------------------
+\subsection{Sum Types}
+\label{sec:sums}
+%% --------------------------------------------------------------------
+
+The sum type $A + B$ is a tagged union: each value is either
+$\mathrm{inl}(a)$ for some $a \in A$, or $\mathrm{inr}(b)$ for some
+$b \in B$.
+The tag (left vs.\ right) enables pattern matching: given a value of type
+$A + B$, one inspects the tag to determine which handler to apply.
+
+In plaintext computing, the tag is always available and pattern matching
+is free.
+Under cipher encoding, this is no longer the case.
+
+\begin{theorem}[Sum-type impossibility]
+\label{thm:sum-impossibility}
+Let $A$ and $B$ be non-empty finite types with $|A| \geq 1$ and
+$|B| \geq 1$.
+For cipher values of sum type $A + B$, the following two properties are
+mutually exclusive:
+\begin{enumerate}
+\item \textbf{Tag hiding}: the untrusted machine cannot determine, from a
+  cipher value alone, whether it encodes an $A$-value or a $B$-value with
+  advantage better than $\delta$ (the representation uniformity parameter).
+\item \textbf{Untrusted pattern matching}: the untrusted machine can route
+  a cipher value to the correct handler ($A$-handler or $B$-handler)
+  without assistance from the trusted machine.
+\end{enumerate}
+\end{theorem}
+
+\begin{proof}
+We prove the two directions by exhibiting the information-theoretic
+constraint.
+
+\medskip
+\noindent\textbf{Joint encoding ($\cipher{A+B}$) achieves tag hiding but
+blocks pattern matching.}
+Under joint encoding, each value $v \in A + B$ (whether $\mathrm{inl}(a)$ or
+$\mathrm{inr}(b)$) is encoded as a single cipher value $\enc(v, k) \in \B^n$.
+Representation uniformity ($\delta$-bounded) guarantees that the marginal
+distribution of $\enc(v, k)$ over random $v$ and $k$ is $\delta$-close to
+uniform on $\B^n$.
+In particular, the set of cipher values encoding $A$-values and the set
+encoding $B$-values are not efficiently distinguishable by the untrusted
+machine: both are subsets of $\B^n$, and their union is $\delta$-close to
+covering $\B^n$ uniformly.
+Therefore the tag (which variant) is hidden up to $\delta$.
+
+Now suppose the untrusted machine could nonetheless perform pattern matching:
+given $c = \enc(v, k)$, it could determine whether to apply the $A$-handler
+or the $B$-handler.
+This requires a function $\tau : \B^n \to \{A, B\}$ such that
+$\tau(\enc(\mathrm{inl}(a), k)) = A$ for all $a, k$ and
+$\tau(\enc(\mathrm{inr}(b), k)) = B$ for all $b, k$.
+But $\tau$ is exactly a distinguisher between $A$-encodings and
+$B$-encodings.
+Such a distinguisher exists only if the two sets of cipher values are
+disjoint (or nearly so) in a way detectable without the trapdoor.
+If $\tau$ succeeds with probability $1 - \gamma$, then the tag is leaked
+with advantage at least $1 - \gamma - \delta$, contradicting tag hiding
+when $\gamma$ is small.
+
+\medskip
+\noindent\textbf{Component-wise encoding ($\cipher{A} + \cipher{B}$)
+permits pattern matching but leaks the tag.}
+Under component-wise encoding, the value is stored as a tagged pair:
+either $(\texttt{L}, \enc_A(a, k))$ or $(\texttt{R}, \enc_B(b, k))$,
+where the tag $\texttt{L}$ or $\texttt{R}$ is in the clear (or
+distinguishable by the encoding structure---for instance, $A$-cipher-values
+and $B$-cipher-values occupy disjoint regions of bit-string space, or
+carry a type identifier).
+The untrusted machine reads the tag and routes to the correct handler.
+Pattern matching is available.
+
+But the tag is observable.
+Given a cipher value, the untrusted machine learns whether it encodes an
+$A$-value or a $B$-value.
+For any distribution $D$ on $A + B$, the fraction of queries that are
+$A$-values is observable, leaking $\Pr_{v \sim D}[v \in A]$.
+
+\medskip
+\noindent\textbf{No intermediate encoding achieves both.}
+Suppose an encoding achieves both tag hiding (advantage $\leq \delta'$
+for some small $\delta'$) and untrusted pattern matching (success
+probability $\geq 1 - \gamma$).
+Pattern matching requires a function $\tau : \B^n \to \{A, B\}$ that is
+correct on valid encodings with probability $\geq 1 - \gamma$.
+Tag hiding requires that no such function exists with advantage better than
+$\delta'$.
+These are contradictory whenever $1 - \gamma - 1/2 > \delta'$, i.e.,
+whenever pattern matching succeeds with probability noticeably better than
+random guessing and the encoding is approximately uniform.
+Formally: the advantage of $\tau$ as a distinguisher between
+$A$-encodings and $B$-encodings is at least
+$(1 - \gamma) - 1/2 = 1/2 - \gamma$.
+Tag hiding requires this advantage to be at most $\delta'$.
+Therefore $1/2 - \gamma \leq \delta'$, which means either
+$\gamma \geq 1/2 - \delta'$ (pattern matching fails nearly half the time)
+or $\delta' \geq 1/2 - \gamma$ (the tag is substantially leaked).
+\end{proof}
+
+\begin{remark}[Contrast with products]
+\label{rem:sum-vs-product}
+Products leak correlations; sums leak the tag.
+The asymmetry is structural.
+For a product $A \times B$, the two components are always both present;
+the question is whether their relationship (correlation) is visible.
+For a sum $A + B$, only one component is present; the question is whether
+which one is visible.
+A product hides \emph{what values co-occur}; a sum hides \emph{what type
+is occupied}.
+\end{remark}
+
+\begin{remark}[Trusted pattern matching]
+\label{rem:trusted-matching}
+Under joint encoding $\cipher{A+B}$, pattern matching is still possible---by
+the trusted machine.
+The trusted machine decodes $\dec(c)$, inspects the tag, applies the
+appropriate handler in plaintext, and re-encodes the result.
+This requires a round trip through the trusted machine for every case
+analysis.
+The cost is a communication round, not an impossibility.
+The impossibility is for \emph{untrusted} pattern matching without the
+trapdoor.
+\end{remark}
+
+\begin{example}[Cipher optionals]
+\label{ex:optional}
+The optional type $\mathrm{Maybe}(A) = \mathbf{1} + A$ is a sum.
+Under $\cipher{\mathbf{1} + A}$, the untrusted machine cannot tell
+whether a cipher value encodes $\mathrm{Nothing}$ or $\mathrm{Just}(a)$.
+Under $\cipher{\mathbf{1}} + \cipher{A}$, the untrusted machine knows
+whether the value is present, but not what it is.
+For a database application, the first encoding hides which records have null
+fields; the second reveals the null pattern but permits null-checking without
+the trapdoor.
+\end{example}
+
+
+%% --------------------------------------------------------------------
+\subsection{Exponential Types}
+\label{sec:exponentials}
+%% --------------------------------------------------------------------
+
+The exponential type $B^A = A \to B$ is the type of functions from $A$ to
+$B$.
+A cipher map $\fhat$ for $f : A \to B$ is already an element of the cipher
+exponential type: it is a total function on $\B^n$ that, when restricted
+to valid encodings of $A$, produces (approximate) encodings of $B$-values.
+
+This observation, developed in~\cite{towell2026cipher}, means the cipher
+exponential type is not a new construction but the cipher map abstraction
+itself.
+The four properties (totality, representation uniformity, correctness,
+composability) are exactly the conditions that make $\fhat$ a well-behaved
+element of $\cipher{A \to B}$.
+
+The encoding granularity trade-off from \Cref{sec:products} extends to
+exponentials.
+Given cipher maps $\fhat : \B^n \to \B^n$ and $\hat{g} : \B^n \to \B^n$,
+applying them independently (component-wise) to the two components of a
+product cipher value reveals that both functions are being applied---leaking
+the computation pattern.
+Encoding the pair of function applications as a single cipher map
+$\widehat{(f,g)} : \B^n \to \B^n$ for the product function
+$(f, g)(a, b) = (f(a), g(b))$ hides the computation pattern but requires
+a dedicated construction.
+
+
+%% ====================================================================
+\section{Orbit Closure and Information Leakage}
+\label{sec:orbit}
+%% ====================================================================
+
+The type constructors of \Cref{sec:types} describe static confidentiality
+properties: what the untrusted machine can learn from the structure of a
+single cipher value.
+We now develop a tool for analyzing dynamic confidentiality: what the
+untrusted machine can learn by actively applying the cipher maps it holds.
+
+
+%% --------------------------------------------------------------------
+\subsection{Definition}
+\label{sec:orbit-def}
+%% --------------------------------------------------------------------
+
+\begin{definition}[Orbit closure]
+\label{def:orbit}
+Let $F = \{\fhat_1, \ldots, \fhat_k\}$ be a set of cipher maps
+(total functions $\B^n \to \B^n$) available to the untrusted machine,
+and let $c \in \B^n$ be a cipher value.
+The \emph{orbit closure} of $c$ under $F$ is the smallest set
+$\orbitF(c) \subseteq \B^n$ such that:
+\begin{enumerate}
+\item $c \in \orbitF(c)$, and
+\item if $c' \in \orbitF(c)$ and $\fhat_i \in F$, then
+  $\fhat_i(c') \in \orbitF(c)$.
+\end{enumerate}
+Equivalently, $\orbitF(c)$ is the set of all bit strings reachable from
+$c$ by composing operations in $F$ in any order and any number of times.
+\end{definition}
+
+Since $\B^n$ is finite, $\orbitF(c)$ is always finite and can be computed
+by iterative expansion (breadth-first search from $c$, applying each
+$\fhat_i$ at each step, until no new values appear).
+
+\begin{remark}
+The orbit closure depends only on the cipher maps $F$ available to the
+untrusted machine and the starting cipher value $c$.
+It does not depend on the latent function, the domain, or the trapdoor.
+This makes it a tool for analysis by the trusted machine designer: given
+the operations you plan to expose, how much can the untrusted machine
+explore?
+\end{remark}
+
+
+%% --------------------------------------------------------------------
+\subsection{Monotonicity}
+\label{sec:monotonicity}
+%% --------------------------------------------------------------------
+
+\begin{theorem}[Monotonicity of orbit closure]
+\label{thm:monotonicity}
+If $F \subseteq G$ (every operation in $F$ is also in $G$), then
+$\orbitF(c) \subseteq \mathrm{orbit}_G(c)$ for all $c \in \B^n$.
+\end{theorem}
+
+\begin{proof}
+By induction on the iterative construction of $\orbitF(c)$.
+
+\emph{Base case.} $c \in \orbitF(c)$ and $c \in \mathrm{orbit}_G(c)$
+by definition.
+
+\emph{Inductive step.} Suppose $c' \in \orbitF(c)$ and $c' \in
+\mathrm{orbit}_G(c)$ (inductive hypothesis).
+For any $\fhat_i \in F$, we have $\fhat_i(c') \in \orbitF(c)$ by
+\Cref{def:orbit}.
+Since $F \subseteq G$, $\fhat_i \in G$, so
+$\fhat_i(c') \in \mathrm{orbit}_G(c)$ by \Cref{def:orbit} applied to $G$.
+
+Every element of $\orbitF(c)$ is therefore also in $\mathrm{orbit}_G(c)$.
+\end{proof}
+
+The interpretation is direct: exposing more operations to the untrusted
+machine can only enlarge (never shrink) the set of cipher values it can
+reach.
+Each additional operation is an additional edge in the reachability graph
+over $\B^n$.
+
+\begin{corollary}
+\label{cor:empty-ops}
+$\mathrm{orbit}_\emptyset(c) = \{c\}$ for all $c$.
+If the untrusted machine has no cipher maps, it learns nothing beyond the
+cipher value it was given.
+\end{corollary}
+
+\begin{proof}
+With $F = \emptyset$, only the base case of the orbit definition applies.
+\end{proof}
+
+
+%% --------------------------------------------------------------------
+\subsection{Confidentiality Bound}
+\label{sec:conf-bound}
+%% --------------------------------------------------------------------
+
+The orbit closure quantifies reachability.
+We now connect it to confidentiality.
+The key idea: the untrusted machine knows, without the trapdoor, that
+the latent value encoded by $c$ must be consistent with every cipher value
+in $\orbitF(c)$.
+A larger orbit means more of the cipher space is determined by $c$, leaving
+fewer possibilities for the latent value.
+
+\begin{definition}[Candidate set]
+\label{def:candidate-set}
+Given a cipher value $c$ and operations $F$, the \emph{candidate set} is
+the set of latent values $x \in X$ that are consistent with $c$ and
+$\orbitF(c)$:
+\[
+\mathrm{Cand}_F(c) = \{ x \in X \mid \exists\, k \text{ s.t.\ }
+\enc(x, k) = c \}.
+\]
+If the untrusted machine can additionally check whether specific cipher
+values in $\orbitF(c)$ match known constants (e.g., a known encoding of a
+specific value), the candidate set shrinks further.
+\end{definition}
+
+\begin{theorem}[Confidentiality bound]
+\label{thm:confidentiality-bound}
+Let $F$ be a set of cipher maps available to the untrusted machine, $c$ a
+cipher value, and assume representation uniformity with parameter
+$\delta \approx 0$ (approximately uniform marginals).
+Then the fraction of the latent domain $X$ that is excluded by the orbit
+closure is at most:
+\[
+\frac{|\orbitF(c)|}{2^n}.
+\]
+That is, the untrusted machine can determine that the latent value belongs
+to a subset of $X$ of size at most
+\[
+|\mathrm{Cand}_F(c)| \leq |X| \cdot
+  \left(1 - \frac{|\orbitF(c)| - |X|}{2^n - |X|}\right)
+\]
+when $|\orbitF(c)| > |X|$ and the orbit includes noise values, and
+more precisely:
+\[
+\frac{|\mathrm{Cand}_F(c)|}{|X|} \leq
+  \frac{|\orbitF(c)|}{2^n} \cdot \frac{2^n}{|X|}
+  = \frac{|\orbitF(c)|}{|X|}.
+\]
+The confidentiality of $c$ under $F$, measured as the adversary's remaining
+uncertainty about the latent value, satisfies:
+\[
+\mathrm{conf}_F(c) \geq 1 - \frac{|\orbitF(c)|}{2^n}.
+\]
+\end{theorem}
+
+\begin{proof}
+Under approximate representation uniformity ($\delta \approx 0$), each
+latent value $x$ has $K(x)$ representations spread approximately uniformly
+across $\B^n$.
+The total number of valid encodings is $\sum_x K(x)$, occupying a fraction
+$\varepsilon = \sum_x K(x) / 2^n$ of the cipher space.
+
+The orbit $\orbitF(c)$ is a set of bit strings.
+Some of these are valid encodings of latent values; the rest are noise
+(bit strings that decode to $\bot$).
+The untrusted machine can compute every element of $\orbitF(c)$ but cannot
+decode any of them.
+However, it knows the total size $|\orbitF(c)|$ and can observe which
+elements of the orbit are equal to each other.
+
+The adversary's knowledge is bounded as follows.
+Without any operations ($F = \emptyset$), the adversary knows only $c$ and
+must guess among all $|X|$ latent values (assuming $\delta \approx 0$).
+With operations $F$, the adversary learns the orbit structure:
+which orbit elements are distinct, how the operations connect them, and
+whether any orbit element matches a known cipher value.
+
+In the worst case (from the confidentiality perspective), every element of
+$\orbitF(c)$ is a valid encoding and each encodes a distinct latent value.
+Then the adversary learns that the latent value is one of at most
+$|\orbitF(c)|$ values.
+Since there are $2^n$ total bit strings and $|X|$ latent values (each with
+$K(x) \geq 1$ representations), the fraction of the cipher space explored
+is $|\orbitF(c)| / 2^n$.
+The remaining unexplored fraction is
+$1 - |\orbitF(c)| / 2^n$, which bounds the confidentiality.
+\end{proof}
+
+\begin{remark}
+When $|\orbitF(c)| = 2^n$ (the entire cipher space is reachable), the
+confidentiality bound is zero: the adversary can potentially distinguish
+every latent value by exploring the orbit structure.
+When $|\orbitF(c)| = 1$ (no operations available), confidentiality is
+$1 - 2^{-n} \approx 1$.
+\end{remark}
+
+
+%% --------------------------------------------------------------------
+\subsection{Examples}
+\label{sec:orbit-examples}
+%% --------------------------------------------------------------------
+
+\begin{example}[Boolean operations]
+\label{ex:boolean-orbit}
+Let $X = \{0, 1\}$ (Boolean) with cipher maps $\widehat{\mathrm{AND}}$ and
+$\widehat{\mathrm{NOT}}$ available to the untrusted machine.
+Given a cipher value $c$ encoding some unknown Boolean $x$, the untrusted
+machine can compute:
+\begin{align*}
+c_1 &= \widehat{\mathrm{NOT}}(c), \\
+c_2 &= \widehat{\mathrm{AND}}(c, c_1)
+     = \widehat{\mathrm{AND}}(c, \widehat{\mathrm{NOT}}(c)).
+\end{align*}
+
+Now, $\mathrm{AND}(x, \mathrm{NOT}(x)) = 0$ for all $x$ (up to
+correctness $\eta$).
+So $c_2$ is an (approximate) cipher encoding of the constant
+$\mathrm{FALSE}$.
+If the untrusted machine has a reference cipher value $c_{\mathrm{F}}$
+known to encode $\mathrm{FALSE}$ (for instance, from a prior computation
+$\widehat{\mathrm{AND}}(c', \widehat{\mathrm{NOT}}(c'))$ for some other
+cipher value $c'$), it can compare $c_2$ with $c_{\mathrm{F}}$.
+
+This comparison reveals information: if $c_2 = c_{\mathrm{F}}$
+(same representation), the untrusted machine confirms the tautology
+and potentially identifies the representation index.
+Writing $F_0 = \{\widehat{\mathrm{AND}}, \widehat{\mathrm{NOT}}\}$, the
+orbit $\mathrm{orbit}_{F_0}(c)$ includes $c$, $c_1$, $c_2$, and all further
+compositions---quickly covering a nontrivial fraction of the cipher space
+for small $n$.
+\end{example}
+
+\begin{example}[Successor on a bounded type]
+\label{ex:successor-orbit}
+Let $X = \{0, 1, \ldots, m-1\}$ (integers mod $m$) with a single cipher
+map $\widehat{\mathrm{succ}}$ implementing the successor function
+$x \mapsto (x+1) \bmod m$.
+Given any cipher value $c$ encoding some $x$:
+\[
+\mathrm{orbit}_{\{\widehat{\mathrm{succ}}\}}(c) =
+  \{c,\; \widehat{\mathrm{succ}}(c),\;
+   \widehat{\mathrm{succ}}^2(c),\; \ldots,\;
+   \widehat{\mathrm{succ}}^{m-1}(c)\}.
+\]
+After $m$ applications, the orbit returns to $c$ (since successor is
+cyclic on $\mathbb{Z}/m\mathbb{Z}$).
+The orbit has exactly $m$ elements (assuming $\eta = 0$).
+The untrusted machine does not learn which element is
+$\enc(0, k)$, but it learns the cycle structure: there exists a cycle of
+length $m$ starting from $c$.
+This reveals $m = |X|$, the domain cardinality.
+
+By \Cref{thm:confidentiality-bound}, the confidentiality is
+$1 - m/2^n$.
+For $m \ll 2^n$, this is close to 1: the orbit covers a tiny fraction
+of the cipher space.
+For $m$ close to $2^n$, confidentiality degrades.
+\end{example}
+
+\begin{example}[Branching]
+\label{ex:branching-orbit}
+Suppose the untrusted machine holds cipher maps $\fhat$ and $\hat{g}$
+and evaluates both on a cipher value $c$, obtaining $\fhat(c)$ and
+$\hat{g}(c)$.
+The orbit of $c$ under $\{\fhat, \hat{g}\}$ includes both results plus all
+further compositions.
+If $\fhat$ and $\hat{g}$ are the two branches of a conditional
+(the ``then'' and ``else'' handlers), both cipher results are visible to
+the untrusted machine---even though in plaintext computing, only one
+branch would be taken.
+
+This is a form of information leakage specific to trapdoor computing:
+the untrusted machine does not know which branch is ``correct,'' but it
+sees both outcomes, enlarging the orbit and reducing confidentiality.
+Mitigating this requires either (a)~evaluating both branches and having the
+trusted machine select the correct result, or (b)~encoding the branch
+selection as part of the cipher map (a joint encoding of the conditional).
+Strategy (a) doubles the computation; strategy (b) requires a dedicated
+cipher map construction.
+\end{example}
+
+
+%% ====================================================================
+\section{Cipher Turing Machine}
+\label{sec:cipher-tm}
+%% ====================================================================
+
+The cipher map abstraction represents a function $f : X \to Y$ as a lookup
+table: a total function $\fhat : \B^n \to \B^n$ that maps each cipher
+encoding of $x$ to a cipher encoding of $f(x)$.
+The space complexity is $O(|X|)$---the table must have an entry for every
+element of the domain (plus noise entries).
+For large domains (e.g., string processing over an alphabet of size
+$|\Sigma|$ with strings of length $\ell$, giving $|X| = |\Sigma|^\ell$),
+this is prohibitive.
+
+A Turing machine provides an alternative computational model whose space
+depends on the \emph{program} (states and tape alphabet), not the
+\emph{data} (input size).
+We define a cipher Turing machine and analyze its space and leakage
+properties.
+
+
+%% --------------------------------------------------------------------
+\subsection{Definition}
+\label{sec:cipher-tm-def}
+%% --------------------------------------------------------------------
+
+\begin{definition}[Cipher Turing machine]
+\label{def:cipher-tm}
+A \emph{cipher Turing machine} is a tuple $(Q, \Gamma, \delta_T, q_0,
+q_{\mathrm{halt}})$ together with a cipher encoding of the transition
+function, where:
+\begin{itemize}
+\item $Q$ is a finite set of states, $\Gamma$ is a finite tape alphabet
+  (with a distinguished blank symbol $\sqcup$).
+\item The transition function
+  $\delta_T : Q \times \Gamma \to Q \times \Gamma \times \{L, R, S\}$
+  maps (current state, symbol read) to (next state, symbol to write,
+  head direction).
+\item $\delta_T$ is implemented as a cipher map
+  $\hat{\delta}_T : \B^n \to \B^n$, where the input is a cipher encoding
+  of a (state, symbol) pair and the output is a cipher encoding of a
+  (state, symbol, direction) triple.
+\item The tape is a sequence of cipher values, each encoding a symbol in
+  $\Gamma$.
+\item $q_0$ is the initial state (cipher-encoded); $q_{\mathrm{halt}}$ is
+  the halting state.
+\end{itemize}
+
+Execution proceeds as follows.
+At each step, the untrusted machine reads the cipher symbol $c_{\mathrm{sym}}$
+at the current head position and the current cipher state $c_q$.
+It evaluates $\hat{\delta}_T$ on $\enc((q, \gamma), k)$ where $q$ and
+$\gamma$ are the values encoded by $c_q$ and $c_{\mathrm{sym}}$---but
+since the untrusted machine cannot decode, it instead evaluates
+$\hat{\delta}_T$ on the \emph{pair cipher value}
+$\enc_{\mathrm{pair}}(c_q, c_{\mathrm{sym}})$, which requires a cipher map
+for the pairing operation.
+The output is decoded (by the cipher map structure, not by the untrusted
+machine) into a cipher state, a cipher symbol (written to the tape), and a
+head direction.
+
+The head direction $\{L, R, S\}$ is \textbf{not} cipher-encoded: it is
+in the clear.
+This is the fundamental leakage of the cipher Turing machine.
+\end{definition}
+
+\begin{remark}
+The head direction must be in the clear because the untrusted machine
+needs to know which tape cell to access next.
+Without knowing the direction, it cannot update the head position.
+Ciphering the direction would require the untrusted machine to access all
+three possible next cells (left, right, stay) on every step, tripling the
+work per step and still revealing that a step occurred.
+\end{remark}
+
+
+%% --------------------------------------------------------------------
+\subsection{Space Complexity}
+\label{sec:cipher-tm-space}
+%% --------------------------------------------------------------------
+
+\begin{proposition}[Cipher TM space complexity]
+\label{prop:cipher-tm-space}
+The cipher map $\hat{\delta}_T$ for a cipher Turing machine with $|Q|$
+states and $|\Gamma|$ tape symbols has space complexity
+$O(|Q| \cdot |\Gamma|)$, independent of the input domain size $|X|$.
+\end{proposition}
+
+\begin{proof}
+The transition function $\delta_T : Q \times \Gamma \to Q \times \Gamma
+\times \{L, R, S\}$ has domain $Q \times \Gamma$ of size
+$|Q| \cdot |\Gamma|$.
+The cipher map $\hat{\delta}_T$ is a cipher map for $\delta_T$, which
+by~\cite[Sec.~6]{towell2026cipher} has space proportional to its domain
+size: $O(|Q| \cdot |\Gamma|)$ entries (plus the $-\log_2 \varepsilon$ bits
+per entry for noise budget and the $H(Q \times \Gamma \times \{L,R,S\})$
+bits per entry for value encoding).
+
+In contrast, a cipher map $\fhat$ for an arbitrary function
+$f : X \to Y$ has space $O(|X|)$.
+When the computation is specified as a Turing machine program rather than
+a lookup table, $|Q| \cdot |\Gamma|$ replaces $|X|$ as the domain size.
+For large input domains ($|X| \gg |Q| \cdot |\Gamma|$), this is a
+qualitative improvement: the cipher map's size depends on the program
+complexity, not the data size.
+
+The tape itself requires space proportional to the number of tape cells
+used during computation (at most the running time), but each tape cell is
+a single cipher value encoding a symbol in $\Gamma$---the per-cell cost is
+$O(1)$ cipher values, independent of $|X|$.
+\end{proof}
+
+\begin{remark}
+The space saving comes with a time cost: where a cipher map evaluates
+$f(x)$ in $O(1)$ cipher map lookups (two hash evaluations for the
+two-level construction~\cite{towell2026cipher}), a cipher Turing machine
+requires as many steps as the Turing machine takes to compute $f(x)$.
+The trade-off is space (lookup table vs.\ program) for time
+($O(1)$ vs.\ $O(T(|x|))$ where $T$ is the running time).
+\end{remark}
+
+
+%% --------------------------------------------------------------------
+\subsection{Head Movement Leakage}
+\label{sec:head-leakage}
+%% --------------------------------------------------------------------
+
+The cipher Turing machine's head direction is in the clear.
+This means the untrusted machine observes the sequence of head movements
+$d_1, d_2, d_3, \ldots \in \{L, R, S\}^*$ for every computation.
+
+\begin{proposition}[Head movement determinism]
+\label{prop:head-determinism}
+For a deterministic cipher Turing machine with correctness $\eta = 0$,
+the head movement sequence is a deterministic function of the input.
+Two inputs that produce different head movement sequences are
+distinguishable by the untrusted machine.
+\end{proposition}
+
+\begin{proof}
+When $\eta = 0$, the cipher map $\hat{\delta}_T$ is exact: every
+transition produces the correct next state, symbol, and direction.
+The head movement sequence is therefore identical to the sequence produced
+by the plaintext Turing machine on the same input.
+Since the plaintext Turing machine is deterministic, the head movement
+sequence is a deterministic function of the input.
+
+If $x_1 \neq x_2$ produce different head movement
+sequences, i.e.,
+$(d_1^{(1)}, d_2^{(1)}, \ldots) \neq (d_1^{(2)}, d_2^{(2)}, \ldots)$,
+the untrusted machine observes different sequences and can distinguish
+the two inputs (or at least partition inputs into equivalence classes
+by their head movement pattern).
+\end{proof}
+
+\begin{remark}[Comparison with ORAM]
+\label{rem:oram}
+Oblivious RAM~\cite{goldreich1996software} is designed precisely to hide
+access patterns: the sequence of memory addresses accessed is independent
+of the input.
+A cipher Turing machine makes no such guarantee---the head movement
+pattern is visible.
+The cipher TM's confidentiality comes from a different source: the tape
+contents (cipher symbols) are opaque, and the transition function (cipher
+map) is opaque.
+The adversary sees which cells are visited but not what is read or written.
+This is weaker than ORAM but requires no $O(\log N)$ overhead per access.
+\end{remark}
+
+\begin{remark}[Nonzero $\eta$]
+When $\eta > 0$, the cipher transition function occasionally produces
+incorrect results.
+An incorrect transition may produce a different head direction than the
+correct one, introducing noise into the head movement sequence.
+This provides a weak form of access-pattern obfuscation---the observed
+sequence differs from the true sequence with probability depending on
+$\eta$ and the number of steps---but it is unreliable as a privacy
+mechanism because errors are systematic (the same elements always fail for
+a given seed), not random.
+\end{remark}
+
+
+%% ====================================================================
+\section{Discussion}
+\label{sec:discussion}
+%% ====================================================================
+
+\paragraph{Relationship to cipher maps.}
+This paper extends the cipher map framework of~\cite{towell2026cipher} in
+two directions: inward (what happens when cipher values carry algebraic
+structure) and outward (what happens when the untrusted machine actively
+explores the cipher space).
+The cipher map paper focuses on individual maps and their four properties;
+this paper studies how those properties interact with type constructors and
+how confidentiality degrades under active use.
+
+\paragraph{Relationship to Bernoulli data types.}
+The accuracy-side analysis of algebraic types over approximate values is
+developed in~\cite{towell2026bernoulli}, which studies the Kronecker
+factorization of joint confusion matrices for product types and the error
+propagation through sum-type constructors.
+That paper asks: how does $\eta$ change when types are composed?
+This paper asks the complementary question: how does confidentiality
+change when types are composed?
+Together, they characterize the full trade-off space (accuracy $\times$
+confidentiality) for algebraic types over trapdoor computing.
+
+\paragraph{The encoding granularity principle.}
+The product and sum trade-offs in \Cref{sec:products,sec:sums} are
+instances of a single principle developed
+in~\cite[Sec.~9]{towell2026cipher}: coarser encoding granularity
+(encoding more values as a single unit) yields better confidentiality but
+fewer operations available to the untrusted machine.
+The entanglement parameter $p$~\cite[Sec.~9.3]{towell2026cipher} controls
+the spectrum: $p = 1$ (component-wise) gives maximum functionality and
+minimum confidentiality; $p = k$ (whole-state) gives maximum
+confidentiality and minimum functionality.
+
+\paragraph{Open questions.}
+
+\begin{enumerate}
+\item \emph{Recursive types.}
+  Lists, trees, and other recursive types are built from sums and products.
+  The sum-type impossibility (\Cref{thm:sum-impossibility}) implies that
+  recursive traversal (which requires pattern matching at each node)
+  either leaks the structure (which constructors are used at each level)
+  or requires a trusted-machine round trip at each node.
+  Quantifying the total leakage for a recursive traversal of depth $d$
+  is open.
+
+\item \emph{Tight orbit bounds for specific constructions.}
+  \Cref{thm:confidentiality-bound} gives a general upper bound on
+  confidentiality in terms of orbit size.
+  For specific cipher map constructions (e.g., the trapdoor boolean
+  algebra of~\cite{towell2026cipher}), tighter bounds may be possible
+  by exploiting the structure of the construction.
+
+\item \emph{Cipher TM with oblivious head.}
+  Can the head direction be ciphered at acceptable cost?
+  The naive approach (evaluate all three possible next states) triples
+  the work per step.
+  Whether a sub-multiplicative overhead exists, achieving partial
+  head-movement hiding without full ORAM cost, is open.
+
+\item \emph{Partial sum-type hiding.}
+  \Cref{thm:sum-impossibility} shows that full tag hiding and full
+  untrusted pattern matching are mutually exclusive.
+  Is there a meaningful intermediate notion---hiding the tag from
+  some adversary classes while permitting restricted pattern matching?
+  For instance, one could imagine a construction where the tag is hidden
+  against passive adversaries (who only observe cipher values) but
+  available to active adversaries (who evaluate cipher maps).
+\end{enumerate}
+
+
+%% ====================================================================
+\section*{Acknowledgments}
+%% ====================================================================
+
+The algebraic cipher types concept originates in a 2019--2022 C++ notebook
+by the author, which explored cipher Booleans, cipher unions, and cipher
+Turing machines through concrete implementations.
+The present paper extracts and formalizes the theoretical content from that
+notebook, building on the cipher map framework developed
+in~\cite{towell2026cipher}.
+
+\bibliographystyle{plainnat}
+\bibliography{references}
+
+\end{document}
