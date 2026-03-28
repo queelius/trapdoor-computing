@@ -52,11 +52,12 @@ exist only behind a one-way trapdoor---provides a distinct, quantifiable
 privacy model with predictable composition and information-theoretically
 optimal space.  We characterize cipher maps by four independent, measurable
 properties (totality, representation uniformity, correctness, composability),
-prove the composition theorem governing error accumulation, and present three
-constructions---HashSet, entropy map, and trapdoor Boolean algebra---spanning
-batch and online strategies.  The Singular Hash Map achieves the
-information-theoretic lower bound of $-\log_2 \varepsilon + H(Y)$ bits per
-element.
+prove the composition theorem governing error accumulation, and present two
+construction strategies---batch (seed search) and online (algebraic)---spanning
+complementary parameter regimes.  The batch construction, the entropy cipher
+map, achieves the information-theoretic lower bound of
+$-\log_2 \varepsilon + H(Y)$ bits per element; the online construction, the
+trapdoor Boolean algebra, enables incremental set operations without seed search.
 \end{abstract}
 
 
@@ -81,12 +82,12 @@ opaque bit strings flowing through opaque total functions.
 
 This paper develops the theory of cipher maps in a self-contained way.
 We define four properties that characterize a cipher map
-(\S\ref{sec:properties}), instantiate them against three concrete
-constructions from distinct domains (\S\ref{sec:constructions}), formalize
-the trusted/untrusted machine model (\S\ref{sec:trust-model}), present the
-Singular Hash Map achieving space-optimal performance
-(\S\ref{sec:singular-hash}), and prove the composition theorem governing
-error accumulation (\S\ref{sec:composition}).
+(\S\ref{sec:properties}), formalize the trusted/untrusted machine model
+(\S\ref{sec:trust-model}), develop the batch construction unified under the
+acceptance predicate framework (\S\ref{sec:batch}), prove the composition
+theorem governing error accumulation (\S\ref{sec:composition}), and discuss
+the online alternative via trapdoor Boolean algebra
+(\S\ref{subsec:online}).
 
 \paragraph{Bernoulli error model.}
 The error framework underlying cipher maps is the Bernoulli
@@ -122,20 +123,20 @@ Bloom filters~\cite{bloom1970space} are the canonical approximate membership
 structure: a bit array with $k$ hash functions, trading false positives for
 space.  Quotient filters~\cite{bender2012quotient} and cuckoo
 filters~\cite{fan2014cuckoo} improve cache locality and support deletion,
-respectively, but share the same basic model.  The HashSet construction
-(\S\ref{subsec:hashset}) subsumes Bloom filters as a special case: a single
-hash function ($k=1$), exact correctness ($\eta=0$), and the same
-information-theoretic space bound of $-\log_2\varepsilon$ bits per element.
-The difference is that the HashSet is a cipher map---a total function on bit
-strings with a trapdoor---while Bloom filters expose their output directly.
+respectively, but share the same basic model.  Set membership (Remark~\ref{rem:membership}) subsumes Bloom filters as a special
+case: a single hash function ($k=1$), exact correctness ($\eta=0$), and the
+same information-theoretic space bound of $-\log_2\varepsilon$ bits per
+element.  The difference is that the HashSet is a cipher map---a total
+function on bit strings with a trapdoor---while Bloom filters expose their
+output directly.
 
 \paragraph{Perfect hash functions.}
 Fredman, Koml\'{o}s, and Szemer\'{e}di~\cite{fredman1984storing} introduced
 FKS perfect hashing with $O(n)$ space and $O(1)$ lookup.
 Belazzougui, Botelho, and Dietzfelbinger~\cite{belazzougui2009hash} achieved
 minimal perfect hash functions near the information-theoretic lower bound.
-The Singular Hash Map (\S\ref{sec:singular-hash}) is a perfect hash function
-with a different optimization target: it maps domain elements to
+The batch cipher map construction (\S\ref{sec:batch}) is a perfect hash
+function with a different optimization target: it maps domain elements to
 prefix-free codewords (not to consecutive integers) and trades correctness
 ($\eta > 0$) for space, achieving $(1-\eta)(-\log_2\varepsilon + H(Y))$
 bits per element.
@@ -229,15 +230,15 @@ Cipher maps arise from two fundamentally different construction strategies:
     to find a seed $s$ such that $\fhat$ satisfies correctness constraints
     for all $x \in X$ simultaneously.  This gives tunable correctness
     parameter $\eta$ and optimal space, but requires knowing $X$ and $f$ at
-    construction time.  Examples: HashSet (\S\ref{subsec:hashset}), entropy
-    map (\S\ref{subsec:entropy-map}).
+    construction time.  The entropy cipher map (\S\ref{sec:batch}) is the
+    general batch construction.
 
 \item[Online construction.]  The cipher map $\fhat$ is defined directly by
     the hash structure---no seed search is needed.  The secret $s$ is a hash
     key, not a searched seed.  Operations are limited to those the hash
     structure supports algebraically (e.g., set union, intersection).  Space
-    and accuracy trade-offs are fixed by the hash width~$n$.  Example:
-    trapdoor Boolean algebra (\S\ref{subsec:trapdoor-bool}).
+    and accuracy trade-offs are fixed by the hash width~$n$.  The trapdoor
+    Boolean algebra (\S\ref{subsec:online}) is the online construction.
 \end{description}
 
 Both strategies produce objects satisfying Definition~\ref{def:cipher-map}.
@@ -527,338 +528,15 @@ correlated values (\S\ref{subsec:granularity}).
 
 
 %% ============================================================
-\section{Concrete Constructions}
-\label{sec:constructions}
+\section{The Batch Construction}
+\label{sec:batch}
 
-We instantiate the cipher map abstraction against three constructions.  For
-each, we identify which of the four properties are satisfied and with what
-parameter values.
-
-\subsection{HashSet}
-\label{subsec:hashset}
-
-The HashSet is the simplest cipher map: an approximate set membership
-structure derived from a seed search.
-
-\paragraph{Latent function.}
-Set membership indicator: $f = \mathbf{1}_A : X \to \{0,1\}$ where
-$A \subseteq X$.
-
-\paragraph{Construction.}
-Choose a seed $s$ such that
-\[
-h(x \| s) = 0^n \quad \text{for all } x \in A,
-\]
-where $h : \{0,1\}^* \to \{0,1\}^n$ is a cryptographic hash modeled as a
-random oracle.  Membership test: declare $x \in A$ if and only if
-$h(x \| s) = 0^n$.
-
-\paragraph{Mapping to cipher map abstraction.}
-\begin{itemize}
-\item $\fhat(c) = h(c \| s)$, a total function on all bit strings.
-\item $\enc(x, 0) = x$ (single encoding per element; $K(x)=1$).
-\item $\dec(r) = 1$ if $r = 0^n$, else $0$.
-\end{itemize}
-
-\paragraph{Parameter instantiation.}
-\begin{center}
-\begin{tabular}{@{}lll@{}}
-\toprule
-Parameter & Value & Justification \\
-\midrule
-$\eta$ & $0$ & All members hash to $0^n$ by construction \\
-$\varepsilon$ & $2^{-n}$ & Random $c$ satisfies $h(c\|s)=0^n$ w.p.\
-    $2^{-n}$ \\
-$\mu$ & $\leq 1$ & Binary output \\
-$\delta$ & N/A & $K(x)=1$; no representation uniformity \\
-Space & $n = -\log_2\varepsilon$ bits/element & \\
-\bottomrule
-\end{tabular}
-\end{center}
-
-\paragraph{Property status.}
-Totality: \textbf{yes} ($h$ is defined on all inputs).
-Representation uniformity: \textbf{no} ($K=1$; cipher values are just
-domain elements).  Correctness: \textbf{yes} ($\eta = 0$).  Composability:
-\textbf{yes} (intersection of HashSets: $x \in A \cap B$ iff
-$h(x\|s_A) = 0^n$ and $h(x\|s_B) = 0^n$).
-
-The HashSet demonstrates that the four properties are independent: a
-construction can satisfy some without others.
-
-\begin{remark}[Bits per element]
-The HashSet stores a single seed $s$, not per-element data.  The quantity
-$\log_2(|U|/m)$ bits per element is the \emph{amortized information
-content}: the total information required to specify which $m$ elements
-belong to the set, divided by $m$.  This is standard in the perfect hashing
-literature.
-\end{remark}
-
-\paragraph{Construction complexity.}
-Each candidate seed succeeds with probability $2^{-n|A|}$ (all $|A|$
-elements must hash to $0^n$), so the expected number of trials is
-$2^{n|A|}$.  The space is $n|A|$ bits total, or $n = -\log_2 \varepsilon$
-bits per element, matching the information-theoretic lower bound for
-membership (\S\ref{subsec:lower-bound}).  The exponential construction time
-motivates the two-level construction of \S\ref{sec:singular-hash}.
-
-
-\subsection{Entropy Map}
-\label{subsec:entropy-map}
-
-The entropy map generalizes the HashSet to arbitrary functions
-$f : X \to Y$, achieving Shannon-entropy-optimal value encoding.
-
-\paragraph{Latent function.}
-Arbitrary $f : X \to Y$ where $Y$ is finite.
-
-\paragraph{Construction.}
-Assign a prefix-free code $C_y \subseteq \{0,1\}^*$ for each $y \in Y$,
-where the fraction of hash space covered by $C_y$ is proportional to
-$\Pr_D[f(X) = y]$.  Find a seed $s$ (via two-level hashing) such that
-\[
-h(x \| s) \in C_{f(x)} \quad \text{for all } x \in X.
-\]
-Evaluation: compute $h(c \| s)$ and decode via the prefix-free code.
-
-\paragraph{Two-level hash (practical algorithm).}
-\begin{enumerate}
-\item A primary hash maps $x$ to a bucket index $j \in \{0, \ldots, b-1\}$.
-\item For each bucket, find a local seed $s_j$ such that $h(x \| s_j)$
-    decodes to $f(x)$ for all $x$ in bucket $j$.
-\item Store $s_j$ in a seed table $H[j]$.
-\item Query: compute bucket $j$ (1~hash), evaluate $h(x \| H[j])$ and
-    decode (1~hash).  Total: $O(1)$ hash operations.
-\end{enumerate}
-
-\paragraph{Construction time.}
-Let $\ell$ be the number of items in a bucket.  Each candidate seed succeeds
-independently with probability $\varepsilon^\ell$ (all $\ell$ items must
-land in valid codewords).  The expected number of trials per bucket is
-$\varepsilon^{-\ell}$, geometric.  Total expected construction time:
-$O(b \cdot \varepsilon^{-\ell})$.
-
-\paragraph{Mapping to cipher map abstraction.}
-\begin{itemize}
-\item $\fhat(c) = h(c \| H[\mathrm{bucket}(c)])$, total function.
-\item $\enc(x, 0) = x$ (simplest version; $K(x)=1$).
-\item $\dec(r) = y$ if $r \in C_y$ for some $y$, else $\bot$.
-\end{itemize}
-
-\paragraph{Parameter instantiation.}
-\begin{center}
-\begin{tabular}{@{}lll@{}}
-\toprule
-Parameter & Value & Justification \\
-\midrule
-$\eta$ & Construction-dependent & Fraction of bucket failures; near-zero
-    with retry \\
-$\varepsilon$ & Code-dependent & Pr[random bits $\in \bigcup_y C_y$] \\
-$\mu$ & $H(Y)$ & Shannon entropy of output distribution \\
-$\delta$ & From code assignment & If $|C_y| \propto \Pr[f(X)=y]$,
-    approaches uniform \\
-Space & $-\log_2\varepsilon + H(Y)$ bits/element & \\
-\bottomrule
-\end{tabular}
-\end{center}
-
-\paragraph{Property status.}
-Totality: \textbf{yes}.  Representation uniformity: \textbf{achievable}
-(by assigning multiple codes proportional to output frequency).
-Correctness: \textbf{yes} ($\eta \approx 0$, tunable).  Composability:
-\textbf{yes} (output is an $n$-bit string; serves as input to another
-cipher map).
-
-\begin{proposition}[Entropy map space]
-\label{prop:entropy-space}
-The space per element of an entropy map for $f : X \to Y$ with output
-distribution $(p_y)_{y \in Y}$ equals
-$-\log_2 \varepsilon + H(Y)$
-bits, where $H(Y) = -\sum_y p_y \log_2 p_y$.
-\end{proposition}
-
-\begin{proof}
-The term $-\log_2 \varepsilon$ is the per-element cost of distinguishing
-signal from noise: each stored element requires that its hash prefix match a
-valid codeword, which occurs with probability $\varepsilon$ for random
-inputs.  The term $H(Y)$ is the expected code length under
-Shannon-optimal prefix-free coding, which equals the entropy of the output
-distribution by Shannon's source coding theorem~\cite{shannon1948mathematical}.  These two components are
-additive because the noise-rejection bits and the value-encoding bits occupy
-disjoint portions of the hash output.
-\end{proof}
-
-\begin{remark}[Connection to Bloom filters]
-The entropy map for the set-indicator function $\mathbf{1}_A$ is analogous
-to a Bloom filter: two codewords (``member'' / ``non-member'') allocated
-hash space in ratio $\varepsilon : (1-\varepsilon)$.  The constructions
-differ---hash-based lookup vs.\ bit array with $k$ hash functions---but the
-space bounds are related.
-\end{remark}
-
-
-\subsection{Trapdoor Boolean Algebra}
-\label{subsec:trapdoor-bool}
-
-The trapdoor Boolean algebra is an online construction: no seed search is
-needed, and set operations are performed via bitwise logic on hash values.
-
-\paragraph{Latent function.}
-Set operations over subsets of a string universe.  Let $X^*$ denote the free
-semigroup over alphabet $X$.  The latent structure is the Boolean algebra
-$(\mathcal{P}(X^*), \cap, \cup, \complement, \emptyset, X^*)$.
-
-\paragraph{Construction.}
-Define a map $F : \mathcal{P}(X^*) \to \{0,1\}^n$ by:
-\[
-F(\{x_1, \ldots, x_k\}) = h(x_1) \mathbin{|} h(x_2) \mathbin{|} \cdots
-\mathbin{|} h(x_k),
-\]
-where $|$ denotes bitwise OR and $h : X^* \to \{0,1\}^n$ is a
-cryptographic hash.
-
-The operation correspondence is:
-\begin{center}
-\begin{tabular}{@{}llc@{}}
-\toprule
-Lattice operation & Bit operation & Exact? \\
-\midrule
-$A \cup B$ & $F(A) \mathbin{|} F(B)$ & Yes \\
-$A \cap B$ & $F(A) \mathbin{\&} F(B)$ & Approximate \\
-$A^\complement$ & ${\sim}F(A)$ & Approximate \\
-$\emptyset$ & $0^n$ & Yes \\
-$X^*$ & $1^n$ & Yes (limiting) \\
-\bottomrule
-\end{tabular}
-\end{center}
-
-\paragraph{Why intersection is approximate.}
-$F(A) \mathbin{\&} F(B)$ retains all bit positions set in both $F(A)$ and
-$F(B)$.  But $F(A)$ has bits set by \emph{all} elements of $A$ (not just
-$A \cap B$), and likewise for $F(B)$.  When elements of $A \setminus B$
-happen to set the same bit positions as elements of $B \setminus A$
-(cross-element hash collisions), those bits survive the AND and appear as
-spurious bits.  Formally, $F(A \cap B) \subseteq F(A) \mathbin{\&} F(B)$
-(as bit vectors), with equality only when there are no cross-element
-collisions.
-
-\paragraph{Why NOT degrades with set size.}
-${\sim}F(A)$ flips all bits, giving the positions not set by any element of
-$A$.  But $F(A^\complement)$ is the OR of hashes of all elements not in $A$:
-for large complements, this converges to $1^n$.  Since $F(A)$ also
-approaches $1^n$ for large $|A|$, the NOT approximation
-${\sim}F(A) \approx 0^n$ is poor when $|A|$ is large.  NOT is most accurate
-when $|A|$ is small relative to $n$.
-
-\paragraph{Relational predicates.}
-\begin{itemize}
-\item Membership: $x \in_B W$ iff $h(x) \mathbin{\&} F(W) = h(x)$.
-\item Subset: $A \subseteq_B B$ iff $F(A) \mathbin{\&} F(B) = F(A)$.
-\end{itemize}
-
-\begin{proposition}[Membership false positive rate]
-\label{prop:membership-fp}
-For random $x \notin W$ where $|W| = k$, under the random oracle model:
-\begin{equation}
-\varepsilon_{\in}(k, n) = (1 - 2^{-(k+1)})^n.
-\end{equation}
-\end{proposition}
-
-\begin{proof}
-Under the random oracle model, hash outputs are independent uniform bits.
-Each bit position $j$ has $\Pr[h(x)_j = 1] = 1/2$ and
-$\Pr[F(W)_j = 0] = (1/2)^k = 2^{-k}$ (probability none of the $k$
-elements set bit $j$).  Bit $j$ causes a rejection (correctly identifying
-$x \notin W$) when $h(x)_j = 1$ and $F(W)_j = 0$, which happens with
-probability $2^{-(k+1)}$.  All $n$ bits must independently pass for a false
-positive:
-$\varepsilon_{\in} = (1 - 2^{-(k+1)})^n$.
-\end{proof}
-
-\paragraph{Space complexity.}
-Single-level: $n = \log \varepsilon / \log(1 - 2^{-(k+1)}) = O(2^k)$ bits.
-This is exponential in set size.  Two-level (practical): hash to $2^w$ bins
-of $(q-w)$ bits each.  Total space $2^w(q-w)$ bits.  False positive rate:
-$\varepsilon(k, w, q) = (1 - 2^{-(k/2^w + 1)})^{q-w}$.
-
-\paragraph{Mapping to cipher map abstraction.}
-For the membership predicate on a set $W$:
-\begin{itemize}
-\item $\fhat(c) = c \mathbin{\&} F(W)$, total function on all $n$-bit strings.
-\item $\enc(x, 0) = h(x)$.
-\item $\dec(r) = 1$ if $r = h(x)$ (where $x$ is the queried element),
-    else $0$.
-\end{itemize}
-
-\paragraph{Parameter instantiation} (membership predicate, set size $k$).
-\begin{center}
-\begin{tabular}{@{}lll@{}}
-\toprule
-Parameter & Value & Justification \\
-\midrule
-$\eta$ & Operation-dependent & Union exact; intersection approximate \\
-$\varepsilon$ & $(1-2^{-(k+1)})^n$ & Membership FP rate \\
-$\mu$ & $n$ bits (fixed width) & Entire set as single $n$-bit vector \\
-Space & $n$ bits total (not per element) & Constant-size; FP rate degrades
-    with $k$ \\
-\bottomrule
-\end{tabular}
-\end{center}
-
-\paragraph{Property status.}
-Totality: \textbf{yes} (bitwise operations defined on all $n$-bit strings).
-Representation uniformity: \textbf{marginal only} (see
-Remark~\ref{rem:marginal-only} and \S\ref{subsec:granularity}).
-Correctness: \textbf{partial} (union exact; intersection/NOT approximate).
-Composability: \textbf{yes} (Boolean operations compose; error propagates
-via interval arithmetic).
-
-\begin{remark}[Boolean asymmetry]
-\label{rem:boolean-asymmetry}
-The Boolean algebra homomorphism $F$ preserves union and intersection at the
-bit level but does not preserve complement: the complement of a finite set in
-the infinite free semigroup $X^*$ covers all hash values (by pigeonhole,
-$F(A^\complement) = 1^n$ for any non-trivial $A$).  This asymmetry is
-structural, not an artifact of the construction, and constrains all cipher map
-systems that compose Boolean operations over hash-based set representations.
-\end{remark}
-
-\subsection{Construction Comparison}
-
-Table~\ref{tab:comparison} compares the three constructions across all parameters.
-
-\begin{table}[ht]
-\centering
-\caption{Comparison of the three constructions.}
-\label{tab:comparison}
-\begin{tabular}{@{}llll@{}}
-\toprule
-& HashSet & Entropy Map & Trapdoor Boolean Alg. \\
-\midrule
-Construction & Batch & Batch & Online \\
-Latent function & $\mathbf{1}_A$ & Arbitrary $f:X\to Y$ &
-    Set ops on $\mathcal{P}(X^*)$ \\
-Totality & Yes & Yes & Yes \\
-Rep.\ Uniformity & No ($K\!=\!1$) & Achievable & Marginal only \\
-Correctness $\eta$ & $0$ & $\approx 0$ (tunable) &
-    Union exact; $\cap$/$\neg$ approx. \\
-$\varepsilon$ & $2^{-n}$ & Code-dependent &
-    $(1-2^{-(k+1)})^n$ \\
-$\mu$ & $\leq 1$ bit & $H(Y)$ & $n$ bits \\
-Space/element & $-\log_2\varepsilon$ &
-    $-\log_2\varepsilon + H(Y)$ & $n/k$ (amortized) \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-
-%% ============================================================
-\section{The Singular Hash Map}
-\label{sec:singular-hash}
-
-The Singular Hash Map is a concrete cipher map construction achieving the
-information-theoretic space lower bound.  It combines the entropy map's
-prefix-free coding with a global seed search.
+The batch construction requires knowing $X$ and $f$ at construction time
+and invests computation in a seed search to find a cipher map satisfying
+correctness constraints for all stored elements.  This section develops the
+batch construction from the information-theoretic lower bound through the
+acceptance predicate framework, culminating in the entropy cipher map---the
+general batch cipher map for arbitrary $f : X \to Y$.
 
 \subsection{Information-Theoretic Lower Bound}
 \label{subsec:lower-bound}
@@ -929,7 +607,7 @@ Different predicates give different space and construction-time trade-offs:
     $A(y) = \{c \in \{0,1\}^n : c \text{ starts with codeword}(y)\}$.
     Acceptance probability $\alpha(y) = 2^{-|\text{code}(y)|}$.
     Shannon-optimal when $|\text{code}(y)| \approx -\log_2 p_y$.
-    This is the entropy map construction.
+    This is the entropy cipher map construction.
 \item \textbf{Threshold.}
     $A(y) = \{c : c < t(y)\}$ for thresholds $0 = t_0 < t_1 < \cdots$.
     Acceptance probability $\alpha(y) = (t_{y+1} - t_y) / 2^n$.
@@ -945,10 +623,32 @@ bits per element when acceptance probabilities are Shannon-optimal
 ($\alpha(y) \propto p_y$).  They differ in construction time and
 implementation simplicity.
 
-\subsection{Construction}
+\paragraph{Shannon-optimal allocation and frequency hiding.}
+Setting $\alpha(y) \propto \Pr[f(X)=y]$ simultaneously achieves two goals.
+First, it minimizes space: the per-element encoding cost
+$-\log_2 \alpha(y) \approx -\log_2 p_y$ is the Shannon information content
+of value $y$, and the average cost
+$\sum_y p_y (-\log_2 p_y) = H(Y)$ is the entropy of the output
+distribution.  Second, it hides value frequencies: noise queries (random
+hash values) hit acceptance set $A(y)$ with probability
+$\alpha(y) \propto p_y$---the same distribution as real queries.  An
+adversary observing output values cannot distinguish whether a result came
+from a real query or noise, because the output frequency profile is
+identical in both cases.
+
+These are not two independent optimizations that happen to coincide.
+Shannon-optimal coding IS frequency hiding: matching the acceptance
+distribution to the output distribution simultaneously minimizes space and
+maximizes indistinguishability.  Any deviation from $\alpha(y) \propto p_y$
+both wastes space (encoding rare values with fewer bits than their
+information content requires) and leaks information (the frequency profile
+of outputs differs between real and noise queries).
+
+\subsection{Construction Algorithm}
+\label{subsec:construction-alg}
 
 \begin{algorithm}
-\caption{Singular Hash Map Construction}
+\caption{Batch Cipher Map Construction}
 \label{alg:singular-hash}
 \begin{algorithmic}[1]
 \Function{BuildCipherMap}{$M$, $A$, $h$, $\eta$}
@@ -1001,7 +701,7 @@ possible: failures are not clustered at the end by a fixed ordering.
 
 \begin{theorem}[Space complexity]
 \label{thm:space-optimal}
-The Singular Hash Map achieves space complexity
+The batch construction achieves space complexity
 \begin{equation}
 (1-\eta)\bigl(-\log_2 \varepsilon + \mu\bigr) \text{ bits per element},
 \end{equation}
@@ -1037,11 +737,11 @@ $(1-\eta)n(-\log_2 \varepsilon + \mu)$ bits.
 \end{proof}
 
 \begin{corollary}[Asymptotic optimality]
-When $\eta = 0$, the Singular Hash Map achieves $-\log_2 \varepsilon + H(Y)$
+When $\eta = 0$, the batch construction achieves $-\log_2 \varepsilon + H(Y)$
 bits per element, matching the information-theoretic lower bound.
 \end{corollary}
 
-\subsection{Construction Time}
+\subsection{Construction Time and Bucketing}
 \label{subsec:tractability}
 
 \begin{proposition}[Per-seed success probability]
@@ -1134,6 +834,113 @@ At $k = m$, each bucket has one element, construction is linear in $m$,
 and the overhead is $\log_2(1/\bar{\alpha})$ bits per element for the
 per-element seed---the same order as the hash width.  This is the regime
 of practical perfect hash functions~\cite{belazzougui2009hash}.
+
+\subsection{Instantiations}
+\label{subsec:instantiations}
+
+\subsubsection{Entropy Cipher Map}
+\label{subsec:entropy-cipher-map}
+
+The \emph{entropy cipher map} is the batch construction
+(Algorithm~\ref{alg:singular-hash}) instantiated with a prefix-free
+acceptance predicate.  It is the general batch cipher map for arbitrary
+$f : X \to Y$, achieving Shannon-entropy-optimal value encoding.
+
+\paragraph{Latent function.}
+Arbitrary $f : X \to Y$ where $Y$ is finite.
+
+\paragraph{Construction.}
+Assign a prefix-free code $C_y \subseteq \{0,1\}^*$ for each $y \in Y$,
+where the fraction of hash space covered by $C_y$ is proportional to
+$\Pr_D[f(X) = y]$.  Find a seed $s$ (via two-level hashing,
+\S\ref{subsec:tractability}) such that
+\[
+h(x \| s) \in C_{f(x)} \quad \text{for all } x \in X.
+\]
+Evaluation: compute $h(c \| s)$ and decode via the prefix-free code.
+
+\paragraph{Two-level hash (practical algorithm).}
+\begin{enumerate}
+\item A primary hash maps $x$ to a bucket index $j \in \{0, \ldots, b-1\}$.
+\item For each bucket, find a local seed $s_j$ such that $h(x \| s_j)$
+    decodes to $f(x)$ for all $x$ in bucket $j$.
+\item Store $s_j$ in a seed table $H[j]$.
+\item Query: compute bucket $j$ (1~hash), evaluate $h(x \| H[j])$ and
+    decode (1~hash).  Total: $O(1)$ hash operations.
+\end{enumerate}
+
+\paragraph{Mapping to cipher map abstraction.}
+\begin{itemize}
+\item $\fhat(c) = h(c \| H[\mathrm{bucket}(c)])$, total function.
+\item $\enc(x, 0) = x$ (simplest version; $K(x)=1$).
+\item $\dec(r) = y$ if $r \in C_y$ for some $y$, else $\bot$.
+\end{itemize}
+
+\paragraph{Parameter instantiation.}
+\begin{center}
+\begin{tabular}{@{}lll@{}}
+\toprule
+Parameter & Value & Justification \\
+\midrule
+$\eta$ & Tunable & Fraction of elements failing acceptance predicate \\
+$\varepsilon$ & Code-dependent & Pr[random bits $\in \bigcup_y C_y$] \\
+$\mu$ & $H(Y)$ & Shannon entropy of output distribution \\
+$\delta$ & From code assignment & If $|C_y| \propto \Pr[f(X)=y]$,
+    approaches uniform \\
+Space & $-\log_2\varepsilon + H(Y)$ bits/element & \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\paragraph{Property status.}
+Totality: \textbf{yes}.  Representation uniformity: \textbf{achievable}
+(by assigning multiple codes proportional to output frequency).
+Correctness: \textbf{yes} ($\eta \approx 0$, tunable via
+Algorithm~\ref{alg:singular-hash}).  Composability:
+\textbf{yes} (output is an $n$-bit string; serves as input to another
+cipher map).
+
+\begin{proposition}[Entropy cipher map space]
+\label{prop:entropy-space}
+The space per element of an entropy cipher map for $f : X \to Y$ with
+output distribution $(p_y)_{y \in Y}$ equals
+$-\log_2 \varepsilon + H(Y)$
+bits, where $H(Y) = -\sum_y p_y \log_2 p_y$.
+\end{proposition}
+
+\begin{proof}
+The term $-\log_2 \varepsilon$ is the per-element cost of distinguishing
+signal from noise: each stored element requires that its hash prefix match a
+valid codeword, which occurs with probability $\varepsilon$ for random
+inputs.  The term $H(Y)$ is the expected code length under
+Shannon-optimal prefix-free coding, which equals the entropy of the output
+distribution by Shannon's source coding theorem~\cite{shannon1948mathematical}.  These two components are
+additive because the noise-rejection bits and the value-encoding bits occupy
+disjoint portions of the hash output.
+\end{proof}
+
+\begin{remark}[Set membership as a cipher map]
+\label{rem:membership}
+Set membership $\mathbf{1}_A : X \to \mathrm{Bool}$ is a cipher map
+with $Y = \{\mathit{true}, \mathit{false}\}$.  The acceptance predicate
+partitions hash space into $A(\mathit{true})$ and $A(\mathit{false})$,
+with both outputs appearing as opaque bit strings.  Shannon-optimal
+allocation sets $|A(\mathit{true})| \propto \Pr[x \in A]$ and
+$|A(\mathit{false})| \propto \Pr[x \notin A]$.  For members, the seed
+search ensures $h(\ell) \oplus h(x) \in A(\mathit{true})$.  For
+non-members, the hash lands in $A(\mathit{false})$ with probability
+$1 - \varepsilon$, providing both correct classification and
+output-frequency hiding.  Space per element:
+$-\log_2 \varepsilon + H(\mathrm{Bool})$ bits, where
+$H(\mathrm{Bool}) = -p \log_2 p - (1\!-\!p) \log_2(1\!-\!p)$ for
+$p = \Pr[x \in A]$.
+
+The traditional Bloom filter~\cite{bloom1970space} tests membership but
+reveals the raw Boolean result.  The cipher map version hides both the
+input (via $\enc$) and the output (via the acceptance predicate), at the
+cost of storing per-element seeds and accepting a noise-decode probability
+$\varepsilon$.
+\end{remark}
 
 
 %% ============================================================
@@ -1409,6 +1216,22 @@ framing (cipher functors lifting monoids to cipher monoids) is a natural
 extension but requires careful treatment of the approximate setting: the
 functor laws hold exactly on the quotient but only approximately on
 representatives.
+
+\subsection{Online Construction}
+\label{subsec:online}
+
+The batch construction developed in \S\ref{sec:batch} requires knowing the
+domain $X$ and function $f$ at construction time.  An alternative
+\emph{online} strategy encodes sets incrementally via bitwise OR of
+per-element hashes, with no seed search.  Union, intersection, and
+complement reduce to bitwise OR, AND, and NOT; union is exact but
+intersection and complement are approximate (cross-element hash collisions
+and the pigeonhole principle, respectively).  This approach---the
+\emph{trapdoor Boolean algebra}---is developed in a companion
+paper~\cite{bernoulli-types}.  The batch and online strategies offer
+complementary trade-offs: batch achieves information-theoretically optimal
+space with tunable correctness; online enables incremental construction and
+algebraic composition at the cost of space exponential in set size.
 
 \subsection{Application: Encrypted Search}
 \label{subsec:encrypted-search}
