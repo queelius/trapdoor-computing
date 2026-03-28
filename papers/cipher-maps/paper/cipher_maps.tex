@@ -49,15 +49,17 @@ Privacy in encrypted computation need not come from access-pattern hiding
 (garbled circuits).  We show that a \emph{cipher map}---a total function on
 bit strings where the concepts of domain, correctness, and function identity
 exist only behind a one-way trapdoor---provides a distinct, quantifiable
-privacy model with predictable composition and information-theoretically
-optimal space.  We characterize cipher maps by four independent, measurable
-properties (totality, representation uniformity, correctness, composability),
-prove the composition theorem governing error accumulation, and present two
-construction strategies---batch (seed search) and online (algebraic)---spanning
-complementary parameter regimes.  The batch construction, the entropy cipher
-map, achieves the information-theoretic lower bound of
-$-\log_2 \varepsilon + H(Y)$ bits per element; the online construction, the
-trapdoor Boolean algebra, enables incremental set operations without seed search.
+privacy model.  The entire construction reduces to a single design choice:
+an \emph{acceptance predicate} that partitions hash space among output
+values.  Shannon-optimal allocation of this partition simultaneously
+minimizes space (achieving the information-theoretic lower bound of
+$-\log_2 \varepsilon + H(Y)$ bits per element), maximizes output
+indistinguishability (noise and real outputs share the same frequency
+profile), and enables predictable error composition
+($\eta_{\mathrm{total}} \leq 1 - \prod(1 - \eta_i)$).  We formalize the
+framework through four measurable properties, prove the composition and
+space optimality theorems, and demonstrate the construction on arbitrary
+maps, set membership, and encrypted search.
 \end{abstract}
 
 

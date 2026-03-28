@@ -8,9 +8,9 @@ authors:
     orcid: "0000-0001-6443-9897"
 
 thesis:
-  claim: "Privacy in encrypted computation need not come from access-pattern hiding (ORAM), exact algebraic homomorphism (FHE), or simulation-based security (garbled circuits). A total function on bit strings -- where domain, correctness, and function identity exist only behind a one-way trapdoor -- provides a distinct, quantifiable privacy model with predictable composition and information-theoretically optimal space."
-  novelty: "The privacy mechanism is totality itself: the untrusted machine cannot distinguish real queries from noise, one encoding from another, or correct results from errors. This is not access-pattern hiding or computational hardness beyond the one-way hash."
-  refined: "Variant C (contrast-forward). Leads with what's genuinely different, positions against ORAM/FHE/garbled circuits, signals quantifiability. Abstract rewritten 2026-03-27."
+  claim: "A cipher map is fully determined by a single design choice: the acceptance predicate. Shannon-optimal allocation of the acceptance predicate simultaneously minimizes space (achieving -log2(eps) + H(Y) bits per element), maximizes output indistinguishability (noise and real outputs share the same frequency profile), and enables predictable error composition."
+  novelty: "The unification of space optimality and frequency hiding as the same optimization (Shannon-optimal acceptance allocation), and the collapse of the entire batch construction to one parameterized algorithm."
+  refined: "v2 (acceptance-predicate-forward). Contrast-forward opening retained but the claim now centers on the acceptance predicate framework and the Shannon duality. Abstract rewritten 2026-03-28."
 
 prior_art:
   last_survey: null
