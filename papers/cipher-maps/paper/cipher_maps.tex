@@ -1154,18 +1154,64 @@ $x_1$ and $x_2$.  An adversary observing $N$ draws can estimate this joint
 distribution and recover the correlation structure of $(x_1, x_2)$.
 \end{proof}
 
-\paragraph{The trade-off.}
-Coarser encoding granularity (larger $p$) yields better privacy but
-requires more space and construction time.  Composition exists precisely
-because encoding the entire program as a single cipher value is impractical:
-we compose smaller cipher maps and accept that intermediate correlations may
-leak.
+\subsection{Compositional Leakage}
+\label{subsec:comp-leakage}
+
+Even when each cipher map has uniform marginal output, composing multiple
+cipher maps on a shared input leaks the correlation structure of the latent
+functions.  Consider cipher maps $\fhat_1 : \{0,1\}^n \to \{0,1\}^n$ and
+$\fhat_2 : \{0,1\}^n \to \{0,1\}^n$ for latent $f_1 : X \to Y$ and
+$f_2 : X \to Z$, each with Shannon-optimal acceptance predicates.
+Individually, the outputs $\hat{y}$ and $\hat{z}$ are uniform.  But the
+untrusted machine observes both $\hat{y} = \fhat_1(c)$ and
+$\hat{z} = \fhat_2(c)$ for the same cipher value~$c$.  Since $\fhat_1$ and
+$\fhat_2$ are deterministic, the pair $(\hat{y}, \hat{z})$ is a
+deterministic function of~$c$, and the joint distribution of
+$(\hat{y}, \hat{z})$ preserves the latent correlation between $f_1$ and
+$f_2$ (Proposition~\ref{prop:granularity}).
+
+If a third cipher map $\fhat_3$ takes this correlated pair as input, its
+output inherits the non-uniformity: $\fhat_3$ was constructed assuming a
+design distribution over its inputs, but the actual input distribution
+reflects latent correlations.  The output $\hat{w}$ is non-uniform even if
+$\fhat_3$'s acceptance predicate is Shannon-optimal for the marginal
+distribution of~$W$.  Every observable correlation between cipher values
+carries information about the latent data.
+
+\paragraph{Mitigation strategies.}
+Two approaches exist, both costly:
+
+\begin{description}
+\item[Build the composition directly.]
+Construct a single cipher map for the composed function
+$g(x) = f_3(f_1(x), f_2(x))$ as one batch construction.  The untrusted
+machine sees only the cipher input $\hat{x}$ and the final cipher output
+$\hat{w}$; no intermediate values are exposed.  This eliminates
+compositional leakage entirely but costs $O(|X| \cdot (-\log_2 \varepsilon
++ H(W)))$ space and exponential construction time---the entire program is
+a single lookup table.
+
+\item[Compose components and inject noise.]
+Keep the practical component-wise evaluation ($\fhat_1$, $\fhat_2$,
+$\fhat_3$ as separate cipher maps) and add $R$ noise queries for every
+$N$ real queries.  By totality, noise and real queries are
+indistinguishable to~$U$.  The adversary's estimates of pairwise
+correlations have variance $O(1/N)$; mixing with $R \gg N$ noise pairs
+dilutes the signal proportionally.  This costs bandwidth rather than space.
+\end{description}
+
+The fundamental trade-off: constructing the composition as a single cipher
+map gives full privacy at the cost of space and construction time.
+Composing component cipher maps is practical but leaks intermediate
+correlations.  Noise injection is an intermediate strategy that trades
+bandwidth for privacy.  The entanglement parameter $p$ controls the
+granularity of this trade-off.
 
 \paragraph{Honest limitations.}
 \begin{enumerate}
 \item Marginal uniformity says nothing about joint distributions.
-\item Encoding granularity is a design choice, not a property of the
-    formalism.
+\item Compositional leakage is inherent in component-wise evaluation;
+    only joint encoding or noise injection can mitigate it.
 \item Equality pattern leakage is fundamental: any deterministic encoding
     leaks the equality pattern of its inputs.  Multiple representations
     ($K(x) > 1$) reduce but do not eliminate this.
