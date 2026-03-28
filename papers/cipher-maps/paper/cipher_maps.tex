@@ -147,23 +147,29 @@ bits per element.
 Order-preserving encryption (OPE)~\cite{agrawal2004order,boldyreva2009order}
 and deterministic encryption~\cite{bellare2007deterministic} enable
 computation on ciphertexts by preserving algebraic structure (order,
-equality).  Cipher maps differ fundamentally: rather than preserving
-structure at the cost of leakage, cipher maps hide structure behind a total
-function.  The untrusted machine cannot distinguish domain elements from
-noise, and the output distribution is controlled by the representation
-uniformity parameter $\delta$.
+equality).  Naveed et al.~\cite{naveed2015inference} demonstrated devastating inference
+attacks exploiting exactly this preserved structure.  Cipher maps differ
+fundamentally: rather than preserving structure at the cost of leakage,
+cipher maps hide structure behind a total function.  The untrusted machine
+cannot distinguish domain elements from noise, and the output distribution
+is controlled by the representation uniformity parameter $\delta$.
 
 \paragraph{Searchable symmetric encryption.}
 Song, Wagner, and Perrig~\cite{song2000practical} introduced practical
 encrypted keyword search.  Curtmola et al.~\cite{curtmola2006searchable}
 formalized SSE with simulation-based security (IND-CKA).  Cash et
 al.~\cite{cash2013highly} extended SSE to Boolean queries with sublinear
-search.  SSE constructions use inverted indices and game-based security
-definitions; cipher maps use total functions with information-theoretic
-parameters ($\eta$, $\varepsilon$, $\delta$).  The approaches address
-different threat models: SSE hides query results from the server (up to
-leakage profiles), while cipher maps hide function identity and domain
-membership through totality and noise closure.
+search.  Islam et al.~\cite{islam2012access} showed that access-pattern leakage in
+SSE enables query recovery.  SSE constructions use inverted indices and
+game-based security definitions; cipher maps use total functions with
+information-theoretic parameters ($\eta$, $\varepsilon$, $\delta$).  The
+approaches address different threat models: SSE hides query results from the
+server (up to leakage profiles), while cipher maps hide function identity
+and domain membership through totality and noise closure.  Honey
+encryption~\cite{juels2014honey}, which produces plausible-looking
+plaintexts under wrong keys, shares the intuition that decoding ambiguity
+provides deniability; cipher maps achieve a similar effect through the
+noise-decode probability $\varepsilon$.
 
 \paragraph{Garbled circuits and fully homomorphic encryption.}
 Yao's garbled circuits~\cite{yao1982protocols} evaluate arbitrary functions
@@ -386,15 +392,14 @@ cipher maps without needing to decode intermediate results.
 \label{thm:composition-correctness}
 Under the hypotheses of Definition~\ref{def:composability}, if $\fhat$ has
 correctness $\eta_f$ and $\ghat$ has correctness $\eta_g$, then
-$\ghat \circ \fhat$ has correctness:
-\begin{equation}
-\eta_{g \circ f} = 1 - (1-\eta_f)(1-\eta_g) = \eta_f + \eta_g - \eta_f \eta_g.
-\end{equation}
+$\ghat \circ \fhat$ has correctness
+\[
+\eta_{g \circ f} \leq \eta_f + \eta_g - \eta_f \eta_g
+  = 1 - (1 - \eta_f)(1 - \eta_g),
+\]
+with equality under independent errors (see \S\ref{sec:composition},
+Theorem~\ref{thm:composition}).
 \end{theorem}
-
-\begin{proof}
-See \S\ref{sec:composition} (Theorem~\ref{thm:composition}).
-\end{proof}
 
 \begin{remark}[Noise under composition]
 Noise input to $\fhat$ produces random output (by totality).  With

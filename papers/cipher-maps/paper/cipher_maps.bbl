@@ -1,4 +1,4 @@
-\begin{thebibliography}{18}
+\begin{thebibliography}{21}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -94,6 +94,25 @@ Craig Gentry.
 Oded Goldreich and Rafail Ostrovsky.
 \newblock Software protection and simulation on oblivious {RAMs}.
 \newblock \emph{Journal of the ACM}, 43\penalty0 (3):\penalty0 431--473, 1996.
+
+\bibitem[Islam et~al.(2012)Islam, Kuzu, and Kantarcioglu]{islam2012access}
+Mohammad~Saiful Islam, Mehmet Kuzu, and Murat Kantarcioglu.
+\newblock Access pattern disclosure on searchable encryption: Ramification,
+  attack and mitigation.
+\newblock In \emph{Proceedings of the 19th Network and Distributed System
+  Security Symposium}, 2012.
+
+\bibitem[Juels and Ristenpart(2014)]{juels2014honey}
+Ari Juels and Thomas Ristenpart.
+\newblock Honey encryption: Security beyond the brute-force bound.
+\newblock In \emph{Advances in Cryptology -- EUROCRYPT 2014}, pages 293--310,
+  2014.
+
+\bibitem[Naveed et~al.(2015)Naveed, Kamara, and Wright]{naveed2015inference}
+Muhammad Naveed, Seny Kamara, and Charles~V Wright.
+\newblock Inference attacks on property-preserving encrypted databases.
+\newblock In \emph{Proceedings of the 22nd ACM Conference on Computer and
+  Communications Security}, pages 644--655, 2015.
 
 \bibitem[Shannon(1948)]{shannon1948mathematical}
 Claude~E Shannon.

@@ -3,44 +3,44 @@ Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
 The top-level auxiliary file: cipher_maps.aux
 The style file: plainnat.bst
 Database file #1: references.bib
-You've used 18 entries,
+You've used 21 entries,
             2773 wiz_defined-function locations,
-            701 strings with 8187 characters,
-and the built_in function-call counts, 10136 in all, are:
-= -- 934
-> -- 528
-< -- 19
-+ -- 180
-- -- 162
-* -- 773
-:= -- 1446
-add.period$ -- 57
-call.type$ -- 18
-change.case$ -- 108
-chr.to.int$ -- 18
-cite$ -- 36
-duplicate$ -- 489
-empty$ -- 856
-format.name$ -- 184
-if$ -- 2218
+            716 strings with 8799 characters,
+and the built_in function-call counts, 11773 in all, are:
+= -- 1082
+> -- 609
+< -- 22
++ -- 207
+- -- 186
+* -- 889
+:= -- 1670
+add.period$ -- 66
+call.type$ -- 21
+change.case$ -- 125
+chr.to.int$ -- 21
+cite$ -- 42
+duplicate$ -- 578
+empty$ -- 1004
+format.name$ -- 213
+if$ -- 2586
 int.to.chr$ -- 1
 int.to.str$ -- 1
-missing$ -- 17
-newline$ -- 98
-num.names$ -- 72
-pop$ -- 244
+missing$ -- 20
+newline$ -- 113
+num.names$ -- 84
+pop$ -- 288
 preamble$ -- 1
-purify$ -- 90
+purify$ -- 104
 quote$ -- 0
-skip$ -- 403
+skip$ -- 475
 stack$ -- 0
-substring$ -- 512
-swap$ -- 120
-text.length$ -- 11
+substring$ -- 582
+swap$ -- 144
+text.length$ -- 13
 text.prefix$ -- 0
 top$ -- 0
-type$ -- 198
+type$ -- 231
 warning$ -- 0
-while$ -- 99
+while$ -- 114
 width$ -- 0
-write$ -- 243
+write$ -- 281
