@@ -1108,6 +1108,19 @@ The noise fraction creates a floor of uncertainty in any statistical
 test the adversary performs.
 \end{remark}
 
+\begin{remark}[Generalization beyond Bool]
+\label{rem:general-cipher-type}
+\Cref{def:cipher-bool} generalizes to any finite type $Y$.
+A cipher type $\cipher{Y}$ partitions $\B^n$ into $|Y|$ value regions
+plus a noise region, with $|R_y|/2^n \propto \Pr[Y = y]$
+(Shannon-optimal allocation).
+Operations $f : Y_1 \times \cdots \times Y_k \to Z$ become cipher maps
+over the product of input regions.
+The cipher Boolean is the special case $Y = \{\mathrm{True},
+\mathrm{False}\}$; the same construction applies to enumerated types,
+bounded integers, or any codomain where the output distribution is known.
+\end{remark}
+
 \paragraph{Practical allocation.}
 The cipher Boolean allocation $|T|/2^n = 0.05$, $|F|/2^n = 0.90$,
 $|N|/2^n = 0.05$ is motivated by the set membership use case.
