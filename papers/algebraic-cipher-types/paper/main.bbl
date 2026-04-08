@@ -1,4 +1,4 @@
-\begin{thebibliography}{6}
+\begin{thebibliography}{10}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -12,6 +12,19 @@ Mihir Bellare and Phillip Rogaway.
 \newblock In \emph{Proceedings of the 1st ACM Conference on Computer and
   Communications Security}, pages 62--73, 1993.
 
+\bibitem[Boneh et~al.(2011)Boneh, Sahai, and Waters]{boneh2011functional}
+Dan Boneh, Amit Sahai, and Brent Waters.
+\newblock Functional encryption: Definitions and challenges.
+\newblock In \emph{Theory of Cryptography Conference}, pages 253--273, 2011.
+
+\bibitem[Curtmola et~al.(2006)Curtmola, Garay, Kamara, and
+  Ostrovsky]{curtmola2006searchable}
+Reza Curtmola, Juan Garay, Seny Kamara, and Rafail Ostrovsky.
+\newblock Searchable symmetric encryption: Improved definitions and efficient
+  constructions.
+\newblock In \emph{Proceedings of the 13th ACM Conference on Computer and
+  Communications Security}, pages 79--88, 2006.
+
 \bibitem[Gentry(2009)]{gentry2009fully}
 Craig Gentry.
 \newblock Fully homomorphic encryption using ideal lattices.
@@ -22,6 +35,18 @@ Craig Gentry.
 Oded Goldreich and Rafail Ostrovsky.
 \newblock Software protection and simulation on oblivious {RAMs}.
 \newblock \emph{Journal of the ACM}, 43\penalty0 (3):\penalty0 431--473, 1996.
+
+\bibitem[Naveed et~al.(2015)Naveed, Kamara, and Wright]{naveed2015inference}
+Muhammad Naveed, Seny Kamara, and Charles~V Wright.
+\newblock Inference attacks on property-preserving encrypted databases.
+\newblock In \emph{Proceedings of the 22nd ACM Conference on Computer and
+  Communications Security}, pages 644--655, 2015.
+
+\bibitem[Sabelfeld and Myers(2003)]{sabelfeld2003language}
+Andrei Sabelfeld and Andrew~C Myers.
+\newblock Language-based information-flow security.
+\newblock \emph{IEEE Journal on Selected Areas in Communications}, 21\penalty0
+  (1):\penalty0 5--19, 2003.
 
 \bibitem[Towell(2026{\natexlab{a}})]{towell2026bernoulli}
 Alexander Towell.

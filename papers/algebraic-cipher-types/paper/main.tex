@@ -121,6 +121,47 @@ where totality and noise closure provide the confidentiality guarantees.
 
 
 %% ====================================================================
+\section{Related Work}
+\label{sec:related}
+%% ====================================================================
+
+\paragraph{Information flow type systems.}
+The sum-type impossibility (\Cref{thm:sum-impossibility}) is closely
+related to the implicit flow problem in language-based information
+security~\cite{sabelfeld2003language}: a conditional branch on a secret
+value leaks information through the control flow path taken.
+Our result formalizes this for cipher values: pattern matching on a
+cipher sum type is an implicit flow that leaks the tag.
+The difference is that information flow type systems prevent the leak
+at compile time, while cipher types quantify it at the representation
+level.
+
+\paragraph{Functional encryption.}
+Functional encryption~\cite{boneh2011functional} allows computing
+$f(x)$ on an encrypted $x$ by issuing function-specific decryption
+keys.
+Cipher maps differ in two ways: (1)~they are information-theoretic
+(parameterized by $\eta$, $\varepsilon$, $\delta$) rather than
+game-based, and (2)~they are approximate (the untrusted machine
+evaluates a total function with bounded error, not an exact
+decryption).
+The type-constructor trade-offs we identify (tag leakage for sums,
+correlation leakage for products) apply equally to functional
+encryption schemes that support algebraic operations.
+
+\paragraph{Searchable symmetric encryption.}
+SSE~\cite{curtmola2006searchable} enables keyword search on encrypted
+documents with simulation-based security guarantees.
+The Boolean search construction in \Cref{sec:cipher-bool} provides an
+alternative with information-theoretic parameters: cipher sets with
+cipher Boolean AND/OR/NOT, rather than encrypted indices with leakage
+profiles.
+Naveed et al.~\cite{naveed2015inference} demonstrated inference attacks
+on property-preserving encryption; the cipher map model avoids
+property preservation entirely (the untrusted machine cannot determine
+the output type from the cipher value).
+
+%% ====================================================================
 \section{Preliminaries}
 \label{sec:prelim}
 %% ====================================================================
@@ -391,16 +432,21 @@ Pattern matching requires a function $\tau : \B^n \to \{A, B\}$ that is
 correct on valid encodings with probability $\geq 1 - \gamma$.
 Tag hiding requires that no such function exists with advantage better than
 $\delta'$.
-These are contradictory whenever $1 - \gamma - 1/2 > \delta'$, i.e.,
-whenever pattern matching succeeds with probability noticeably better than
-random guessing and the encoding is approximately uniform.
-Formally: the advantage of $\tau$ as a distinguisher between
-$A$-encodings and $B$-encodings is at least
-$(1 - \gamma) - 1/2 = 1/2 - \gamma$.
+Let $p = \Pr[v \in A]$ be the prior probability of an $A$-value.
+A trivial strategy that ignores the encoding and always guesses the
+majority type achieves accuracy $\max(p, 1-p)$.
+The advantage of $\tau$ over this baseline is at least
+$(1 - \gamma) - \max(p, 1-p)$.
 Tag hiding requires this advantage to be at most $\delta'$.
-Therefore $1/2 - \gamma \leq \delta'$, which means either
-$\gamma \geq 1/2 - \delta'$ (pattern matching fails nearly half the time)
-or $\delta' \geq 1/2 - \gamma$ (the tag is substantially leaked).
+Therefore $(1-\gamma) - \max(p, 1-p) \leq \delta'$, which means either
+$\gamma \geq 1 - \max(p, 1-p) - \delta'$ (pattern matching fails often)
+or $\delta' \geq (1-\gamma) - \max(p, 1-p)$ (the tag is substantially
+leaked).
+For the balanced case $p = 1/2$, this simplifies to
+$1/2 - \gamma \leq \delta'$.
+Unbalanced distributions ($p \neq 1/2$) make the impossibility stronger:
+the baseline accuracy is higher, leaving less room for the encoding to
+add information without leaking the tag.
 \end{proof}
 
 \begin{remark}[Contrast with products]
@@ -578,79 +624,56 @@ fewer possibilities for the latent value.
 
 \begin{definition}[Candidate set]
 \label{def:candidate-set}
-Given a cipher value $c$ and operations $F$, the \emph{candidate set} is
-the set of latent values $x \in X$ that are consistent with $c$ and
-$\orbitF(c)$:
+Given a cipher value $c$, operations $F$, and the orbit $\orbitF(c)$, the
+\emph{candidate set} is the set of latent values consistent with the
+observed orbit:
 \[
 \mathrm{Cand}_F(c) = \{ x \in X \mid \exists\, k \text{ s.t.\ }
-\enc(x, k) = c \}.
+\enc(x, k) = c \text{ and } \orbitF(\enc(x,k)) = \orbitF(c) \}.
 \]
-If the untrusted machine can additionally check whether specific cipher
-values in $\orbitF(c)$ match known constants (e.g., a known encoding of a
-specific value), the candidate set shrinks further.
+That is, $x$ is a candidate if encoding $x$ produces $c$ and the orbit
+structure starting from $c$ matches what the adversary observes.
+\end{definition}
+
+\begin{definition}[Confidentiality]
+\label{def:confidentiality}
+The \emph{confidentiality} of a cipher value $c$ under operations $F$ is
+the adversary's remaining uncertainty about the latent value:
+\[
+\mathrm{conf}_F(c) = 1 - \frac{|\mathrm{Cand}_F(c)|}{|X|}.
+\]
+When $\mathrm{conf}_F(c) = 1$, the adversary has learned nothing.
+When $\mathrm{conf}_F(c) = 0$, the latent value is uniquely determined.
 \end{definition}
 
 \begin{theorem}[Confidentiality bound]
 \label{thm:confidentiality-bound}
 Let $F$ be a set of cipher maps available to the untrusted machine, $c$ a
 cipher value, and assume representation uniformity with parameter
-$\delta \approx 0$ (approximately uniform marginals).
-Then the fraction of the latent domain $X$ that is excluded by the orbit
-closure is at most:
-\[
-\frac{|\orbitF(c)|}{2^n}.
-\]
-That is, the untrusted machine can determine that the latent value belongs
-to a subset of $X$ of size at most
-\[
-|\mathrm{Cand}_F(c)| \leq |X| \cdot
-  \left(1 - \frac{|\orbitF(c)| - |X|}{2^n - |X|}\right)
-\]
-when $|\orbitF(c)| > |X|$ and the orbit includes noise values, and
-more precisely:
-\[
-\frac{|\mathrm{Cand}_F(c)|}{|X|} \leq
-  \frac{|\orbitF(c)|}{2^n} \cdot \frac{2^n}{|X|}
-  = \frac{|\orbitF(c)|}{|X|}.
-\]
-The confidentiality of $c$ under $F$, measured as the adversary's remaining
-uncertainty about the latent value, satisfies:
+$\delta \approx 0$.
+Then:
 \[
 \mathrm{conf}_F(c) \geq 1 - \frac{|\orbitF(c)|}{2^n}.
 \]
 \end{theorem}
 
 \begin{proof}
-Under approximate representation uniformity ($\delta \approx 0$), each
-latent value $x$ has $K(x)$ representations spread approximately uniformly
+Under $\delta \approx 0$, encodings are spread approximately uniformly
 across $\B^n$.
-The total number of valid encodings is $\sum_x K(x)$, occupying a fraction
-$\varepsilon = \sum_x K(x) / 2^n$ of the cipher space.
+The orbit $\orbitF(c)$ is a set of bit strings that the adversary can
+compute but not decode.
+In the worst case, every orbit element is a valid encoding of a distinct
+latent value.
+The adversary then knows the latent value is one of at most
+$|\orbitF(c)|$ possibilities out of $|X|$ total.
+Since $|X| \leq 2^n$ (at most $2^n$ distinct encodings), the fraction of
+the cipher space explored is $|\orbitF(c)| / 2^n$, and the remaining
+unexplored fraction bounds the confidentiality.
 
-The orbit $\orbitF(c)$ is a set of bit strings.
-Some of these are valid encodings of latent values; the rest are noise
-(bit strings that decode to $\bot$).
-The untrusted machine can compute every element of $\orbitF(c)$ but cannot
-decode any of them.
-However, it knows the total size $|\orbitF(c)|$ and can observe which
-elements of the orbit are equal to each other.
-
-The adversary's knowledge is bounded as follows.
-Without any operations ($F = \emptyset$), the adversary knows only $c$ and
-must guess among all $|X|$ latent values (assuming $\delta \approx 0$).
-With operations $F$, the adversary learns the orbit structure:
-which orbit elements are distinct, how the operations connect them, and
-whether any orbit element matches a known cipher value.
-
-In the worst case (from the confidentiality perspective), every element of
-$\orbitF(c)$ is a valid encoding and each encodes a distinct latent value.
-Then the adversary learns that the latent value is one of at most
-$|\orbitF(c)|$ values.
-Since there are $2^n$ total bit strings and $|X|$ latent values (each with
-$K(x) \geq 1$ representations), the fraction of the cipher space explored
-is $|\orbitF(c)| / 2^n$.
-The remaining unexplored fraction is
-$1 - |\orbitF(c)| / 2^n$, which bounds the confidentiality.
+This bound is loose: it ignores the functional relationships between orbit
+elements (e.g., the adversary knows that orbit element $c' = \fhat(c)$,
+which constrains the possible latent values beyond mere set size).
+Tighter bounds for specific operations are an open problem.
 \end{proof}
 
 \begin{remark}
@@ -1060,29 +1083,29 @@ from random.
 
 The noise region $N$ plays a structural role beyond mere error tolerance.
 
-\begin{proposition}[Noise as an absorbing element]
-\label{prop:noise-absorption}
+\begin{proposition}[Noise unreliability]
+\label{prop:noise-unreliability}
 Let $\mathrm{AND}$, $\mathrm{OR}$, $\mathrm{NOT}$ be cipher maps
-implementing Boolean operations over the cipher Boolean type.  Then:
-\begin{enumerate}
-\item $\mathrm{AND}(x, n) \in N$ for any $x \in T \cup F$ and $n \in N$.
-\item $\mathrm{OR}(x, n) \in N$ for any $x \in T \cup F$ and $n \in N$.
-\item $\mathrm{NOT}(n) \in N$ for $n \in N$.
-\end{enumerate}
-Noise propagates through all Boolean operations.
+implementing Boolean operations over the cipher Boolean type.
+If any input is a noise value $n \in N$, the output is \emph{uncorrelated}
+with the intended Boolean result: it lands in $T$, $F$, or $N$ according
+to the allocation ratios $p_T$, $p_F$, $p_N$, independent of the other
+input's value.
 \end{proposition}
 
 \begin{proof}
-The AND, OR, and NOT cipher maps are defined only over $T \cup F$.
-An input from $N$ is not in the domain of the cipher map; the cipher map
-is total, but its PHF maps noise inputs to random slots containing random
-bytes, which decode to a value in $N$ with probability
-$1 - p_{\mathrm{true}} - p_{\mathrm{false}}$.
-For the standard allocation ($p_{\mathrm{true}} = 0.05$,
-$p_{\mathrm{false}} = 0.90$, $|N|/2^n = 0.05$), a noise input produces
-noise output with probability $\geq 0.05$ and a False output with
-probability $\leq 0.90$.
-The exact behavior depends on the PHF slot contents for noise inputs.
+The AND, OR, and NOT cipher maps are constructed over the domain
+$T \cup F$.
+An input from $N$ is outside this domain.
+Since the cipher map is total (backed by a PHF with random noise in
+unused slots), a noise input maps to a random slot whose contents decode
+to a value in $T$ with probability $p_T$, in $F$ with probability $p_F$,
+and in $N$ with probability $p_N$.
+For the standard allocation ($p_T = 0.05$, $p_F = 0.90$, $p_N = 0.05$),
+a noise input produces False 90\% of the time, True 5\%, and noise 5\%.
+Crucially, this output is independent of the other (valid) input:
+the cipher map cannot ``correct'' for a noise input because it does not
+know which inputs are noise.
 \end{proof}
 
 \begin{remark}[Noise prevents output certainty]
@@ -1252,6 +1275,35 @@ maps that compose dynamically.
   available to active adversaries (who evaluate cipher maps).
 \end{enumerate}
 
+
+%% ====================================================================
+\section{Conclusion}
+%% ====================================================================
+
+We have shown that algebraic type constructors create unavoidable
+confidentiality costs in trapdoor computing.
+The sum-type impossibility theorem establishes that tag hiding and
+untrusted pattern matching are mutually exclusive for any encoding.
+The orbit closure framework provides a quantitative bound on
+confidentiality degradation as the untrusted machine applies operations.
+These results apply to any cipher map construction, not just specific
+implementations.
+
+On the practical side, cipher Boolean types with AND/OR/NOT as cipher
+maps enable Boolean search queries evaluated entirely on the untrusted
+machine.
+Experiments on the 20 Newsgroups corpus (5{,}000 documents) show
+perfect recall for AND queries, with false positive rates matching
+theoretical predictions for single-term queries and compounding
+predictably through Boolean chains.
+The encoding granularity spectrum is measurable: root annotation
+(one cipher map for the entire program) is 650$\times$ faster and
+exposes zero intermediates compared to leaf annotation
+(one cipher map per function).
+
+The gap between the Bernoulli independence model and the cipher map
+implementation for AND chain composition points to future work on
+tighter error models for composed cipher maps.
 
 %% ====================================================================
 \section*{Acknowledgments}
