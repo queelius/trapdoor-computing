@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex 2025.2.2)  28 MAR 2026 12:31
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex 2025.2.2)  8 APR 2026 12:25
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -478,24 +478,23 @@ File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 ) [1
 
 {/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}] [2] [3] [4] [5] [6] [7] [8
-] [9{/usr/share/texmf/fonts/enc/dvips/cm-super/cm-super-ts1.enc}] [10] (./main.
-bbl [11]) [12]
-(./main.aux)
+] [9{/usr/share/texmf/fonts/enc/dvips/cm-super/cm-super-ts1.enc}] [10] [11] [12
+] [13] (./main.bbl) [14] (./main.aux)
  ***********
 LaTeX2e <2023-11-01> patch level 1
 L3 programming layer <2024-01-22>
  ***********
 Package rerunfilecheck Info: File `main.out' has not changed.
-(rerunfilecheck)             Checksum: 9519FAB5AFB01D91CA3BC54A5A4E6E58;2283.
+(rerunfilecheck)             Checksum: 739AAB097C72DBD5D5A673647A5DB5D2;2656.
  ) 
 Here is how much of TeX's memory you used:
- 13074 strings out of 474222
- 211536 string characters out of 5748734
+ 13108 strings out of 474222
+ 212018 string characters out of 5748734
  1937975 words of memory out of 5000000
- 35091 multiletter control sequences out of 15000+600000
+ 35106 multiletter control sequences out of 15000+600000
  571379 words of font info for 87 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 75i,10n,79p,281b,559s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 75i,10n,79p,281b,552s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb></us
 r/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb></usr/shar
 e/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmbxti10.pfb></usr/share/te
@@ -515,10 +514,10 @@ e/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt10.pfb></usr/share/texlive/texm
 f-dist/fonts/type1/public/amsfonts/cm/cmtt12.pfb></usr/share/texlive/texmf-dist
 /fonts/type1/public/amsfonts/symbols/msbm10.pfb></usr/share/texmf/fonts/type1/p
 ublic/cm-super/sfrm1095.pfb>
-Output written on main.pdf (12 pages, 288810 bytes).
+Output written on main.pdf (14 pages, 304910 bytes).
 PDF statistics:
- 340 PDF objects out of 1000 (max. 8388607)
- 283 compressed objects within 3 object streams
- 85 named destinations out of 1000 (max. 500000)
- 137 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 380 PDF objects out of 1000 (max. 8388607)
+ 320 compressed objects within 4 object streams
+ 104 named destinations out of 1000 (max. 500000)
+ 153 words of extra memory for PDF output out of 10000 (max. 10000000)
 

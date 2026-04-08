@@ -934,6 +934,78 @@ a given seed), not random.
 \label{sec:discussion}
 %% ====================================================================
 
+\subsection{Cipher Program Construction}
+\label{sec:cipher-programs}
+
+The type-theoretic trade-offs of \Cref{sec:products,sec:sums} have a
+direct operational realization: given a program (an expression tree),
+which subtrees should be replaced by cipher maps?
+
+\begin{definition}[Cipher node annotation]
+\label{def:cipher-node}
+Given a program $P$ represented as an expression tree, a
+\emph{cipher node annotation} marks a subset of nodes $\{n_1, \ldots,
+n_k\}$ in the tree.  Each marked node $n_i$, together with its entire
+subtree, is replaced by a cipher map: the subtree is evaluated at
+construction time (on the trusted machine) over a specified domain, and
+the resulting mapping is stored as a PHF-backed cipher map.
+Unmarked nodes above the cipher nodes become a \emph{combiner}: itself
+a cipher map built over the hash-value outputs of the components.
+\end{definition}
+
+The placement of cipher node annotations controls the encoding
+granularity:
+
+\begin{itemize}
+\item \textbf{Annotation at the root}: the entire program is one cipher
+  map.  Maximum confidentiality (no intermediate values exposed), maximum
+  space ($O(|X|)$ where $X$ is the input domain of the full program).
+\item \textbf{Annotation at the leaves}: each leaf function is a
+  separate cipher map.  The combiner chains them.  Intermediate cipher
+  values are visible to the untrusted machine, leaking correlations
+  between components (as in the product-type trade-off of
+  \Cref{sec:products}).
+\item \textbf{Annotation at intermediate nodes}: a spectrum between the
+  two extremes.  Deeper annotations absorb more computation into cipher
+  maps (more confidential, more space); shallower annotations expose
+  more structure (less space, more leakage).
+\end{itemize}
+
+\begin{remark}[Shared variables and compositional leakage]
+\label{rem:shared-vars}
+When two cipher nodes $f$ and $g$ share an input variable $x$, the
+untrusted machine observes two cipher values $\enc_f(x, k_f)$ and
+$\enc_g(x, k_g)$ derived from the same latent $x$.
+Even if both encodings are individually $\delta$-close to uniform, the
+joint distribution of $(\enc_f(x), \enc_g(x))$ preserves the correlation
+(as in \cite[Prop.~9.1]{towell2026cipher}).
+The only mitigation is to merge $f$ and $g$ into a single cipher node
+(eliminating the shared intermediate) or to inject noise queries that
+dilute the correlation signal.
+\end{remark}
+
+\paragraph{Implementation via tracing.}
+A practical realization uses Python function decorators and runtime
+tracing.
+Functions marked with a \texttt{@cipher\_node} decorator are
+intercepted during a tracing pass over the input domain.
+The tracing records which cipher nodes are called, with what arguments,
+and what they return.
+From this trace, the system:
+\begin{enumerate}
+\item builds a cipher map for each traced cipher node,
+\item builds a combiner cipher map over the hash-output tuples of the
+  components,
+\item infers the input routing (which program arguments feed which
+  cipher node) from the traced call patterns.
+\end{enumerate}
+Short-circuit evaluation (e.g., Python's \texttt{x if cond else y})
+is handled by computing all component cipher maps for every input,
+even when the original program skips some branches.
+The combiner's domain includes hash tuples for both branches.
+The resulting composed cipher program evaluates entirely on the
+untrusted machine with no round trips to the trusted machine.
+
 \paragraph{Relationship to cipher maps.}
 This paper extends the cipher map framework of~\cite{towell2026cipher} in
 two directions: inward (what happens when cipher values carry algebraic
@@ -964,6 +1036,112 @@ The entanglement parameter $p$~\cite[Sec.~9.3]{towell2026cipher} controls
 the spectrum: $p = 1$ (component-wise) gives maximum functionality and
 minimum confidentiality; $p = k$ (whole-state) gives maximum
 confidentiality and minimum functionality.
+
+\subsection{Cipher Boolean Algebra}
+\label{sec:cipher-bool}
+
+The cipher Boolean type $\cipher{\mathrm{Bool}}$ illustrates how the
+sum-type trade-off specializes to the most fundamental algebraic
+structure.
+
+\begin{definition}[Cipher Boolean type]
+\label{def:cipher-bool}
+A cipher Boolean type over $\B^n$ is a partition of the hash space into
+three disjoint regions:
+\begin{itemize}
+\item $T \subset \B^n$: the True region ($|T| / 2^n = p_{\mathrm{true}}$),
+\item $F \subset \B^n$: the False region ($|F| / 2^n = p_{\mathrm{false}}$),
+\item $N = \B^n \setminus (T \cup F)$: the noise region.
+\end{itemize}
+The partition is derived from a secret via a pseudorandom permutation.
+Without the secret, membership in $T$, $F$, or $N$ is indistinguishable
+from random.
+\end{definition}
+
+The noise region $N$ plays a structural role beyond mere error tolerance.
+
+\begin{proposition}[Noise as an absorbing element]
+\label{prop:noise-absorption}
+Let $\mathrm{AND}$, $\mathrm{OR}$, $\mathrm{NOT}$ be cipher maps
+implementing Boolean operations over the cipher Boolean type.  Then:
+\begin{enumerate}
+\item $\mathrm{AND}(x, n) \in N$ for any $x \in T \cup F$ and $n \in N$.
+\item $\mathrm{OR}(x, n) \in N$ for any $x \in T \cup F$ and $n \in N$.
+\item $\mathrm{NOT}(n) \in N$ for $n \in N$.
+\end{enumerate}
+Noise propagates through all Boolean operations.
+\end{proposition}
+
+\begin{proof}
+The AND, OR, and NOT cipher maps are defined only over $T \cup F$.
+An input from $N$ is not in the domain of the cipher map; the cipher map
+is total, but its PHF maps noise inputs to random slots containing random
+bytes, which decode to a value in $N$ with probability
+$1 - p_{\mathrm{true}} - p_{\mathrm{false}}$.
+For the standard allocation ($p_{\mathrm{true}} = 0.05$,
+$p_{\mathrm{false}} = 0.90$, $|N|/2^n = 0.05$), a noise input produces
+noise output with probability $\geq 0.05$ and a False output with
+probability $\leq 0.90$.
+The exact behavior depends on the PHF slot contents for noise inputs.
+\end{proof}
+
+\begin{remark}[Noise prevents output certainty]
+The noise region ensures that an adversary observing a sequence of
+Boolean cipher map evaluations cannot achieve certainty about any
+individual result.
+Consider an adversary that repeatedly ANDs a cipher value $c$ with
+random cipher values $r_1, r_2, \ldots$.
+If $c \in T$ (True), then $\mathrm{AND}(c, r_i)$ produces True when
+$r_i \in T$ and False when $r_i \in F$.
+But when $r_i \in N$ (5\% probability), the output is noise, which the
+adversary cannot distinguish from a legitimate False.
+After $k$ ANDs, the adversary has seen some True and some False/noise
+results, but cannot determine with certainty whether any given False
+result is real or noise-induced.
+
+Dually, an adversary that repeatedly ORs $c$ with random values sees
+True for $c \in T$ (always True), but again noise inputs produce
+unpredictable outputs.
+For $c \in F$, the OR produces True only when $r_i \in T$ (5\%),
+False when $r_i \in F$ (90\%), and noise when $r_i \in N$ (5\%).
+The noise fraction creates a floor of uncertainty in any statistical
+test the adversary performs.
+\end{remark}
+
+\paragraph{Practical allocation.}
+The cipher Boolean allocation $|T|/2^n = 0.05$, $|F|/2^n = 0.90$,
+$|N|/2^n = 0.05$ is motivated by the set membership use case.
+A cipher set $\hat{1}_A : \cipher{X} \to \cipher{\mathrm{Bool}}$
+maps domain elements to cipher Booleans.
+Members are forced into $T$ by the construction.
+Non-members land randomly: 90\% decode as False (correct rejection),
+5\% as True (false positive), 5\% as noise.
+The false positive rate equals $p_{\mathrm{true}}$ and is a system
+parameter, not dependent on the set size or universe.
+
+\paragraph{Composition with set operations.}
+Boolean search queries like ``$w_1 \land w_2 \land \lnot w_3$'' are
+evaluated entirely on the untrusted machine by chaining cipher set
+evaluations through cipher AND/OR/NOT maps.
+Each Boolean operation is itself a cipher map (constructed via PHF
+over the $|T \cup F|^2$ input pairs for AND/OR, or $|T \cup F|$
+for NOT).
+The untrusted machine sees opaque hash values flowing through opaque
+total functions at every stage.
+
+\paragraph{Implementation.}
+A reference implementation (\texttt{cipher-maps}, Python) demonstrates
+the construction.
+With $n = 8$ bits, $|T| = 13$, $|F| = 230$, the AND and OR cipher
+maps each have $(13 + 230)^2 = 59{,}049$ entries and build in under
+4 seconds via PHF.
+Boolean search over 8 documents produces correct results for queries
+including ``python AND data,'' ``python AND NOT java,'' and
+``(data OR machine) AND NOT cat,'' evaluated entirely on the untrusted
+side without decoding any intermediate cipher value.
+At scale (18{,}266 documents, 58{,}903 unique words), construction
+takes 25.6 seconds (703 documents per second) with perfect recall and
+false positive rate matching the theoretical $p_{\mathrm{true}}$.
 
 \paragraph{Open questions.}
 
