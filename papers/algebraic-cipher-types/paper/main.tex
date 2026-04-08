@@ -1142,19 +1142,79 @@ for NOT).
 The untrusted machine sees opaque hash values flowing through opaque
 total functions at every stage.
 
-\paragraph{Implementation.}
-A reference implementation (\texttt{cipher-maps}, Python) demonstrates
-the construction.
+\paragraph{Experimental results.}
+A reference implementation (\texttt{cipher-maps}, Python with PHF
+backend via \texttt{phobic}) validates the construction on the 20
+Newsgroups corpus (18{,}266 documents, 58{,}903 unique words).
 With $n = 8$ bits, $|T| = 13$, $|F| = 230$, the AND and OR cipher
-maps each have $(13 + 230)^2 = 59{,}049$ entries and build in under
-4 seconds via PHF.
-Boolean search over 8 documents produces correct results for queries
-including ``python AND data,'' ``python AND NOT java,'' and
-``(data OR machine) AND NOT cat,'' evaluated entirely on the untrusted
-side without decoding any intermediate cipher value.
-At scale (18{,}266 documents, 58{,}903 unique words), construction
-takes 25.6 seconds (703 documents per second) with perfect recall and
-false positive rate matching the theoretical $p_{\mathrm{true}}$.
+maps each have $(13 + 230)^2 = 59{,}049$ entries.
+
+\emph{Boolean search at scale.}
+Table~\ref{tab:boolean-search} shows precision and recall for
+representative Boolean queries over 5{,}000 documents, with all
+Boolean operations evaluated on the untrusted machine.
+Construction rate: 843 documents per second.
+
+\begin{table}[ht]
+\centering
+\caption{Boolean encrypted search (5{,}000 documents, $p_T = 0.05$).}
+\label{tab:boolean-search}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+Query & Precision & Recall & FP & Time \\
+\midrule
+Single term & 0.39 & 1.00 & 248 & 0.10s \\
+2-term AND & 0.26 & 1.00 & 42 & 0.30s \\
+3-term AND & 0.33 & 1.00 & 12 & 0.60s \\
+OR & 0.37 & 0.97 & 428 & 0.30s \\
+OR AND NOT & 0.33 & 0.88 & 389 & 0.55s \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+AND queries maintain perfect recall while false positives decrease
+(248 for single term, 12 for 3-term AND).
+OR and NOT queries lose recall (0.97 and 0.88) due to noise
+propagation: when a cipher set returns a noise value $n \in N$,
+the subsequent OR or NOT operation produces noise or an unpredictable
+result, effectively dropping the document from the result set.
+
+\emph{FPR compounding vs.\ Bernoulli model.}
+The Bernoulli composition model~\cite{towell2026bernoulli} predicts
+$\mathrm{FPR}_{\mathrm{AND},k} = p_T^k$ for $k$ independent AND
+operations.
+Empirically, the OR chain matches theory closely (ratio $\approx 0.9$
+across chain lengths 1--5), but the AND chain diverges at depth $> 2$:
+the empirical FPR exceeds the predicted $p_T^k$ by an order of
+magnitude at $k = 3$.
+The reason: the Bernoulli model assumes each test is an independent
+draw, but the cipher Boolean AND is a deterministic cipher map.
+After one AND, the result is a specific cipher Boolean value (not a
+fresh random draw), and feeding it into the next AND produces a
+deterministic output.
+The independence assumption breaks at the cipher map level even though
+it holds at the element level within a single cipher set.
+
+\emph{Encoding granularity.}
+We built a 7-function loan approval pipeline at three granularity
+levels:
+\begin{center}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+Level & Build time & Space & Intermediates \\
+\midrule
+Root (1 cipher map) & 0.009s & 694\,B & 0 \\
+Intermediate (3 groups) & 6.8s & --- & 3 \\
+Leaf (7 nodes) & 5.9s & --- & 7 \\
+\bottomrule
+\end{tabular}
+\end{center}
+All three produce zero errors on the full domain (150 inputs).
+The root annotation is 650$\times$ faster (PHF backend vs.\ seed
+search) and exposes zero intermediate cipher values.
+The trade-off: the root annotation requires the entire input domain
+at construction time, while the leaf annotation builds smaller cipher
+maps that compose dynamically.
 
 \paragraph{Open questions.}
 
