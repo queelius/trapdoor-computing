@@ -618,17 +618,24 @@ disjunct adds false positive mass.  NOT is approximate due to
 complement non-preservation via the pigeonhole
 principle~\cite{towell2026cipher}.
 
-\paragraph{Space cost of Boolean composition.}
-Each Boolean operation is itself a cipher map over the product of its
-input cipher spaces.
-For a cipher Boolean type with $|T \cup F| = m$ valid values,
-AND and OR each require $m^2$ entries in their domain.
-More generally, a cipher map
-$\fhat : \cipher{X_1} \times \cdots \times \cipher{X_k} \to \cipher{Y}$
-requires $\prod_i |\cipher{X_i}|$ entries.
-With typed composition chains (\S\ref{subsec:granularity}), each level
-adds another cipher map of size $m^2$, so $d$ levels of Boolean
-composition cost $d \cdot m^2$ entries total.
+\paragraph{Space cost of joint encoding.}
+Merging cipher nodes to prevent correlation leakage increases the domain
+of the resulting cipher map.
+Consider $h(f(x), g(x))$ where $f$ and $g$ share input $x$.
+With separate cipher maps $\fhat$, $\hat{g}$, and $\hat{h}$, the
+untrusted machine sees both $\fhat(c)$ and $\hat{g}(c)$, leaking the
+correlation between $f$ and $g$.
+The alternative is a single cipher map for the composition:
+$\widehat{h \circ (f, g)}(c)$ maps $c$ directly to
+$h(f(x), g(x))$ with no intermediate values exposed.
+The domain is $|X|$ (same as the components), but the construction must
+evaluate $f$, $g$, and $h$ for every $x \in X$ at build time.
+If instead we partially merge $f$ and $g$ into a tuple cipher map
+$\widehat{(f,g)}(c) \to \cipher{Y_f \times Y_g}$, the codomain is the
+product space $|Y_f| \times |Y_g|$, which grows exponentially in the
+number of merged components.
+This is the fundamental space cost of the encoding granularity principle:
+hiding correlations requires encoding into product spaces.
 
 \paragraph{Effect on confidentiality.}
 AND chains improve precision (fewer false positives) but maintain the
