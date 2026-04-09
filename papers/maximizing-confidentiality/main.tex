@@ -182,15 +182,27 @@ $(\eta, \varepsilon, \mu, \delta)$~\cite[Sec.~4]{towell2026cipher}:
   Informally, $\delta$ bounds the advantage of any test that tries to
   distinguish real cipher values from random ones.
 
-\item[Correctness ($\eta$-bounded).]  For random in-domain $x$ and
-  random representation index $k$,
+\item[Correctness ($\eta$-bounded).]  The fraction of domain elements
+  that decode incorrectly is at most $\eta$:
   \[
   \Pr[\dec(\fhat(\enc(x,k))) \neq f(x)] \leq \eta.
   \]
+  Nonzero $\eta$ provides plausible deniability (an observed result might
+  be wrong) and reduces construction cost.
+
+\item[Noise-decode probability ($\varepsilon$).]  A random $n$-bit
+  string decodes to a valid output with probability $\varepsilon$.
+  Lower $\varepsilon$ means out-of-domain queries are more likely to be
+  rejected (decoded as $\bot$), at the cost of more bits per element.
+
+\item[Value cost ($\mu = H(Y)$).]  The average number of bits needed to
+  encode one output value, equal to the Shannon entropy of the output
+  distribution.
 
 \item[Composability.]  The composition of two cipher maps is again a
   cipher map: $\ghat \circ \fhat$ has correctness
   $\eta_{g \circ f} \leq 1 - (1 - \eta_f)(1 - \eta_g)$.
+  Errors accumulate predictably, enabling pipeline analysis.
 \end{description}
 
 The space per element decomposes as
@@ -214,11 +226,22 @@ output values~\cite[Sec.~6.2]{towell2026cipher}.  Shannon-optimal
 allocation sets $|A(y)| \propto \Pr[f(X) = y]$, simultaneously
 minimizing space and maximizing output indistinguishability.
 
-\paragraph{Notation.}
-Throughout, $H(\cdot)$ denotes Shannon entropy in bits, $H(X \mid Y)$
-is conditional entropy, and $I(X; Y)$ is mutual information.  We use
-$D$ for the distribution of queries over the domain $X$, and $Q$ for
-the induced distribution over cipher values.  All logarithms are base 2.
+\paragraph{Information-theoretic notation.}
+We use standard information-theoretic quantities throughout.
+\emph{Shannon entropy} $H(X) = -\sum_x p(x) \log_2 p(x)$ measures the
+average surprise (in bits) of a random variable; higher entropy means
+less predictable.
+\emph{Conditional entropy} $H(X \mid Y)$ is the remaining uncertainty in
+$X$ after observing $Y$.
+\emph{Mutual information} $I(X; Y) = H(X) - H(X \mid Y)$ quantifies how
+much observing $Y$ reveals about $X$; zero means independence.
+\emph{KL divergence} $D_{\mathrm{KL}}(P \| Q) = \sum_x P(x) \log_2
+(P(x)/Q(x))$ measures how far $P$ is from $Q$; it is zero iff $P = Q$
+and connects to the entropy ratio via $H(P) = H^* - D_{\mathrm{KL}}(P
+\| U) \cdot H^*$ when $U$ is the maximum-entropy distribution.
+We use $D$ for the distribution of queries over the domain $X$, and $Q$
+for the induced distribution over cipher values.
+All logarithms are base~2.
 
 
 %% ====================================================================
@@ -324,7 +347,8 @@ is a relabeling of $D$.  Entropy is invariant under bijection, giving
 $H(Q) = H(D)$.  The maximum over distributions on $|X|$ elements is
 $\log_2 |X|$, so $e = H(D) / \log_2 |X|$.
 
-For part (3): by Pinsker's inequality,
+For part (3): by Pinsker's inequality (which bounds KL divergence from
+below by squared TV distance),
 $\TV(Q, U) \leq \sqrt{D_{\mathrm{KL}}(Q \| U) / 2}$.  Since
 $\TV(Q, U) \leq \delta$, we have
 $D_{\mathrm{KL}}(Q \| U) \leq 2\delta^2$.  Then
@@ -563,7 +587,10 @@ error compounding (correctness degrades) and correlation leakage
 
 For Boolean-valued cipher maps (set membership predicates), the
 composition behavior depends on the gate type.  Let $p_T$ denote the
-per-test false positive rate.
+\emph{false positive rate} (FPR): the probability that a non-member
+query is incorrectly decoded as True.  This is controlled by the
+fraction of hash space allocated to the True region in the cipher
+Boolean type.
 
 \begin{theorem}[FPR compounding~{\cite[Sec.~8]{towell2026cipher}}]
 \label{thm:fpr-compounding}
