@@ -87,11 +87,9 @@ deployment with a known query distribution, known vocabulary size, and
 known resource budget, how confidential is the system, and how can it be
 improved?
 
-This paper develops the quantitative theory.  The central idea, first
-explored in~\cite{towell2017maxconf} before the cipher map formalism
-existed, is the \emph{entropy ratio}: the ratio of observed entropy in
-the cipher map output stream to the maximum entropy achievable under
-system constraints.  We ground this idea in the cipher map framework,
+This paper develops the quantitative theory.  The central idea is the
+\emph{entropy ratio}: the ratio of observed entropy in the cipher map
+output stream to the maximum entropy achievable under system constraints.  We ground this idea in the cipher map framework,
 connecting the entropy ratio to the four cipher map parameters, and
 identify three levers for improving confidentiality:
 
@@ -466,8 +464,7 @@ $H(D) \approx 7.83$ bits, compared to $H^* = \log_2 10{,}000 \approx
 words via $K(x_i) = \lceil D(x_1) / D(x_i) \rceil$ (approximately
 $i$ representations for the $i$-th ranked word) increases the effective
 entropy to $\approx 10.2$ bits, giving $e \approx 0.77$.  The space
-overhead is approximately 518 additional trapdoors per
-document~\cite{towell2017maxconf}.
+overhead is approximately 518 additional trapdoors per document.
 \end{example}
 
 \subsection{Encoding Granularity}
