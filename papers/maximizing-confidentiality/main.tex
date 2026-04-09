@@ -585,7 +585,9 @@ error compounding (correctness degrades) and correlation leakage
 
 \subsection{Error Compounding in Boolean Chains}
 
-For Boolean-valued cipher maps (set membership predicates), the
+For Boolean-valued cipher maps (e.g., set indicator functions
+$\hat{1}_A : \cipher{X} \to \cipher{\mathrm{Bool}}$, or any
+$\fhat$ with $Y = \{\mathrm{True}, \mathrm{False}\}$), the
 composition behavior depends on the gate type.  Let $p_T$ denote the
 \emph{false positive rate} (FPR):
 \[
@@ -600,7 +602,7 @@ probability $|T|/2^n$.
 
 \begin{theorem}[FPR compounding~{\cite[Sec.~8]{towell2026cipher}}]
 \label{thm:fpr-compounding}
-For $k$ independent cipher set membership tests composed via Boolean
+For $k$ independent Boolean-valued cipher maps composed via Boolean
 operations:
 \begin{align}
 \text{AND of } k \text{ tests:} &\quad
