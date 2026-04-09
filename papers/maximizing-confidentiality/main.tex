@@ -587,10 +587,13 @@ error compounding (correctness degrades) and correlation leakage
 
 For Boolean-valued cipher maps (set membership predicates), the
 composition behavior depends on the gate type.  Let $p_T$ denote the
-\emph{false positive rate} (FPR): the probability that a non-member
-query is incorrectly decoded as True.  This is controlled by the
-fraction of hash space allocated to the True region in the cipher
-Boolean type.
+\emph{false positive rate} (FPR):
+\[
+p_T = \Pr[\dec(\fhat(\enc(x,k))) = \mathrm{True} \mid f(x) = \mathrm{False}],
+\]
+the probability that a non-member is incorrectly decoded as True.
+This equals the fraction of hash space allocated to the True region
+in the cipher Boolean type.
 
 \begin{theorem}[FPR compounding~{\cite[Sec.~8]{towell2026cipher}}]
 \label{thm:fpr-compounding}
