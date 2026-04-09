@@ -658,6 +658,33 @@ The noise region prevents the adversary from distinguishing
 ``legitimately False after AND'' from ``noise-induced False,'' providing
 a floor of uncertainty even in deep compositions.
 
+\paragraph{Active probing via Boolean operations.}
+Exposing AND and OR to the untrusted machine creates an orthogonal
+confidentiality risk: the adversary can actively probe cipher values to
+learn their latent meaning.
+Given a cipher value $c$ and cipher AND, the adversary computes
+$\mathrm{AND}(c, c)$.
+Since cipher maps are deterministic, this always returns the same result
+for a given $c$.
+If the adversary also has cipher values $c_1, c_2$ and computes
+$\mathrm{AND}(c_1, c_2)$, $\mathrm{AND}(c_1, c_1)$, and
+$\mathrm{AND}(c_2, c_2)$, it can check whether the results are
+structurally consistent with both being True, both False, or one of each.
+Over many such probes, the adversary partitions cipher values into
+equivalence classes that correspond to latent Boolean values.
+
+This is exactly the orbit closure
+attack~\cite[Sec.~5]{towell2026algebraic}: each Boolean operation
+enlarges the orbit of reachable cipher values from $c$, and the
+confidentiality degrades as
+$\mathrm{conf}_F(c) \geq 1 - |\orbitF_F(c)|/2^n$.
+The more operations the untrusted machine can apply, the larger the
+orbit, the lower the confidentiality.
+This creates a fundamental tension: exposing AND/OR/NOT enables
+untrusted-side Boolean search (a functionality gain) but simultaneously
+provides the adversary with tools to probe the cipher space
+(a confidentiality cost).
+
 \subsection{Correlation Leakage from Shared Variables}
 
 Even when each cipher map has uniform marginal output, evaluating multiple
