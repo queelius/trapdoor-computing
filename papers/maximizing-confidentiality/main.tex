@@ -593,8 +593,10 @@ p_T = \Pr[\dec(\fhat(\enc(x,k))) = \mathrm{True} \mid f(x) = \mathrm{False}],
 \]
 the probability that an element with $f(x) = \mathrm{False}$ is
 decoded as True.
-For the cipher Boolean construction, this equals the fraction of hash
-space allocated to the True region.
+For in-domain elements with $\eta = 0$, FPR is zero by construction.
+For out-of-domain elements (not in the construction domain), the hash
+output is effectively random and lands in the True region with
+probability $|T|/2^n$.
 
 \begin{theorem}[FPR compounding~{\cite[Sec.~8]{towell2026cipher}}]
 \label{thm:fpr-compounding}
