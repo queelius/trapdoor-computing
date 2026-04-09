@@ -618,25 +618,6 @@ disjunct adds false positive mass.  NOT is approximate due to
 complement non-preservation via the pigeonhole
 principle~\cite{towell2026cipher}.
 
-\paragraph{Space cost of joint encoding.}
-Merging cipher nodes to prevent correlation leakage increases the domain
-of the resulting cipher map.
-Consider $h(f(x), g(x))$ where $f$ and $g$ share input $x$.
-With separate cipher maps $\fhat$, $\hat{g}$, and $\hat{h}$, the
-untrusted machine sees both $\fhat(c)$ and $\hat{g}(c)$, leaking the
-correlation between $f$ and $g$.
-The alternative is a single cipher map for the composition:
-$\widehat{h \circ (f, g)}(c)$ maps $c$ directly to
-$h(f(x), g(x))$ with no intermediate values exposed.
-The domain is $|X|$ (same as the components), but the construction must
-evaluate $f$, $g$, and $h$ for every $x \in X$ at build time.
-If instead we partially merge $f$ and $g$ into a tuple cipher map
-$\widehat{(f,g)}(c) \to \cipher{Y_f \times Y_g}$, the codomain is the
-product space $|Y_f| \times |Y_g|$, which grows exponentially in the
-number of merged components.
-This is the fundamental space cost of the encoding granularity principle:
-hiding correlations requires encoding into product spaces.
-
 \paragraph{Effect on confidentiality.}
 AND chains improve precision (fewer false positives) but maintain the
 same recall (elements with $f(x) = \mathrm{True}$ pass all tests).
@@ -746,9 +727,19 @@ Two approaches, both costly~\cite[Sec.~9.2]{towell2026cipher}:
 \begin{description}
 \item[Build the composition directly.]  Construct a single cipher map for
   $g(x) = f_3(f_1(x), f_2(x))$.  The untrusted machine sees only
-  input and final output; no intermediates are exposed.  Cost: the domain
-  is the full Cartesian product, so space is
-  $O(|X| \cdot (-\log_2 \varepsilon + H(W)))$.
+  input and final output; no intermediates are exposed.  The domain is
+  $|X|$ (same as either component), but the construction must evaluate
+  $f_1$, $f_2$, and $f_3$ for every $x \in X$ at build time.
+
+  A partial merge is also possible: merge $f_1$ and $f_2$ into a tuple
+  cipher map $\widehat{(f_1, f_2)}(c) \to \cipher{Y_1 \times Y_2}$,
+  then build $\fhat_3$ over the product codomain.
+  This hides the correlation between $f_1$ and $f_2$ but the codomain
+  $|Y_1| \times |Y_2|$ grows as a product of the component codomains.
+  For $k$ merged components, the codomain is $\prod_i |Y_i|$, which
+  grows exponentially.
+  This is the fundamental space cost of the encoding granularity
+  principle: hiding correlations requires encoding into product spaces.
 
 \item[Compose components and inject noise.]  Keep practical
   component-wise evaluation and add $R$ noise queries per $N$ real
