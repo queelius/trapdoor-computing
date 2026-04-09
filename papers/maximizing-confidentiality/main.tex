@@ -176,8 +176,11 @@ $(\eta, \varepsilon, \mu, \delta)$~\cite[Sec.~4]{towell2026cipher}:
   model.
 
 \item[Representation uniformity ($\delta$-bounded).]  The marginal
-  distribution of cipher values is $\delta$-close (in total variation
-  distance) to uniform over $\B^n$.
+  distribution of cipher values is $\delta$-close to uniform over $\B^n$
+  in total variation distance:
+  $\TV(P, U) = \frac{1}{2}\sum_c |P(c) - U(c)| \leq \delta$.
+  Informally, $\delta$ bounds the advantage of any test that tries to
+  distinguish real cipher values from random ones.
 
 \item[Correctness ($\eta$-bounded).]  For random in-domain $x$ and
   random representation index $k$,
