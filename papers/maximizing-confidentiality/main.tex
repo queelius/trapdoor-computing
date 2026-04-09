@@ -530,14 +530,19 @@ exclusive.  Products leak correlations; sums leak the tag.
 The orbit closure~\cite[Sec.~5]{towell2026algebraic} quantifies the
 dynamic confidentiality cost of exposing operations.  Given cipher maps
 $F = \{\fhat_1, \ldots, \fhat_m\}$ available to the untrusted machine
-and a starting cipher value $c$, the orbit
-$\orbitF_F(c)$ is the set of all cipher values reachable by composing
-operations in $F$.  The confidentiality is bounded
-by~\cite[Thm.~5.3]{towell2026algebraic}:
+and a starting cipher value $c$, the \emph{orbit}
+$\orbitF_F(c)$ is the set of all cipher values reachable from $c$ by
+composing operations in $F$.  The \emph{confidentiality}
+$\mathrm{conf}_F(c)$ measures how much uncertainty the adversary retains
+about the latent value encoded by $c$: it is $1$ when the adversary has
+learned nothing and $0$ when the latent value is uniquely determined.
+The orbit size bounds it~\cite[Thm.~5.3]{towell2026algebraic}:
 \begin{equation}
 \mathrm{conf}_F(c) \geq 1 - \frac{|\orbitF_F(c)|}{2^n}.
 \end{equation}
-Fewer exposed operations means smaller orbit means higher
+A larger orbit (more reachable cipher values) means the adversary has
+explored more of the cipher space, leaving fewer possibilities for the
+latent value.  Fewer exposed operations means smaller orbit means higher
 confidentiality.  This provides a formal justification for the root
 encoding strategy: exposing no intermediate cipher values gives
 $|\orbitF_\emptyset(c)| = 1$ and confidentiality $\geq 1 - 2^{-n}$.
