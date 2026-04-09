@@ -127,13 +127,13 @@ explicit probabilistic models of the adversary.
   measure for cipher map systems, with a precise relationship to the
   cipher map parameters (\S\ref{sec:measure}).
 
-\item Theorems connecting each of the three levers (noise, multiplicity,
-  granularity) to the entropy ratio, with explicit cost/benefit trade-offs
-  (\S\ref{sec:levers}).
+\item Theorems connecting each of the three levers (noise injection,
+  multiplicity, granularity) to the entropy ratio, with explicit
+  cost/benefit trade-offs (\S\ref{sec:levers}).
 
-\item Analysis of confidentiality under cipher map composition, including
-  FPR compounding through Boolean chains and correlation leakage from
-  shared variables (\S\ref{sec:composition}).
+\item Analysis of confidentiality under composition: FPR compounding
+  through Boolean chains and correlation leakage from shared variables
+  (\S\ref{sec:composition}).
 
 \item Practical measurement via compression-based entropy estimation and
   a case study demonstrating confidentiality improvement from 59\% to
@@ -181,7 +181,9 @@ $(\eta, \varepsilon, \mu, \delta)$~\cite[Sec.~4]{towell2026cipher}:
 
 \item[Correctness ($\eta$-bounded).]  For random in-domain $x$ and
   random representation index $k$,
-  $\Pr[\dec(\fhat(\enc(x,k))) \neq f(x)] \leq \eta$.
+  \[
+  \Pr[\dec(\fhat(\enc(x,k))) \neq f(x)] \leq \eta.
+  \]
 
 \item[Composability.]  The composition of two cipher maps is again a
   cipher map: $\ghat \circ \fhat$ has correctness
@@ -658,12 +660,11 @@ with equality when $\mathrm{Compress}$ is optimal.
 \end{proposition}
 
 \begin{proof}
-An optimal compressor $\mathrm{Compress}^*$ produces output whose
-expected bit length equals $H(C_1, \ldots, C_N)$ by Shannon's source
-coding theorem.  Any sub-optimal compressor produces output at least as
-long.  The particular encoding $\mathrm{Encode}$ is irrelevant: the
-compressor compensates for the encoding overhead (as long as the encoding
-is uniquely decodable).
+An optimal compressor produces output whose expected bit length equals
+$H(C_1, \ldots, C_N)$ by Shannon's source coding theorem.
+Any sub-optimal compressor produces output at least as long.
+The particular encoding is irrelevant: the compressor compensates for
+the encoding overhead (as long as the encoding is uniquely decodable).
 \end{proof}
 
 The compression estimator has three practical advantages:
