@@ -620,16 +620,19 @@ principle~\cite{towell2026cipher}.
 
 \paragraph{Effect on confidentiality.}
 AND chains improve precision (fewer false positives) but maintain the
-same recall (true positives pass all tests).  From a confidentiality
-perspective, AND chains reduce the effective noise level: with
-$p_T = 0.05$ and $k = 3$, the FPR drops to $0.05^3 \approx 0.000125$,
-meaning almost all decoded ``true'' outputs correspond to genuine
-members.  This makes the system more predictable to the adversary (lower
-$e$) in exchange for higher precision.
+same recall (elements with $f(x) = \mathrm{True}$ pass all tests).
+From a confidentiality perspective, AND chains reduce the effective noise
+level: with $p_T = 0.05$ and $k = 3$, the FPR drops to
+$0.05^3 \approx 0.000125$, meaning almost all decoded True outputs
+correspond to elements where $f(x) = \mathrm{True}$.
+The adversary can infer with higher confidence that a True result is
+correct (lower entropy ratio $e$), a direct trade-off between precision
+and confidentiality.
 
-OR chains increase the noise level but reduce recall.  This makes the
-system less predictable (higher $e$) but also less useful (more false
-positives in the results).
+OR chains have the opposite effect: FPR increases, adding noise to the
+output stream.
+The adversary's uncertainty grows (higher $e$), but the system returns
+more false positives, reducing its usefulness.
 
 \subsection{Correlation Leakage from Shared Variables}
 
