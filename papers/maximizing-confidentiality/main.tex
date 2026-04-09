@@ -634,6 +634,30 @@ output stream.
 The adversary's uncertainty grows (higher $e$), but the system returns
 more false positives, reducing its usefulness.
 
+\paragraph{Convergence under deep composition.}
+Long AND chains converge toward False (or noise).
+With $p_T = 0.05$ and $p_F = 0.90$, each AND step multiplies the
+probability of a True result by $p_T$ for noise inputs.
+After $k$ ANDs with independent random cipher values, the probability
+of a True output is at most $p_T^k$, which vanishes rapidly.
+The cipher Boolean output after a deep AND chain is almost certainly
+False or noise, regardless of the initial value.
+This limits the depth of useful AND composition: beyond a few
+terms, the signal (legitimate True results) is indistinguishable from
+the False/noise floor.
+
+Dually, long OR chains converge toward True (or noise).
+Each OR step with an independent input produces True with probability
+at least $p_T$, and after $k$ steps the probability of \emph{not} seeing
+True is at most $(1 - p_T)^k$.
+Deep OR chains saturate at True, again drowning the signal.
+
+In both cases, noise acts as an attractor: AND pulls toward False/noise,
+OR pulls toward True/noise.
+The noise region prevents the adversary from distinguishing
+``legitimately False after AND'' from ``noise-induced False,'' providing
+a floor of uncertainty even in deep compositions.
+
 \subsection{Correlation Leakage from Shared Variables}
 
 Even when each cipher map has uniform marginal output, evaluating multiple
