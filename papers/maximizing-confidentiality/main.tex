@@ -33,6 +33,7 @@
 \newcommand{\TV}{d_{\mathrm{TV}}}
 \newcommand{\B}{\{0,1\}}
 \DeclareMathOperator{\Uniform}{Uniform}
+\newcommand{\cipher}[1]{\mathsf{C}(#1)}
 \DeclareMathOperator{\orbitF}{orbit}
 
 \title{Quantitative Confidentiality for Cipher Maps}
@@ -149,6 +150,39 @@ hash function.  The framework is information-theoretic throughout.
 
 
 %% ====================================================================
+\section{Related Work}
+\label{sec:related}
+%% ====================================================================
+
+\paragraph{Quantitative information flow.}
+The entropy ratio $e = H/H^*$ is a normalized form of Shannon leakage,
+studied extensively in the QIF literature~\cite{smith2009foundations,alvim2020science}.
+Smith~\cite{smith2009foundations} proposes min-entropy leakage as a
+worst-case measure; Alvim et al.~\cite{alvim2020science} provide a
+comprehensive treatment of information-theoretic leakage measures.
+Our contribution is not the measure itself but its application to the
+cipher map framework: the parameter decomposition connecting $e$ to
+$(\eta, \varepsilon, \delta, \mu)$ and the three levers for improving it.
+
+\paragraph{SSE leakage mitigation.}
+Noise injection for encrypted search has been studied in the SSE
+literature.
+Bost and Fouque~\cite{bost2017thwarting} propose dummy queries with
+game-based security analysis; Demertzis et al.~\cite{demertzis2020seal}
+develop tunable leakage-functionality trade-offs.
+Our analysis differs in using information-theoretic measures (entropy
+ratio) rather than simulation-based definitions, and applies to general
+cipher maps, not only encrypted search.
+
+\paragraph{Leakage from property-preserving encryption.}
+Naveed et al.~\cite{naveed2015inference} and Islam et
+al.~\cite{islam2012access} demonstrate inference attacks exploiting
+preserved algebraic structure.
+The cipher map model avoids property preservation entirely: the untrusted
+machine evaluates a total function on opaque bit strings and cannot
+determine the output type from the cipher value.
+
+%% ====================================================================
 \section{Preliminaries}
 \label{sec:prelim}
 %% ====================================================================
@@ -238,7 +272,7 @@ much observing $Y$ reveals about $X$; zero means independence.
 \emph{KL divergence} $D_{\mathrm{KL}}(P \| Q) = \sum_x P(x) \log_2
 (P(x)/Q(x))$ measures how far $P$ is from $Q$; it is zero iff $P = Q$
 and connects to the entropy ratio via $H(P) = H^* - D_{\mathrm{KL}}(P
-\| U) \cdot H^*$ when $U$ is the maximum-entropy distribution.
+\| U)$ when $U$ is the maximum-entropy (uniform) distribution.
 We use $D$ for the distribution of queries over the domain $X$, and $Q$
 for the induced distribution over cipher values.
 All logarithms are base~2.
@@ -272,9 +306,8 @@ cipher value observed by the untrusted machine.
 \label{def:max-entropy}
 The \emph{maximum entropy} $H^*$ is the maximum of $H$ over all
 distributions on the observable sequence that are consistent with the
-system constraints: domain size $|X|$, vocabulary size $|Y|$, query
-arrival rate $\lambda$, mean query size $\mu_q$, number of agents $k$,
-and the cipher map parameters $(\eta, \varepsilon, \delta)$.
+system constraints: domain size $|X|$, codomain size $|Y|$, and the
+cipher map parameters $(\eta, \varepsilon, \delta)$.
 \end{definition}
 
 By the maximum entropy principle~\cite{jaynes1957information}, $H^*$ is
@@ -321,19 +354,19 @@ distribution on $X$, and let $Q$ be the induced distribution on cipher
 values.  Then the per-query observed entropy satisfies:
 \begin{equation}
 \label{eq:entropy-decomp}
-H(Q) = H^* - D_{\mathrm{KL}}(Q \| U) \cdot H^*
-      = H^* (1 - \delta'),
+H(Q) = H^* - D_{\mathrm{KL}}(Q \| U)
+      = H^* \!\left(1 - \frac{D_{\mathrm{KL}}(Q \| U)}{H^*}\right),
 \end{equation}
-where $U$ is the uniform distribution on $\B^n$ and $\delta'$ captures
-the deviation from uniformity.  In particular:
+where $U$ is the uniform distribution on $\B^n$ and the entropy ratio is
+$e = H(Q)/H^* = 1 - D_{\mathrm{KL}}(Q \| U)/H^*$.  In particular:
 \begin{enumerate}
 \item If $\delta = 0$ (perfect representation uniformity), then $Q = U$
   and $H(Q) = H^* = n$ bits, giving $e = 1$.
 \item If $K(x) = 1$ for all $x$ (simple substitution, no multiple
   representations), then $Q$ inherits the non-uniformity of $D$, and
   $e \leq H(D) / \log_2 |X|$.
-\item The entropy ratio is bounded by $e \geq 1 - \delta \cdot
-  \log_2(2^n / \delta)$ for small $\delta$, via Pinsker's inequality.
+\item The entropy ratio is bounded by $e \geq 1 - 2\delta^2/n$,
+  via Pinsker's inequality.
 \end{enumerate}
 \end{theorem}
 
@@ -388,8 +421,10 @@ are $n$-bit strings, and $\fhat$ produces $n$-bit output on both.
 
 \begin{theorem}[Noise dilution]
 \label{thm:noise-dilution}
-Let the trusted machine submit $N$ real queries drawn from distribution
-$D$ and $R$ filler queries drawn uniformly from $\B^n$.  The mixed
+Assume $K(x) = 1$ (single encoding per element), so the cipher value
+distribution of real queries equals $D$.
+Let the trusted machine submit $N$ real queries drawn from $D$ and
+$R$ filler queries drawn uniformly from $\B^n$.  The mixed
 sequence has $N + R$ elements, each of which is real with probability
 $\rho = N / (N + R)$ and filler with probability $1 - \rho$.  Then:
 \begin{enumerate}
@@ -428,9 +463,11 @@ $D$.  Each observation contributes information about $\theta$ only when
 it is a real query (probability $\rho$).  The effective sample size for
 estimating $\theta$ is $\rho \cdot (N + R) = N$, but the adversary does
 not know which observations are real.  The best the adversary can do is
-treat each observation as drawn from the mixture, giving Fisher
-information reduced by a factor of $\rho^2$ relative to observing $D$
-directly.
+treat each observation as drawn from the mixture.
+When $\rho \ll 1$ (filler dominates), the mixture is approximately
+uniform and the Fisher information for estimating any parameter of $D$
+is reduced by a factor of approximately $\rho^2$ relative to observing
+$D$ directly.
 \end{proof}
 
 \paragraph{Cost.}
