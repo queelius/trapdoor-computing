@@ -685,6 +685,15 @@ untrusted-side Boolean search (a functionality gain) but simultaneously
 provides the adversary with tools to probe the cipher space
 (a confidentiality cost).
 
+One mitigation: \emph{typed composition chains}~\cite[Sec.~5.4]{towell2026algebraic}.
+Instead of a single shared cipher Boolean space where AND can be
+self-composed indefinitely, define a tower of distinct cipher spaces
+$\cipher{\mathrm{Bool}}_0, \cipher{\mathrm{Bool}}_1, \ldots$
+where $\mathrm{AND}_i$ maps from level $i$ to level $i+1$.
+Without $\mathrm{AND}_{k}$, the chain terminates at depth $k$.
+The orbit is bounded by $1 + k$ and the type system enforces the
+limit at construction time.
+
 \subsection{Correlation Leakage from Shared Variables}
 
 Even when each cipher map has uniform marginal output, evaluating multiple

@@ -770,6 +770,81 @@ cipher map construction.
 \end{example}
 
 
+\subsection{Typed Composition Chains}
+\label{sec:typed-chains}
+
+The orbit grows because the adversary can feed cipher map outputs back
+as inputs, composing operations to reach new cipher values.
+A direct mitigation: \emph{prevent self-composition by typing the
+cipher spaces}.
+
+\begin{definition}[Typed composition chain]
+\label{def:typed-chain}
+A \emph{typed composition chain} of depth $k$ is a sequence of cipher
+maps $\fhat_0, \fhat_1, \ldots, \fhat_{k-1}$ where
+$\fhat_i : \cipher{A}_i \to \cipher{A}_{i+1}$ and the cipher spaces
+$\cipher{A}_0, \cipher{A}_1, \ldots, \cipher{A}_k$ are \emph{distinct}
+(disjoint hash value sets, different secrets).
+\end{definition}
+
+Since $\cipher{A}_i \neq \cipher{A}_j$ for $i \neq j$, the output of
+$\fhat_i$ cannot be fed into $\fhat_j$ for $j \neq i+1$.
+The adversary can compose at most $k$ operations in sequence, and cannot
+loop.
+
+\begin{proposition}[Orbit bound for typed chains]
+\label{prop:typed-orbit}
+For a typed composition chain of depth $k$ with cipher spaces of sizes
+$|\cipher{A}_0|, \ldots, |\cipher{A}_k|$, the orbit of any cipher value
+$c \in \cipher{A}_0$ is bounded by
+\[
+|\orbitF(c)| \leq 1 + k,
+\]
+where each step adds at most one new cipher value (the output of $\fhat_i$
+applied to the previous result).
+The confidentiality satisfies
+$\mathrm{conf}_F(c) \geq 1 - (1+k)/2^n$.
+\end{proposition}
+
+\begin{proof}
+Starting from $c \in \cipher{A}_0$, the adversary computes
+$c_1 = \fhat_0(c) \in \cipher{A}_1$,
+$c_2 = \fhat_1(c_1) \in \cipher{A}_2$, and so on up to
+$c_k = \fhat_{k-1}(c_{k-1}) \in \cipher{A}_k$.
+No operation maps back into an earlier cipher space, so the orbit is
+exactly $\{c, c_1, \ldots, c_k\}$ with $|\orbitF(c)| = 1 + k$.
+The confidentiality bound follows from
+\Cref{thm:confidentiality-bound}.
+\end{proof}
+
+\begin{example}[Depth-limited Boolean search]
+\label{ex:typed-bool}
+For Boolean search with maximum query depth 2 (e.g., $w_1 \land w_2$
+but not $w_1 \land w_2 \land w_3$), define:
+\begin{itemize}
+\item Cipher sets output to $\cipher{\mathrm{Bool}}_0$.
+\item $\mathrm{AND}_0 : \cipher{\mathrm{Bool}}_0 \times
+  \cipher{\mathrm{Bool}}_0 \to \cipher{\mathrm{Bool}}_1$.
+\item $\mathrm{AND}_1 : \cipher{\mathrm{Bool}}_1 \times
+  \cipher{\mathrm{Bool}}_1 \to \cipher{\mathrm{Bool}}_2$.
+\item No $\mathrm{AND}_2$ is defined.
+\end{itemize}
+The adversary can compose at most two AND operations.
+The orbit from any cipher Boolean value has size at most 3.
+Contrast with a single shared cipher Boolean space, where the
+adversary can self-compose indefinitely and the orbit grows
+without bound.
+\end{example}
+
+The general principle: \textbf{the type system controls the orbit}.
+By choosing how many cipher space levels to define, the system designer
+sets the maximum composition depth and therefore the maximum orbit size
+and minimum confidentiality.
+This is a compile-time (construction-time) decision with no runtime
+cost: the untrusted machine simply does not have cipher maps for
+deeper levels.
+
+
 %% ====================================================================
 \section{Cipher Turing Machine}
 \label{sec:cipher-tm}
