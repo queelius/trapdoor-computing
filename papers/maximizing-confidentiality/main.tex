@@ -591,9 +591,10 @@ composition behavior depends on the gate type.  Let $p_T$ denote the
 \[
 p_T = \Pr[\dec(\fhat(\enc(x,k))) = \mathrm{True} \mid f(x) = \mathrm{False}],
 \]
-the probability that a non-member is incorrectly decoded as True.
-This equals the fraction of hash space allocated to the True region
-in the cipher Boolean type.
+the probability that an element with $f(x) = \mathrm{False}$ is
+decoded as True.
+For the cipher Boolean construction, this equals the fraction of hash
+space allocated to the True region.
 
 \begin{theorem}[FPR compounding~{\cite[Sec.~8]{towell2026cipher}}]
 \label{thm:fpr-compounding}
