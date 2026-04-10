@@ -608,6 +608,17 @@ and the noise-decode probability is
 $\varepsilon = \sum_y \alpha(y) = |\bigcup_y A(y)| / 2^n$.
 \end{definition}
 
+\begin{remark}[XOR-scrambled decode]
+The decode function applies a secret-derived XOR mask before checking
+acceptance boundaries: $\dec(r)$ checks whether $r \oplus s_{\mathrm{key}}$
+falls in the acceptance region for some $y$.  Without the scramble key, the
+mapping from hash values to output values is pseudorandom; contiguous
+acceptance regions in the scrambled space appear scattered in the raw hash
+space.  This prevents an adversary observing hash outputs from inferring
+which outputs correspond to which values, even if the acceptance regions are
+contiguous.
+\end{remark}
+
 Different predicates give different space and construction-time trade-offs:
 \begin{itemize}
 \item \textbf{Prefix-free code.}
@@ -841,6 +852,15 @@ At $k = m$, each bucket has one element, construction is linear in $m$,
 and the overhead is $\log_2(1/\bar{\alpha})$ bits per element for the
 per-element seed---the same order as the hash width.  This is the regime
 of practical perfect hash functions~\cite{belazzougui2009hash}.
+
+An alternative construction uses perfect hash functions (PHFs) to assign
+elements to slots in $O(m)$ time, avoiding the seed search entirely.  A PHF
+maps the $m$ cipher keys to $m$ distinct slots; each slot stores the
+XOR-masked value encoding.  Construction time drops from exponential in
+bucket size to linear in $m$.  A reference implementation using a
+RecSplit-family PHF achieves 700 documents per second on the 20~Newsgroups
+corpus (18{,}266 documents, 58{,}903 words), compared to approximately
+10~documents per second with the seed search construction.
 
 \subsection{Instantiations}
 \label{subsec:instantiations}
@@ -1337,6 +1357,18 @@ for 3-term AND) while maintaining perfect recall.
 OR and NOT queries lose recall (0.97 and 0.88 respectively) due to
 noise propagation through the cipher Boolean operations.
 The full 18{,}266-document index builds in 25.6 seconds.
+
+Boolean search queries composed from AND, OR, and NOT can be evaluated
+entirely on the untrusted machine using cipher Boolean types.  A cipher
+Boolean type partitions the hash space into True, False, and noise regions
+(e.g., 5\%, 90\%, 5\% respectively).  AND, OR, and NOT are themselves cipher
+maps over the cipher Boolean space.  Members of a cipher set are forced into
+the True region by construction; non-members land randomly in True (5\%, the
+false positive rate), False (90\%), or noise (5\%).  Experimental validation
+on 5{,}000 documents shows perfect recall for AND queries with false
+positives decreasing from 248 (single term) to 12 (3-term AND).  Details are
+developed in the companion paper on algebraic cipher
+types~\cite{towell2026algebraic}.
 
 The correctness parameter $\eta$ has a precise deniability interpretation
 for Boolean-valued cipher maps.

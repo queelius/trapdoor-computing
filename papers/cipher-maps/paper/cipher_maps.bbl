@@ -1,4 +1,4 @@
-\begin{thebibliography}{21}
+\begin{thebibliography}{22}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -132,12 +132,18 @@ Dawn~Xiaodong Song, David Wagner, and Adrian Perrig.
 \newblock In \emph{Proceedings of the 2000 IEEE Symposium on Security and
   Privacy}, pages 44--55, 2000.
 
-\bibitem[Towell(2026)]{bernoulli-types}
+\bibitem[Towell(2026{\natexlab{a}})]{bernoulli-types}
 Alexander Towell.
 \newblock Bernoulli sets and maps: A probabilistic framework for approximate
-  data structures, 2026.
+  data structures, 2026{\natexlab{a}}.
 \newblock Manuscript in preparation. See
   \url{https://github.com/queelius/bernoulli_sets}.
+
+\bibitem[Towell(2026{\natexlab{b}})]{towell2026algebraic}
+Alexander Towell.
+\newblock Algebraic cipher types: A functorial framework for structured
+  computation over trapdoor encodings, 2026{\natexlab{b}}.
+\newblock Manuscript in preparation.
 
 \bibitem[Yao(1982)]{yao1982protocols}
 Andrew~C Yao.

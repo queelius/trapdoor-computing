@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex 2025.2.2)  8 APR 2026 13:50
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex 2025.2.2)  9 APR 2026 19:16
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -517,27 +517,28 @@ File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 {/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}{/usr/share/texmf/fonts/enc/
 dvips/cm-super/cm-super-ts1.enc}] [2] [3] [4] [5] [6] [7] [8]
 Package hyperref Info: bookmark level for unknown algorithm defaults to 0 on in
-put line 658.
+put line 669.
  [9] [10] [11] [12] [13] [14]
-Overfull \hbox (4.3997pt too wide) in paragraph at lines 1191--1198
+[15]
+Overfull \hbox (4.3997pt too wide) in paragraph at lines 1211--1218
 []\OT1/cmr/m/n/10.95 Construct a sin-gle ci-pher map for the com-posed func-tio
 n $\OML/cmm/m/it/10.95 g\OT1/cmr/m/n/10.95 (\OML/cmm/m/it/10.95 x\OT1/cmr/m/n/1
 0.95 ) =
  []
 
-[15] [16] [17] (./cipher_maps.bbl [18] [19]) [20] (./cipher_maps.aux)
+[16] [17] [18] (./cipher_maps.bbl [19] [20]) [21] (./cipher_maps.aux)
  ***********
 LaTeX2e <2023-11-01> patch level 1
 L3 programming layer <2024-01-22>
  ***********
 Package rerunfilecheck Info: File `cipher_maps.out' has not changed.
-(rerunfilecheck)             Checksum: 470715FCEF84347E94D68252D94933FC;6600.
+(rerunfilecheck)             Checksum: 049E0C3F0111230CCE78EBC946C6C556;6600.
  ) 
 Here is how much of TeX's memory you used:
- 13978 strings out of 474222
- 226212 string characters out of 5748734
- 1942975 words of memory out of 5000000
- 35877 multiletter control sequences out of 15000+600000
+ 13984 strings out of 474222
+ 226334 string characters out of 5748734
+ 1940975 words of memory out of 5000000
+ 35880 multiletter control sequences out of 15000+600000
  571820 words of font info for 87 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  75i,10n,79p,391b,641s stack positions out of 10000i,1000n,20000p,200000b,200000s
@@ -562,10 +563,10 @@ type1/public/amsfonts/cm/cmti10.pfb></usr/share/texlive/texmf-dist/fonts/type1/
 public/amsfonts/cm/cmtt10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public
 /amsfonts/cm/cmtt12.pfb></usr/share/texmf/fonts/type1/public/cm-super/sfrm1095.
 pfb></usr/share/texmf/fonts/type1/public/cm-super/sfti1095.pfb>
-Output written on cipher_maps.pdf (20 pages, 367451 bytes).
+Output written on cipher_maps.pdf (21 pages, 370284 bytes).
 PDF statistics:
- 589 PDF objects out of 1000 (max. 8388607)
- 515 compressed objects within 6 object streams
- 183 named destinations out of 1000 (max. 500000)
+ 596 PDF objects out of 1000 (max. 8388607)
+ 521 compressed objects within 6 object streams
+ 186 named destinations out of 1000 (max. 500000)
  297 words of extra memory for PDF output out of 10000 (max. 10000000)
 
