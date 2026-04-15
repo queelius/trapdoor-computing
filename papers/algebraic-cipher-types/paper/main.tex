@@ -51,10 +51,15 @@ No encoding achieves both simultaneously.
 We introduce the \emph{orbit closure} of a cipher value under a set of
 available operations and prove that confidentiality is bounded by the
 fraction of the cipher space reachable from any single value.
-Finally, we define a cipher Turing machine whose space complexity is
-$O(|Q| \cdot |\Gamma|)$, independent of the input domain size, contrasting
-with the $O(|X|)$ space of a cipher map---but at the cost of leaking head
-movement patterns.
+A typed-composition discipline turns this bound into a design-time
+budget: the type of a cipher program determines how deep its orbit
+can go.
+We then present two realizations of cipher programs, an expression-tree
+decomposition with cipher-map cut points (the practical path, exposed
+via a \texttt{@cipher\_node} decorator) and a cipher Turing machine
+(space $O(|Q| \cdot |\Gamma|)$, leaks head movement), and evaluate the
+cipher Boolean algebra specialization on a 20~Newsgroups Boolean search
+task.
 \end{abstract}
 
 
@@ -103,11 +108,19 @@ The main contributions are:
   (\Cref{thm:monotonicity}), and derive an upper bound on
   confidentiality in terms of orbit size
   (\Cref{thm:confidentiality-bound}).
+  A typed-composition discipline (\Cref{sec:typed-chains}) converts this
+  bound into a design-time budget: the type of a cipher program bounds
+  its orbit depth and hence its worst-case confidentiality loss.
 
-\item \textbf{Cipher Turing machine} (\Cref{sec:cipher-tm}).
-  We exhibit a model of computation on cipher values whose space complexity
-  is $O(|Q| \cdot |\Gamma|)$---depending on the program, not the data---but
-  which leaks the head movement pattern.
+\item \textbf{Cipher program realizations} (\Cref{sec:realizing}).
+  We present two concrete ways to decompose a cipher program into
+  cipher-map pieces.
+  Expression-tree decomposition with cipher-node annotations is the
+  practical path; a cipher Turing machine is a second realization,
+  with space $O(|Q| \cdot |\Gamma|)$ at the cost of leaking head
+  movement.
+  The two realizations share a cut-point structure and differ in what
+  residual structure the untrusted machine observes.
 \end{enumerate}
 
 We deliberately avoid game-based or simulation-based cryptographic
@@ -150,15 +163,47 @@ correlation leakage for products) apply equally to functional
 encryption schemes that support algebraic operations.
 
 \paragraph{Searchable symmetric encryption.}
-SSE~\cite{curtmola2006searchable} enables keyword search on
-encrypted documents with simulation-based security.
+SSE originates with Song, Wagner, and
+Perrig~\cite{song2000practical} and is placed on rigorous
+foundations by Curtmola et al.~\cite{curtmola2006searchable}.
 The Boolean search construction in \Cref{sec:cipher-bool} provides
 an alternative with information-theoretic parameters: cipher sets
 with cipher Boolean AND/OR/NOT, rather than encrypted indices with
 leakage profiles.
-Naveed et al.~\cite{naveed2015inference} demonstrated inference
-attacks on property-preserving encryption; cipher maps avoid
-property preservation entirely.
+Subsequent work established that leakage profiles in SSE are
+attackable in practice: Islam, Kuzu, and
+Kantarcioglu~\cite{islam2012access} demonstrated access-pattern
+disclosure attacks; Cash et al.~\cite{cash2015leakage} and
+Grubbs, Ristenpart, and Shmatikov~\cite{grubbs2017leakage} mounted
+leakage-abuse attacks against deployed SSE and encrypted databases;
+Naveed, Kamara, and Wright~\cite{naveed2015inference} did the same for
+property-preserving encryption.
+Cipher maps avoid property preservation entirely and limit the
+adversary to the orbit-closure bound of
+\Cref{thm:confidentiality-bound}.
+
+\paragraph{Quantitative information flow.}
+The entropy-form confidentiality bound of
+\Cref{thm:confidentiality-bound} places this work in the quantitative
+information flow tradition~\cite{smith2009foundations}, where leakage
+is measured as conditional entropy or min-entropy of the secret given
+the adversary's observations.
+Our contribution is to specialize this framework to cipher values
+under an algebraic operation set, yielding a construction-independent
+bound in terms of orbit size.
+
+\paragraph{Related concepts.}
+Cipher maps realize the oblivious evaluation of a computable function
+(after Turing~\cite{turing1936computable}) through a total function on
+bit strings, and the cipher Boolean construction
+(\Cref{sec:cipher-bool}) is structurally related to the Bloom
+filter~\cite{bloom1970space}, which it generalizes by allocating an
+explicit False region alongside the True region.
+Our experiments sit on the 20~Newsgroups corpus of
+Lang~\cite{lang1995newsweeder}.
+Maximizing-confidentiality analyses complementary to this paper's
+information-theoretic bound appear in a companion
+work~\cite{towell2026maxconf}.
 
 %% ====================================================================
 \section{Preliminaries}
@@ -614,73 +659,76 @@ With $F = \emptyset$, only the base case of the orbit definition applies.
 %% --------------------------------------------------------------------
 
 The orbit closure quantifies reachability.
-We now connect it to confidentiality.
-The key idea: the untrusted machine knows, without the trapdoor, that
-the latent value encoded by $c$ must be consistent with every cipher value
-in $\orbitF(c)$.
-A larger orbit means more of the cipher space is determined by $c$, leaving
-fewer possibilities for the latent value.
+We now connect it to confidentiality via an information-theoretic
+bound: each distinct cipher value in $\orbitF(c)$ is a signal the
+adversary observes, and the number of such signals upper-bounds how
+much can be learned about the latent value.
 
-\begin{definition}[Candidate set]
-\label{def:candidate-set}
-Given a cipher value $c$, operations $F$, and the orbit $\orbitF(c)$, the
-\emph{candidate set} is the set of latent values consistent with the
-observed orbit:
-\[
-\mathrm{Cand}_F(c) = \{ x \in X \mid \exists\, k \text{ s.t.\ }
-\enc(x, k) = c \text{ and } \orbitF(\enc(x,k)) = \orbitF(c) \}.
-\]
-That is, $x$ is a candidate if encoding $x$ produces $c$ and the orbit
-structure starting from $c$ matches what the adversary observes.
-\end{definition}
+Let $X$ denote the random latent value encoded by $c$ (drawn from the
+distribution over inputs that the trusted machine uses) and let
+$\mathcal{V}_F(c) = \orbitF(c)$ denote the adversary's view: the set
+of cipher values reachable from $c$ under $F$.
+The adversary's residual uncertainty about $X$ is quantified by the
+conditional entropy $H(X \mid \mathcal{V}_F(c))$.
 
-\begin{definition}[Confidentiality]
-\label{def:confidentiality}
-The \emph{confidentiality} of a cipher value $c$ under operations $F$ is
-the adversary's remaining uncertainty about the latent value:
-\[
-\mathrm{conf}_F(c) = 1 - \frac{|\mathrm{Cand}_F(c)|}{|X|}.
-\]
-When $\mathrm{conf}_F(c) = 1$, the adversary has learned nothing.
-When $\mathrm{conf}_F(c) = 0$, the latent value is uniquely determined.
-\end{definition}
-
-\begin{theorem}[Confidentiality bound]
+\begin{theorem}[Confidentiality bound, entropy form]
 \label{thm:confidentiality-bound}
-Let $F$ be a set of cipher maps available to the untrusted machine, $c$ a
-cipher value, and assume representation uniformity with parameter
-$\delta \approx 0$.
-Then:
+Let $F$ be a set of cipher maps available to the untrusted machine and
+$c$ a cipher value.
+Then
 \[
-\mathrm{conf}_F(c) \geq 1 - \frac{|\orbitF(c)|}{2^n}.
+H(X \mid \mathcal{V}_F(c)) \;\geq\; H(X) - \log_2 |\orbitF(c)|.
 \]
 \end{theorem}
 
 \begin{proof}
-Under $\delta \approx 0$, encodings are spread approximately uniformly
-across $\B^n$.
-The orbit $\orbitF(c)$ is a set of bit strings that the adversary can
-compute but not decode.
-In the worst case, every orbit element is a valid encoding of a distinct
-latent value.
-The adversary then knows the latent value is one of at most
-$|\orbitF(c)|$ possibilities out of $|X|$ total.
-Since $|X| \leq 2^n$ (at most $2^n$ distinct encodings), the fraction of
-the cipher space explored is $|\orbitF(c)| / 2^n$, and the remaining
-unexplored fraction bounds the confidentiality.
-
-This bound is loose: it ignores the functional relationships between orbit
-elements (e.g., the adversary knows that orbit element $c' = \fhat(c)$,
-which constrains the possible latent values beyond mere set size).
-Tighter bounds for specific operations are an open problem.
+The view $\mathcal{V}_F(c)$ takes at most $|\orbitF(c)|$ distinct
+values as $X$ ranges over its distribution, since the orbit is a
+finite set of bit strings computable from $c$.
+Therefore
+\[
+I(X; \mathcal{V}_F(c)) \;\leq\; H(\mathcal{V}_F(c)) \;\leq\; \log_2 |\orbitF(c)|,
+\]
+and $H(X \mid \mathcal{V}_F(c)) = H(X) - I(X; \mathcal{V}_F(c))$.
 \end{proof}
 
-\begin{remark}
-When $|\orbitF(c)| = 2^n$ (the entire cipher space is reachable), the
-confidentiality bound is zero: the adversary can potentially distinguish
-every latent value by exploring the orbit structure.
-When $|\orbitF(c)| = 1$ (no operations available), confidentiality is
-$1 - 2^{-n} \approx 1$.
+\begin{corollary}[Confidentiality bound, set form]
+\label{cor:confidentiality-set}
+Let $S_F(c) \subseteq X$ denote the set of latent values the adversary
+cannot rule out from $\mathcal{V}_F(c)$, and define the
+\emph{confidentiality} of $c$ under $F$ as
+$\mathrm{conf}_F(c) = 1 - |S_F(c)|/|X|$.
+Then
+\[
+\mathrm{conf}_F(c) \;\geq\; 1 - \frac{|\orbitF(c)|}{|X|}.
+\]
+\end{corollary}
+
+\begin{proof}
+Each element of $S_F(c)$ is distinguished from the others by at least
+one observable feature of the view, and the view takes at most
+$|\orbitF(c)|$ distinct values, so
+$|S_F(c)| \leq |\orbitF(c)|$.
+The bound follows.
+\end{proof}
+
+\begin{remark}[Loose bound, tight in the worst case]
+Both forms are loose: they ignore the functional relationships between
+orbit elements (the adversary knows $c' = \fhat(c)$, which constrains
+the possible latent values beyond mere set size) and the algebraic
+structure of $F$.
+Tighter bounds for specific operations are an open problem.
+Equality is approached when orbit elements behave like independent
+signals about $X$, e.g., when the cipher maps in $F$ are modeled as
+random oracles~\cite{bellare1993random}.
+\end{remark}
+
+\begin{remark}[Extremes]
+When $|\orbitF(c)| \geq |X|$, the set-form bound is vacuous; in
+principle the orbit can identify every latent value.
+When $|\orbitF(c)| = 1$ (no operations available, per
+\Cref{cor:empty-ops}), confidentiality is maximal:
+$H(X \mid \mathcal{V}_F(c)) = H(X)$ and $\mathrm{conf}_F(c) = 1 - 1/|X|$.
 \end{remark}
 
 
@@ -798,58 +846,77 @@ cipher spaces}.
 \label{def:typed-chain}
 A \emph{typed composition chain} of depth $k$ is a sequence of
 cipher maps $\fhat_0, \ldots, \fhat_{k-1}$ where
-$\fhat_i : \cipher{A}_i \to \cipher{A}_{i+1}$ and the cipher
+$\fhat_i : \cipher{A}_i^{a_i} \to \cipher{A}_{i+1}$ has arity
+$a_i \geq 1$ over the cipher space $\cipher{A}_i$, and the cipher
 spaces $\cipher{A}_0, \ldots, \cipher{A}_k$ are \emph{distinct}
 (disjoint hash value sets, different secrets).
 \end{definition}
 
 Since $\cipher{A}_i \neq \cipher{A}_j$ for $i \neq j$, the output of
 $\fhat_i$ cannot be fed into $\fhat_j$ for $j \neq i+1$.
-The adversary can compose at most $k$ operations in sequence, and cannot
+The adversary can compose at most $k$ operations in sequence and cannot
 loop.
 
 \begin{proposition}[Orbit bound for typed chains]
 \label{prop:typed-orbit}
-For a typed composition chain of depth $k$ with cipher spaces of sizes
-$|\cipher{A}_0|, \ldots, |\cipher{A}_k|$, the orbit of any cipher value
-$c \in \cipher{A}_0$ is bounded by
+Let $V_0 \subseteq \cipher{A}_0$ be a set of $m$ initial cipher values
+available to the adversary, and let $F = \{\fhat_0, \ldots, \fhat_{k-1}\}$
+be a typed composition chain of depth $k$ with arities
+$a_0, \ldots, a_{k-1}$.
+Define $N_0 = m$ and $N_{i+1} = N_i^{a_i}$.
+Then
 \[
-|\orbitF(c)| \leq 1 + k,
+|\orbitF(V_0)| \;\leq\; \sum_{i=0}^{k} N_i,
 \]
-where each step adds at most one new cipher value (the output of $\fhat_i$
-applied to the previous result).
-The confidentiality satisfies
-$\mathrm{conf}_F(c) \geq 1 - (1+k)/2^n$.
+a finite bound determined entirely by $(k, m, a_0, \ldots, a_{k-1})$
+and independent of the cipher-space sizes $|\cipher{A}_i|$.
+Two useful special cases:
+\begin{itemize}
+\item \textbf{Single-value start} ($m = 1$), any arities:
+  $|\orbitF(V_0)| \leq 1 + k$.
+\item \textbf{Unary chain} ($a_i = 1$), any $m$:
+  $|\orbitF(V_0)| \leq m(k+1)$.
+\end{itemize}
+The corresponding confidentiality bound follows from
+\Cref{cor:confidentiality-set}.
 \end{proposition}
 
 \begin{proof}
-Starting from $c \in \cipher{A}_0$, the adversary computes
-$c_1 = \fhat_0(c) \in \cipher{A}_1$,
-$c_2 = \fhat_1(c_1) \in \cipher{A}_2$, and so on up to
-$c_k = \fhat_{k-1}(c_{k-1}) \in \cipher{A}_k$.
-No operation maps back into an earlier cipher space, so the orbit is
-exactly $\{c, c_1, \ldots, c_k\}$ with $|\orbitF(c)| = 1 + k$.
-The confidentiality bound follows from
-\Cref{thm:confidentiality-bound}.
+Partition $\orbitF(V_0)$ by level: $L_0 = V_0 \subseteq \cipher{A}_0$,
+and $L_{i+1} \subseteq \cipher{A}_{i+1}$ is the image of $\fhat_i$
+applied to all $a_i$-tuples of elements of $L_i$.
+Distinct cipher spaces prevent back-references, so every orbit element
+lies in exactly one $L_i$.
+Since $|L_i| \leq |L_{i-1}|^{a_{i-1}}$, induction gives $|L_i| \leq N_i$,
+and therefore $|\orbitF(V_0)| = \sum_i |L_i| \leq \sum_i N_i$.
+For $m = 1$, $N_i = 1$ at every level (identical inputs produce one
+output for a deterministic cipher map), so the sum is $1+k$.
+For $a_i = 1$, $N_i = m$ at every level, so the sum is $m(k+1)$.
 \end{proof}
 
 \begin{example}[Depth-limited Boolean search]
 \label{ex:typed-bool}
-For Boolean search with maximum query depth 2 (e.g., $w_1 \land w_2$
-but not $w_1 \land w_2 \land w_3$), define:
+Consider Boolean search with maximum query depth 2 (e.g., $w_1 \land w_2$
+but not $w_1 \land w_2 \land w_3$):
 \begin{itemize}
 \item Cipher sets output to $\cipher{\mathrm{Bool}}_0$.
 \item $\mathrm{AND}_0 : \cipher{\mathrm{Bool}}_0 \times
-  \cipher{\mathrm{Bool}}_0 \to \cipher{\mathrm{Bool}}_1$.
+  \cipher{\mathrm{Bool}}_0 \to \cipher{\mathrm{Bool}}_1$
+  (binary, $a_0 = 2$).
 \item $\mathrm{AND}_1 : \cipher{\mathrm{Bool}}_1 \times
-  \cipher{\mathrm{Bool}}_1 \to \cipher{\mathrm{Bool}}_2$.
+  \cipher{\mathrm{Bool}}_1 \to \cipher{\mathrm{Bool}}_2$
+  (binary, $a_1 = 2$).
 \item No $\mathrm{AND}_2$ is defined.
 \end{itemize}
-The adversary can compose at most two AND operations.
-The orbit from any cipher Boolean value has size at most 3.
+Starting from a single cipher Boolean $c$ (one membership-query
+output), the orbit has size at most $1 + k = 3$: namely
+$\{c, \mathrm{AND}_0(c, c), \mathrm{AND}_1(\mathrm{AND}_0(c, c),
+\mathrm{AND}_0(c, c))\}$.
+With $m$ membership-query outputs as initial values, the bound is
+$m + m^2 + m^4$, still finite and controlled by the chain depth.
 Contrast with a single shared cipher Boolean space, where the
-adversary can self-compose indefinitely and the orbit grows
-without bound.
+adversary can self-compose indefinitely and the orbit grows up to
+$2^n$.
 \end{example}
 
 The general principle: \textbf{the type system controls the orbit}.
@@ -862,198 +929,115 @@ deeper levels.
 
 
 %% ====================================================================
-\section{Cipher Turing Machine}
-\label{sec:cipher-tm}
+\section{Realizing Cipher Programs}
+\label{sec:realizing}
 %% ====================================================================
 
-The cipher map abstraction represents a function $f : X \to Y$ as a lookup
-table: a total function $\fhat : \B^n \to \B^n$ that maps each cipher
-encoding of $x$ to a cipher encoding of $f(x)$.
-The space complexity is $O(|X|)$---the table must have an entry for every
-element of the domain (plus noise entries).
-For large domains (e.g., string processing over an alphabet of size
-$|\Sigma|$ with strings of length $\ell$, giving $|X| = |\Sigma|^\ell$),
-this is prohibitive.
-
-A Turing machine provides an alternative computational model whose space
-depends on the \emph{program} (states and tape alphabet), not the
-\emph{data} (input size).
-We define a cipher Turing machine and analyze its space and leakage
-properties.
+The type-theoretic results of \Cref{sec:types,sec:orbit} bound what any
+cipher-program realization can achieve.
+We now examine two concrete realizations, each decomposing a program
+into cipher-map pieces along a different axis.
+A cipher Turing machine treats the program as a repeated transition
+step; expression-tree decomposition treats the program as a DAG whose
+selected subtrees are replaced by cipher maps.
+The two realizations leak different residual structure and occupy
+different points in the space-time-confidentiality trade-off.
+We present them in turn and then make explicit the common cut-point
+pattern they share (\Cref{sec:tm-vs-tree}).
 
 
 %% --------------------------------------------------------------------
-\subsection{Definition}
-\label{sec:cipher-tm-def}
+\subsection{Cipher Turing Machines}
+\label{sec:cipher-tm}
 %% --------------------------------------------------------------------
+
+A cipher map for $f : X \to Y$ is a lookup table of size $O(|X|)$, which
+is prohibitive when $|X|$ is large (e.g., string processing with
+$|X| = |\Sigma|^\ell$).
+A Turing machine is an alternative whose space depends on the
+\emph{program}, not the \emph{data}.
 
 \begin{definition}[Cipher Turing machine]
 \label{def:cipher-tm}
-A \emph{cipher Turing machine} is a tuple $(Q, \Gamma, \delta_T, q_0,
-q_{\mathrm{halt}})$ together with a cipher encoding of the transition
-function, where:
-\begin{itemize}
-\item $Q$ is a finite set of states, $\Gamma$ is a finite tape alphabet
-  (with a distinguished blank symbol $\sqcup$).
-\item The transition function
-  $\delta_T : Q \times \Gamma \to Q \times \Gamma \times \{L, R, S\}$
-  maps (current state, symbol read) to (next state, symbol to write,
-  head direction).
-\item $\delta_T$ is implemented as a cipher map
-  $\hat{\delta}_T : \B^n \to \B^n$, where the input is a cipher encoding
-  of a (state, symbol) pair and the output is a cipher encoding of a
-  (state, symbol, direction) triple.
-\item The tape is a sequence of cipher values, each encoding a symbol in
-  $\Gamma$.
-\item $q_0$ is the initial state (cipher-encoded); $q_{\mathrm{halt}}$ is
-  the halting state.
-\end{itemize}
-
-Execution proceeds as follows.
-At each step, the untrusted machine reads the cipher symbol $c_{\mathrm{sym}}$
-at the current head position and the current cipher state $c_q$.
-It evaluates $\hat{\delta}_T$ on $\enc((q, \gamma), k)$ where $q$ and
-$\gamma$ are the values encoded by $c_q$ and $c_{\mathrm{sym}}$---but
-since the untrusted machine cannot decode, it instead evaluates
-$\hat{\delta}_T$ on the \emph{pair cipher value}
-$\enc_{\mathrm{pair}}(c_q, c_{\mathrm{sym}})$, which requires a cipher map
-for the pairing operation.
-The output is decoded (by the cipher map structure, not by the untrusted
-machine) into a cipher state, a cipher symbol (written to the tape), and a
-head direction.
-
-The head direction $\{L, R, S\}$ is \textbf{not} cipher-encoded: it is
-in the clear.
-This is the fundamental leakage of the cipher Turing machine.
+A \emph{cipher Turing machine} consists of a finite state set $Q$, a
+tape alphabet $\Gamma$ with blank $\sqcup$, an initial state $q_0$, a
+halting state $q_\mathrm{halt}$, and a cipher map $\hat{\delta}_T$ for
+the transition function
+$\delta_T : Q \times \Gamma \to Q \times \Gamma \times \{L, R, S\}$.
+Each tape cell is a single cipher value in $\cipher{Q \times \Gamma}$:
+the cell stores a cipher encoding of the (state, symbol) pair at that
+cell, with the distinguished state $\varnothing \in Q$ marking cells
+without the head.
+On entry, the trusted machine encodes the head position by placing a
+cipher value for $(q_0, \sqcup)$ (or the first input symbol) at the
+start cell and cipher encodings of $(\varnothing, \sqcup)$ elsewhere.
+At each step the untrusted machine applies $\hat{\delta}_T$ to the
+current-head cell, obtaining a pair $(c', d)$ where $c'$ is a cipher
+value in $\cipher{Q \times \Gamma}$ and $d \in \{L, R, S\}$ is the head
+direction in the clear.
+The untrusted machine writes $c'$ back to the current cell, shifts the
+``head'' marker according to $d$ (by swapping the state component of
+the neighbouring cell with the current cell via a second cipher map
+for the shift operation), and repeats.
+The head direction is not cipher-encoded: the untrusted machine must
+know which cell to access next.
+Ciphering the direction would require evaluating all three neighbouring
+cells on every step, tripling per-step work while still revealing that
+a step occurred.
 \end{definition}
-
-\begin{remark}
-The head direction must be in the clear because the untrusted machine
-needs to know which tape cell to access next.
-Without knowing the direction, it cannot update the head position.
-Ciphering the direction would require the untrusted machine to access all
-three possible next cells (left, right, stay) on every step, tripling the
-work per step and still revealing that a step occurred.
-\end{remark}
-
-
-%% --------------------------------------------------------------------
-\subsection{Space Complexity}
-\label{sec:cipher-tm-space}
-%% --------------------------------------------------------------------
 
 \begin{proposition}[Cipher TM space complexity]
 \label{prop:cipher-tm-space}
-The cipher map $\hat{\delta}_T$ for a cipher Turing machine with $|Q|$
-states and $|\Gamma|$ tape symbols has space complexity
-$O(|Q| \cdot |\Gamma|)$, independent of the input domain size $|X|$.
+The cipher map $\hat{\delta}_T$ has space $O(|Q| \cdot |\Gamma|)$ (plus
+$-\log_2 \varepsilon$ bits per entry for the noise budget and
+$H(Q \times \Gamma \times \{L,R,S\})$ bits per entry for value encoding,
+per~\cite[Sec.~6]{towell2026cipher}), independent of the input domain
+size $|X|$.
+When $|X| \gg |Q| \cdot |\Gamma|$, this is a qualitative improvement
+over the $O(|X|)$ space of a lookup-table cipher map, at the cost of
+$O(T(|x|))$ steps per evaluation instead of $O(1)$, where $T$ is the
+running time of the plaintext TM.
 \end{proposition}
 
-\begin{proof}
-The transition function $\delta_T : Q \times \Gamma \to Q \times \Gamma
-\times \{L, R, S\}$ has domain $Q \times \Gamma$ of size
-$|Q| \cdot |\Gamma|$.
-The cipher map $\hat{\delta}_T$ is a cipher map for $\delta_T$, which
-by~\cite[Sec.~6]{towell2026cipher} has space proportional to its domain
-size: $O(|Q| \cdot |\Gamma|)$ entries (plus the $-\log_2 \varepsilon$ bits
-per entry for noise budget and the $H(Q \times \Gamma \times \{L,R,S\})$
-bits per entry for value encoding).
-
-In contrast, a cipher map $\fhat$ for an arbitrary function
-$f : X \to Y$ has space $O(|X|)$.
-When the computation is specified as a Turing machine program rather than
-a lookup table, $|Q| \cdot |\Gamma|$ replaces $|X|$ as the domain size.
-For large input domains ($|X| \gg |Q| \cdot |\Gamma|$), this is a
-qualitative improvement: the cipher map's size depends on the program
-complexity, not the data size.
-
-The tape itself requires space proportional to the number of tape cells
-used during computation (at most the running time), but each tape cell is
-a single cipher value encoding a symbol in $\Gamma$---the per-cell cost is
-$O(1)$ cipher values, independent of $|X|$.
-\end{proof}
-
-\begin{remark}
-The space saving comes with a time cost: where a cipher map evaluates
-$f(x)$ in $O(1)$ cipher map lookups (two hash evaluations for the
-two-level construction~\cite{towell2026cipher}), a cipher Turing machine
-requires as many steps as the Turing machine takes to compute $f(x)$.
-The trade-off is space (lookup table vs.\ program) for time
-($O(1)$ vs.\ $O(T(|x|))$ where $T$ is the running time).
-\end{remark}
-
-
-%% --------------------------------------------------------------------
-\subsection{Head Movement Leakage}
-\label{sec:head-leakage}
-%% --------------------------------------------------------------------
-
-The cipher Turing machine's head direction is in the clear.
-This means the untrusted machine observes the sequence of head movements
-$d_1, d_2, d_3, \ldots \in \{L, R, S\}^*$ for every computation.
-
-\begin{proposition}[Head movement determinism]
+\begin{proposition}[Head-movement leakage]
 \label{prop:head-determinism}
-For a deterministic cipher Turing machine with correctness $\eta = 0$,
-the head movement sequence is a deterministic function of the input.
-Two inputs that produce different head movement sequences are
-distinguishable by the untrusted machine.
+For a deterministic cipher TM with $\eta = 0$, the head-movement
+sequence $d_1, d_2, \ldots \in \{L, R, S\}^*$ is a deterministic
+function of the input.
+Two inputs that produce different head-movement sequences are
+distinguishable by the untrusted machine without the trapdoor.
 \end{proposition}
 
 \begin{proof}
-When $\eta = 0$, the cipher map $\hat{\delta}_T$ is exact: every
-transition produces the correct next state, symbol, and direction.
-The head movement sequence is therefore identical to the sequence produced
-by the plaintext Turing machine on the same input.
-Since the plaintext Turing machine is deterministic, the head movement
-sequence is a deterministic function of the input.
-
-If $x_1 \neq x_2$ produce different head movement
-sequences, i.e.,
-$(d_1^{(1)}, d_2^{(1)}, \ldots) \neq (d_1^{(2)}, d_2^{(2)}, \ldots)$,
-the untrusted machine observes different sequences and can distinguish
-the two inputs (or at least partition inputs into equivalence classes
-by their head movement pattern).
+With $\eta = 0$, $\hat{\delta}_T$ reproduces the plaintext Turing
+machine's transitions exactly, so the head-movement sequence is
+identical to the plaintext sequence, which is a deterministic function
+of the input.
+Distinct sequences are directly observable by the untrusted machine.
 \end{proof}
 
 \begin{remark}[Comparison with ORAM]
 \label{rem:oram}
-Oblivious RAM~\cite{goldreich1996software} is designed precisely to hide
-access patterns: the sequence of memory addresses accessed is independent
-of the input.
-A cipher Turing machine makes no such guarantee---the head movement
-pattern is visible.
-The cipher TM's confidentiality comes from a different source: the tape
-contents (cipher symbols) are opaque, and the transition function (cipher
-map) is opaque.
-The adversary sees which cells are visited but not what is read or written.
-This is weaker than ORAM but requires no $O(\log N)$ overhead per access.
-\end{remark}
-
-\begin{remark}[Nonzero $\eta$]
-When $\eta > 0$, the cipher transition function occasionally produces
-incorrect results.
-An incorrect transition may produce a different head direction than the
-correct one, introducing noise into the head movement sequence.
-This provides a weak form of access-pattern obfuscation---the observed
-sequence differs from the true sequence with probability depending on
-$\eta$ and the number of steps---but it is unreliable as a privacy
-mechanism because errors are systematic (the same elements always fail for
-a given seed), not random.
+Oblivious RAM~\cite{goldreich1996software} is designed precisely to
+hide access patterns.
+A cipher TM makes no such guarantee: tape contents and the transition
+function are opaque, but the sequence of cells visited is not.
+This is weaker than ORAM but requires no $O(\log N)$ per-access
+overhead.
+Non-zero $\eta$ injects noise into the head-movement sequence, but the
+noise is seed-systematic rather than random, so it is unreliable as an
+access-pattern obfuscation mechanism.
 \end{remark}
 
 
-%% ====================================================================
-\section{Discussion}
-\label{sec:discussion}
-%% ====================================================================
-
-\subsection{Cipher Program Construction}
+%% --------------------------------------------------------------------
+\subsection{Expression-Tree Decomposition}
 \label{sec:cipher-programs}
+%% --------------------------------------------------------------------
 
 The type-theoretic trade-offs of \Cref{sec:products,sec:sums} have a
-direct operational realization: given a program (an expression tree),
-which subtrees should be replaced by cipher maps?
+direct operational realization: given a program represented as an
+expression tree, which subtrees should be replaced by cipher maps?
 
 \begin{definition}[Cipher node annotation]
 \label{def:cipher-node}
@@ -1062,7 +1046,8 @@ Given a program $P$ represented as an expression tree, a
 n_k\}$ in the tree.  Each marked node $n_i$, together with its entire
 subtree, is replaced by a cipher map: the subtree is evaluated at
 construction time (on the trusted machine) over a specified domain, and
-the resulting mapping is stored as a PHF-backed cipher map.
+the resulting mapping is stored as a cipher map backed by a
+perfect hash function~\cite{fredman1984storing}.
 Unmarked nodes above the cipher nodes become a \emph{combiner}: itself
 a cipher map built over the hash-value outputs of the components.
 \end{definition}
@@ -1120,43 +1105,98 @@ The combiner's domain includes hash tuples for both branches.
 The resulting composed cipher program evaluates entirely on the
 untrusted machine with no round trips to the trusted machine.
 
-\paragraph{Relationship to cipher maps.}
-This paper extends the cipher map framework of~\cite{towell2026cipher} in
-two directions: inward (what happens when cipher values carry algebraic
-structure) and outward (what happens when the untrusted machine actively
-explores the cipher space).
-The cipher map paper focuses on individual maps and their four properties;
-this paper studies how those properties interact with type constructors and
-how confidentiality degrades under active use.
 
-\paragraph{Relationship to Bernoulli data types.}
-The accuracy-side analysis of algebraic types over approximate values is
-developed in~\cite{towell2026bernoulli}, which studies the Kronecker
-factorization of joint confusion matrices for product types and the error
-propagation through sum-type constructors.
-That paper asks: how does $\eta$ change when types are composed?
-This paper asks the complementary question: how does confidentiality
-change when types are composed?
-Together, they characterize the full trade-off space (accuracy $\times$
-confidentiality) for algebraic types over trapdoor computing.
+%% --------------------------------------------------------------------
+\subsection{Cut-Point Structure Common to Both Realizations}
+\label{sec:tm-vs-tree}
+%% --------------------------------------------------------------------
 
-\paragraph{The encoding granularity principle.}
-The product and sum trade-offs in \Cref{sec:products,sec:sums} are
-instances of a single principle developed
-in~\cite[Sec.~9]{towell2026cipher}: coarser encoding granularity
-(encoding more values as a single unit) yields better confidentiality but
-fewer operations available to the untrusted machine.
-The entanglement parameter $p$~\cite[Sec.~9.3]{towell2026cipher} controls
-the spectrum: $p = 1$ (component-wise) gives maximum functionality and
-minimum confidentiality; $p = k$ (whole-state) gives maximum
-confidentiality and minimum functionality.
+Both realizations implement the same abstract move.
 
-\subsection{Cipher Boolean Algebra}
+\begin{definition}[Cut point]
+\label{def:cut-point}
+Given a plaintext computation $P$ represented as a directed graph with
+plaintext functions at nodes and data flow along edges, a \emph{cut
+point} is a node whose subgraph of ancestors is replaced, during
+construction, by a single cipher map.
+Edges entering the cut point carry plaintext values on the trusted
+machine and cipher values on the untrusted machine; edges leaving the
+cut point carry cipher values throughout.
+A \emph{cut-point set} is a collection of cut points such that every
+input of the plaintext computation reaches at least one cut point, and
+the cipher maps at the cut points together with a \emph{combiner}
+cipher map for the nodes above them compute the full program on the
+untrusted machine.
+\end{definition}
+
+\paragraph{Mapping the two realizations onto cut points.}
+A cipher TM places a single cut point at the transition function
+$\delta_T$, with a self-loop: the cut-point output $(c', d)$ feeds the
+next step's tape cell, which feeds $\delta_T$ again.
+Expression-tree decomposition places multiple cut points in a
+finite-depth DAG, one at each \texttt{@cipher\_node}-annotated node,
+with the combiner cipher map above them.
+The number of cut points, their depth in the computation, and the
+cipher spaces between them are the three design knobs.
+
+\paragraph{What leaks above the cut points.}
+Exactly what remains plaintext above the cut points is the leakage
+profile.
+For a cipher TM, this is the head-movement sequence (one clear direction
+per step) and the halting time, nothing else.
+For expression-tree decomposition, this is the collection of
+intermediate cipher values flowing between cipher nodes, which leak
+correlations whenever multiple cut points share latent inputs.
+
+\paragraph{What the typed-chain bound says in each case.}
+\Cref{prop:typed-orbit} bounds the adversary's orbit by $\sum_i N_i$
+where the levels $i$ correspond to the depth of cut points along any
+computation path.
+For a cipher TM running for $T$ steps with self-loop at a single
+(binary-arity, if state and symbol are distinct inputs) cut point, a
+naive reading gives $N_i = 1$ for a single initial tape configuration
+so the orbit is bounded by $1 + T$; with $m$ distinct initial tape
+contents considered as a population, the bound is $m \cdot (T+1)$.
+For an expression tree of depth $k$ with binary combinators, the bound
+is $\sum_{i=0}^{k} m^{2^i}$ where $m$ is the number of distinct latent
+inputs.
+Typing the cipher spaces between cut points is what prevents the
+self-loop in either realization from degenerating into an unbounded
+orbit.
+
+\begin{example}[Regex matching as cipher TM vs.\ expression tree]
+\label{ex:regex-cut-points}
+Consider matching a fixed regular expression $R$ of size $r$ against a
+string $x \in \Sigma^\ell$.
+As a cipher TM, $Q$ is the set of DFA states for $R$ (size $O(r)$),
+$\Gamma = \Sigma \cup \{\sqcup\}$, and $\hat{\delta}_T$ is a single
+cipher map of space $O(r \cdot |\Sigma|)$, evaluated $\ell$ times per
+match.
+Leakage: the head moves right exactly $\ell$ times, revealing $\ell$.
+As an expression tree, the program is a fold over the string with $\ell$
+cut points at the transition function; the combiner cipher map above
+them has domain $\cipher{Q}^{\ell}$ so its construction cost is
+exponential in $\ell$.
+Cipher TM is preferable for long strings; expression-tree decomposition
+is preferable when $\ell$ is small and string length must be hidden.
+Choosing between the two is exactly a cut-point placement problem.
+\end{example}
+
+
+%% ====================================================================
+\section{Cipher Boolean Algebra and Evaluation}
 \label{sec:cipher-bool}
+%% ====================================================================
 
-The cipher Boolean type $\cipher{\mathrm{Bool}}$ illustrates how the
-sum-type trade-off specializes to the most fundamental algebraic
-structure.
+The cipher Boolean type $\cipher{\mathrm{Bool}}$ specializes the
+sum-type trade-off to the most fundamental algebraic structure and
+provides the concrete instantiation we evaluate on a real corpus.
+
+
+%% --------------------------------------------------------------------
+\subsection{Cipher Boolean Type}
+\label{sec:cipher-bool-type}
+%% --------------------------------------------------------------------
 
 \begin{definition}[Cipher Boolean type]
 \label{def:cipher-bool}
@@ -1171,6 +1211,26 @@ The partition is derived from a secret via a pseudorandom permutation.
 Without the secret, membership in $T$, $F$, or $N$ is indistinguishable
 from random.
 \end{definition}
+
+\begin{remark}[Generalization beyond Bool]
+\label{rem:general-cipher-type}
+\Cref{def:cipher-bool} generalizes to any finite type $Y$.
+A cipher type $\cipher{Y}$ partitions $\B^n$ into $|Y|$ value regions
+plus a noise region, with $|R_y|/2^n \propto \Pr[Y = y]$
+(Shannon-optimal allocation per the source coding
+theorem~\cite{shannon1948mathematical}).
+Operations $f : Y_1 \times \cdots \times Y_k \to Z$ become cipher maps
+over the product of input regions.
+The cipher Boolean is the special case $Y = \{\mathrm{True},
+\mathrm{False}\}$; the same construction applies to enumerated types,
+bounded integers, or any codomain where the output distribution is known.
+\end{remark}
+
+
+%% --------------------------------------------------------------------
+\subsection{Noise Unreliability}
+\label{sec:noise-unreliability}
+%% --------------------------------------------------------------------
 
 The noise region $N$ plays a structural role beyond mere error tolerance.
 
@@ -1222,19 +1282,6 @@ The noise fraction creates a floor of uncertainty in any statistical
 test the adversary performs.
 \end{remark}
 
-\begin{remark}[Generalization beyond Bool]
-\label{rem:general-cipher-type}
-\Cref{def:cipher-bool} generalizes to any finite type $Y$.
-A cipher type $\cipher{Y}$ partitions $\B^n$ into $|Y|$ value regions
-plus a noise region, with $|R_y|/2^n \propto \Pr[Y = y]$
-(Shannon-optimal allocation).
-Operations $f : Y_1 \times \cdots \times Y_k \to Z$ become cipher maps
-over the product of input regions.
-The cipher Boolean is the special case $Y = \{\mathrm{True},
-\mathrm{False}\}$; the same construction applies to enumerated types,
-bounded integers, or any codomain where the output distribution is known.
-\end{remark}
-
 \paragraph{Practical allocation.}
 The cipher Boolean allocation $|T|/2^n = 0.05$, $|F|/2^n = 0.90$,
 $|N|/2^n = 0.05$ is motivated by the set membership use case.
@@ -1256,15 +1303,20 @@ for NOT).
 The untrusted machine sees opaque hash values flowing through opaque
 total functions at every stage.
 
-\paragraph{Experimental results.}
+
+%% --------------------------------------------------------------------
+\subsection{Experimental Validation}
+\label{sec:evaluation}
+%% --------------------------------------------------------------------
+
 A reference implementation (\texttt{cipher-maps}, Python with PHF
 backend via \texttt{phobic}) validates the construction on the 20
 Newsgroups corpus (18{,}266 documents, 58{,}903 unique words).
 With $n = 8$ bits, $|T| = 13$, $|F| = 230$, the AND and OR cipher
 maps each have $(13 + 230)^2 = 59{,}049$ entries.
 
-\emph{Boolean search at scale.}
-Table~\ref{tab:boolean-search} shows precision and recall for
+\paragraph{Boolean search at scale.}
+\Cref{tab:boolean-search} shows precision and recall for
 representative Boolean queries over 5{,}000 documents, with all
 Boolean operations evaluated on the untrusted machine.
 Construction rate: 843 documents per second.
@@ -1293,7 +1345,7 @@ propagation: when a cipher set returns a noise value $n \in N$,
 the subsequent OR or NOT operation produces noise or an unpredictable
 result, effectively dropping the document from the result set.
 
-\emph{FPR compounding vs.\ Bernoulli model.}
+\paragraph{FPR compounding vs.\ Bernoulli model.}
 The Bernoulli composition model~\cite{towell2026bernoulli} predicts
 that $k$ independent AND operations yield
 $\mathrm{FPR}_k = p_T^k$.
@@ -1308,7 +1360,7 @@ feeding it into the next AND produces a deterministic output.
 The independence assumption breaks at the cipher map level even
 though it holds within a single cipher set.
 
-\emph{Encoding granularity.}
+\paragraph{Encoding granularity.}
 We built a 7-function loan approval pipeline at three granularity
 levels:
 \begin{center}
@@ -1328,6 +1380,43 @@ search) and exposes zero intermediate cipher values.
 The trade-off: the root annotation requires the entire input domain
 at construction time, while the leaf annotation builds smaller cipher
 maps that compose dynamically.
+
+
+%% ====================================================================
+\section{Discussion}
+\label{sec:discussion}
+%% ====================================================================
+
+\paragraph{Relationship to cipher maps.}
+This paper extends the cipher map framework of~\cite{towell2026cipher} in
+two directions: inward (what happens when cipher values carry algebraic
+structure) and outward (what happens when the untrusted machine actively
+explores the cipher space).
+The cipher map paper focuses on individual maps and their four properties;
+this paper studies how those properties interact with type constructors and
+how confidentiality degrades under active use.
+
+\paragraph{Relationship to Bernoulli data types.}
+The accuracy-side analysis of algebraic types over approximate values is
+developed in~\cite{towell2026bernoulli}, which studies the Kronecker
+factorization of joint confusion matrices for product types and the error
+propagation through sum-type constructors.
+That paper asks: how does $\eta$ change when types are composed?
+This paper asks the complementary question: how does confidentiality
+change when types are composed?
+Together, they characterize the full trade-off space (accuracy $\times$
+confidentiality) for algebraic types over trapdoor computing.
+
+\paragraph{The encoding granularity principle.}
+The product and sum trade-offs in \Cref{sec:products,sec:sums} are
+instances of a single principle developed
+in~\cite[Sec.~9]{towell2026cipher}: coarser encoding granularity
+(encoding more values as a single unit) yields better confidentiality but
+fewer operations available to the untrusted machine.
+The entanglement parameter $p$~\cite[Sec.~9.3]{towell2026cipher} controls
+the spectrum: $p = 1$ (component-wise) gives maximum functionality and
+minimum confidentiality; $p = k$ (whole-state) gives maximum
+confidentiality and minimum functionality.
 
 \paragraph{Open questions.}
 
@@ -1363,6 +1452,14 @@ maps that compose dynamically.
   For instance, one could imagine a construction where the tag is hidden
   against passive adversaries (who only observe cipher values) but
   available to active adversaries (who evaluate cipher maps).
+
+\item \emph{Cut-point placement as an optimization.}
+  \Cref{sec:tm-vs-tree} describes cut points as a design knob spanning
+  cipher-TM-style iteration and leaf-level expression-tree annotation.
+  Formulating cut-point selection as a constrained optimization, subject
+  to the orbit bound of \Cref{prop:typed-orbit} and construction-time
+  space budgets, would turn the choice into a solvable problem rather
+  than a designer's judgement call.
 \end{enumerate}
 
 
@@ -1375,9 +1472,19 @@ confidentiality costs in trapdoor computing.
 The sum-type impossibility theorem establishes that tag hiding and
 untrusted pattern matching are mutually exclusive for any encoding.
 The orbit closure framework provides a quantitative bound on
-confidentiality degradation as the untrusted machine applies operations.
+confidentiality degradation as the untrusted machine applies
+operations, and a typed-composition discipline converts that bound
+into a design-time budget.
 These results apply to any cipher map construction, not just specific
 implementations.
+
+Two realizations concretize these trade-offs.
+Expression-tree decomposition with cipher-node annotations lets the
+programmer choose the granularity at which intermediate cipher values
+are exposed; a cipher Turing machine gives space $O(|Q| \cdot |\Gamma|)$
+at the cost of leaking head-movement patterns.
+Both are instances of a single cut-point pattern that the typed-chain
+bound constrains identically.
 
 On the practical side, cipher Boolean types with AND/OR/NOT as cipher
 maps enable Boolean search queries evaluated entirely on the untrusted
@@ -1390,7 +1497,6 @@ The encoding granularity spectrum is measurable: root annotation
 (one cipher map for the entire program) is 650$\times$ faster and
 exposes zero intermediates compared to leaf annotation
 (one cipher map per function).
-
 The gap between the Bernoulli independence model and the cipher map
 implementation for AND chain composition points to future work on
 tighter error models for composed cipher maps.
