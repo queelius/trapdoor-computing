@@ -1,4 +1,4 @@
-\begin{thebibliography}{10}
+\begin{thebibliography}{21}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -12,10 +12,22 @@ Mihir Bellare and Phillip Rogaway.
 \newblock In \emph{Proceedings of the 1st ACM Conference on Computer and
   Communications Security}, pages 62--73, 1993.
 
+\bibitem[Bloom(1970)]{bloom1970space}
+Burton~H Bloom.
+\newblock Space/time trade-offs in hash coding with allowable errors.
+\newblock \emph{Communications of the ACM}, 13\penalty0 (7):\penalty0 422--426,
+  1970.
+
 \bibitem[Boneh et~al.(2011)Boneh, Sahai, and Waters]{boneh2011functional}
 Dan Boneh, Amit Sahai, and Brent Waters.
 \newblock Functional encryption: Definitions and challenges.
 \newblock In \emph{Theory of Cryptography Conference}, pages 253--273, 2011.
+
+\bibitem[Cash et~al.(2015)Cash, Grubbs, Perry, and Ristenpart]{cash2015leakage}
+David Cash, Paul Grubbs, Jason Perry, and Thomas Ristenpart.
+\newblock Leakage-abuse attacks against searchable encryption.
+\newblock In \emph{Proceedings of the 22nd ACM Conference on Computer and
+  Communications Security}, pages 668--679, 2015.
 
 \bibitem[Curtmola et~al.(2006)Curtmola, Garay, Kamara, and
   Ostrovsky]{curtmola2006searchable}
@@ -24,6 +36,12 @@ Reza Curtmola, Juan Garay, Seny Kamara, and Rafail Ostrovsky.
   constructions.
 \newblock In \emph{Proceedings of the 13th ACM Conference on Computer and
   Communications Security}, pages 79--88, 2006.
+
+\bibitem[Fredman et~al.(1984)Fredman, Koml{\'o}s, and
+  Szemer{\'e}di]{fredman1984storing}
+Michael~L Fredman, J{\'a}nos Koml{\'o}s, and Endre Szemer{\'e}di.
+\newblock Storing a sparse table with {$O(1)$} worst case access time.
+\newblock \emph{Journal of the ACM}, 31\penalty0 (3):\penalty0 538--544, 1984.
 
 \bibitem[Gentry(2009)]{gentry2009fully}
 Craig Gentry.
@@ -35,6 +53,26 @@ Craig Gentry.
 Oded Goldreich and Rafail Ostrovsky.
 \newblock Software protection and simulation on oblivious {RAMs}.
 \newblock \emph{Journal of the ACM}, 43\penalty0 (3):\penalty0 431--473, 1996.
+
+\bibitem[Grubbs et~al.(2017)Grubbs, Ristenpart, and
+  Shmatikov]{grubbs2017leakage}
+Paul Grubbs, Thomas Ristenpart, and Vitaly Shmatikov.
+\newblock Why your encrypted database is not secure.
+\newblock In \emph{Proceedings of the 16th Workshop on Hot Topics in Operating
+  Systems}, pages 162--168, 2017.
+
+\bibitem[Islam et~al.(2012)Islam, Kuzu, and Kantarcioglu]{islam2012access}
+Mohammad~Saiful Islam, Mehmet Kuzu, and Murat Kantarcioglu.
+\newblock Access pattern disclosure on searchable encryption: Ramification,
+  attack and mitigation.
+\newblock In \emph{Proceedings of the 19th Network and Distributed System
+  Security Symposium}, 2012.
+
+\bibitem[Lang(1995)]{lang1995newsweeder}
+Ken Lang.
+\newblock {NewsWeeder}: Learning to filter netnews.
+\newblock In \emph{Proceedings of the 12th International Conference on Machine
+  Learning}, pages 331--339, 1995.
 
 \bibitem[Naveed et~al.(2015)Naveed, Kamara, and Wright]{naveed2015inference}
 Muhammad Naveed, Seny Kamara, and Charles~V Wright.
@@ -48,6 +86,25 @@ Andrei Sabelfeld and Andrew~C Myers.
 \newblock \emph{IEEE Journal on Selected Areas in Communications}, 21\penalty0
   (1):\penalty0 5--19, 2003.
 
+\bibitem[Shannon(1948)]{shannon1948mathematical}
+Claude~E Shannon.
+\newblock A mathematical theory of communication.
+\newblock \emph{Bell System Technical Journal}, 27\penalty0 (3):\penalty0
+  379--423, 1948.
+
+\bibitem[Smith(2009)]{smith2009foundations}
+Geoffrey Smith.
+\newblock On the foundations of quantitative information flow.
+\newblock In \emph{Proceedings of the 12th International Conference on
+  Foundations of Software Science and Computational Structures}, pages
+  288--302, 2009.
+
+\bibitem[Song et~al.(2000)Song, Wagner, and Perrig]{song2000practical}
+Dawn~Xiaodong Song, David Wagner, and Adrian Perrig.
+\newblock Practical techniques for searches on encrypted data.
+\newblock In \emph{Proceedings of the 2000 IEEE Symposium on Security and
+  Privacy}, pages 44--55, 2000.
+
 \bibitem[Towell(2026{\natexlab{a}})]{towell2026bernoulli}
 Alexander Towell.
 \newblock Bernoulli data types: Approximate algebraic types with quantitative
@@ -59,6 +116,19 @@ Alexander Towell.
 \newblock Cipher maps: Total functions as trapdoor approximations,
   2026{\natexlab{b}}.
 \newblock Manuscript in preparation.
+
+\bibitem[Towell(2026{\natexlab{c}})]{towell2026maxconf}
+Alexander Towell.
+\newblock Maximizing confidentiality under trapdoor computing: Encoding
+  granularity and optimal space, 2026{\natexlab{c}}.
+\newblock Manuscript in preparation.
+
+\bibitem[Turing(1936)]{turing1936computable}
+Alan~M Turing.
+\newblock On computable numbers, with an application to the
+  {E}ntscheidungsproblem.
+\newblock \emph{Proceedings of the London Mathematical Society}, s2-42\penalty0
+  (1):\penalty0 230--265, 1936.
 
 \bibitem[Yao(1982)]{yao1982protocols}
 Andrew~C Yao.
