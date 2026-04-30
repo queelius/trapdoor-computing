@@ -57,7 +57,8 @@ can go.
 We then present two realizations of cipher programs, an expression-tree
 decomposition with cipher-map cut points (the practical path, exposed
 via a \texttt{@cipher\_node} decorator) and a cipher Turing machine
-(space $O(|Q| \cdot |\Gamma|)$, leaks head movement), and evaluate the
+(space $O(|Q|^2 \cdot |\Gamma|)$ for transition plus shift, leaks the
+head-movement and state sequences), and evaluate the
 cipher Boolean algebra specialization on a 20~Newsgroups Boolean search
 task.
 \end{abstract}
@@ -117,8 +118,8 @@ The main contributions are:
   cipher-map pieces.
   Expression-tree decomposition with cipher-node annotations is the
   practical path; a cipher Turing machine is a second realization,
-  with space $O(|Q| \cdot |\Gamma|)$ at the cost of leaking head
-  movement.
+  with space $O(|Q|^2 \cdot |\Gamma|)$ at the cost of leaking the
+  head-movement and state sequences.
   The two realizations share a cut-point structure and differ in what
   residual structure the untrusted machine observes.
 \end{enumerate}
@@ -258,18 +259,6 @@ A cipher value $\enc(v, k)$ is a cipher map for the constant function
 $f_v(x) = v$; we use ``cipher value'' and ``cipher map from a trivial
 domain'' interchangeably.
 
-\begin{definition}[Cipher type]
-\label{def:cipher-type}
-For a finite type $X$, the \emph{cipher type} $\cipher{X} \subseteq \B^n$
-is the set of valid cipher values encoding elements of $X$:
-\[
-\cipher{X} \;=\; \{\, \enc(x, k) \;:\; x \in X,\; 0 \leq k < K(x) \,\},
-\]
-where $K(x) \geq 1$ is the number of representations of $x$.
-We use $\cipher{X}$ throughout to denote the type of cipher values for
-$X$, distinct from the latent type $X$ itself.
-\end{definition}
-
 \begin{definition}[Trusted and untrusted machines~{\cite[Sec.~5]{towell2026cipher}}]
 \label{def:machines}
 The \emph{trusted machine} $T$ holds the trapdoor $s$, $\enc$, $\dec$, and
@@ -278,6 +267,21 @@ The \emph{untrusted machine} $U$ holds $\fhat$ and a collection of cipher
 values.
 $U$ can evaluate $\fhat$ on any bit string; it cannot decode, distinguish
 real from filler queries, or determine the domain $X$.
+\end{definition}
+
+\begin{definition}[Cipher type]
+\label{def:cipher-type}
+For a finite latent type $X$ with encoding $\enc : X \times
+\{0, \ldots, K{-}1\} \to \B^n$, the \emph{cipher type} of $X$ is
+\[
+\cipher{X} \;=\; \{\enc(x, k) : x \in X,\; 0 \leq k < K(x)\} \;\subseteq\; \B^n.
+\]
+We use $\cipher{X}$ for both the set and the type-theoretic constructor:
+$\cipher{X \times Y}$ denotes the cipher type for the latent product, and
+similarly for sums and exponentials.
+A cipher map $\fhat : \cipher{X} \to \cipher{Y}$ is the cipher form of
+the latent function $f : X \to Y$ (extended totally over $\B^n$ per
+Property~1).
 \end{definition}
 
 
@@ -292,8 +296,6 @@ For each constructor, there is a choice: apply the cipher operation to the
 entire constructed type, or construct from already-ciphered components.
 These two strategies yield different confidentiality and functionality
 properties.
-We use the cipher-type notation $\cipher{X}$ from
-\Cref{def:cipher-type} throughout.
 
 
 %% --------------------------------------------------------------------
@@ -968,10 +970,6 @@ is prohibitive when $|X|$ is large (e.g., string processing with
 $|X| = |\Sigma|^\ell$).
 A Turing machine is an alternative whose space depends on the
 \emph{program}, not the \emph{data}.
-We write the TM transition function as $\tau_T$ rather than the
-conventional $\delta$ to avoid collision with the total-variation
-parameter $\delta$ of representation uniformity used throughout
-\Cref{sec:prelim,sec:orbit}.
 
 \begin{definition}[Cipher Turing machine]
 \label{def:cipher-tm}
@@ -979,7 +977,9 @@ A \emph{cipher Turing machine} consists of a finite state set $Q$, a
 tape alphabet $\Gamma$ with blank $\sqcup$, an initial state $q_0$, a
 halting state $q_\mathrm{halt}$, and a cipher map $\hat{\tau}_T$ for
 the transition function
-$\tau_T : Q \times \Gamma \to Q \times \Gamma \times \{L, R, S\}$.
+$\tau_T : Q \times \Gamma \to Q \times \Gamma \times \{L, R, S\} \times Q$,
+where the final $Q$-component of the output is a plaintext selector
+$q_\mathrm{sel}$ for the new state.
 Each tape cell is a single cipher value in $\cipher{Q \times \Gamma}$:
 the cell stores a cipher encoding of the (state, symbol) pair at that
 cell, with the distinguished state $\varnothing \in Q$ marking cells
@@ -988,25 +988,25 @@ On entry, the trusted machine encodes the head position by placing a
 cipher value for $(q_0, \sqcup)$ (or the first input symbol) at the
 start cell and cipher encodings of $(\varnothing, \sqcup)$ elsewhere.
 At each step the untrusted machine applies $\hat{\tau}_T$ to the
-current-head cell, obtaining a pair $(c', d)$ where $c'$ is a cipher
-value in $\cipher{Q \times \Gamma}$ and $d \in \{L, R, S\}$ is the head
-direction in the clear.
+current-head cell, obtaining a triple $(c', d, q_\mathrm{sel})$ where
+$c'$ is a cipher value in $\cipher{Q \times \Gamma}$, $d \in \{L, R, S\}$
+is the head direction in the clear, and $q_\mathrm{sel} \in Q$ is the
+new-state selector in the clear.
 The untrusted machine writes $c'$ back to the current cell and then
 shifts the head marker by applying two auxiliary unary cipher maps:
 $\hat{\mathrm{clear}} : \cipher{Q \times \Gamma} \to \cipher{Q \times \Gamma}$
 replaces the state component of the just-read cell with $\varnothing$,
-and $\hat{\mathrm{set}}_q : \cipher{Q \times \Gamma} \to \cipher{Q \times \Gamma}$
-(parameterized by the new state $q$ extracted from $c'$) places the
-head into the neighbouring cell at offset $d$.
-We treat the shift as a choice over a small finite family of unary
-cipher maps, one per $(q, d)$ pair, rather than as a binary operation
-on adjacent cells; this keeps every cipher map's domain at a single
-cell.
-The head direction is not cipher-encoded: the untrusted machine must
-know which cell to access next.
-Ciphering the direction would require evaluating all three neighbouring
-cells on every step, tripling per-step work while still revealing that
-a step occurred.
+and $\hat{\mathrm{set}}_{q_\mathrm{sel}} : \cipher{Q \times \Gamma} \to
+\cipher{Q \times \Gamma}$, selected by the plaintext $q_\mathrm{sel}$,
+places the head into the neighbouring cell at offset $d$.
+The shift is a choice over a finite family of unary cipher maps,
+one per $(q, d)$ pair, rather than a binary operation on adjacent
+cells; this keeps every cipher map's domain at a single cell.
+Two cleartext signals therefore leak per step: the head direction $d$
+(necessary so the untrusted machine knows which neighbouring cell to
+access) and the state selector $q_\mathrm{sel}$ (necessary so the
+untrusted machine can choose the right $\hat{\mathrm{set}}_q$
+instance without decoding $c'$).
 \end{definition}
 
 \begin{proposition}[Cipher TM space complexity]
@@ -1029,33 +1029,33 @@ $O(T(|x|))$ steps per evaluation instead of $O(1)$, where $T$ is the
 running time of the plaintext TM.
 \end{proposition}
 
-\begin{proposition}[Head-movement leakage]
+\begin{proposition}[Trajectory leakage]
 \label{prop:head-determinism}
-For a deterministic cipher TM with $\eta = 0$, the head-movement
-sequence $d_1, d_2, \ldots \in \{L, R, S\}^*$ is a deterministic
-function of the input.
-Two inputs that produce different head-movement sequences are
-distinguishable by the untrusted machine without the trapdoor.
+For a deterministic cipher TM with $\eta = 0$, the per-step plaintext
+output sequence $(d_1, q_{\mathrm{sel},1}), (d_2, q_{\mathrm{sel},2}),
+\ldots \in (\{L, R, S\} \times Q)^*$ is a deterministic function of
+the input.
+Two inputs that produce different trajectories are distinguishable by
+the untrusted machine without the trapdoor.
 \end{proposition}
 
 \begin{proof}
 With $\eta = 0$, $\hat{\tau}_T$ reproduces the plaintext Turing
-machine's transitions exactly, so the head-movement sequence is
-identical to the plaintext sequence, which is a deterministic function
-of the input.
-Distinct sequences are directly observable by the untrusted machine.
+machine's transitions exactly, so each $(d_i, q_{\mathrm{sel},i})$
+matches the plaintext direction and next state at step $i$.
+Distinct trajectories are directly observable by the untrusted machine.
 \end{proof}
 
 \begin{remark}[Comparison with ORAM]
 \label{rem:oram}
 Oblivious RAM~\cite{goldreich1996software} is designed precisely to
 hide access patterns.
-A cipher TM makes no such guarantee: tape contents and the transition
-function are opaque, but the sequence of cells visited is not.
+A cipher TM makes no such guarantee: tape contents are opaque, but the
+sequence of head movements and state selectors is not.
 This is weaker than ORAM but requires no $O(\log N)$ per-access
 overhead.
-Non-zero $\eta$ injects noise into the head-movement sequence, but the
-noise is seed-systematic rather than random, so it is unreliable as an
+Non-zero $\eta$ injects noise into the trajectory, but the noise is
+seed-systematic rather than random, so it is unreliable as an
 access-pattern obfuscation mechanism.
 \end{remark}
 
@@ -1172,8 +1172,8 @@ cipher spaces between them are the three design knobs.
 \paragraph{What leaks above the cut points.}
 Exactly what remains plaintext above the cut points is the leakage
 profile.
-For a cipher TM, this is the head-movement sequence (one clear direction
-per step) and the halting time, nothing else.
+For a cipher TM, this is the trajectory: one $(d, q_\mathrm{sel})$
+pair in the clear per step, plus the halting time.
 For expression-tree decomposition, this is the collection of
 intermediate cipher values flowing between cipher nodes, which leak
 correlations whenever multiple cut points share latent inputs.
@@ -1211,10 +1211,12 @@ $\hat{\tau}_T$ is a single cipher map of space
 $O(|Q_R| \cdot |\Sigma|)$, evaluated $\ell$ times.
 The orbit along a fixed input has size at most $\ell + 1$ by the
 deterministic-trajectory bound.
-Leakage: the head moves right $\ell$ times, revealing $\ell$.
+Leakage: the trajectory $(d_i, q_{\mathrm{sel},i})$ for
+$i = 1, \ldots, \ell$, revealing both the string length $\ell$ and the
+DFA state sequence.
 \emph{As an expression tree under the natural typed-chain
-decomposition,} we place $\ell$ cut points $\hat{\delta}_0, \ldots,
-\hat{\delta}_{\ell-1}$ with $\hat{\delta}_i : \cipher{Q_R}_i \times
+decomposition,} we place $\ell$ cut points $\hat{\tau}_0, \ldots,
+\hat{\tau}_{\ell-1}$ with $\hat{\tau}_i : \cipher{Q_R}_i \times
 \cipher{\Sigma} \to \cipher{Q_R}_{i+1}$, each of space
 $O(|Q_R| \cdot |\Sigma|)$, total $O(\ell \cdot |Q_R| \cdot |\Sigma|)$.
 The orbit is bounded by $1 + \ell$ from \Cref{prop:typed-orbit} (single
@@ -1222,14 +1224,18 @@ state value at each level).
 Leakage: the cipher state values $c_0, \ldots, c_\ell$ flow between cut
 points, so an adversary observing the run sees an $(\ell+1)$-tuple of
 intermediate cipher state values rather than just a head-movement count.
-The two realizations have the same total construction cost (up to a
-constant factor) and the same orbit bound; they differ in residual
-\emph{leakage profile} (head-movement count for the TM, intermediate
-state-value sequence for the expression tree) and in evaluation cost
-(repeated lookups in one cipher map vs.\ a chain of $\ell$ lookups in
-distinct cipher maps).
+The two realizations have the same orbit bound but different
+construction-cost asymptotics: cipher TM is $O(|Q_R|^2 \cdot |\Sigma|)$
+(\Cref{prop:cipher-tm-space}, including the auxiliary shift maps),
+expression tree is $O(\ell \cdot |Q_R| \cdot |\Sigma|)$, and the
+crossover sits near $\ell \approx |Q_R|$.
+The qualitative difference is the \emph{leakage profile}: cipher TM
+leaks the head-movement and state sequences (one $(d, q_\mathrm{sel})$
+pair per step); the expression tree leaks the intermediate cipher
+state values $c_0, \ldots, c_\ell$ flowing between cut points.
 Cut-point placement therefore selects \emph{which structure leaks},
-not \emph{whether the program fits in space}.
+and the cost comparison is a separate axis that depends on the
+relationship between $\ell$ and $|Q_R|$.
 \end{example}
 
 
@@ -1424,10 +1430,10 @@ Leaf (7 nodes) & 5.9s & --- & 7 \\
 \bottomrule
 \end{tabular}
 \end{center}
-As expected from the PHF construction (perfect-hash backing gives
-exact lookup on the construction domain), all three produce zero
-errors on the full domain (150 inputs); we report this as a sanity
-check, not a measured outcome.
+As expected from the PHF construction, all three produce zero errors
+on the full domain (150 inputs); each cipher map is built over its
+declared input set, so on-domain inputs are exact lookups by
+construction.
 The root annotation is 650$\times$ faster (PHF backend vs.\ seed
 search) and exposes zero intermediate cipher values.
 The trade-off: the root annotation requires the entire input domain
@@ -1534,10 +1540,12 @@ implementations.
 Two realizations concretize these trade-offs.
 Expression-tree decomposition with cipher-node annotations lets the
 programmer choose the granularity at which intermediate cipher values
-are exposed; a cipher Turing machine gives space $O(|Q| \cdot |\Gamma|)$
-at the cost of leaking head-movement patterns.
-Both are instances of a single cut-point pattern that the typed-chain
-bound constrains identically.
+are exposed; a cipher Turing machine gives space $O(|Q|^2 \cdot |\Gamma|)$
+at the cost of leaking the head-movement and state sequences.
+Both are instances of a single cut-point pattern; their orbits are
+bounded by complementary arguments (typed-chain reasoning for the
+expression tree, deterministic-trajectory reasoning for the cipher
+TM).
 
 On the practical side, cipher Boolean types with AND/OR/NOT as cipher
 maps enable Boolean search queries evaluated entirely on the untrusted

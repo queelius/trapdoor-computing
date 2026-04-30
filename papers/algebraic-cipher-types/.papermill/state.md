@@ -71,13 +71,16 @@ review_history:
     addresses: "MAJ-1, MAJ-2, MAJ-3 from 2026-04-13 review"
     notes: "MAJ-3 fixed by rewriting the 'What the typed-chain bound says in each case' paragraph in Section 6.3 as 'What bounds the orbit in each case', explicitly distinguishing the typed-chain bound (expression tree, distinct cipher spaces) from the deterministic-trajectory bound (cipher TM, self-loop on a single cipher space). MAJ-1 fixed by rewriting the regex example as 'Regex matching: same total cost, different leakage', acknowledging |Q_R| can be 2^{O(r)}, presenting the natural typed-chain decomposition with l cut points each O(|Q_R|*|Sigma|) for total O(l*|Q_R|*|Sigma|), reframing the comparison as a leakage-profile choice rather than a space-cost choice. MAJ-2 fixed by factoring the shift into two unary cipher maps (clear, set_q parameterized by new state), Prop 6.1 updated to account for all three families (delta_T, clear, |Q|*|{L,R,S}| instances of set_q) giving total space O(|Q|^2*|Gamma|). PDF builds clean at 19 pages with no warnings."
   - date: 2026-04-29
-    type: in-session-fix
-    addresses: "LC-MIN-3, LC-MIN-4, LC-MIN-6 (carry-forward minors)"
-    notes: "LC-MIN-3 fixed by renaming TM transition function from delta_T to tau_T throughout Section 6 to avoid collision with TV-distance delta from Section 3 representation uniformity; an explanatory sentence at top of Section 6.1 motivates the rename. LC-MIN-4 fixed by adding formal Definition 3.3 (Cipher type) in Section 3 Preliminaries with label def:cipher-type, defining C(X) as the set of valid encodings; the inline introduction in Section 4 was replaced with a Cref to the formal definition. LC-MIN-6 fixed by qualifying the zero-errors line in Section 7.3 as expected from the PHF construction, framed as a sanity check rather than a measured outcome."
+    type: multi-agent
+    recommendation: major-revision
+    findings: "Critical: 0 | Major: 2 | Minor: 5 | Suggestions: 3"
+    location: ".papermill/reviews/2026-04-29/"
+    status: addressed-in-session
+    notes: "Fourth-round verification review. Confirmed MAJ-2 (cipher TM shift), MAJ-3 (typed-chain split), LC-MIN-4 (Def 3.3), LC-MIN-6 (zero-errors framing) fully resolved. Flagged four new defects from third-round fixes: MAJ-1 (cipher TM space mismatch: abstract/intro/conclusion still claimed O(|Q|*|Gamma|) but Prop 6.1 now O(|Q|^2*|Gamma|)), MAJ-2 (conclusion still claimed typed-chain bound 'constrains identically' both realizations, contradicting MAJ-3 fix in §6.3), MIN-1 (regex example claimed equal total cost while showing different costs), MIN-2 (LC-MIN-3 partial: plaintext renamed delta_T->tau_T but cipher hat-delta_T still used delta), MIN-3 (set_q selection mechanism under-specified: untrusted machine cannot extract q from cipher c' without trapdoor)."
   - date: 2026-04-29
-    type: lightweight-verification
-    location: ".papermill/reviews/2026-04-29/verification.md"
-    notes: "Fourth-round verification confirms all six fixes (MAJ-1, MAJ-2, MAJ-3, LC-MIN-3, LC-MIN-4, LC-MIN-6) landed cleanly. No residual issues, no new defects, build clean. Section 6 reads as coherent unit with consistent notation, well-bounded space accounting, and sharp distinction between the two orbit-bound arguments. Remaining open: M2/M3/M4/M5 experimental, M7 doc class, M9 self-citations. Paper is converging."
+    type: in-session-fix
+    addresses: "MAJ-1, MAJ-2, MIN-1, MIN-2, MIN-3 from 2026-04-29 verification"
+    notes: "Abstract, intro contributions, and conclusion updated to O(|Q|^2*|Gamma|) consistent with Prop 6.1. Conclusion's 'constrains identically' claim replaced with 'orbits bounded by complementary arguments (typed-chain for expression tree, deterministic-trajectory for cipher TM)'. Regex example reframed: same orbit bound but different construction-cost asymptotics, with crossover near l ~ |Q_R|; cost comparison decoupled from leakage comparison. Cipher rename completed: hat-delta_T -> hat-tau_T throughout, eliminating the delta collision in §6. set_q selection made explicit: tau_T output is now a triple (c', d, q_sel) where q_sel in Q is a plaintext selector; trajectory leakage proposition (Prop 6.2) generalized to (d_i, q_{sel,i}) pairs; §6.3 leakage profile updated to match. Build clean at 19 pages."
 
 related_papers:
   - path: ~/github/trapdoor-computing/papers/cipher-maps
