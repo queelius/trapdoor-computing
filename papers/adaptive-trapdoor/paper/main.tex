@@ -1,0 +1,82 @@
+\documentclass[11pt]{article}
+
+% Essential packages
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{mathtools}
+\usepackage[numbers,square]{natbib}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\graphicspath{{img/}}
+\usepackage{hyperref}
+\hypersetup{hypertexnames=false}
+\usepackage{cleveref}
+
+% Theorem environments (matching sibling papers)
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{proposition}[theorem]{Proposition}
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}[section]
+\newtheorem{example}{Example}[section]
+
+% Notation (matching cipher-maps paper)
+\newcommand{\fhat}{\hat{f}}
+\newcommand{\enc}{\mathrm{enc}}
+\newcommand{\dec}{\mathrm{dec}}
+\newcommand{\im}{\mathrm{Im}}
+\newcommand{\TV}{d_{\mathrm{TV}}}
+\newcommand{\B}{\{0,1\}}
+
+\title{Adaptive Trapdoor Computing:\\
+Maintaining Confidentiality Under Distributional Drift}
+\author{Alexander Towell\\\texttt{lex@metafunctor.com}}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+TODO. Static confidentiality assumes a fixed query distribution.
+Real systems see drift. We develop online observation and retuning
+of the homophonic allocation $K(x)$, prove a regret bound on average
+confidentiality, and present a secret-preserving retune algorithm
+that maintains validity of already-emitted cipher values. We
+evaluate on TBD real drift dataset.
+\end{abstract}
+
+\section{Introduction}
+TODO. See notes/plan.md.
+
+\section{Background}
+TODO. Cite cipher-maps and The Entropy Ratio.
+
+\section{Drift and Staleness: Formal Model}
+TODO.
+
+\section{Online Tuning}
+TODO. Describe observer, allocators, cadence.
+
+\section{Secret-Preserving Retune}
+TODO. Algorithm + correctness theorem.
+
+\section{Experiments}
+TODO. Synthetic + real drift.
+
+\section{Discussion}
+TODO.
+
+\section{Related Work}
+TODO. See notes/related-work.md.
+
+\section{Conclusion}
+TODO.
+
+\bibliographystyle{plainnat}
+\bibliography{references}
+
+\end{document}
