@@ -88,6 +88,17 @@ review_history:
     type: experimental-rerun
     addresses: "M2/M3/M4/M5 from 2026-04-13 review (carry-forward across all four rounds)"
     notes: "Wrote examples/experiment_paper_tables.py in cipher-maps Python lib (at /home/spinoza/github/trapdoor-computing/src/cipher-maps/) producing all three §7.3 tables with multi-seed averaging. Output saved to docs/paper-numbers.md per PAPER-INTEGRATION.md convention. Paper §7.3 rewritten: Table 1 (Boolean search) now reports mean +/- SD across 5 seeds with plaintext baseline column; Table 2 (FPR compounding) is new and replaces the prior prose paragraph, showing AND ratios 1.01/2.96/35.2/256/12160 vs OR ratios 0.90-1.02; Table 3 (granularity) now has space measurements for all 3 levels with the counter-intuitive finding that leaf annotations use less raw space (smaller per-component domains). Hardware spec added. Conclusion updated to surface the AND-chain divergence as a quotable empirical finding (the previous prose claim 'order of magnitude at k=3' was a major undercount of the actual 35x at k=3 / 12000x at k=5). Build clean at 20 pages."
+  - date: 2026-04-30
+    type: multi-agent
+    recommendation: minor-revision
+    findings: "Critical: 0 | Major: 0 | Minor: 1 | Suggestions: 1"
+    location: ".papermill/reviews/2026-04-30/"
+    status: addressed-in-session
+    notes: "Fifth-round verification of the experimental rerun. All Table 1/2/3 numerics check out internally (predicted FP 242 vs measured 233 +/- 13; theoretical FPRs match p_T^k and 1-(1-p_T)^k; bits/elem cross-check correct). Counter-intuitive Table 3 finding (leaf < root space) is physically correct. Single minor flagged: regex example title 'same total cost, different leakage' contradicted the body which now correctly says 'same orbit bound but different cost asymptotics'. Title corrected to 'Regex matching: same orbit bound, different cost asymptotics and leakage profiles'. M2/M3/M4/M5 confirmed fully closed. Carry-forward unchanged: M7 (article doc class, gated on venue), M9 (3 unpublished self-cites, gated on arXiv/IACR ePrint posting). Paper is content-complete pending external blockers."
+  - date: 2026-04-30
+    type: in-session-fix
+    addresses: "Single minor from 2026-04-30 verification"
+    notes: "Regex example title corrected from 'same total cost, different leakage' to 'same orbit bound, different cost asymptotics and leakage profiles', matching the body's prose. Build clean at 20 pages."
 
 related_papers:
   - path: ~/github/trapdoor-computing/papers/cipher-maps
@@ -163,31 +174,40 @@ Still outstanding from the review:
 
 ## Next Actions
 
-1. **Experiments (carries forward as M2/M3/M4/M5 in the 2026-04-12
-   review)**: re-run the 20 Newsgroups Boolean search in the
-   `cipher-maps` library with (a) a plaintext baseline and a Bloom-filter
-   baseline in Table 1, (b) 5+ seeds with mean and standard deviation,
-   (c) a new Table 2 for FPR-vs-chain-length for both AND and OR chains
-   (k=1..5), (d) measured space for the intermediate and leaf
-   annotations in the granularity table. The paper's one genuinely
-   novel empirical finding is buried in prose; promote it to a table.
-2. **Venue commitment and document class (M7)**: if PLAS, create a
-   submission branch with `\documentclass[sigconf,nonacm=true]{acmart}`,
-   add CCS concepts, verify page count under the acmart template. If
-   IACR ePrint or arXiv is the target instead, current article class
-   is fine.
-3. **Self-citations (M9)**: post `towell2026cipher` and
+The paper is **content-complete** as of 2026-04-30 (5 review rounds,
+trajectory Critical 2->1->0->0->0; final round flagged 1 minor since
+closed). The remaining items are external blockers, not content
+rewrites.
+
+1. **Venue commitment (M7)**: choose between
+   - PLAS (Programming Languages and Analysis for Security, at CCS):
+     swap to `\documentclass[sigconf,nonacm=true]{acmart}`, add CCS
+     concepts, verify page count under the acmart template. Best
+     fit for the type-theoretic framing and sum-type impossibility.
+   - IACR ePrint or arXiv: keep article class, submit as a technical
+     report. Best fit if PLAS deadline is unfavorable or if a
+     longer treatment is preferred.
+   - TCC: requires hardening of the orbit-closure framework into
+     simulation-style or game-style definitions, which contradicts
+     the paper's deliberate framing. Not recommended.
+2. **Self-citations (M9)**: post `towell2026cipher` and
    `towell2026bernoulli` to IACR ePrint or arXiv before final
    submission so the load-bearing preliminaries are publicly
-   verifiable; alternatively expand §3 Preliminaries with the verbatim
-   composition theorem and representation-uniformity statements so
-   this paper is self-contained.
-4. **Optional strengtheners** from the 2026-04-12 review's suggestions:
-   add an explicit definition of $\cipher{X}$ in Preliminaries
-   (LC-MIN m2), rename the Turing-transition $\delta_T$ to avoid
-   notation clash with TV-distance $\delta$ (LC-MIN m1), qualify the
-   "zero errors on the full domain" sentence as "as expected from the
-   PHF construction" (LC-MIN-5).
+   verifiable. Three @misc entries currently cite "Manuscript in
+   preparation"; updating to arXiv or ePrint links would close the
+   reviewer concern about unverifiable load-bearing references.
+3. **Optional strengtheners** for whichever venue is chosen:
+   - Submit-time bibliography sweep (cite phobic, add a software
+     citation for the cipher-maps library, etc.).
+   - One pre-submission proofreading pass for prose nits.
+
+Status by review round:
+- Critical: 2 (2026-04-08) -> 1 (2026-04-12) -> 0 (2026-04-13) -> 0 (2026-04-29) -> 0 (2026-04-30)
+- Major: 11 -> 12 -> 6 -> 2 -> 0
+- Closed in-session: candidate-set tautology, typed-chain arity,
+  cipher TM space accounting, cut-point synthesis, regex example,
+  notation collision, plaintext baseline, error bars, FPR table,
+  granularity space data.
 
 ## Restructure Log (2026-04-12)
 

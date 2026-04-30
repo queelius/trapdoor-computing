@@ -6,6 +6,8 @@
 \usepackage{mathtools}
 \usepackage[numbers,square]{natbib}
 \usepackage{booktabs}
+\usepackage{graphicx}
+\graphicspath{{img/}}
 \usepackage{hyperref}
 \hypersetup{hypertexnames=false}
 \usepackage{cleveref}
@@ -33,7 +35,11 @@
 \newcommand{\TV}{d_{\mathrm{TV}}}
 \newcommand{\B}{\{0,1\}}
 \DeclareMathOperator{\Uniform}{Uniform}
+% Cipher functor: \cipher{X} = C(X) when secret is implicit;
+% \cipherS{X}{s} = C_s(X) when secret is explicit.
+% Same notation applies to objects (latent types) and morphisms (latent functions).
 \newcommand{\cipher}[1]{\mathsf{C}(#1)}
+\newcommand{\cipherS}[2]{\mathsf{C}_{#2}(#1)}
 \DeclareMathOperator{\orbitF}{orbit}
 
 \title{The Entropy Ratio: Quantitative Confidentiality\\for Trapdoor Computing}
@@ -48,21 +54,25 @@
 A cipher map is a total function on bit strings implementing a trapdoor
 approximation of a latent function: the untrusted machine evaluates it
 blindly; only the trusted machine, holding the secret, can encode inputs
-and decode outputs.  We develop a quantitative confidentiality theory for
-cipher map systems.  The central measure is the \emph{entropy ratio}
-$e = H/H^*$, where $H$ is the observed entropy of cipher map outputs and
-$H^*$ is the maximum entropy achievable under system constraints.  This
-ratio lies in $[0,1]$: zero means fully predictable; one means
-indistinguishable from uniform.  We identify three levers for improving
-confidentiality---noise injection, multiple representations, and encoding
-granularity---and prove how each affects the entropy ratio through the
-cipher map parameters $(\eta, \varepsilon, \delta, \mu)$.  We analyze
-confidentiality under composition, showing how shared variables and
-Boolean chain operations create correlation leakage, and provide
-practical measurement techniques including compression-based entropy
-estimation.  Experimental validation on encrypted Boolean search over the
-20 Newsgroups corpus confirms the theoretical predictions for FPR
-compounding and the encoding granularity spectrum.
+and decode outputs.  We develop a quantitative confidentiality theory
+for cipher map systems.  The starting point is the entropy ratio
+$e = H/H^*$, a normalized form of Shannon leakage borrowed from the
+Quantitative Information Flow literature.  We connect this measure to
+the cipher map framework's representation-uniformity parameter $\delta$
+via the Fannes--Audenaert continuity inequality, giving
+$e \geq 1 - \delta - h_2(\delta)/n$.  This bridge makes $\delta$ the
+operational design target, and we analyze two constructions that
+reduce it with explicit costs (noise injection and multiple
+representations), plus a third, encoding granularity, inherited from
+the cipher maps framework.  The paper's main result is a compositional
+leakage theorem: even when each cipher map is marginally
+$\delta$-uniform, observing multiple evaluations on a shared cipher
+value lets the untrusted machine recover the latent joint distribution
+at the standard parametric rate $O(|Y_1|\cdot|Y_2|/\xi^2)$, so reducing
+$\delta$ is necessary but not sufficient.  Experimental validation on
+encrypted Boolean search over the 20 Newsgroups corpus confirms the
+theoretical predictions for FPR compounding and the encoding
+granularity spectrum.
 \end{abstract}
 
 
@@ -88,57 +98,122 @@ deployment with a known query distribution, known vocabulary size, and
 known resource budget, how confidential is the system, and how can it be
 improved?
 
-This paper develops the quantitative theory.  The central idea is the
-\emph{entropy ratio}: the ratio of observed entropy in the cipher map
-output stream to the maximum entropy achievable under system constraints.  We ground this idea in the cipher map framework,
-connecting the entropy ratio to the four cipher map parameters, and
-identify three levers for improving confidentiality:
+Our central observation is that confidentiality in cipher map systems
+decomposes into two scales.  At the \emph{marginal scale}, a single
+cipher map's leakage is controlled by its representation-uniformity
+parameter $\delta$, and the per-cipher-value entropy ratio gives a
+clean translation.  At the \emph{compositional scale}, observations of
+multiple cipher map evaluations on a shared cipher value leak the
+joint over latent outputs at parametric rate, independent of $\delta$.
+The two scales do not reduce to each other: engineering at one does
+not engineer at the other.  This is the structural reason cipher-map
+confidentiality cannot be addressed by a single number, and is the
+spine of the paper.
+
+\paragraph{Marginal scale.}
+The central measure is the \emph{entropy ratio} $e = H/H^*$: the ratio
+of observed entropy in the cipher map output stream to the maximum
+entropy achievable under system constraints.  The measure itself is
+not new; it is a normalized form of Shannon leakage studied in the
+Quantitative Information Flow literature
+(\S\ref{sec:related}).  The cipher map contribution is the connection:
+we prove that the representation-uniformity parameter $\delta$
+directly lower-bounds the entropy ratio via the Fannes--Audenaert
+continuity inequality~\cite{fannes1973continuity,audenaert2007sharp},
+\[
+e \;\geq\; 1 - \delta - h_2(\delta)/n,
+\]
+where $h_2$ is the binary entropy.  This reduces marginal-scale
+engineering to the concrete problem of minimizing $\delta$.
+
+We analyze two constructions that reduce $\delta$ with explicit costs:
 
 \begin{enumerate}
 \item \textbf{Noise injection.}  The trusted machine mixes $R$ filler
   queries per $N$ real queries.  By totality, the untrusted machine
-  cannot distinguish real from filler.  This dilutes the adversary's
-  correlation estimates.
+  cannot distinguish real from filler.  Cost: bandwidth
+  ($1 + R/N$).  Effect: Fisher information for any correlation
+  estimator is reduced by $\rho^2 = (N/(N+R))^2$.
 
 \item \textbf{Multiple representations.}  Each element receives
-  $K(x) \geq 1$ encodings, with $K(x) \propto 1/D(x)$ to flatten the
-  cipher value distribution.  This controls the representation uniformity
-  parameter $\delta$.
-
-\item \textbf{Encoding granularity.}  The entanglement parameter $p$
-  controls how many correlated values are encoded as a single unit.
-  Joint encoding hides correlations; component-wise encoding leaks them.
-  The spectrum runs from full correlation hiding ($p = k$, space
-  $O(|Y|^k)$) to no correlation hiding ($p = 1$, space $O(k \cdot |Y|)$).
+  $K(x) \geq 1$ encodings, with $K(x) \propto D(x)$ to flatten the
+  cipher value distribution (classical homophonic substitution:
+  frequent elements get more code symbols so that per-cipher frequency
+  equalizes).  Cost: space ($\sum_x K(x)$ slots).  Effect:
+  $\delta \to 0$ as the normalizing constant grows.
 \end{enumerate}
 
-We then analyze how confidentiality behaves under composition: when
-cipher maps are chained (Boolean AND/OR/NOT over cipher sets), FPR
-compounds predictably but correlations between shared variables create
-leakage that marginal uniformity alone does not prevent.
+A third construction, \textbf{encoding granularity} (controlled by an
+entanglement parameter $p$ that interpolates between component-wise
+encoding with correlation leakage and joint encoding with space
+$O(|Y|^k)$), is inherited from the cipher maps framework
+\cite[Sec.~9]{towell2026cipher}.  We use it but do not re-prove it
+here.
 
-Finally, we provide practical measurement tools.  The entropy of a cipher
-map output stream can be estimated by compressing it: more compressible
-means more predictable means less confidential.  This avoids the need for
+\paragraph{Compositional scale.}
+The constructions above all act at the marginal scale: each cipher map
+on its own.  The paper's main result, Theorem~\ref{thm:comp-leakage},
+shows that this is not enough.  When the untrusted machine observes
+multiple cipher map evaluations on a shared cipher value, the joint
+distribution over latent outputs is recoverable at standard parametric
+rate $O(|Y_1|\cdot|Y_2|/\xi^2)$ even when each marginal is
+$\delta$-uniform; mutual information is preserved exactly,
+$I(\fhat_1(C); \fhat_2(C)) = I(f_1(X); f_2(X))$.  The compositional
+channel is intrinsic to the framework's composability, not a bug:
+the same property that lets the untrusted machine chain evaluations
+blindly is the property that creates the channel.  Defending against
+a distribution-estimation adversary at the compositional scale
+therefore requires either reducing the number of shared-$c$
+observations, joint encoding via Prop.~\ref{prop:granularity}, or
+noise injection.  This is the operational reason practitioners cannot
+stop at multiplicity, and is the paper's headline contribution.  We
+also include, for completeness, FPR compounding through Boolean
+chains, which is inherited from~\cite[Sec.~8]{towell2026cipher}.
+
+\paragraph{Practical measurement.}
+We provide practical measurement tools that close the loop between
+theory and operation.  The entropy of a cipher map output stream can
+be estimated by compressing it: more compressible means more
+predictable means less confidential.  This avoids the need for
 explicit probabilistic models of the adversary.
 
 \paragraph{Contributions.}
 \begin{enumerate}
-\item The entropy ratio $e = H/H^*$ as a quantitative confidentiality
-  measure for cipher map systems, with a precise relationship to the
-  cipher map parameters (\S\ref{sec:measure}).
-
-\item Theorems connecting each of the three levers (noise injection,
-  multiplicity, granularity) to the entropy ratio, with explicit
-  cost/benefit trade-offs (\S\ref{sec:levers}).
-
-\item Analysis of confidentiality under composition: FPR compounding
-  through Boolean chains and correlation leakage from shared variables
+\item \textbf{Compositional leakage theorem (main result).}
+  Theorem~\ref{thm:comp-leakage} shows that $\delta$-uniform marginals
+  do not prevent joint recovery: when the untrusted machine observes
+  multiple cipher map evaluations on a shared cipher value, the joint
+  distribution over latent outputs is recoverable from
+  $O(|Y_1|\cdot|Y_2|/\xi^2)$ observations, with mutual-information
+  preservation $I(\fhat_1(C); \fhat_2(C)) = I(f_1(X); f_2(X))$.  A
+  matching minimax lower bound (Theorem~\ref{thm:comp-leakage-lb})
+  shows the rate is sharp: no estimator can do better, so the
+  compositional channel is information-theoretically optimal for the
+  adversary.  Reducing $\delta$ is therefore necessary but not
+  sufficient.  FPR compounding through Boolean chains is included for
+  context; it is inherited from~\cite{towell2026cipher}
   (\S\ref{sec:composition}).
 
-\item Practical measurement via compression-based entropy estimation and
-  a case study demonstrating confidentiality improvement from 59\% to
-  85\% (\S\ref{sec:measurement},~\S\ref{sec:experiments}).
+\item \textbf{Fannes bridge.}  The representation-uniformity parameter
+  $\delta$ directly lower-bounds the entropy ratio,
+  $e \geq 1 - \delta - h_2(\delta)/n$, via the Fannes--Audenaert
+  continuity inequality (Theorem~\ref{thm:entropy-decomposition}).
+  This makes $\delta$ the operational handle for confidentiality
+  engineering in cipher map systems (\S\ref{sec:measure}).
+
+\item \textbf{Two constructions that reduce $\delta$.}  Noise injection
+  (bandwidth cost $1 + R/N$, Fisher-information dilution $\rho^2$;
+  Theorem~\ref{thm:noise-dilution}) and multiple representations
+  (space cost $\sum_x K(x)$ with $K(x)\propto D(x)$, the classical
+  homophonic prescription; Theorem~\ref{thm:multiplicity}).  A third
+  construction, encoding granularity, is inherited from the cipher
+  maps framework and used without re-proof (\S\ref{sec:levers}).
+
+\item \textbf{Practical measurement and validation.}  Compression-based
+  entropy estimation avoiding explicit adversary models, and a case
+  study demonstrating confidentiality improvement from 72\% to 98\%
+  with approximately 1.04$\times$ space and 1.5$\times$ bandwidth
+  overhead (\S\ref{sec:measurement},~\S\ref{sec:experiments}).
 \end{enumerate}
 
 \paragraph{What this paper does not do.}
@@ -156,13 +231,24 @@ hash function.  The framework is information-theoretic throughout.
 
 \paragraph{Quantitative information flow.}
 The entropy ratio $e = H/H^*$ is a normalized form of Shannon leakage,
-studied extensively in the QIF literature~\cite{smith2009foundations,alvim2020science}.
+studied extensively in the QIF
+literature~\cite{smith2009foundations,alvim2020science}.
 Smith~\cite{smith2009foundations} proposes min-entropy leakage as a
 worst-case measure; Alvim et al.~\cite{alvim2020science} provide a
 comprehensive treatment of information-theoretic leakage measures.
-Our contribution is not the measure itself but its application to the
-cipher map framework: the parameter decomposition connecting $e$ to
-$(\eta, \varepsilon, \delta, \mu)$ and the three levers for improving it.
+The measure itself is not our contribution, and we do not claim
+novelty there.  What is new here is (i) the compositional leakage
+bound showing that $\delta$-uniform marginals are insufficient when
+shared cipher values recur across evaluations
+(Theorem~\ref{thm:comp-leakage}), the paper's main result, and
+(ii) the \emph{Fannes bridge} connecting the representation-uniformity
+parameter $\delta$ of cipher maps to the entropy ratio
+($e \geq 1 - \delta - h_2(\delta)/n$), making $\delta$ the operational
+handle QIF does not have.  The QIF literature treats leakage of a
+function; the cipher map setting adds a four-parameter construction
+$(\eta, \varepsilon, \delta, \mu)$ and a composition discipline under
+which that leakage must be reasoned about.  We discuss the
+Shannon-vs-min-entropy choice in \S\ref{sec:discussion}.
 
 \paragraph{SSE leakage mitigation.}
 Noise injection for encrypted search has been studied in the SSE
@@ -283,6 +369,11 @@ All logarithms are base~2.
 \label{sec:measure}
 %% ====================================================================
 
+This section and~\S\ref{sec:levers} develop the marginal-scale theory
+introduced in~\S\ref{sec:intro}: how to measure single-cipher-map
+leakage via the entropy ratio, and how to engineer toward the design
+target $\delta$.  The compositional-scale theory is in~\S\ref{sec:composition}.
+
 \subsection{Observed and Maximum Entropy}
 
 Consider a cipher map system in which the trusted machine submits a
@@ -365,8 +456,13 @@ $e = H(Q)/H^* = 1 - D_{\mathrm{KL}}(Q \| U)/H^*$.  In particular:
 \item If $K(x) = 1$ for all $x$ (simple substitution, no multiple
   representations), then $Q$ inherits the non-uniformity of $D$, and
   $e \leq H(D) / \log_2 |X|$.
-\item The entropy ratio is bounded by $e \geq 1 - 2\delta^2/n$,
-  via Pinsker's inequality.
+\item For $\delta \leq 1/2$, the entropy ratio is bounded by
+  \[
+  e \geq 1 - \delta - h_2(\delta)/n,
+  \]
+  where $h_2(\delta) = -\delta\log_2\delta - (1-\delta)\log_2(1-\delta)$
+  is the binary entropy.  The bound follows from the Fannes--Audenaert
+  continuity inequality~\cite{fannes1973continuity,audenaert2007sharp}.
 \end{enumerate}
 \end{theorem}
 
@@ -380,14 +476,33 @@ is a relabeling of $D$.  Entropy is invariant under bijection, giving
 $H(Q) = H(D)$.  The maximum over distributions on $|X|$ elements is
 $\log_2 |X|$, so $e = H(D) / \log_2 |X|$.
 
-For part (3): by Pinsker's inequality (which bounds KL divergence from
-below by squared TV distance),
-$\TV(Q, U) \leq \sqrt{D_{\mathrm{KL}}(Q \| U) / 2}$.  Since
-$\TV(Q, U) \leq \delta$, we have
-$D_{\mathrm{KL}}(Q \| U) \leq 2\delta^2$.  Then
-$H(Q) = \log_2 2^n - D_{\mathrm{KL}}(Q \| U) \geq n - 2\delta^2$,
-and $e \geq 1 - 2\delta^2/n$.
+For part (3): the Fannes--Audenaert inequality bounds entropy
+continuity: for any distributions $P, Q$ on a support of size $d$ with
+$\TV(P, Q) \leq t \leq 1/2$,
+\[
+|H(P) - H(Q)| \;\leq\; t \log_2(d - 1) + h_2(t).
+\]
+Applying this to $Q$ and $U$ on $\B^n$ with $d = 2^n$ and
+$\TV(Q, U) \leq \delta$,
+\[
+|H(Q) - n| \;\leq\; \delta \log_2(2^n - 1) + h_2(\delta)
+                \;\leq\; \delta n + h_2(\delta),
+\]
+so $H(Q) \geq n(1 - \delta) - h_2(\delta)$ and
+$e = H(Q)/n \geq 1 - \delta - h_2(\delta)/n$.
+Note the bound is linear in $\delta$ (not quadratic):
+Pinsker gives $D_{\mathrm{KL}} \geq 2\,\TV^2$, an upper bound on TV
+given KL, which does not convert to a KL bound given TV.  The correct
+direction is Fannes--Audenaert.
 \end{proof}
+
+\begin{remark}[Numerical scale]
+Take a 64-bit cipher-value space ($n = 64$, a typical width for the
+hash output of a cipher map).  For $\delta = 0.05$, the bound gives
+$e \geq 0.945$.  For $\delta = 0.01$, $e \geq 0.989$.  The linear
+scaling in $\delta$ means tightening $\delta$ by an order of magnitude
+tightens the leakage bound by roughly the same order.
+\end{remark}
 
 \begin{remark}[The role of $\varepsilon$]
 The noise decode probability $\varepsilon$ does not appear directly in
@@ -408,7 +523,7 @@ uncertainty per query (the binary entropy of the error event).
 
 
 %% ====================================================================
-\section{Three Levers for Improving Confidentiality}
+\section{Constructions for Reducing \texorpdfstring{$\delta$}{delta}}
 \label{sec:levers}
 %% ====================================================================
 
@@ -437,11 +552,19 @@ where $H_b(\rho)$ is the binary entropy of $\rho$.
 
 \item As $R/N \to \infty$, $H_{\mathrm{mix}} \to n = H^*$ and $e \to 1$.
 
-\item The adversary's estimate of any correlation between query elements
-  has variance $O(1/(N+R))$.  Mixing with $R \gg N$ filler dilutes the
-  real signal proportionally: the adversary needs
-  $\Omega((1 + R/N)^2)$ observations to achieve the same estimation
-  accuracy as observing $N$ pure real queries.
+\item For any one-dimensional parameter $\theta$ of $D$, the
+  Fisher information satisfies
+  \begin{equation}
+  \label{eq:fisher-noise}
+  I^{\mathrm{mix}}(\theta) \;\leq\; \rho^2 \cdot C(D) \cdot I^{\mathrm{pure}}(\theta),
+  \end{equation}
+  where $I^{\mathrm{pure}}(\theta)$ is the Fisher information from
+  observing $D$ directly and
+  $C(D) = \max_c D(c) / U(c) = 2^n \max_c D(c)$ is a
+  distribution-dependent constant capturing the worst-case
+  concentration of $D$ relative to uniform.  In particular, for
+  $\rho \ll 1$ the variance of any unbiased estimator scales as
+  $\Omega\!\bigl((1 + R/N)^2 / C(D)\bigr) \cdot \mathrm{Var}_{\mathrm{pure}}$.
 \end{enumerate}
 \end{theorem}
 
@@ -455,19 +578,27 @@ conditional entropy given the indicator.
 For part (2): as $\rho \to 0$, the distribution converges to uniform on
 $\B^n$.
 
-For part (3): the adversary observes a mixture.  For any statistic
-$T$ computed from the observed sequence, the contribution of real
-queries is diluted by the noise fraction.  Specifically, let
-$\hat{\theta}$ be the adversary's estimator of a parameter $\theta$ of
-$D$.  Each observation contributes information about $\theta$ only when
-it is a real query (probability $\rho$).  The effective sample size for
-estimating $\theta$ is $\rho \cdot (N + R) = N$, but the adversary does
-not know which observations are real.  The best the adversary can do is
-treat each observation as drawn from the mixture.
-When $\rho \ll 1$ (filler dominates), the mixture is approximately
-uniform and the Fisher information for estimating any parameter of $D$
-is reduced by a factor of approximately $\rho^2$ relative to observing
-$D$ directly.
+For part (3): write the mixture density at observation $c$ as
+$P_{\mathrm{mix}}(c \mid \theta) = \rho P_\theta(c) + (1 - \rho) U(c)$,
+where $U(c) = 2^{-n}$ is uniform.  The score is
+$\partial_\theta \log P_{\mathrm{mix}} =
+\rho \partial_\theta P_\theta / P_{\mathrm{mix}}$, so
+\[
+I^{\mathrm{mix}}(\theta)
+  = \mathbb{E}_{\mathrm{mix}}\!\left[\bigl(\partial_\theta \log P_{\mathrm{mix}}\bigr)^2\right]
+  = \rho^2 \int \frac{(\partial_\theta P_\theta)^2}{P_{\mathrm{mix}}}\,dc.
+\]
+Bounding $P_{\mathrm{mix}}(c) \geq (1 - \rho) U(c) = (1-\rho) 2^{-n}$
+in the denominator and $P_{\mathrm{mix}}(c) \leq \rho P_\theta(c) + U(c)
+\leq \max\{P_\theta(c), U(c)\} \cdot 2$ gives
+$I^{\mathrm{mix}}(\theta) \leq \rho^2 \cdot C(D) \cdot
+\int (\partial_\theta P_\theta)^2 / P_\theta \, dc =
+\rho^2 \cdot C(D) \cdot I^{\mathrm{pure}}(\theta)$, where the constant
+$C(D) = \max_c P_\theta(c) / U(c) = 2^n \max_c P_\theta(c)$
+absorbs the worst-case concentration of $D$.  The Cram\'er-Rao bound
+then gives the variance scaling claim.  Note that $C(D)$ is unbounded
+as $D$ becomes a point mass; the $\rho^2$ scaling is exact only for
+distributions with bounded ratio to uniform.
 \end{proof}
 
 \paragraph{Cost.}
@@ -478,59 +609,87 @@ filler and real queries) doubles bandwidth; $R/N = 9$ (90\% filler)
 increases bandwidth tenfold but brings $e$ close to 1 for most practical
 distributions.
 
-\subsection{Multiple Representations ($K > 1$)}
+\subsection{Multiple Representations \texorpdfstring{($K > 1$)}{(K > 1)}}
 \label{subsec:multiple-reps}
 
 Each element $x$ can be given $K(x) \geq 1$ distinct encodings.  The
 trusted machine, when encoding $x$, chooses $k$ uniformly from
-$\{0, \ldots, K(x) - 1\}$.  Assigning $K(x) \propto 1/D(x)$ equalizes
-the cipher value frequencies, achieving $\delta \approx 0$.
+$\{0, \ldots, K(x) - 1\}$, so the probability of observing a particular
+cipher value $v = \enc(x, k)$ is $D(x)/K(x)$ (assuming distinct
+encodings, which holds with high probability under the random oracle
+model).  Flattening the cipher value distribution therefore requires
+$D(x)/K(x)$ to be constant in $x$: more frequent elements need
+\emph{more} representations, not fewer.  This is the classical
+homophonic substitution prescription~\cite{simmons1979symmetric}:
+$K(x) \propto D(x)$.
 
 \begin{theorem}[Representation uniformity via multiplicity]
 \label{thm:multiplicity}
-Let $D$ be a distribution on $X$ with $D(x) > 0$ for all $x$.  Set
-$K(x) = \lceil c / D(x) \rceil$ for a normalizing constant $c$.  Then the
-induced distribution on cipher values satisfies:
+Let $D$ be a distribution on $X$ with $D(x) > 0$ for all $x$, and let
+$c \geq 1/\min_x D(x)$ be a normalizing constant.  Set
+$K(x) = \lceil c \cdot D(x) \rceil$.  Then the cipher value
+distribution $Q$ induced on the image of $\enc$ satisfies
 \begin{equation}
-\TV(Q, U) \leq \frac{|X|}{2 \sum_x K(x)}.
+\TV(Q, U_{\mathrm{im}}) \;\leq\; \frac{|X|}{2\,\sum_x K(x)}
+\;\leq\; \frac{|X|}{2c},
 \end{equation}
-In particular, $\TV(Q, U) \to 0$ as $c \to \infty$.
+where $U_{\mathrm{im}}$ is the uniform distribution on
+$\mathrm{im}(\enc)$.  In particular, $\TV(Q, U_{\mathrm{im}}) \to 0$
+as $c \to \infty$.  Under the random oracle model,
+$\mathrm{im}(\enc)$ is a pseudorandom subset of $\B^n$, so
+$\TV(Q, U)$ inherits the same bound up to a birthday-bound term
+$O(\sum_x K(x) / 2^n)$.
 \end{theorem}
 
 \begin{proof}
-The induced distribution on cipher values is
-$Q(v) = \sum_x D(x) \cdot |\{k : \enc(x, k) = v\}| / K(x)$.  Under the
-random oracle model, each encoding maps to a distinct cipher value (with
-high probability when $n$ is large), so the sum simplifies: each cipher
-value $v$ is hit by exactly one pair $(x, k)$, giving
-$Q(v) = D(x) / K(x)$ for the $(x, k)$ mapping to $v$.  With
-$K(x) = \lceil c / D(x) \rceil$, we have $D(x) / K(x) \approx c$ for all
-$x$.  The total number of cipher values is $\sum_x K(x)$, and the uniform
-distribution on that many values assigns probability $1 / \sum_x K(x)$ to
-each.  The TV distance between $Q$ and uniform is bounded by the maximum
-deviation, which is at most $|X| / (2 \sum_x K(x))$ by the rounding error
-in $\lceil c / D(x) \rceil$.
+Under the random oracle model, distinct $(x, k)$ pairs map to distinct
+cipher values with high probability, so each $v \in \mathrm{im}(\enc)$
+is the image of exactly one pair $(x, k)$ and $Q(v) = D(x)/K(x)$.  With
+$K(x) = \lceil c\, D(x) \rceil$, rounding gives
+\[
+\frac{1}{c + 1/D(x)} \;\leq\; \frac{D(x)}{K(x)} \;\leq\; \frac{1}{c},
+\]
+so $Q(v) \in [1/(c + 1/\min_x D(x)),\ 1/c]$ for every $v$ in the image.
+The image has $M = \sum_x K(x) \in [c,\ c + |X|]$ values, and the
+uniform distribution on the image assigns mass $1/M$ to each.  TV
+distance aggregates the per-cipher discrepancy:
+\[
+\TV(Q, U_{\mathrm{im}}) = \tfrac{1}{2}\sum_v |Q(v) - 1/M|.
+\]
+Since each $K(x) - c\,D(x) \in [0, 1]$ by the ceiling, the per-source
+discrepancy in $Q(v) = D(x)/K(x)$ around $1/c$ is at most $1/(c\,K(x))$
+in absolute value, and aggregating gives $\TV(Q, U_{\mathrm{im}}) \leq
+|X|/(2M) \leq |X|/(2c)$.  The image-to-$\B^n$ step follows from the
+random-oracle assumption: a pseudorandom image of size $M$ inside
+$\B^n$ contributes at most $O(M / 2^n)$ additional TV distance.
 \end{proof}
 
 \paragraph{Cost.}
 Multiple representations cost space: each element now occupies $K(x)$
 slots in the cipher map, so the total space is
-$\sum_x K(x) \cdot (-\log_2 \varepsilon + H(Y))$ bits.  For a Zipf
-distribution $D(x) \propto 1/i$ on $m$ elements, the total number of
-representations is $\sum_x K(x) \approx c \sum_x 1/D(x) = c \cdot m
-\cdot H_m$ where $H_m = \sum_{i=1}^m 1/i$ is the $m$-th harmonic
-number.
+$\sum_x K(x) \cdot (-\log_2 \varepsilon + H(Y))$ bits.  With
+$K(x) = \lceil c \cdot D(x) \rceil$, the total number of
+representations is $\sum_x K(x) \approx c$ (plus a rounding term bounded
+by $|X|$).  The cost scales with the normalizing constant $c$, which
+sets the achievable $\delta$ via Theorem~\ref{thm:multiplicity}.
 
 \begin{example}[Homophonic encryption for Zipf-distributed queries]
 \label{ex:homophonic}
 A vocabulary of $m = 10{,}000$ words with Zipf distribution
-$D(x_i) \propto 1/i$ has entropy
-$H(D) \approx 7.83$ bits, compared to $H^* = \log_2 10{,}000 \approx
-13.29$ bits, giving $e \approx 0.59$.  Flattening the top $b = 100$
-words via $K(x_i) = \lceil D(x_1) / D(x_i) \rceil$ (approximately
-$i$ representations for the $i$-th ranked word) increases the effective
-entropy to $\approx 10.2$ bits, giving $e \approx 0.77$.  The space
-overhead is approximately 518 additional trapdoors per document.
+$D(x_i) \propto 1/i$ has harmonic normalizer
+$H_m = \sum_{i=1}^m 1/i \approx 9.788$, entropy
+$H(D) \approx 9.55$ bits, and $H^* = \log_2 10{,}000 \approx 13.29$
+bits, giving baseline $e \approx 0.72$.  Flattening the top
+$b = 100$ words via $K(x_i) = \lceil c \cdot D(x_i) \rceil$ with
+$c = 100 \cdot H_m \approx 979$ yields
+$K(x_1) \approx 100, K(x_2) \approx 50, \ldots, K(x_{100}) \approx 1$,
+total $\sum_{i=1}^{100} K(x_i) \approx 100 \cdot H_{100} \approx 519$
+cipher cells for the top words.  Each of these cells has mass
+$D(x_i)/K(x_i) \approx 1/979$, so the top-100 mass $\approx 0.53$ is
+spread approximately uniformly across 519 cells.  The effective
+entropy rises to $H(Q) \approx 11.5$ bits, giving $e \approx 0.87$.
+The space overhead is approximately 519 additional trapdoors, a
+$1.04\times$ increase over the baseline 10{,}000 trapdoors.
 \end{example}
 
 \subsection{Encoding Granularity}
@@ -610,17 +769,189 @@ $|\orbitF_\emptyset(c)| = 1$ and confidentiality $\geq 1 - 2^{-n}$.
 
 
 %% ====================================================================
-\section{Compositional Confidentiality}
+\section{The Compositional Scale}
 \label{sec:composition}
 %% ====================================================================
 
-When cipher maps compose---$\ghat \circ \fhat$, or Boolean combinations
-like $\widehat{\mathrm{AND}}(\fhat(c), \ghat(c))$---confidentiality
-behaves differently from the single-query case.  Two effects interact:
-error compounding (correctness degrades) and correlation leakage
-(intermediate values reveal structure).
+When cipher maps compose, as in $\ghat \circ \fhat$ or Boolean
+combinations like $\widehat{\mathrm{AND}}(\fhat(c), \ghat(c))$,
+confidentiality moves to a different scale than the marginal one
+addressed in~\S\ref{sec:levers}.  Composition has both a
+\emph{confidentiality} facet and a \emph{correctness} facet, and we
+treat both in this section.  Section~\ref{subsec:correlation-leakage}
+covers the confidentiality facet, the compositional scale proper:
+correlation leakage from shared cipher values, the paper's headline
+result, exposing a fundamental limit of the marginal-scale
+constructions of~\S\ref{sec:levers} (reducing $\delta$ to zero is
+necessary but not sufficient when cipher values recur).
+Section~\ref{subsec:fpr-compounding} covers the correctness facet:
+how the cipher map error parameter $\eta$ compounds through Boolean
+chains.  This is inherited from~\cite[Sec.~8]{towell2026cipher} and
+included here both for completeness and because it interacts with the
+confidentiality story (e.g., AND chains drive false-positive
+\emph{noise} down, which has confidentiality consequences treated
+in~\S\ref{subsec:fpr-compounding}).
+
+\subsection{Correlation Leakage from Shared Variables}
+\label{subsec:correlation-leakage}
+
+Even when each cipher map has uniform marginal output, evaluating multiple
+cipher maps on the same cipher value leaks
+correlations~\cite[Sec.~9.2]{towell2026cipher}.  If the untrusted machine
+evaluates $\fhat_1(c)$ and $\fhat_2(c)$ for the same $c$, the pair
+$(\fhat_1(c), \fhat_2(c))$ is a deterministic function of $c$, and the
+joint distribution preserves the latent correlation between $f_1$ and
+$f_2$.  This is the central compositional result of the paper.
+
+\begin{theorem}[Compositional leakage]
+\label{thm:comp-leakage}
+Let $\fhat_1, \fhat_2$ be cipher maps for latent $f_1 : X \to Y_1$,
+$f_2 : X \to Y_2$, each with $\delta_i \approx 0$ so their marginal
+cipher value distributions are near-uniform on $\B^n$.  Assume the
+untrusted machine observes pairs $(\fhat_1(c_i), \fhat_2(c_i))$ for
+$i = 1, \ldots, N$, where each $c_i$ is an independent in-domain
+cipher value drawn according to the pushforward of $D$ under $\enc$
+(so the latent pair $(f_1(x), f_2(x))$ is drawn i.i.d.\ from the
+true joint under $D$).  Then:
+\begin{enumerate}
+\item Each marginal cipher output is individually $\delta_i$-uniform on
+  $\B^n$ (by hypothesis).
+\item Mutual information is preserved:
+  $I(\fhat_1(C); \fhat_2(C)) = I(f_1(X); f_2(X))$, where
+  $X \sim D$ and $C = \enc(X, k)$ for uniform $k$.
+\item The adversary estimates the joint distribution on
+  $Y_1 \times Y_2$ to TV accuracy $\xi$ from
+  $N = O(|Y_1| \cdot |Y_2| / \xi^2)$ samples, the standard plug-in
+  estimator rate.
+\item Any downstream cipher map $\fhat_3$ with Shannon-optimal
+  acceptance predicate for the \emph{marginal} output distribution
+  remains non-uniform when applied to the correlated pair:
+  achieving $\delta_3 \approx 0$ requires reconstructing $\fhat_3$ with
+  respect to the joint distribution.
+\end{enumerate}
+\end{theorem}
+
+\begin{proof}
+Part (1) is the hypothesis.
+Part (2): the maps $\dec_i \circ \fhat_i$ push cipher pairs back to
+latent pairs deterministically (up to $\eta$).  Under the sampling
+assumption, the encoding randomness $k$ is drawn uniformly from
+$\{0, \ldots, K(X) - 1\}$ marginally independent of the latent pair
+$(f_1(X), f_2(X))$, so the observed joint and the latent joint have
+equal mutual information.  Data-processing then gives equality because
+the push maps are surjective onto $Y_1, Y_2$ on the in-domain part.
+Part (3): the empirical distribution on a discrete support of size
+$|Y_1| \cdot |Y_2|$ converges in TV to the true distribution at rate
+$O(\sqrt{|Y_1|\cdot|Y_2|/N})$~\cite{cover2006elements}, so
+$N = O(|Y_1|\cdot|Y_2|/\xi^2)$ samples suffice for TV accuracy $\xi$.
+Part (4): when $I(f_1; f_2) > 0$, the joint input distribution to
+$\fhat_3$ is not uniform on $Y_1 \times Y_2$, so a predicate optimized
+for the product of marginals cannot achieve $\delta_3 = 0$; the
+optimal $\delta_3$ is bounded below by the TV distance between the
+joint and the product of marginals.
+\end{proof}
+
+The upper bound of Theorem~\ref{thm:comp-leakage} part~(3) is
+matched by a minimax lower bound: no estimator can recover the joint
+distribution at a faster rate than the empirical distribution does.
+
+\begin{theorem}[Compositional leakage is rate-optimal]
+\label{thm:comp-leakage-lb}
+Under the sampling model of Theorem~\ref{thm:comp-leakage}, any
+estimator $\hat{P}$ of the joint distribution $P$ on $Y_1 \times Y_2$
+based on $N$ i.i.d.\ samples of $(\fhat_1(C_i), \fhat_2(C_i))$
+satisfies
+\begin{equation}
+\label{eq:lecam-lb}
+\inf_{\hat{P}} \;\sup_{P \in \Delta(Y_1 \times Y_2)} \;
+\mathbb{E}\bigl[\TV(\hat{P}, P)\bigr] \;\geq\; c\,\sqrt{|Y_1| \cdot |Y_2| / N},
+\end{equation}
+for an absolute constant $c > 0$, where the supremum is over joint
+distributions on $Y_1 \times Y_2$ with full support.  Achieving expected
+TV accuracy $\xi$ therefore requires $N = \Omega(|Y_1| \cdot |Y_2| / \xi^2)$
+samples in the worst case, matching the upper bound of
+Theorem~\ref{thm:comp-leakage} part~(3) up to constants.  The minimax
+rate for compositional joint recovery is
+$\Theta(|Y_1| \cdot |Y_2| / \xi^2)$.
+\end{theorem}
+
+\begin{proof}[Proof sketch]
+This is the standard Le Cam minimax bound for distribution estimation
+in TV, applied to the joint support $Y_1 \times Y_2$.  Let
+$m = |Y_1| \cdot |Y_2|$ and pair the cells of $Y_1 \times Y_2$ into
+$m/2$ disjoint pairs $\{(v_i^+, v_i^-)\}_{i=1}^{m/2}$.  For
+$s \in \{\pm 1\}^{m/2}$ and $\varepsilon$ a small constant times the
+target $\xi$, define $P^{(s)}$ by
+\[
+P^{(s)}(v_i^{\pm}) = \tfrac{1}{m}(1 \pm s_i \varepsilon),
+\]
+so each $P^{(s)}$ is a perturbation of uniform on $Y_1 \times Y_2$ with
+total mass~$1$.  Pairwise TV is
+$\TV(P^{(s)}, P^{(s')}) = (\varepsilon/m)\,d_H(s, s')$ where $d_H$ is
+Hamming distance.  Le Cam's two-point lemma applied to this
+$2^{m/2}$-packing, with KL divergence between any pair bounded by
+$O(\varepsilon^2/m)$ per coordinate (a standard consequence of the
+bounded-perturbation construction), gives the minimax rate
+$\Omega(\sqrt{m/N}) = \Omega(\sqrt{|Y_1| \cdot |Y_2| / N})$ in expected
+TV.  See Devroye, Gy{\"o}rfi, and
+Lugosi~\cite{devroye1996nonparametric} for the canonical treatment of
+the construction and constants.
+\end{proof}
+
+\begin{remark}[Sampling regimes]
+The bounds in Theorems~\ref{thm:comp-leakage} and
+\ref{thm:comp-leakage-lb} both assume each observation uses an
+independent $c_i$ drawn from the same distribution.  A different
+regime, in which the same cipher value $c$ is reused across
+evaluations, does not yield additional samples of the joint and so has
+no corresponding rate.  The interesting case for compositional leakage
+is many distinct $c_i$ observed across deployment, each evaluated
+under both $\fhat_1$ and $\fhat_2$.
+\end{remark}
+
+\paragraph{Why this matters.}
+The constructions in~\S\ref{sec:levers} all target the marginal
+parameter $\delta$.  Theorem~\ref{thm:comp-leakage} shows that the
+adversary \emph{can} recover the joint at the rate
+$O(|Y_1|\cdot|Y_2|/\xi^2)$ when $\delta \to 0$;
+Theorem~\ref{thm:comp-leakage-lb} shows that no estimator can do
+better.  The compositional channel is therefore not merely
+exploitable, it is information-theoretically minimax-optimal for the
+adversary: the cipher map system designer cannot push the adversary's
+task to a harder rate by any choice within the marginal-scale tools.
+The only defenses are reducing the number of shared-$c$ observations
+($N \lesssim |Y_1|\cdot|Y_2|/\xi^2$), reducing granularity by joint
+encoding (Prop.~\ref{prop:granularity}), or injecting noise
+(\S\ref{subsec:noise}).
+
+\paragraph{Mitigation strategies.}
+Two approaches, both costly~\cite[Sec.~9.2]{towell2026cipher}:
+
+\begin{description}
+\item[Build the composition directly.]  Construct a single cipher map for
+  $g(x) = f_3(f_1(x), f_2(x))$.  The untrusted machine sees only
+  input and final output; no intermediates are exposed.  The domain is
+  $|X|$ (same as either component), but the construction must evaluate
+  $f_1$, $f_2$, and $f_3$ for every $x \in X$ at build time.
+
+  A partial merge is also possible: merge $f_1$ and $f_2$ into a tuple
+  cipher map $\widehat{(f_1, f_2)}(c) \to \cipher{Y_1 \times Y_2}$,
+  then build $\fhat_3$ over the product codomain.
+  This hides the correlation between $f_1$ and $f_2$ but the codomain
+  $|Y_1| \times |Y_2|$ grows as a product of the component codomains.
+  For $k$ merged components, the codomain is $\prod_i |Y_i|$, which
+  grows exponentially.
+  This is the fundamental space cost of the encoding granularity
+  principle: hiding correlations requires encoding into product spaces.
+
+\item[Compose components and inject noise.]  Keep practical
+  component-wise evaluation and add $R$ noise queries per $N$ real
+  queries.  Cost: bandwidth, not space.  The adversary's correlation
+  estimates are diluted by the noise fraction.
+\end{description}
 
 \subsection{Error Compounding in Boolean Chains}
+\label{subsec:fpr-compounding}
 
 For Boolean-valued cipher maps (e.g., set indicator functions
 $\hat{1}_A : \cipher{X} \to \cipher{\mathrm{Bool}}$, or any
@@ -731,60 +1062,6 @@ Without $\mathrm{AND}_{k}$, the chain terminates at depth $k$.
 The orbit is bounded by $1 + k$ and the type system enforces the
 limit at construction time.
 
-\subsection{Correlation Leakage from Shared Variables}
-
-Even when each cipher map has uniform marginal output, evaluating multiple
-cipher maps on the same cipher value leaks
-correlations~\cite[Sec.~9.2]{towell2026cipher}.  If the untrusted machine
-evaluates $\fhat_1(c)$ and $\fhat_2(c)$ for the same $c$, the pair
-$(\fhat_1(c), \fhat_2(c))$ is a deterministic function of $c$, and the
-joint distribution preserves the latent correlation between $f_1$ and
-$f_2$.
-
-\begin{proposition}[Compositional leakage]
-\label{prop:comp-leakage}
-Let $\fhat_1, \fhat_2$ be cipher maps for latent $f_1 : X \to Y_1$,
-$f_2 : X \to Y_2$, each with Shannon-optimal acceptance predicates.  If
-the untrusted machine observes both $\fhat_1(c)$ and $\fhat_2(c)$ for the
-same cipher value $c$, then:
-\begin{enumerate}
-\item Each marginal output is individually uniform (by Shannon-optimal
-  allocation).
-\item The joint distribution $(\fhat_1(c), \fhat_2(c))$ preserves all
-  correlations between $f_1(x)$ and $f_2(x)$.
-\item A third cipher map $\fhat_3$ taking this correlated pair as input
-  inherits the non-uniformity, even if $\fhat_3$'s acceptance predicate
-  is Shannon-optimal for the marginal distribution of its output.
-\end{enumerate}
-\end{proposition}
-
-\paragraph{Mitigation strategies.}
-Two approaches, both costly~\cite[Sec.~9.2]{towell2026cipher}:
-
-\begin{description}
-\item[Build the composition directly.]  Construct a single cipher map for
-  $g(x) = f_3(f_1(x), f_2(x))$.  The untrusted machine sees only
-  input and final output; no intermediates are exposed.  The domain is
-  $|X|$ (same as either component), but the construction must evaluate
-  $f_1$, $f_2$, and $f_3$ for every $x \in X$ at build time.
-
-  A partial merge is also possible: merge $f_1$ and $f_2$ into a tuple
-  cipher map $\widehat{(f_1, f_2)}(c) \to \cipher{Y_1 \times Y_2}$,
-  then build $\fhat_3$ over the product codomain.
-  This hides the correlation between $f_1$ and $f_2$ but the codomain
-  $|Y_1| \times |Y_2|$ grows as a product of the component codomains.
-  For $k$ merged components, the codomain is $\prod_i |Y_i|$, which
-  grows exponentially.
-  This is the fundamental space cost of the encoding granularity
-  principle: hiding correlations requires encoding into product spaces.
-
-\item[Compose components and inject noise.]  Keep practical
-  component-wise evaluation and add $R$ noise queries per $N$ real
-  queries.  Cost: bandwidth, not space.  The adversary's correlation
-  estimates are diluted by the noise fraction.
-\end{description}
-
-
 %% ====================================================================
 \section{Practical Measurement}
 \label{sec:measurement}
@@ -813,11 +1090,21 @@ with equality when $\mathrm{Compress}$ is optimal.
 \end{proposition}
 
 \begin{proof}
-An optimal compressor produces output whose expected bit length equals
-$H(C_1, \ldots, C_N)$ by Shannon's source coding theorem.
-Any sub-optimal compressor produces output at least as long.
-The particular encoding is irrelevant: the compressor compensates for
-the encoding overhead (as long as the encoding is uniquely decodable).
+A uniquely decodable code on $\mathbf{c}$ of length
+$L(\mathbf{c}) = |\mathrm{Compress}(\mathrm{Encode}(\mathbf{c}))|$
+satisfies the Kraft inequality and induces a probability measure
+$Q(\mathbf{c}) \leq 2^{-L(\mathbf{c})}$.  The expected codelength
+satisfies $\mathbb{E}_P[L(\mathbf{c})] \geq H(C_1, \ldots, C_N)$ by
+the source-coding theorem~\cite{shannon1948mathematical}, with the gap
+equal to the divergence $D_{\mathrm{KL}}(P \| Q) \geq 0$ (cross-entropy
+inequality, see~\cite[Thm.~5.4.3]{cover2006elements}).  Equality holds
+when the compressor matches the source distribution; for universal
+compressors (e.g., LZ77, LZ78), the per-symbol gap vanishes
+asymptotically as $N \to \infty$~\cite{shannon1948mathematical}.
+Dividing by $N$ gives $\hat{H} \geq H/N$ in expectation.  The
+encoding overhead is bounded by a constant factor (any uniquely
+decodable encoding has a bounded prefix), so it contributes
+$O(1/N)$ to the per-symbol bias and vanishes in the same limit.
 \end{proof}
 
 The compression estimator has three practical advantages:
@@ -869,6 +1156,62 @@ compression-based and Monte Carlo estimation:
 \end{enumerate}
 The entropy gap quantifies how many bits of information per query the
 adversary potentially gains from the non-uniformity of the system.
+
+\subsection{Finite-Sample Resolution of \texorpdfstring{$\delta$}{delta}}
+\label{subsec:finite-sample}
+
+The estimators above measure entropy.  The representation-uniformity
+parameter $\delta = \TV(Q, U)$ can also be measured directly from
+observed cipher values, but only at a query cost that scales with the
+allocated budget.
+
+Let $|\im| = \sum_x K(x)$ denote the image size of $\enc$ under a given
+homophonic allocation, and let $\hat{Q}_N$ be the empirical
+distribution over the image after observing $N$ cipher values.  By
+Glivenko--Cantelli, $\TV(\hat{Q}_N, Q) = O(\sqrt{|\im|/N})$, so the
+empirical estimator $\hat{\delta}_N = \TV(\hat{Q}_N, U)$ has
+finite-sample bias of the same order:
+\begin{equation}
+\hat{\delta}_N - \delta \;=\; O\!\left(\sqrt{|\im|/N}\right).
+\label{eq:finite-sample-bias}
+\end{equation}
+
+To resolve $\delta$ at a target level $\delta_0$ thus requires
+\begin{equation}
+N \;=\; \Omega\!\left(|\im| / \delta_0^2\right)
+\label{eq:n-required}
+\end{equation}
+observed cipher values.  This is a practical lower bound on the
+evaluation cost of any cipher map system claiming a particular
+$\delta$: increasing the budget $\sum K$ improves the analytical
+floor (Theorem~\ref{thm:multiplicity}) but proportionally increases
+the query stream length needed to verify the improvement.
+
+We confirm this empirically by sweeping a $(\sum K, N)$ grid on a
+synthetic Zipf distribution and measuring
+$\hat{\delta}_N - \delta_{\mathrm{predicted}}$
+across cells (Fig.~\ref{fig:finite-sample-gap}).  The gap fits a
+linear law $\hat{\delta}_N - \delta \approx 0.4\sqrt{|\im|/N}$ across
+budgets in $[32, 2048]$ and stream lengths in $[500, 50{,}000]$.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.85\linewidth]{finite_sample_gap}
+\caption{Finite-sample bias of $\hat{\delta}_N$ as a function of
+$\sqrt{|\im|/N}$.  Each point is the mean over three replicates of a
+proportional homophonic allocation on Zipf$(32, \alpha=1.5)$; colour
+encodes total budget.  The dashed line is the origin-anchored linear
+fit, slope $\approx 0.4$.}
+\label{fig:finite-sample-gap}
+\end{figure}
+
+\paragraph{Practical implication.}
+A defender increasing $\sum K$ to drive analytical $\delta$ from
+$10^{-2}$ to $10^{-3}$ must also increase the validation query
+budget from roughly $10^4 |\im|$ to $10^6 |\im|$, a hundredfold
+growth.  Below this threshold the empirical estimate $\hat{\delta}_N$
+is dominated by sampling noise and will overstate leakage.
+
 
 
 %% ====================================================================
@@ -967,31 +1310,85 @@ confidentiality) at 33.5 bits per element.  The leaf encoding exposes all
 element---3.4$\times$ the root cost.  The intermediate level balances
 the trade-off: 3 exposed values, 64.2 bits per element.
 
+\subsection{Homophonic Encoding on the 20 Newsgroups Corpus}
+\label{subsec:newsgroups-homophonic}
+
+We apply the proportional homophonic prescription
+(Theorem~\ref{thm:multiplicity}) to the empirical word-frequency
+distribution of the 20 Newsgroups training split.  Tokenising the
+2.31\,M word corpus and retaining the top 500 most frequent words
+gives a vocabulary in which the head word \emph{the} carries 7.1\%
+of probability mass, the top ten words 33\%, and the top hundred
+74\%.  The effective vocabulary $1/\sum_x D(x)^2$ is 64, so the
+distribution is highly skewed even after tail truncation.
+
+We compare three allocators across budgets $\sum K \in
+\{|X|, 2|X|, 5|X|, 20|X|, 100|X|\}$: the uniform baseline
+($K(x) = b/|X|$), the proportional homophonic
+($K(x) \propto D(x)$), and a sub-optimal square-root variant
+($K(x) \propto \sqrt{D(x)}$).  For each cell we build a fresh
+\texttt{PHFCipherMap}, stream $N = 30{,}000$ queries sampled from
+$D$, and record predicted and empirical TV
+(Fig.~\ref{fig:newsgroups-homophonic}).
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=\linewidth]{newsgroups_homophonic}
+\caption{Homophonic encoding on the 20 Newsgroups distribution.
+Left: representation uniformity $\TV(Q, U_{\mathrm{im}})$ versus
+budget for the three allocators (solid: predicted; dashed:
+empirical at $N=30{,}000$).  Right: lower bound on the entropy
+ratio $e$ from the Fannes-Audenaert inequality.  Proportional
+allocation dominates uniform and square-root at every budget.}
+\label{fig:newsgroups-homophonic}
+\end{figure}
+
+The proportional allocator drops predicted $\TV$ from $0.545$ at
+$\sum K = |X|$ (no flexibility) to $0.165$ at $2|X|$ and $0.021$
+at $5|X|$, with empirical $e$ rising from $0.40$ to $0.85$.  The
+square-root allocator plateaus near $\TV \approx 0.30$ regardless
+of budget; it spreads representations too evenly across rare and
+common elements.  The uniform allocator does not improve at all,
+since its $K$ does not depend on $D$.  At budgets above $20|X|$,
+the empirical $\TV$ measurement enters the finite-sample regime
+of \S\ref{subsec:finite-sample}: the analytical floor continues
+to drop, but $N = 30{,}000$ is no longer enough queries to
+resolve it.
+
 \subsection{Case Study: Confidentiality Improvement}
 
-We demonstrate the three levers on a system with vocabulary $m = 10{,}000$
-and Zipf-distributed queries.
+We demonstrate the two constructions of~\S\ref{sec:levers} (noise
+injection and multiplicity) on a system with vocabulary
+$m = 10{,}000$ and Zipf-distributed queries.
 
 \begin{table}[ht]
 \centering
-\caption{Confidentiality improvement via three levers.}
+\caption{Confidentiality improvement via the two constructions of
+\S\ref{sec:levers}.  Values are analytical, computed from the Zipf
+entropy, the mixture-entropy formula in Theorem~\ref{thm:noise-dilution},
+and the homophonic construction in Example~\ref{ex:homophonic}.}
 \label{tab:case-study}
 \begin{tabular}{@{}lrrr@{}}
 \toprule
 Configuration & $e$ & Space overhead & Bandwidth overhead \\
 \midrule
-Baseline (simple substitution) & 0.59 & $1.0\times$ & $1.0\times$ \\
-+ Homophonic ($b = 100$) & 0.77 & $1.52\times$ & $1.0\times$ \\
-+ Noise injection ($R/N = 0.5$) & 0.72 & $1.0\times$ & $1.5\times$ \\
-Combined & 0.85 & $1.52\times$ & $1.5\times$ \\
+Baseline (simple substitution) & 0.72 & $1.00\times$ & $1.00\times$ \\
++ Homophonic ($b = 100$, $c \approx 979$) & 0.87 & $1.04\times$ & $1.00\times$ \\
++ Noise injection ($R/N = 0.5$) & 0.88 & $1.00\times$ & $1.50\times$ \\
+Combined & 0.98 & $1.04\times$ & $1.50\times$ \\
 Theoretical maximum & 1.00 & $\to \infty$ & $\to \infty$ \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-The combined strategy improves $e$ from 0.59 to 0.85: a 52\% space
+The combined strategy improves $e$ from 0.72 to 0.98: a 4\% space
 overhead and 50\% bandwidth overhead yields a 26 percentage point
-confidentiality improvement.
+confidentiality improvement.  The small space cost (compared to prior
+analyses that assumed $K(x) \propto 1/D(x)$, which requires
+$\sum_x K(x) \approx c \cdot m \cdot H_m$ slots) reflects the classical
+homophonic prescription $K(x) \propto D(x)$: concentrating multiplicity
+on the heavy part of $D$ is exponentially cheaper than spreading it
+over the tail.
 
 
 %% ====================================================================
@@ -1000,13 +1397,36 @@ confidentiality improvement.
 %% ====================================================================
 
 \paragraph{The entropy ratio as a design tool.}
-The entropy ratio $e$ gives system designers a single number to optimize.
-Given a resource budget (space $S$, bandwidth $B$), the designer solves:
-maximize $e$ subject to $\text{space} \leq S$ and
-$\text{bandwidth} \leq B$.  The three levers (noise, multiplicity,
-granularity) provide the degrees of freedom.  Noise costs bandwidth but
-not space; multiplicity costs space but not bandwidth; granularity trades
+The entropy ratio $e$ gives system designers a single number to
+optimize.  Given a resource budget (space $S$, bandwidth $B$), the
+designer solves: maximize $e$ subject to $\text{space} \leq S$ and
+$\text{bandwidth} \leq B$.  The two constructions analyzed here (noise
+injection, multiplicity) plus the inherited granularity dimension
+provide the degrees of freedom.  Noise costs bandwidth but not space;
+multiplicity costs space but not bandwidth; granularity trades
 confidentiality for functionality.
+
+\paragraph{Shannon entropy vs.\ min-entropy.}
+We adopt Shannon entropy because the adversary in our setting observes
+many cipher values and estimates a distribution over them: a
+distribution-estimation problem rather than a single-query guessing
+problem.  Smith~\cite{smith2009foundations} argues that min-entropy
+leakage $L_\infty = -\log_2 \max_x P(X = x \mid \mathrm{view})$ is the
+correct measure when one high-probability outcome dominates and the
+adversary has a single guess.  In a cipher map system, that scenario
+arises when a single query is overwhelmingly likely; the entropy ratio
+can be high even when one cipher value is identifiable, so a Shannon
+bound does not preclude min-entropy leakage of that one value.  The
+min-entropy analogue of Theorem~\ref{thm:entropy-decomposition} would
+replace $\delta$-closeness in TV with $\ell_\infty$-closeness
+$\delta_\infty = \max_c |Q(c) - U(c)|$ and yield a min-entropy bound
+$H_\infty(Q) \geq n - \log_2(1 + 2^n \delta_\infty)$.  Constructing
+cipher maps with bounded $\delta_\infty$ rather than $\delta$ is
+strictly harder (it constrains the worst-case cell, not the average),
+and the multiplicity construction $K(x) \propto D(x)$ does not by
+itself guarantee small $\delta_\infty$.  We leave a full min-entropy
+treatment to future work; Shannon suffices for the average-case
+adversary that motivates this paper.
 
 \paragraph{Relationship to the orbit closure.}
 The entropy ratio measures \emph{passive} confidentiality: what the
@@ -1071,19 +1491,33 @@ different confidentiality profiles.
 
 We have developed a quantitative confidentiality theory for cipher map
 systems, grounded in the cipher map framework
-of~\cite{towell2026cipher}.  The entropy ratio $e = H/H^*$ provides a
-principled, computable measure of how much the untrusted machine learns
-from the cipher value stream.  Three levers---noise injection, multiple
-representations, and encoding granularity---offer distinct cost/benefit
-trade-offs for improving $e$, all expressible in terms of the cipher map
-parameters $(\eta, \varepsilon, \delta, \mu)$.
+of~\cite{towell2026cipher}.  The headline result is the compositional
+leakage theorem (Theorem~\ref{thm:comp-leakage}): even when each cipher
+map's marginal cipher distribution is $\delta$-uniform, observing
+multiple evaluations on a shared cipher value lets the untrusted machine
+recover the latent joint at the standard parametric rate
+$O(|Y_1|\cdot|Y_2|/\xi^2)$.  Marginal uniformity is necessary but not
+sufficient; the cipher map composition discipline that buys
+functionality also creates an information channel through shared values.
+
+To make the marginal target itself operational, we connect $\delta$ to
+the entropy ratio $e = H/H^*$ (a normalized form of Shannon leakage
+borrowed from the QIF literature) via the Fannes--Audenaert continuity
+inequality, reducing marginal-leakage engineering to minimizing
+$\delta$.  Two constructions reduce $\delta$ with explicit costs:
+noise injection (bandwidth) and multiple representations with
+$K(x) \propto D(x)$ (space).  A third dimension, encoding granularity,
+is inherited from the cipher maps framework.  The three are
+expressible in terms of the cipher map parameters
+$(\eta, \varepsilon, \delta, \mu)$ and the entanglement parameter $p$.
 
 The key insight is that the cipher map's four properties already
 determine the confidentiality profile.  Totality enables noise injection
 (filler queries are indistinguishable from real queries).  Representation
 uniformity enables frequency hiding (multiple representations flatten the
 distribution).  Composability enables chained evaluation but introduces
-correlation leakage.  Correctness provides plausible deniability
+correlation leakage---the very channel exploited by Theorem~\ref{thm:comp-leakage}.
+Correctness provides plausible deniability
 ($\eta > 0$ means the adversary cannot be certain of any decoded output).
 
 Experimental validation on the 20 Newsgroups corpus confirms the
@@ -1091,8 +1525,8 @@ theoretical predictions: FPR compounds as $p_T^k$ for AND chains and
 $1 - (1 - p_T)^k$ for OR chains; the encoding granularity spectrum runs
 from 33.5 bits/element (root, zero intermediates) to 112.9 bits/element
 (leaf, all intermediates exposed); and the combined homophonic/noise
-strategy improves confidentiality from 59\% to 85\% with moderate
-overhead.
+strategy improves confidentiality from 72\% to 98\% with approximately
+$1.04\times$ space and $1.5\times$ bandwidth overhead.
 
 The theory connects two previously separate lines of work: the cipher map
 formalism (properties and composition) and the entropy-based
