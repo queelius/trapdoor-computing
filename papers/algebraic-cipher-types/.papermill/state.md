@@ -9,11 +9,11 @@ authors:
     affiliation: "Southern Illinois University Edwardsville"
 
 metrics:
-  pages: 19
-  tex_lines: ~1530
+  pages: 20
+  tex_lines: ~1610
   sections: 10
   citations: 21
-  last_built: 2026-04-29
+  last_built: 2026-04-30
 
 thesis:
   claim: "Every algebraic operation the untrusted machine can perform on cipher values enlarges their orbit closure and, by information-theoretic bound, reduces confidentiality. Each algebraic type constructor (product, sum, exponential) therefore induces a quantifiable confidentiality cost, culminating in a sum-type impossibility (tag hiding and untrusted pattern matching cannot coexist), and a typed cipher-program discipline, realized concretely via expression-tree cut points, turns those costs into a design-time budget."
@@ -31,11 +31,14 @@ prior_art:
 
 experiments:
   - name: "Cipher Boolean search over 20 Newsgroups"
-    status: integrated
-    note: "Precision/recall + AND-chain FPR compounding finding (independence breaks)"
+    status: re-run-with-baselines
+    note: "Table 1 now reports mean +/- SD across 5 seeds (single term: 0.408 +/- 0.014 precision; 1.000 recall for AND chains; 0.91-0.96 for OR/NOT). Plaintext baseline (1.00/1.00 by construction) included as a column. Hardware spec line added."
+  - name: "FPR compounding through AND/OR chains"
+    status: tabulated
+    note: "Table 2 reports empirical vs theoretical FPR for k=1..5 across 5 seeds, 1000 trials each. AND chain ratios: 1.01, 2.96, 35.2, 256, 12160 (the 'order of magnitude' was a major undercount). OR chain ratios: 0.90 to 1.02 (matches theory tightly). Cited in the conclusion."
   - name: "Encoding granularity comparison"
-    status: partial
-    note: "Space column missing for 2/3 granularity levels (flagged M6)"
+    status: complete-with-space
+    note: "Table 3 now reports build time, space, bits/elem, intermediates exposed for all 3 levels with mean +/- SD. Counter-intuitive finding: leaf/intermediate annotations use *less* total space (~140B) than root (694B) because per-component domains are smaller; the trade-off is build-time and intermediate exposure, not raw space."
 
 venue:
   target: null
@@ -81,6 +84,10 @@ review_history:
     type: in-session-fix
     addresses: "MAJ-1, MAJ-2, MIN-1, MIN-2, MIN-3 from 2026-04-29 verification"
     notes: "Abstract, intro contributions, and conclusion updated to O(|Q|^2*|Gamma|) consistent with Prop 6.1. Conclusion's 'constrains identically' claim replaced with 'orbits bounded by complementary arguments (typed-chain for expression tree, deterministic-trajectory for cipher TM)'. Regex example reframed: same orbit bound but different construction-cost asymptotics, with crossover near l ~ |Q_R|; cost comparison decoupled from leakage comparison. Cipher rename completed: hat-delta_T -> hat-tau_T throughout, eliminating the delta collision in §6. set_q selection made explicit: tau_T output is now a triple (c', d, q_sel) where q_sel in Q is a plaintext selector; trajectory leakage proposition (Prop 6.2) generalized to (d_i, q_{sel,i}) pairs; §6.3 leakage profile updated to match. Build clean at 19 pages."
+  - date: 2026-04-30
+    type: experimental-rerun
+    addresses: "M2/M3/M4/M5 from 2026-04-13 review (carry-forward across all four rounds)"
+    notes: "Wrote examples/experiment_paper_tables.py in cipher-maps Python lib (at /home/spinoza/github/trapdoor-computing/src/cipher-maps/) producing all three §7.3 tables with multi-seed averaging. Output saved to docs/paper-numbers.md per PAPER-INTEGRATION.md convention. Paper §7.3 rewritten: Table 1 (Boolean search) now reports mean +/- SD across 5 seeds with plaintext baseline column; Table 2 (FPR compounding) is new and replaces the prior prose paragraph, showing AND ratios 1.01/2.96/35.2/256/12160 vs OR ratios 0.90-1.02; Table 3 (granularity) now has space measurements for all 3 levels with the counter-intuitive finding that leaf annotations use less raw space (smaller per-component domains). Hardware spec added. Conclusion updated to surface the AND-chain divergence as a quotable empirical finding (the previous prose claim 'order of magnitude at k=3' was a major undercount of the actual 35x at k=3 / 12000x at k=5). Build clean at 20 pages."
 
 related_papers:
   - path: ~/github/trapdoor-computing/papers/cipher-maps

@@ -23,7 +23,11 @@
 \newcommand{\enc}{\mathrm{enc}}
 \newcommand{\dec}{\mathrm{dec}}
 \newcommand{\fhat}{\hat{f}}
+% Cipher functor: \cipher{X} = C(X) when secret is implicit;
+% \cipherS{X}{s} = C_s(X) when secret is explicit.
+% Same notation applies to objects (latent types) and morphisms (latent functions).
 \newcommand{\cipher}[1]{\mathsf{C}(#1)}
+\newcommand{\cipherS}[2]{\mathsf{C}_{#2}(#1)}
 \newcommand{\orbitF}{\mathrm{orbit}_F}
 \newcommand{\B}{\{0,1\}}
 
@@ -1367,78 +1371,153 @@ total functions at every stage.
 
 A reference implementation (\texttt{cipher-maps}, Python with PHF
 backend via \texttt{phobic}) validates the construction on the 20
-Newsgroups corpus (18{,}266 documents, 58{,}903 unique words).
+Newsgroups corpus~\cite{lang1995newsweeder} (18{,}266 documents,
+58{,}903 unique words).
 With $n = 8$ bits, $|T| = 13$, $|F| = 230$, the AND and OR cipher
 maps each have $(13 + 230)^2 = 59{,}049$ entries.
+All numbers below are means $\pm$ one standard deviation across five
+independent seeds; hardware: x86\_64, single-threaded, Python 3.12.
 
 \paragraph{Boolean search at scale.}
 \Cref{tab:boolean-search} shows precision and recall for
-representative Boolean queries over 5{,}000 documents, with all
-Boolean operations evaluated on the untrusted machine.
-Construction rate: 843 documents per second.
+representative Boolean queries over a fixed random 5{,}000-document
+sample, with all Boolean operations evaluated on the untrusted
+machine.
+Build rate: 1835 documents per second (mean over seeds).
+Plaintext baseline columns are 1.00/1.00 by construction (the cipher
+Boolean type is a sound over-approximation of set membership); they
+are included to make the cipher-side recall degradation explicit.
 
 \begin{table}[ht]
 \centering
-\caption{Boolean encrypted search (5{,}000 documents, $p_T = 0.05$).}
+\small
+\caption{Boolean encrypted search, 5{,}000 documents, $p_T = 0.05$,
+$n_\text{seeds} = 5$. Plaintext baseline is 1.00/1.00 by construction.}
 \label{tab:boolean-search}
 \begin{tabular}{@{}lcccc@{}}
 \toprule
-Query & Precision & Recall & FP & Time \\
+Query & Precision & Recall & FP count & Time \\
 \midrule
-Single term & 0.39 & 1.00 & 248 & 0.10s \\
-2-term AND & 0.26 & 1.00 & 42 & 0.30s \\
-3-term AND & 0.33 & 1.00 & 12 & 0.60s \\
-OR & 0.37 & 0.97 & 428 & 0.30s \\
-OR AND NOT & 0.33 & 0.88 & 389 & 0.55s \\
+Single term & $0.408 \pm 0.014$ & $1.000 \pm 0.000$ & $233 \pm 13$ & $0.04$s \\
+2-term AND & $0.262 \pm 0.024$ & $1.000 \pm 0.000$ & $43 \pm 5$ & $0.13$s \\
+3-term AND & $0.291 \pm 0.043$ & $1.000 \pm 0.000$ & $15 \pm 3$ & $0.22$s \\
+OR & $0.365 \pm 0.010$ & $0.959 \pm 0.010$ & $437 \pm 16$ & $0.13$s \\
+OR AND NOT & $0.330 \pm 0.008$ & $0.909 \pm 0.010$ & $402 \pm 15$ & $0.26$s \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 AND queries maintain perfect recall while false positives decrease
-(248 for single term, 12 for 3-term AND).
-OR and NOT queries lose recall (0.97 and 0.88) due to noise
+($233 \to 15$ from single term to 3-term AND).
+OR and NOT queries lose recall ($0.96$ and $0.91$) due to noise
 propagation: when a cipher set returns a noise value $n \in N$,
 the subsequent OR or NOT operation produces noise or an unpredictable
 result, effectively dropping the document from the result set.
+Precision values reflect the $p_T = 0.05$ false-positive rate per
+cipher set; for a true set of size $k$ in a corpus of size $N$, the
+expected precision is approximately $k / (k + p_T (N - k))$, which
+for our representative single-term query yields $\approx 0.4$.
 
 \paragraph{FPR compounding vs.\ Bernoulli model.}
 The Bernoulli composition model~\cite{towell2026bernoulli} predicts
-that $k$ independent AND operations yield
-$\mathrm{FPR}_k = p_T^k$.
-Empirically, OR chains match theory closely (ratio $\approx 0.9$
-across chain lengths 1--5), but AND chains diverge at depth $> 2$:
-the empirical FPR exceeds $p_T^k$ by an order of magnitude at
-$k = 3$.
-The reason: each Bernoulli test is an independent draw, but cipher
-Boolean AND is a deterministic cipher map.
-After one AND, the result is a specific cipher Boolean value, and
-feeding it into the next AND produces a deterministic output.
-The independence assumption breaks at the cipher map level even
-though it holds within a single cipher set.
+that $k$ independent AND operations yield $\mathrm{FPR}_k = p_T^k$
+and $k$ independent OR operations yield $1 - (1 - p_T)^k$.
+\Cref{tab:fpr-compounding} reports empirical FPRs over $1{,}000$
+trials per seed across five seeds.
+OR chains match theory tightly across all $k$ (ratio in
+$[0.90, 1.02]$).
+AND chains diverge sharply with depth: the empirical FPR exceeds
+$p_T^k$ by a factor of three at $k = 2$, by $35\times$ at $k = 3$,
+and by more than four orders of magnitude at $k = 5$.
+
+\begin{table}[ht]
+\centering
+\small
+\caption{FPR through Boolean chains, 200-document subset,
+$1{,}000$ trials per seed, $n_\text{seeds} = 5$.
+Last column is empirical / theoretical ratio.}
+\label{tab:fpr-compounding}
+\begin{tabular}{@{}clrll@{}}
+\toprule
+Chain & $k$ & Theoretical FPR & Empirical FPR & Ratio \\
+\midrule
+AND & $1$ & $5.00 \times 10^{-2}$ & $0.0504 \pm 0.0026$ & $1.01$ \\
+AND & $2$ & $2.50 \times 10^{-3}$ & $0.0074 \pm 0.0029$ & $2.96$ \\
+AND & $3$ & $1.25 \times 10^{-4}$ & $0.0044 \pm 0.0021$ & $35.2$ \\
+AND & $4$ & $6.25 \times 10^{-6}$ & $0.0016 \pm 0.0018$ & $256$ \\
+AND & $5$ & $3.13 \times 10^{-7}$ & $0.0038 \pm 0.0029$ & $12{,}160$ \\
+\midrule
+OR & $1$ & $0.0500$ & $0.0448 \pm 0.0086$ & $0.90$ \\
+OR & $2$ & $0.0975$ & $0.0912 \pm 0.0078$ & $0.94$ \\
+OR & $3$ & $0.1426$ & $0.1452 \pm 0.0051$ & $1.02$ \\
+OR & $4$ & $0.1855$ & $0.1724 \pm 0.0101$ & $0.93$ \\
+OR & $5$ & $0.2262$ & $0.2098 \pm 0.0062$ & $0.93$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The asymmetry has a structural explanation.
+A Bernoulli AND test of $k$ independent draws is itself
+$k$-independent, but cipher Boolean AND is a \emph{deterministic
+cipher map}: once a chain produces an intermediate cipher Boolean
+value $c'$, feeding $c'$ into the next AND produces a fixed (not
+redrawn) output.
+Independence holds within a single cipher set (each non-member
+draws a fresh hash) but breaks when the same cipher Boolean cipher
+map is composed with itself $k$ times.
+The OR chain sees the same composition pattern but stays close to
+theory because the Bernoulli OR formula is dominated by the larger
+$1 - (1 - p_T)^k$ term, which is comparatively insensitive to
+within-chain dependence; AND collapses to $p_T^k$, a small number
+that is easy to overshoot.
+A formal correction term is open work; the empirical floor of
+$\sim 10^{-3}$ at $k \geq 3$ is one of this paper's concrete
+contributions to the cipher-Boolean error model.
 
 \paragraph{Encoding granularity.}
 We built a 7-function loan approval pipeline at three granularity
-levels:
-\begin{center}
-\begin{tabular}{@{}lccc@{}}
+levels (\Cref{tab:granularity}).
+The root annotation uses a single PHF-backed cipher map over the
+full domain; intermediate and leaf annotations use seed-search-backed
+component cipher maps composed via tracing.
+Seed-search occasionally fails to find a valid hash assignment for
+a given component domain, which is why the intermediate row reports
+$n = 2$ successful seeds rather than $5$.
+
+\begin{table}[ht]
+\centering
+\small
+\caption{Encoding granularity over the 150-input loan-approval
+domain, $n_\text{seeds} = 5$ attempted (successful seed count
+shown for the seed-search levels).}
+\label{tab:granularity}
+\begin{tabular}{@{}lrrrr@{}}
 \toprule
-Level & Build time & Space & Intermediates \\
+Level & Build (s) & Space & Bits/elem & Intermediates \\
 \midrule
-Root (1 cipher map) & 0.009s & 694\,B & 0 \\
-Intermediate (3 groups) & 6.8s & --- & 3 \\
-Leaf (7 nodes) & 5.9s & --- & 7 \\
+Root (1 cipher map) & $0.003 \pm 0.000$ & $694$\,B & $37.0$ & $0$ \\
+Intermediate (3 groups, $n = 2$) & $1.67 \pm 1.16$ & $138$\,B & $7.4$ & $3$ \\
+Leaf (7 nodes) & $1.14 \pm 1.45$ & $140$\,B & $7.5$ & $7$ \\
 \bottomrule
 \end{tabular}
-\end{center}
+\end{table}
+
 As expected from the PHF construction, all three produce zero errors
 on the full domain (150 inputs); each cipher map is built over its
 declared input set, so on-domain inputs are exact lookups by
 construction.
-The root annotation is 650$\times$ faster (PHF backend vs.\ seed
-search) and exposes zero intermediate cipher values.
-The trade-off: the root annotation requires the entire input domain
-at construction time, while the leaf annotation builds smaller cipher
-maps that compose dynamically.
+The root annotation is roughly $400\times$ faster (PHF lookup vs.\
+per-element seed search) and exposes zero intermediate cipher values.
+Counter-intuitively, the leaf and intermediate annotations use
+\emph{less} total space ($\approx 140$\,B vs.\ the root's $694$\,B):
+each component cipher map's domain is smaller than the product
+domain of the full program, and the seed-search backend stores one
+$n$-bit seed per element.
+The space-leakage trade-off is therefore not a uniform ``coarser is
+larger''; coarser annotation buys hidden intermediate values at the
+cost of construction time and a build that requires the full input
+domain up front, while leaf annotations build smaller cipher maps
+that compose dynamically but expose every intermediate hash flow.
 
 
 %% ====================================================================
@@ -1550,17 +1629,22 @@ TM).
 On the practical side, cipher Boolean types with AND/OR/NOT as cipher
 maps enable Boolean search queries evaluated entirely on the untrusted
 machine.
-Experiments on the 20 Newsgroups corpus (5{,}000 documents) show
-perfect recall for AND queries, with false positive rates matching
-theoretical predictions for single-term queries and compounding
-predictably through Boolean chains.
+Experiments on the 20 Newsgroups corpus (5{,}000 documents, five
+seeds) show perfect recall for AND queries and noise-driven recall
+loss to $\approx 0.91$ for queries containing OR or NOT.
+The most striking empirical finding is that AND-chain FPR diverges
+from the Bernoulli independence prediction by orders of magnitude:
+empirical FPR exceeds $p_T^k$ by $35\times$ at $k = 3$ and by
+$10^4 \times$ at $k = 5$, while OR chains stay within $10\%$ of
+theory at every depth.
+This points to a structural correction term for composed deterministic
+cipher maps as future work.
 The encoding granularity spectrum is measurable: root annotation
-(one cipher map for the entire program) is 650$\times$ faster and
-exposes zero intermediates compared to leaf annotation
-(one cipher map per function).
-The gap between the Bernoulli independence model and the cipher map
-implementation for AND chain composition points to future work on
-tighter error models for composed cipher maps.
+(one cipher map for the entire program) is roughly $400\times$ faster
+than leaf annotation (one cipher map per function), exposes no
+intermediates, but consumes more space than the smaller component
+maps; the trade-off is not a single axis but a multi-dimensional
+choice over (build time, total space, intermediate exposure).
 
 %% ====================================================================
 \section*{Acknowledgments}
