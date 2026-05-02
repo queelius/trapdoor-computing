@@ -58,13 +58,10 @@ fraction of the cipher space reachable from any single value.
 A typed-composition discipline turns this bound into a design-time
 budget: the type of a cipher program determines how deep its orbit
 can go.
-We then present two realizations of cipher programs, an expression-tree
-decomposition with cipher-map cut points (the practical path, exposed
-via a \texttt{@cipher\_node} decorator) and a cipher Turing machine
-(space $O(|Q|^2 \cdot |\Gamma|)$ for transition plus shift, leaks the
-head-movement and state sequences), and evaluate the
-cipher Boolean algebra specialization on a 20~Newsgroups Boolean search
-task.
+We realize cipher programs as expression-tree decompositions with
+cipher-map cut points (exposed in Python via a
+\texttt{@cipher\_node} decorator) and evaluate the cipher Boolean
+algebra specialization on a 20~Newsgroups Boolean search task.
 \end{abstract}
 
 
@@ -117,15 +114,14 @@ The main contributions are:
   bound into a design-time budget: the type of a cipher program bounds
   its orbit depth and hence its worst-case confidentiality loss.
 
-\item \textbf{Cipher program realizations} (\Cref{sec:realizing}).
-  We present two concrete ways to decompose a cipher program into
-  cipher-map pieces.
-  Expression-tree decomposition with cipher-node annotations is the
-  practical path; a cipher Turing machine is a second realization,
-  with space $O(|Q|^2 \cdot |\Gamma|)$ at the cost of leaking the
-  head-movement and state sequences.
-  The two realizations share a cut-point structure and differ in what
-  residual structure the untrusted machine observes.
+\item \textbf{Expression-tree realization} (\Cref{sec:realizing}).
+  We decompose cipher programs into cipher-map pieces via cipher-node
+  annotations on the program's expression tree.
+  Each annotated node becomes a cipher map; unmarked nodes above
+  them remain as plain operations on the cipher bytes.
+  The placement of annotations selects the cut points, and the type
+  of the cut-point cipher spaces determines the orbit budget per
+  \Cref{prop:typed-orbit}.
 \end{enumerate}
 
 We deliberately avoid game-based or simulation-based cryptographic
@@ -953,115 +949,13 @@ deeper levels.
 
 The type-theoretic results of \Cref{sec:types,sec:orbit} bound what any
 cipher-program realization can achieve.
-We now examine two concrete realizations, each decomposing a program
-into cipher-map pieces along a different axis.
-A cipher Turing machine treats the program as a repeated transition
-step; expression-tree decomposition treats the program as a DAG whose
-selected subtrees are replaced by cipher maps.
-The two realizations leak different residual structure and occupy
-different points in the space-time-confidentiality trade-off.
-We present them in turn and then make explicit the common cut-point
-pattern they share (\Cref{sec:tm-vs-tree}).
-
-
-%% --------------------------------------------------------------------
-\subsection{Cipher Turing Machines}
-\label{sec:cipher-tm}
-%% --------------------------------------------------------------------
-
-A cipher map for $f : X \to Y$ is a lookup table of size $O(|X|)$, which
-is prohibitive when $|X|$ is large (e.g., string processing with
-$|X| = |\Sigma|^\ell$).
-A Turing machine is an alternative whose space depends on the
-\emph{program}, not the \emph{data}.
-
-\begin{definition}[Cipher Turing machine]
-\label{def:cipher-tm}
-A \emph{cipher Turing machine} consists of a finite state set $Q$, a
-tape alphabet $\Gamma$ with blank $\sqcup$, an initial state $q_0$, a
-halting state $q_\mathrm{halt}$, and a cipher map $\hat{\tau}_T$ for
-the transition function
-$\tau_T : Q \times \Gamma \to Q \times \Gamma \times \{L, R, S\} \times Q$,
-where the final $Q$-component of the output is a plaintext selector
-$q_\mathrm{sel}$ for the new state.
-Each tape cell is a single cipher value in $\cipher{Q \times \Gamma}$:
-the cell stores a cipher encoding of the (state, symbol) pair at that
-cell, with the distinguished state $\varnothing \in Q$ marking cells
-without the head.
-On entry, the trusted machine encodes the head position by placing a
-cipher value for $(q_0, \sqcup)$ (or the first input symbol) at the
-start cell and cipher encodings of $(\varnothing, \sqcup)$ elsewhere.
-At each step the untrusted machine applies $\hat{\tau}_T$ to the
-current-head cell, obtaining a triple $(c', d, q_\mathrm{sel})$ where
-$c'$ is a cipher value in $\cipher{Q \times \Gamma}$, $d \in \{L, R, S\}$
-is the head direction in the clear, and $q_\mathrm{sel} \in Q$ is the
-new-state selector in the clear.
-The untrusted machine writes $c'$ back to the current cell and then
-shifts the head marker by applying two auxiliary unary cipher maps:
-$\hat{\mathrm{clear}} : \cipher{Q \times \Gamma} \to \cipher{Q \times \Gamma}$
-replaces the state component of the just-read cell with $\varnothing$,
-and $\hat{\mathrm{set}}_{q_\mathrm{sel}} : \cipher{Q \times \Gamma} \to
-\cipher{Q \times \Gamma}$, selected by the plaintext $q_\mathrm{sel}$,
-places the head into the neighbouring cell at offset $d$.
-The shift is a choice over a finite family of unary cipher maps,
-one per $(q, d)$ pair, rather than a binary operation on adjacent
-cells; this keeps every cipher map's domain at a single cell.
-Two cleartext signals therefore leak per step: the head direction $d$
-(necessary so the untrusted machine knows which neighbouring cell to
-access) and the state selector $q_\mathrm{sel}$ (necessary so the
-untrusted machine can choose the right $\hat{\mathrm{set}}_q$
-instance without decoding $c'$).
-\end{definition}
-
-\begin{proposition}[Cipher TM space complexity]
-\label{prop:cipher-tm-space}
-A cipher TM stores three families of cipher maps over the cipher space
-$\cipher{Q \times \Gamma}$, each with domain $|Q \times \Gamma|$ and
-therefore space $O(|Q| \cdot |\Gamma|)$ entries
-(per~\cite[Sec.~6]{towell2026cipher}, plus $-\log_2 \varepsilon$ bits
-per entry for the noise budget and the appropriate $H(\cdot)$ bits per
-entry for value encoding):
-$\hat{\tau}_T$ for the transition,
-$\hat{\mathrm{clear}}$ for marking the just-read cell as headless,
-and $|Q| \cdot |\{L, R, S\}|$ instances of $\hat{\mathrm{set}}_q$ for
-placing the head in a neighbouring cell.
-Total space is $O(|Q|^2 \cdot |\Gamma| \cdot |\{L,R,S\}|) = O(|Q|^2 \cdot |\Gamma|)$,
-still independent of the input domain size $|X|$.
-When $|X| \gg |Q|^2 \cdot |\Gamma|$, this is a qualitative improvement
-over the $O(|X|)$ space of a lookup-table cipher map, at the cost of
-$O(T(|x|))$ steps per evaluation instead of $O(1)$, where $T$ is the
-running time of the plaintext TM.
-\end{proposition}
-
-\begin{proposition}[Trajectory leakage]
-\label{prop:head-determinism}
-For a deterministic cipher TM with $\eta = 0$, the per-step plaintext
-output sequence $(d_1, q_{\mathrm{sel},1}), (d_2, q_{\mathrm{sel},2}),
-\ldots \in (\{L, R, S\} \times Q)^*$ is a deterministic function of
-the input.
-Two inputs that produce different trajectories are distinguishable by
-the untrusted machine without the trapdoor.
-\end{proposition}
-
-\begin{proof}
-With $\eta = 0$, $\hat{\tau}_T$ reproduces the plaintext Turing
-machine's transitions exactly, so each $(d_i, q_{\mathrm{sel},i})$
-matches the plaintext direction and next state at step $i$.
-Distinct trajectories are directly observable by the untrusted machine.
-\end{proof}
-
-\begin{remark}[Comparison with ORAM]
-\label{rem:oram}
-Oblivious RAM~\cite{goldreich1996software} is designed precisely to
-hide access patterns.
-A cipher TM makes no such guarantee: tape contents are opaque, but the
-sequence of head movements and state selectors is not.
-This is weaker than ORAM but requires no $O(\log N)$ per-access
-overhead.
-Non-zero $\eta$ injects noise into the trajectory, but the noise is
-seed-systematic rather than random, so it is unreliable as an
-access-pattern obfuscation mechanism.
-\end{remark}
+We realize cipher programs as expression trees: a program is a DAG whose
+selected nodes are replaced by cipher maps and whose remaining
+operations run as plain code on the cipher bytes.
+This subsumes iterated constructions (a self-loop is one cut point applied
+repeatedly) and reduces to a Turing-machine-style realization in the
+degenerate case where the only cipher map is the transition step.
+We discuss only the expression-tree case here.
 
 
 %% --------------------------------------------------------------------
@@ -1141,105 +1035,72 @@ untrusted machine with no round trips to the trusted machine.
 
 
 %% --------------------------------------------------------------------
-\subsection{Cut-Point Structure Common to Both Realizations}
+\subsection{Cut-Point Structure}
 \label{sec:tm-vs-tree}
 %% --------------------------------------------------------------------
 
-Both realizations implement the same abstract move.
-
 \begin{definition}[Cut point]
 \label{def:cut-point}
-Given a plaintext computation $P$ represented as a directed graph with
-plaintext functions at nodes and data flow along edges, a \emph{cut
+Given a plaintext computation $P$ represented as a directed acyclic
+graph with functions at nodes and data flow along edges, a \emph{cut
 point} is a node whose subgraph of ancestors is replaced, during
 construction, by a single cipher map.
-Edges entering the cut point carry plaintext values on the trusted
-machine and cipher values on the untrusted machine; edges leaving the
-cut point carry cipher values throughout.
+Edges entering the cut point carry plaintext on the trusted machine
+and cipher values on the untrusted machine; edges leaving the cut
+point carry cipher values throughout.
 A \emph{cut-point set} is a collection of cut points such that every
-input of the plaintext computation reaches at least one cut point, and
-the cipher maps at the cut points together with a \emph{combiner}
-cipher map for the nodes above them compute the full program on the
-untrusted machine.
+input of $P$ reaches at least one of them; the cipher maps at the cut
+points together with the unmarked nodes above them (which evaluate as
+plain code on the cipher bytes) compute $P$ on the untrusted machine.
 \end{definition}
-
-\paragraph{Mapping the two realizations onto cut points.}
-A cipher TM places a single cut point at the transition function
-$\tau_T$, with a self-loop: the cut-point output $(c', d)$ feeds the
-next step's tape cell, which feeds $\tau_T$ again.
-Expression-tree decomposition places multiple cut points in a
-finite-depth DAG, one at each \texttt{@cipher\_node}-annotated node,
-with the combiner cipher map above them.
-The number of cut points, their depth in the computation, and the
-cipher spaces between them are the three design knobs.
 
 \paragraph{What leaks above the cut points.}
 Exactly what remains plaintext above the cut points is the leakage
-profile.
-For a cipher TM, this is the trajectory: one $(d, q_\mathrm{sel})$
-pair in the clear per step, plus the halting time.
-For expression-tree decomposition, this is the collection of
-intermediate cipher values flowing between cipher nodes, which leak
-correlations whenever multiple cut points share latent inputs.
+profile: the collection of intermediate cipher values flowing between
+cipher nodes, plus whatever the unmarked plain operations reveal about
+those values (equality checks, branching, dictionary lookups).
+Multiple cut points sharing a latent input leak that input's
+correlation structure across their outputs, per the product-encoding
+trade-off (\Cref{prop:product-tradeoff}).
 
-\paragraph{What bounds the orbit in each case.}
-The two realizations rely on different orbit-bound arguments.
-The expression-tree realization satisfies the typed-chain hypothesis
-of \Cref{def:typed-chain} (distinct cipher spaces between cut points)
-and inherits the bound $\sum_i N_i$ of \Cref{prop:typed-orbit}; for an
-expression tree of depth $k$ with binary combinators starting from $m$
-distinct latent inputs, this gives $\sum_{i=0}^{k} m^{2^i}$.
-The cipher TM does \emph{not} satisfy the typed-chain hypothesis: it
-reuses a single cipher space $\cipher{Q \times \Gamma}$ at every step,
-a self-loop rather than a chain.
-Its orbit is bounded by a separate, simpler argument: a deterministic
-TM produces a single trajectory of length $T$, and an $\eta = 0$ cipher
-TM reproduces that trajectory exactly, so at most $T+1$ distinct cipher
-values appear along the run (with $m$ distinct initial tape
-configurations treated as a population, $m(T+1)$).
-The two bounds coexist because the cut-point structure is a syntactic
-abstraction over decompositions, not a single confidentiality theorem:
-the syntactic structure says \emph{which subgraphs become cipher maps};
-the orbit bound depends on whether composition is iterated through one
-cipher space (TM, deterministic-trajectory bound) or distinct ones
-(expression tree, typed-chain bound).
+\paragraph{What bounds the orbit.}
+A typed-chain decomposition (distinct cipher spaces between
+consecutive cut points) inherits the bound $\sum_i N_i$ of
+\Cref{prop:typed-orbit}; for a depth-$k$ tree with binary combinators
+starting from $m$ distinct latent inputs, the bound is
+$\sum_{i=0}^{k} m^{2^i}$.
+Decompositions that reuse a single cipher space across cut points
+(equivalently, that admit a self-loop in the cipher-map dependency
+graph) fall outside the typed-chain hypothesis and require a separate
+argument; for deterministic iterated computations of length $T$, a
+single-trajectory bound of $T+1$ orbit elements per starting tape
+configuration is straightforward but the leakage profile is severe:
+every per-step plaintext signal needed to advance the loop (selectors,
+indices, halting time) is observable.
 
-\begin{example}[Regex matching: same orbit bound, different cost asymptotics and leakage profiles]
+\begin{example}[Regex matching as a typed cut-point chain]
 \label{ex:regex-cut-points}
 Consider matching a fixed regular expression $R$ of size $r$ against a
-string $x \in \Sigma^\ell$, with DFA state set $Q_R$ (in the worst case
-$|Q_R| = 2^{O(r)}$ via subset construction; for many regexes much
-smaller).
-\emph{As a cipher TM,} $\Gamma = \Sigma \cup \{\sqcup\}$ and
-$\hat{\tau}_T$ is a single cipher map of space
-$O(|Q_R| \cdot |\Sigma|)$, evaluated $\ell$ times.
-The orbit along a fixed input has size at most $\ell + 1$ by the
-deterministic-trajectory bound.
-Leakage: the trajectory $(d_i, q_{\mathrm{sel},i})$ for
-$i = 1, \ldots, \ell$, revealing both the string length $\ell$ and the
-DFA state sequence.
-\emph{As an expression tree under the natural typed-chain
-decomposition,} we place $\ell$ cut points $\hat{\tau}_0, \ldots,
-\hat{\tau}_{\ell-1}$ with $\hat{\tau}_i : \cipher{Q_R}_i \times
-\cipher{\Sigma} \to \cipher{Q_R}_{i+1}$, each of space
-$O(|Q_R| \cdot |\Sigma|)$, total $O(\ell \cdot |Q_R| \cdot |\Sigma|)$.
-The orbit is bounded by $1 + \ell$ from \Cref{prop:typed-orbit} (single
-state value at each level).
-Leakage: the cipher state values $c_0, \ldots, c_\ell$ flow between cut
-points, so an adversary observing the run sees an $(\ell+1)$-tuple of
-intermediate cipher state values rather than just a head-movement count.
-The two realizations have the same orbit bound but different
-construction-cost asymptotics: cipher TM is $O(|Q_R|^2 \cdot |\Sigma|)$
-(\Cref{prop:cipher-tm-space}, including the auxiliary shift maps),
-expression tree is $O(\ell \cdot |Q_R| \cdot |\Sigma|)$, and the
-crossover sits near $\ell \approx |Q_R|$.
-The qualitative difference is the \emph{leakage profile}: cipher TM
-leaks the head-movement and state sequences (one $(d, q_\mathrm{sel})$
-pair per step); the expression tree leaks the intermediate cipher
-state values $c_0, \ldots, c_\ell$ flowing between cut points.
-Cut-point placement therefore selects \emph{which structure leaks},
-and the cost comparison is a separate axis that depends on the
-relationship between $\ell$ and $|Q_R|$.
+string $x \in \Sigma^\ell$, with DFA state set $Q_R$ (in the worst
+case $|Q_R| = 2^{O(r)}$ via subset construction; for many regexes
+much smaller).
+The natural typed-chain decomposition places $\ell$ cut points
+$\hat{\tau}_0, \ldots, \hat{\tau}_{\ell-1}$ with $\hat{\tau}_i :
+\cipher{Q_R}_i \times \cipher{\Sigma} \to \cipher{Q_R}_{i+1}$, each
+of space $O(|Q_R| \cdot |\Sigma|)$, total
+$O(\ell \cdot |Q_R| \cdot |\Sigma|)$.
+The orbit is bounded by $1 + \ell$ from \Cref{prop:typed-orbit}
+(single state value at each level), and the leakage above the cut
+points is the $(\ell + 1)$-tuple of intermediate cipher state values
+$c_0, \ldots, c_\ell$.
+The same computation can be expressed as a self-loop on a single
+cipher space $\cipher{Q_R \times \Sigma}$ with a single transition
+cipher map of space $O(|Q_R|^2 \cdot |\Sigma|)$ (constant in $\ell$),
+but the leakage then includes a plaintext (next-state-selector,
+direction) pair per step, redacting only the tape contents.
+The choice between the typed chain and the self-loop is therefore not
+about space (the typed chain is asymptotically smaller per cut point
+once $\ell > |Q_R|$) but about \emph{which structure leaks}.
 \end{example}
 
 
@@ -1575,12 +1436,15 @@ confidentiality and minimum functionality.
   algebra of~\cite{towell2026cipher}), tighter bounds may be possible
   by exploiting the structure of the construction.
 
-\item \emph{Cipher TM with oblivious head.}
-  Can the head direction be ciphered at acceptable cost?
-  The naive approach (evaluate all three possible next states) triples
-  the work per step.
-  Whether a sub-multiplicative overhead exists, achieving partial
-  head-movement hiding without full ORAM cost, is open.
+\item \emph{Plain operations on cipher bytes.}
+  The expression-tree realization conflates two roles for the
+  unmarked nodes above the cut points: a cipher-map combiner (built
+  at construction time over the product of cipher hash spaces) and
+  plain code that runs on the cipher bytes at evaluation time.
+  Characterizing what each plain operation leaks (equality checks
+  reveal collision structure; dictionary lookups reveal hash bucket
+  membership) and when the trade with construction-time cost is
+  preferable to a precomputed combiner cipher map is open.
 
 \item \emph{Partial sum-type hiding.}
   \Cref{thm:sum-impossibility} shows that full tag hiding and full
@@ -1592,12 +1456,12 @@ confidentiality and minimum functionality.
   available to active adversaries (who evaluate cipher maps).
 
 \item \emph{Cut-point placement as an optimization.}
-  \Cref{sec:tm-vs-tree} describes cut points as a design knob spanning
-  cipher-TM-style iteration and leaf-level expression-tree annotation.
-  Formulating cut-point selection as a constrained optimization, subject
-  to the orbit bound of \Cref{prop:typed-orbit} and construction-time
-  space budgets, would turn the choice into a solvable problem rather
-  than a designer's judgement call.
+  \Cref{sec:tm-vs-tree} describes cut points as a design knob over the
+  computation DAG.
+  Formulating cut-point selection as a constrained optimization,
+  subject to the orbit bound of \Cref{prop:typed-orbit} and
+  construction-time space budgets, would turn the choice into a
+  solvable problem rather than a designer's judgement call.
 \end{enumerate}
 
 
@@ -1616,15 +1480,14 @@ into a design-time budget.
 These results apply to any cipher map construction, not just specific
 implementations.
 
-Two realizations concretize these trade-offs.
-Expression-tree decomposition with cipher-node annotations lets the
-programmer choose the granularity at which intermediate cipher values
-are exposed; a cipher Turing machine gives space $O(|Q|^2 \cdot |\Gamma|)$
-at the cost of leaking the head-movement and state sequences.
-Both are instances of a single cut-point pattern; their orbits are
-bounded by complementary arguments (typed-chain reasoning for the
-expression tree, deterministic-trajectory reasoning for the cipher
-TM).
+The expression-tree realization concretizes these trade-offs at the
+program level: cipher-node annotations on a Python program select the
+cut points where cipher maps replace plaintext subtrees, while
+unmarked nodes run as plain code on the cipher bytes.
+The placement of annotations selects which intermediate structure
+the untrusted machine observes; the type discipline of the
+cut-point cipher spaces bounds the orbit per
+\Cref{prop:typed-orbit}.
 
 On the practical side, cipher Boolean types with AND/OR/NOT as cipher
 maps enable Boolean search queries evaluated entirely on the untrusted
@@ -1650,11 +1513,12 @@ choice over (build time, total space, intermediate exposure).
 \section*{Acknowledgments}
 %% ====================================================================
 
-The algebraic cipher types concept originates in a 2019--2022 C++ notebook
-by the author, which explored cipher Booleans, cipher unions, and cipher
-Turing machines through concrete implementations.
-The present paper extracts and formalizes the theoretical content from that
-notebook, building on the cipher map framework developed
+The algebraic cipher types concept originates in a 2019--2022 C++
+notebook by the author, which explored cipher Booleans, cipher
+unions, and several iterated constructions through concrete
+implementations.
+The present paper extracts and formalizes the theoretical content
+from that notebook, building on the cipher map framework developed
 in~\cite{towell2026cipher}.
 
 \bibliographystyle{plainnat}

@@ -9,15 +9,15 @@ authors:
     affiliation: "Southern Illinois University Edwardsville"
 
 metrics:
-  pages: 20
-  tex_lines: ~1610
-  sections: 10
+  pages: 19
+  tex_lines: ~1530
+  sections: 9
   citations: 21
-  last_built: 2026-04-30
+  last_built: 2026-05-02
 
 thesis:
   claim: "Every algebraic operation the untrusted machine can perform on cipher values enlarges their orbit closure and, by information-theoretic bound, reduces confidentiality. Each algebraic type constructor (product, sum, exponential) therefore induces a quantifiable confidentiality cost, culminating in a sum-type impossibility (tag hiding and untrusted pattern matching cannot coexist), and a typed cipher-program discipline, realized concretely via expression-tree cut points, turns those costs into a design-time budget."
-  novelty: "(1) Information-theoretic confidentiality bound via orbit closure, independent of construction and not derived from ORAM, FHE, functional encryption, or simulation-based definitions. (2) Sum-type impossibility theorem with direct implications for encrypted schema design. (3) Typed composition chains as a design-time confidentiality budget. (4) Expression-tree decomposition via @cipher_node cut points as the practical realization, with the cipher Turing machine as a second realization sharing the same cut-point structure."
+  novelty: "(1) Information-theoretic confidentiality bound via orbit closure, independent of construction and not derived from ORAM, FHE, functional encryption, or simulation-based definitions. (2) Sum-type impossibility theorem with direct implications for encrypted schema design. (3) Typed composition chains as a design-time confidentiality budget. (4) Expression-tree decomposition via @cipher_node cut points as the realization: a Python program is a composition of cipher maps and plain code over opaque bit strings, and cut-point placement controls leakage. (Cipher TM dropped 2026-05-02 as redundant with this realization.)"
   refined: 2026-04-12
   previous_claim: "Each algebraic type constructor (sum, product, exponential) imposes a specific, unavoidable trade-off between confidentiality and composability when applied to cipher values. Orbit closure under the available operations bounds adversarial knowledge."
   refinement_notes: "Reframed from 'three independent results' to 'one principle with three instances plus two realizations'. Replaced 'confidentiality vs composability' (wrong: composability holds throughout) with 'confidentiality vs untrusted structural access'. Elevated typed-chain discipline and expression-tree realization; demoted cipher TM from headline to second realization."
@@ -99,6 +99,10 @@ review_history:
     type: in-session-fix
     addresses: "Single minor from 2026-04-30 verification"
     notes: "Regex example title corrected from 'same total cost, different leakage' to 'same orbit bound, different cost asymptotics and leakage profiles', matching the body's prose. Build clean at 20 pages."
+  - date: 2026-05-02
+    type: structural-revision
+    addresses: "Author-driven simplification: cipher TM is redundant once you have @cipher_node + plain Python over opaque bit strings"
+    notes: "Removed §6.1 (Cipher Turing Machines) entirely along with Definition 6.1, Proposition 6.1 (cipher TM space), Proposition 6.2 (trajectory leakage), and the ORAM comparison remark. Collapsed §6 'Realizing Cipher Programs' to one realization (expression-tree decomposition). §6.3 demoted from 'Cut-Point Structure Common to Both Realizations' to 'Cut-Point Structure'. The §6.3 'mapping the two realizations' / 'what bounds the orbit in each case' paragraphs collapsed to a single 'what bounds the orbit' paragraph that mentions the iterated/self-loop case as a contrast without giving it its own propositions. Regex example reframed as a typed-chain example with the self-loop case as a contrast in the body (no separate analysis). Abstract, intro contributions, conclusion, acknowledgments updated. §8 open-question item 3 (cipher TM with oblivious head) replaced with item on plain operations on cipher bytes. PDF now 19 pages (was 20). Thesis essentially unchanged: still 'one principle with three instances' but with one realization rather than two."
 
 related_papers:
   - path: ~/github/trapdoor-computing/papers/cipher-maps
