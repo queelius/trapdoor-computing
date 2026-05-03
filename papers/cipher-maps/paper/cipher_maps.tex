@@ -11,6 +11,8 @@
 \usepackage{cleveref}
 \usepackage{algorithm}
 \usepackage{algpseudocode}
+\usepackage{tikz}
+\usetikzlibrary{decorations.pathreplacing}
 
 % Theorem environments
 \theoremstyle{definition}
@@ -33,6 +35,13 @@
 \newcommand{\dec}{\mathrm{dec}}
 \newcommand{\im}{\mathrm{Im}}
 \newcommand{\TV}{d_{\mathrm{TV}}}
+\newcommand{\B}{\{0,1\}}
+% Cipher functor: \cipher{X} = C(X) when secret is implicit;
+% \cipherS{X}{s} = C_s(X) when secret is explicit.
+% Same notation applies to objects (latent types) and morphisms (latent functions):
+% \cipherS{X}{s} = cipher value space; \cipherS{f}{s} = cipher map for f.
+\newcommand{\cipher}[1]{\mathsf{C}(#1)}
+\newcommand{\cipherS}[2]{\mathsf{C}_{#2}(#1)}
 \DeclareMathOperator{\Uniform}{Uniform}
 
 \title{Cipher Maps: Total Functions as Trapdoor Approximations}
@@ -44,21 +53,30 @@
 \maketitle
 
 \begin{abstract}
-Privacy in encrypted computation need not come from access-pattern hiding
-(ORAM), exact algebraic homomorphism (FHE), or simulation-based security
-(garbled circuits).  We show that a \emph{cipher map}---a total function on
-bit strings where the concepts of domain, correctness, and function identity
-exist only behind a one-way trapdoor---provides a distinct, quantifiable
-privacy model.  The entire construction reduces to a single design choice:
-an \emph{acceptance predicate} that partitions hash space among output
-values.  Shannon-optimal allocation of this partition simultaneously
-minimizes space (achieving the information-theoretic lower bound of
-$-\log_2 \varepsilon + H(Y)$ bits per element), maximizes output
-indistinguishability (noise and real outputs share the same frequency
-profile), and enables predictable error composition
+Outsourcing function evaluation to an untrusted machine typically requires
+oblivious RAM (hiding access patterns), fully homomorphic encryption
+(exact computation on ciphertexts), or garbled circuits (encrypted
+lookup tables, single-use).  Each carries substantial cost.  We propose
+the \emph{cipher map}: a total function on bit strings whose privacy
+properties emerge from a one-way trapdoor (a cryptographic hash with a
+secret seed) combined with a frequency-equalized output distribution.
+Cipher maps fit the quantitative information flow
+tradition~\cite{smith2009foundations,alvim2012measuring}: rather than
+achieving negligible leakage in a security parameter, they bound
+observable leakage by measurable parameters $\delta$ (representation
+uniformity), $\varepsilon$ (noise-decode probability), and $\eta$
+(correctness), with the entropy ratio serving as the security measure
+(formal framework in companion work~\cite{towell2026maxconf}).  The
+construction reduces to a single design choice: an \emph{acceptance
+predicate} that partitions hash space among output values.
+Shannon-optimal allocation of this partition simultaneously minimizes
+space (achieving $-\log_2 \varepsilon + H(Y)$ bits per element, the
+information-theoretic lower bound), maximizes output indistinguishability
+(noise and real outputs share the same frequency profile), and enables
+predictable error composition
 ($\eta_{\mathrm{total}} \leq 1 - \prod(1 - \eta_i)$).  We formalize the
 framework through four measurable properties, prove the composition and
-space optimality theorems, and demonstrate the construction on arbitrary
+space-optimality theorems, and illustrate the construction on arbitrary
 maps, set membership, and encrypted search.
 \end{abstract}
 
@@ -91,6 +109,28 @@ theorem governing error accumulation (\S\ref{sec:composition}), and discuss
 the online alternative via trapdoor Boolean algebra
 (\S\ref{subsec:online}).
 
+\paragraph{Contribution: framework, not new construction.}
+We do not propose a new construction with novel space, time, or
+correctness guarantees; rather, we identify a \emph{framework} (the
+cipher map abstraction with four measurable properties and the
+acceptance predicate apparatus) that unifies several existing
+approximate-membership and frequency-hiding constructions under a
+single formalism with measurable parameters $(\eta, \varepsilon, \delta,
+\mu)$.  Bloom filters become cipher maps with $K(x) = 1$, exact
+correctness ($\eta = 0$), and a degenerate acceptance partition;
+prefix-free coding instantiates the entropy cipher map; Shannon-optimal
+partition shaping unifies space optimality with frequency hiding
+(\S\ref{subsec:acceptance}, \Cref{fig:acceptance-partition}).  The
+contributions are the framework itself plus the formal results that
+follow from it: an information-theoretic lower bound matched by the
+construction (Theorems~\ref{thm:lower-bound}, \ref{thm:space-optimal}),
+a composition theorem with error bounds
+(Theorem~\ref{thm:composition}), a confidentiality bound tying
+representation uniformity to a quantitative leakage measure
+(Proposition~\ref{prop:confidentiality}), and a unification of three
+prior threads (approximate data structures, frequency-hiding
+encryption, encrypted search) under one abstraction.
+
 \paragraph{Bernoulli error model.}
 The error framework underlying cipher maps is the Bernoulli
 model~\cite{bernoulli-types}.  Two axioms (element-wise independence and
@@ -101,16 +141,29 @@ predictably because they are independent across elements.  The Bernoulli
 model is developed independently; we reference it here only for the error
 accounting that cipher maps inherit.
 
-\paragraph{What this is not.}
-Cipher maps are not oblivious RAM~\cite{goldreich1996software}: ORAM
-reshuffles storage to hide access patterns with polylogarithmic overhead,
-while cipher maps use static total functions with noise injection.  Cipher
-maps are not fully homomorphic encryption~\cite{gentry2009fully}: FHE
-preserves exact algebraic structure on ciphertexts, while cipher maps are
-approximate and hash-based.  The closest relative is garbled
-circuits~\cite{yao1982protocols}---both use encrypted lookup tables---but
-garbled circuits are one-time use and exact, while cipher maps are reusable
-and approximate with noise closure.
+\paragraph{Positioning: parameterized leakage in the QIF tradition.}
+Cipher maps belong to the \emph{quantitative information flow}
+tradition~\cite{smith2009foundations,alvim2012measuring} and the broader
+parameterized-leakage program initiated by entropic
+security~\cite{dodis2005entropic}.  The defining commitment is that
+security is \emph{measurable rather than negligible}: an untrusted
+evaluator's residual uncertainty about the latent function is reported as
+a continuous quantity (the \emph{entropy ratio} $e = H(Q)/n$ where $Q$
+is the cipher value distribution observed by the untrusted evaluator
+and $n$ is the cipher value space dimension), bounded below by the
+cipher map's representation-uniformity parameter $\delta$ via the
+Fannes--Audenaert continuity inequality (formal framework in companion
+work~\cite{towell2026maxconf}).  This puts
+cipher maps in a different design space from oblivious
+RAM~\cite{goldreich1996software} (hides access patterns at polylog
+overhead), fully homomorphic encryption~\cite{gentry2009fully} (preserves
+exact algebraic structure on ciphertexts), and simulation-based
+searchable encryption~\cite{curtmola2006searchable} (achieves
+indistinguishability up to a leakage profile).  The closest structural
+relative is the garbled circuit~\cite{yao1982protocols}, which also
+encrypts a lookup table; cipher maps differ in being reusable,
+approximate, and parameterized.  We make the contrast precise in
+\S\ref{sec:related}.
 
 
 %% ============================================================
@@ -159,17 +212,73 @@ Song, Wagner, and Perrig~\cite{song2000practical} introduced practical
 encrypted keyword search.  Curtmola et al.~\cite{curtmola2006searchable}
 formalized SSE with simulation-based security (IND-CKA).  Cash et
 al.~\cite{cash2013highly} extended SSE to Boolean queries with sublinear
-search.  Islam et al.~\cite{islam2012access} showed that access-pattern leakage in
-SSE enables query recovery.  SSE constructions use inverted indices and
-game-based security definitions; cipher maps use total functions with
-information-theoretic parameters ($\eta$, $\varepsilon$, $\delta$).  The
-approaches address different threat models: SSE hides query results from the
-server (up to leakage profiles), while cipher maps hide function identity
-and domain membership through totality and noise closure.  Honey
-encryption~\cite{juels2014honey}, which produces plausible-looking
-plaintexts under wrong keys, shares the intuition that decoding ambiguity
-provides deniability; cipher maps achieve a similar effect through the
-noise-decode probability $\varepsilon$.
+search.  SSE constructions use inverted indices and game-based security
+definitions; cipher maps use total functions with information-theoretic
+parameters ($\eta$, $\varepsilon$, $\delta$).  The approaches address
+different threat models: SSE hides query results from the server (up to
+leakage profiles), while cipher maps hide function identity and domain
+membership through totality and noise closure.  The volume-hiding
+line~\cite{kamara2019computationally} is closer to cipher maps' approach:
+rather than analyzing leakage, it engineers indistinguishability between
+document-set sizes.  Cipher maps achieve a related guarantee structurally
+(totality plus Property~2) at lower per-query cost.
+
+\paragraph{Frequency-hiding constructions.}
+Kerschbaum's frequency-hiding OPE~\cite{kerschbaum2015frequency} hides
+plaintext frequency by injecting random ranks on duplicate inserts;
+cipher maps hide it by shaping the acceptance partition so that the
+cipher value distribution matches the output distribution
+(\S\ref{subsec:acceptance}, \Cref{fig:acceptance-partition}).  Both
+attack the same threat (frequency analysis on encrypted records) by
+different mechanisms: Kerschbaum randomizes duplicate ranks so that
+frequency information cannot be recovered from rank ordering, while
+cipher maps allocate hash-space partition widths $\alpha(y) \propto p_y$
+so that frequency information cannot be recovered from output marginals.
+The two constructions are complementary: Kerschbaum's mechanism applies
+within each cipher map evaluation, the cipher map mechanism applies
+across many evaluations.
+
+\paragraph{Leakage-abuse attacks.}
+A line of work demonstrates that the leakage permitted by SSE and PPE
+security definitions is exploitable in practice.  Islam, Kuzu, and
+Kantarcioglu~\cite{islam2012access} showed that access-pattern leakage on
+SSE indices enables query recovery via background-knowledge attacks.
+Naveed, Kamara, and Wright~\cite{naveed2015inference} demonstrated
+devastating frequency- and inference-based attacks on PPE-encrypted
+databases (OPE, deterministic encryption), recovering plaintext columns from
+auxiliary data.  Cash, Grubbs, Perry, and
+Ristenpart~\cite{cash2015leakage} showed that even SSE schemes with
+leakage profiles formally analyzed under simulation-based definitions
+remain vulnerable to query- and document-recovery attacks under realistic
+adversary knowledge.
+Cipher maps target the upstream causes of these attacks: rather than
+permitting leakage and analyzing it, the four properties bound what
+$U$ can observe.  Totality and Shannon-optimal acceptance allocation
+together flatten the visible frequency profile (Property~2,
+$\delta$-bounded), so frequency-based attacks face uniform output;
+totality eliminates the ``in-domain vs.\ out-of-domain'' distinction
+exploited by access-pattern attacks.  These structural defenses do not
+make cipher maps immune to all leakage-abuse vectors: composition leaks
+correlation structure (\S\ref{subsec:comp-leakage}), and a bounded query
+budget combined with auxiliary data still gives the adversary statistical
+advantage.
+
+\paragraph{Honey encryption and ``every input decodes.''}
+Honey encryption~\cite{juels2014honey} produces plausible-looking
+plaintexts under any decryption key, defeating brute-force key search
+because the adversary cannot tell a wrong key's output from a real
+plaintext.  Cipher maps share the structural property that every input
+produces output: there is no failure mode that signals ``wrong key'' or
+``not in domain.''  But the targets differ.  Honey encryption protects
+\emph{the encryption of a single message} against \emph{key recovery};
+cipher maps protect \emph{the function $f$} against repeated function
+evaluation by an untrusted evaluator.  Honey encryption is exact (a real
+key recovers the real message); cipher maps are approximate (correctness
+$1 - \eta$ even under the real trapdoor).  The shared intuition---that
+ambiguity at decode time provides deniability---scales differently:
+cipher maps' noise-decode probability $\varepsilon$ converts every cipher
+output, including outputs under the real trapdoor, into a value that is
+either the latent answer or a uniformly drawn alternative.
 
 \paragraph{Garbled circuits and fully homomorphic encryption.}
 Yao's garbled circuits~\cite{yao1982protocols} evaluate arbitrary functions
@@ -204,6 +313,49 @@ truly random function accessible to all parties via oracle queries.
 Results stated ``under the random oracle model'' assume $h$ has this
 property.  Elements of any finite type are encoded as bit strings before
 hashing.
+
+\paragraph{ROM dependence and standard-model considerations.}
+All four properties and every theorem in this paper depend on the random
+oracle model.  Practical instantiation uses cryptographic hash functions
+(e.g., SHA-256, BLAKE3) whose pseudorandomness is conjectured but not
+proven.  The critical ROM assumptions are:
+\emph{(a)} uniform hash output on non-stored elements (Property~1,
+totality, and the noise-decode probability $\varepsilon$);
+\emph{(b)} independence of hash values across distinct elements
+(Property~3, correctness analysis, and the construction-time bound of
+Proposition~\ref{prop:construction-time});
+\emph{(c)} independence across maps with distinct seeds
+(Property~4, composition);
+\emph{(d)} independence of hash values from the seed for unstored
+inputs and across multiplicities $k \in \{0, \ldots, K(x)-1\}$
+(Property~2, the $\delta$-bounded representation uniformity argument
+underlying Proposition~\ref{prop:confidentiality}).
+For domain-separated keyed hashes (HMAC-SHA256 with seed $\ell$ as the key),
+each of these is widely accepted in practice.
+A standard-model instantiation via universal hash families or pairwise-independent
+constructions is an open question; we expect the four-property framework to
+survive such a translation, but with explicit dependence on collision-resistance
+and key-distinguishability assumptions.
+
+\paragraph{Notational convention.}
+We write $\cipherS{X}{s}$ for the cipher value space induced by encoding
+the latent type $X$ under secret $s$, that is, the image of $\enc(\cdot,
+\cdot)$ in $\B^n$.  When the secret is clear from context, we drop the
+subscript and write $\cipher{X}$.  The same notation applies to latent
+functions: for $f : X \to Y$, the cipher map of $f$ under secret $s$ is
+written $\cipherS{f}{s} : \cipherS{X}{s} \to \cipherS{Y}{s}$.  Under the
+random oracle model and the four properties developed in
+\S\ref{sec:properties}, $\cipherS{\cdot}{s}$ behaves as a functor from
+finite latent types to a category $\mathbf{Cipher}_s$ of cipher value
+spaces: it takes objects (types) to objects and morphisms (functions) to
+morphisms, and respects composition up to the error bound of
+\S\ref{sec:composition} (exactly under the re-randomization condition,
+Definition~\ref{def:re-randomization}).  The categorical apparatus,
+including the rekeying functor $r_{s_1 \to s_2} :
+\mathbf{Cipher}_{s_1} \to \mathbf{Cipher}_{s_2}$ and its information-theoretic
+chain bound, is developed in companion work~\cite{towell2026rekeying};
+in this paper we use the notation as a clarifying shorthand without
+invoking the categorical machinery.
 
 \subsection{Definition}
 
@@ -376,17 +528,45 @@ deterministic; with $\eta > 0$, each answer carries ambiguity.
 
 \begin{definition}[Composability]
 \label{def:composability}
-The composition of two cipher maps is again a cipher map.  Specifically: let
-$(\fhat, \enc_f, \dec_f, s_f)$ be a cipher map for $f : X \to Y$ and
-$(\ghat, \enc_g, \dec_g, s_g)$ a cipher map for $g : Y \to Z$.  Then
-$\ghat \circ \fhat : \{0,1\}^n \to \{0,1\}^n$, defined by
-$(\ghat \circ \fhat)(c) = \ghat(\fhat(c))$, with encoding $\enc_f$ and
-decoding $\dec_g$, is a cipher map for $g \circ f : X \to Z$.
+The composition of two cipher maps is again a cipher map.  Specifically,
+let $\cipherS{f}{s} : \cipherS{X}{s} \to \cipherS{Y}{s}$ be a cipher map
+for $f : X \to Y$ and $\cipherS{g}{s} : \cipherS{Y}{s} \to \cipherS{Z}{s}$
+a cipher map for $g : Y \to Z$ (both under the same secret~$s$, sharing
+encoding and decoding for type $Y$).  Then
+\[
+\cipherS{g}{s} \circ \cipherS{f}{s} \;:\; \cipherS{X}{s} \to \cipherS{Z}{s},
+\]
+defined by $(\cipherS{g}{s} \circ \cipherS{f}{s})(c) = \cipherS{g}{s}(\cipherS{f}{s}(c))$,
+realizes a cipher map for $g \circ f : X \to Z$.  In tuple form: if
+$(\fhat, \enc_f, \dec_f, s)$ and $(\ghat, \enc_g, \dec_g, s)$ are the
+underlying cipher maps for $f$ and $g$, the composition has cipher
+function $\ghat \circ \fhat$, encoding $\enc_f$, and decoding $\dec_g$.
 \end{definition}
 
-Composability is enabled by totality: since $\fhat$ is total, its output is
-always a valid $n$-bit input to $\ghat$.  The untrusted machine can chain
-cipher maps without needing to decode intermediate results.
+\begin{remark}[Master secret vs.\ operational sub-derivations]
+\label{rem:master-vs-op}
+Throughout this paper, ``under secret $s$'' refers to the master secret
+shared across the cipher map family.  Each individual cipher map's
+hash randomization derives from $s$ via a domain separator unique to
+the cipher map (e.g., the operational seed for $\cipherS{f}{s}$ is
+$\mathit{op\_seed}_f = \mathrm{HMAC}(s, \texttt{"f"})$).  Under the
+random oracle model, distinct cipher maps under the same master secret
+have independent operational seeds; this independence is what makes the
+re-randomization condition (Definition~\ref{def:re-randomization}) the
+typical case rather than an exception.
+\end{remark}
+
+Composability is enabled by totality: since $\cipherS{f}{s}$ is total,
+its output is always a valid $n$-bit input to $\cipherS{g}{s}$.  The
+untrusted machine can chain cipher maps without needing to decode
+intermediate results.  In functorial language, $\cipherS{\cdot}{s}$
+takes the latent composition $g \circ f$ to the cipher composition
+$\cipherS{g}{s} \circ \cipherS{f}{s}$, agreeing exactly under the
+re-randomization condition (Definition~\ref{def:re-randomization}) and
+up to the bound of Theorem~\ref{thm:composition} otherwise.  Composing
+across different secrets requires the rekeying functor of
+\cite{towell2026rekeying}; we restrict attention to single-secret
+composition in this paper.
 
 \begin{theorem}[Composition correctness]
 \label{thm:composition-correctness}
@@ -397,8 +577,9 @@ $\ghat \circ \fhat$ has correctness
 \eta_{g \circ f} \leq \eta_f + \eta_g - \eta_f \eta_g
   = 1 - (1 - \eta_f)(1 - \eta_g),
 \]
-with equality under independent errors (see \S\ref{sec:composition},
-Theorem~\ref{thm:composition}).
+with equality under the re-randomization condition (see
+\S\ref{sec:composition}, Theorem~\ref{thm:composition} and
+Definition~\ref{def:re-randomization}).
 \end{theorem}
 
 \begin{remark}[Noise under composition]
@@ -448,6 +629,15 @@ information-theoretic.
 \label{sec:trust-model}
 
 The four properties take operational meaning through a two-party model.
+Throughout, we adopt the standard adversary convention from quantitative
+information flow~\cite{smith2009foundations}: the untrusted machine~$U$
+is \emph{honest-but-curious}, faithfully evaluating $\fhat$ on every
+input it receives but attempting to learn information about the latent
+function $f$, the domain $X$, the codomain $Y$, or specific values from
+the observed input/output trace.  Active deviations (returning incorrect
+results, refusing queries, inserting its own queries) are out of scope
+for this paper; they are addressable by orthogonal verification or
+auditing layers, but the parameterized leakage we analyze is the same.
 
 \begin{definition}[Trusted machine $T$]
 \label{def:trusted}
@@ -467,8 +657,8 @@ $T$ can:
 
 \begin{definition}[Untrusted machine $U$]
 \label{def:untrusted}
-The untrusted machine $U$ holds: the cipher map $\fhat$ (a total function on
-bit strings) and a collection of cipher values (encodings + filler,
+The untrusted machine $U$ holds: the cipher map $\fhat$ (a total function
+on bit strings) and a collection of cipher values (encodings plus filler,
 indistinguishable to $U$).
 
 $U$ can:
@@ -476,62 +666,176 @@ $U$ can:
 \item Evaluate cipher maps: $c \mapsto \fhat(c)$ for any
     $c \in \{0,1\}^n$.
 \item Return results to $T$.
+\item Compute arbitrary functions of its observed
+    trace $\tau = ((c_i, \fhat(c_i)))_{i \in [N]}$.
 \end{enumerate}
 
-$U$ cannot:
-\begin{enumerate}
-\item Decode cipher values (does not hold $s$ or $\dec$).
-\item Distinguish real encodings from filler (by Property~1).
-\item Determine the domain $X$ or function $f$ (by Property~2, cipher
-    values are $\delta$-close to uniform).
-\item Enumerate which inputs are ``in-domain'' (by totality, every input
-    produces output).
-\end{enumerate}
+$U$'s view of the latent function $f$ is the trace $\tau$ together with
+the cipher map $\fhat$.  We analyze what $U$ can learn from this view as
+a quantitative leakage measure rather than as a binary security event.
 \end{definition}
+
+\subsection{The Confidentiality Measure}
+\label{subsec:conf-measure}
+
+We adopt the \emph{entropy ratio} of the companion entropy ratio
+paper~\cite[\S 4]{towell2026maxconf}.
+
+\begin{definition}[Entropy ratio]
+\label{def:entropy-ratio}
+Let $Q$ denote the distribution of cipher values that $U$ observes
+(the marginal of the trace's input column).  The \emph{entropy ratio}
+of $U$'s view is
+\[
+e(\fhat, \tau) \;=\; H(Q) \,/\, n,
+\]
+where $H(Q)$ is the Shannon entropy of $Q$ and $n$ is the cipher value
+space dimension (so the maximum-entropy reference is the uniform
+distribution on $\B^n$, with entropy $n$ bits).  The entropy ratio
+satisfies $0 \leq e \leq 1$: $e = 1$ corresponds to a uniformly
+distributed cipher value stream (no marginal leakage from the cipher
+value distribution alone), and $e \to 0$ corresponds to a degenerate
+stream concentrated on few values.
+\end{definition}
+
+This normalized form of Shannon leakage is standard in the quantitative
+information flow tradition~\cite{smith2009foundations,alvim2012measuring}
+and the entropic security literature~\cite{dodis2005entropic}.  We use
+Shannon entropy rather than min-entropy because the relevant adversary
+goal in this paper is \emph{average-case} information recovery from
+many cipher value observations (where Shannon entropy gives the
+information-theoretic ceiling on the adversary's expected gain),
+not single-try guessing (where min-entropy is more natural).  Settings
+where min-entropy is preferred (one-shot key recovery, cryptographic
+guessing games) are treated in the companion
+work~\cite[\S 4]{towell2026maxconf}.
+
+We record only the bridge to the cipher map parameters here; formal
+definitions, decomposition into multiple components, and discussion of
+when this measure suffices versus when other QIF measures (min-entropy
+leakage, $g$-leakage) apply, all appear
+in~\cite[\S 4]{towell2026maxconf}.
+
+\begin{proposition}[Confidentiality bound for cipher maps]
+\label{prop:confidentiality}
+Let $(\fhat, \enc, \dec, s)$ be a cipher map with
+representation-uniformity parameter $\delta \leq 1/2$ over an $n$-bit
+cipher value space (Property~2).  Then the entropy ratio of $U$'s view
+satisfies
+\begin{equation}
+\label{eq:fannes-bridge}
+e(\fhat, \tau) \;\geq\; 1 - \delta - h_2(\delta) / n,
+\end{equation}
+where $h_2(\delta) = -\delta \log_2 \delta - (1 - \delta) \log_2(1 - \delta)$
+is the binary entropy.  The condition $\delta \leq 1/2$ is the standard
+applicability range of the Fannes--Audenaert continuity inequality; for
+$\delta > 1/2$ the bound is trivial ($e \geq 0$).
+\end{proposition}
+
+\begin{proof}[Proof sketch]
+Property~2 gives $\TV(Q, \mathrm{Uniform}) \leq \delta$ where $Q$ is the
+cipher value distribution induced by $\enc$ on the $\B^n$ ambient space.
+Applying the Fannes--Audenaert continuity inequality with reference
+distribution $\mathrm{Uniform}(\B^n)$ (entropy $n$) gives
+$H(Q) \geq n(1 - \delta) - h_2(\delta)$, and dividing by $n$ yields
+\eqref{eq:fannes-bridge}.  Full proof and discussion of tightness in
+\cite[Theorem~4.1, part~3]{towell2026maxconf}.  The bound applies
+specifically to the cipher value marginal; downstream bounds on what
+$U$ can learn about the latent function $f$ or the latent input $X$
+follow by data-processing arguments
+(\S\ref{subsec:operational}).
+\end{proof}
+
+\begin{remark}[The role of $\delta$]
+\label{rem:delta-role}
+Proposition~\ref{prop:confidentiality} reduces confidentiality engineering
+for cipher maps to the concrete problem of minimizing $\delta$.  Three
+mechanisms reduce $\delta$, each with explicit costs analyzed in the
+companion work: noise injection (bandwidth cost), multiple representations
+$K(x) > 1$ (storage cost; Simmons homophonic prescription), and joint
+encoding granularity (storage cost growing as $|Y|^k$).  We discuss the
+multiplicity mechanism in \S\ref{subsec:granularity}; the others are out
+of scope for this paper.
+\end{remark}
+
+\subsection{Operational Consequences}
+\label{subsec:operational}
+
+From the bound \eqref{eq:fannes-bridge} together with the four properties,
+several operational consequences follow that may be more familiar to
+readers expecting binary security claims.  These are not separate
+security guarantees; they are concrete restatements of the entropy ratio
+bound under specific adversary goals.
+
+\begin{enumerate}
+\item \emph{Decoding requires the trapdoor.}  Recovering $\dec$ from
+    $\fhat$ requires inverting the cryptographic hash $h$ used in the
+    construction (\S\ref{sec:batch}).  Under the random oracle model
+    (Preliminaries, \S\ref{sec:abstraction}), this is computationally
+    infeasible.
+\item \emph{Real and filler queries are $\delta$-equivocal in
+    distribution (Properties~1 and 2 together).}  Both are observed as
+    $n$-bit cipher values, and the cipher value distribution is
+    $\delta$-close to uniform by Property~2.  Consequently, no
+    statistical test distinguishes real from filler with advantage
+    exceeding $\delta/2$ (Le Cam's two-point lemma applied to the
+    cipher value marginals; we report $\delta$ as a conservative upper
+    bound throughout to match the total-variation normalization).
+\item \emph{Domain identification is bounded by~$\delta$ (Property~2).}
+    For any binary discrimination question $U$ poses (e.g., ``is this
+    cipher value a real domain element or noise?''), $U$'s advantage
+    over random guessing is at most $\delta$, by the data-processing
+    inequality applied to Property~2's TV bound.  Aggregated over $N$
+    independent observations, $U$'s advantage on a recovery game grows
+    no faster than the entropy ratio bound of
+    Proposition~\ref{prop:confidentiality} permits.
+\item \emph{Function-value leakage is bounded by the entropy ratio.}
+    For any function $g(f)$ that $U$ wishes to extract, $U$'s
+    information gain (mutual information between the trace and
+    $g(f)$) is bounded above by $n(1 - e(\fhat, \tau))$ bits, by the
+    data-processing inequality applied to
+    Proposition~\ref{prop:confidentiality}.  Translating this bit
+    bound into a guessing-advantage bound depends on the prior over
+    $g(f)$ and is treated for specific adversary games
+    in~\cite[\S 5--6]{towell2026maxconf}.
+\end{enumerate}
 
 \paragraph{Protocol.}
 The information flow is:
 \begin{enumerate}
 \item $T$ encodes inputs: $\enc(x_1, k_1), \ldots, \enc(x_m, k_m)$.
 \item $T$ generates filler: $c_1, \ldots, c_r \gets \{0,1\}^n$.
-\item $T$ sends all cipher values (real + filler, shuffled) to $U$.
+\item $T$ sends all cipher values (real plus filler, shuffled) to $U$.
 \item $U$ evaluates $\fhat$ on each cipher value and returns results.
-\item $T$ decodes the results it cares about; discards filler results.
+\item $T$ decodes the results it cares about and discards filler results.
 \end{enumerate}
-
-What $U$ observes is a sequence of $n$-bit strings as input and a sequence
-of $n$-bit strings as output.  Table~\ref{tab:guarantees} summarizes the
-guarantees.  Under the four properties:
-\begin{itemize}
-\item Totality: every input produces output; no error signals leak domain
-    information.
-\item Representation uniformity: cipher values are $\delta$-close to
-    uniform; frequency analysis is bounded by $\delta$.
-\item Correctness: irrelevant to $U$ (only $T$ decodes).
-\item Composability: $U$ can chain cipher maps without decoding intermediate
-    results.
-\end{itemize}
 
 \begin{table}[ht]
 \centering
-\caption{What the four properties guarantee against $U$.}
+\caption{Quantitative confidentiality bounds against $U$ (honest-but-curious).
+The entropy ratio $e$ is the unifying measure;
+Proposition~\ref{prop:confidentiality} ties it to $\delta$ via the
+Fannes--Audenaert continuity inequality.}
 \label{tab:guarantees}
 \begin{tabular}{@{}lll@{}}
 \toprule
-Adversary capability & Prevented by & Mechanism \\
+Adversary goal & Bound & Mechanism \\
 \midrule
-Distinguish real from filler & Totality & All queries produce output \\
-Frequency analysis & Rep.\ uniformity & Values $\delta$-close to uniform \\
-Learn function values & Trapdoor & Cannot invert $h$ without $s$ \\
-Enumerate domain $X$ & Totality + trapdoor & Cannot test membership \\
-Detect query correlations & \textbf{Not fully} & Only marginal uniformity \\
+Distinguish real from filler & $\TV \leq \delta$ & Totality + Property~2 \\
+Frequency-analyze cipher values & $\TV \leq \delta$ & Property~2 (uniformity) \\
+Recover plaintext value $f(x)$ & $1 - e$ advantage & Prop.~\ref{prop:confidentiality} via $\delta$ \\
+Test membership $x \in X$ & $\delta$-bounded & Totality + Property~2 \\
+Detect cross-query correlations & \textbf{Not bounded} & Marginal uniformity only (\S\ref{subsec:comp-leakage}) \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-The last row is the honest limitation: the four properties do not provide
-full correlation hiding unless the encoding granularity encompasses the
-correlated values (\S\ref{subsec:granularity}).
+The last row is the honest limitation: marginal $\delta$-uniformity per
+cipher map does not bound joint correlations across multiple cipher maps
+sharing inputs.  The compositional leakage analysis in
+\S\ref{subsec:comp-leakage} treats this case; the encoding granularity
+parameter $p$ controls the trade-off between space and joint correlation
+hiding.
 
 
 %% ============================================================
@@ -569,10 +873,18 @@ elements from $|U|-n$ non-elements, with at most an $\varepsilon$ fraction
 of non-elements decoding to valid output.  There are $\binom{|U|}{n}$
 possible sets of size $n$ from a universe $U$.  Any representation must
 distinguish all such sets, requiring at least $\log_2 \binom{|U|}{n}$
-bits.  For $|U| \gg n$, Stirling's approximation gives
-$\log_2 \binom{|U|}{n} \approx n \log_2(|U|/n)$ bits, or
-$\log_2(|U|/n)$ bits per element.  Setting $\varepsilon = n/|U|$ (the
-fraction of the universe that decodes validly), this is
+bits.  For $|U| \gg n$, Stirling's approximation
+$\log_2 \binom{|U|}{n} = n \log_2(|U|/n) + n \log_2 e + O(\log n)$ gives
+$\log_2 \binom{|U|}{n} \approx n \log_2(|U|/n)$ bits to leading order in
+$|U|/n$, or $\log_2(|U|/n)$ bits per element.  We drop the $n \log_2 e
+\approx 1.44 n$ subleading term: it is independent of $|U|$ and adds at
+most a constant overhead per element, which the matching achievability
+construction (Theorem~\ref{thm:space-optimal}) matches asymptotically.  The noise-decode probability
+$\varepsilon$ is the fraction of bit strings in $\{0,1\}^n$ that decode to
+some valid output value: under any membership-faithful encoding, exactly
+the $n$ stored elements decode validly out of the $|U|$ universe inputs,
+so $\varepsilon = n / |U|$ when the universe is identified with the
+$n$-bit cipher value space.  Substituting yields
 $n \log_2(1/\varepsilon)$ bits.
 
 \emph{Value component.}
@@ -608,6 +920,65 @@ and the noise-decode probability is
 $\varepsilon = \sum_y \alpha(y) = |\bigcup_y A(y)| / 2^n$.
 \end{definition}
 
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[x=1cm, y=1cm]
+  % Hash space outline
+  \draw[very thick] (0,0) rectangle (12,0.9);
+
+  % Acceptance regions (Shannon-optimal: width proportional to p_y)
+  % Total accepted = epsilon = 4 (i.e., epsilon = 4/12 = 1/3 in this example)
+  \fill[blue!35] (0,0) rectangle (2.0,0.9);    % A(y_1), p_1 = 0.50
+  \fill[blue!55] (2.0,0) rectangle (3.4,0.9);  % A(y_2), p_2 = 0.35
+  \fill[blue!75] (3.4,0) rectangle (4.0,0.9);  % A(y_3), p_3 = 0.15
+  \fill[gray!12] (4.0,0) rectangle (12,0.9);   % reject region (noise)
+
+  % Boundaries (redraw on top of fill)
+  \draw[very thick] (0,0) rectangle (12,0.9);
+  \draw[thick] (2.0,0) -- (2.0,0.9);
+  \draw[thick] (3.4,0) -- (3.4,0.9);
+  \draw[thick] (4.0,0) -- (4.0,0.9);
+
+  % Region labels inside
+  \node at (1.0, 0.45) {$A(y_1)$};
+  \node at (2.7, 0.45) {$A(y_2)$};
+  \node at (3.7, 0.45) {\scriptsize $A(y_3)$};
+  \node at (8.0, 0.45) {decode $\to \bot$ (reject)};
+
+  % Endpoint labels
+  \node[below=2pt] at (0,0) {\small $0$};
+  \node[below=2pt] at (12,0) {\small $2^n$};
+
+  % Width annotations: alpha(y_i) = epsilon * p_{y_i}
+  \draw[<->, thick] (0, -0.7) -- (2.0, -0.7);
+  \node[below] at (1.0, -0.75) {\small $\alpha(y_1)$};
+  \draw[<->, thick] (2.0, -0.7) -- (3.4, -0.7);
+  \node[below] at (2.7, -0.75) {\small $\alpha(y_2)$};
+  \draw[<->, thick] (3.4, -0.7) -- (4.0, -0.7);
+  \node[below=10pt, font=\scriptsize] at (3.7, -0.75) {$\alpha(y_3)$};
+
+  % Top braces: total accept (epsilon) and reject (1 - epsilon)
+  \draw [decorate, decoration={brace, amplitude=5pt}] (0, 1.0) -- (4.0, 1.0);
+  \node[above=6pt] at (2.0, 1.05) {$\varepsilon = \sum_y \alpha(y)$};
+
+  \draw [decorate, decoration={brace, amplitude=5pt}] (4.0, 1.0) -- (12, 1.0);
+  \node[above=6pt] at (8.0, 1.05) {$1 - \varepsilon$};
+\end{tikzpicture}
+\caption{Acceptance predicate partition of the $n$-bit hash space.
+Each value $y \in Y$ is assigned an acceptance set $A(y)$ with
+probability $\alpha(y) = |A(y)| / 2^n$.  Under Shannon-optimal
+allocation $\alpha(y) = \varepsilon \cdot p_y$ (where $p_y =
+\Pr[f(X) = y]$), region widths are proportional to value frequencies:
+the dominant value $y_1$ occupies the largest region.  A hash falling
+in $A(y)$ decodes to $y$; a hash outside the accepted region (total
+measure $1 - \varepsilon$) decodes to $\bot$.  The Shannon-frequency
+duality (\S\ref{subsec:acceptance}) holds because the same allocation
+that minimizes the per-element bit cost ($-\log_2 \varepsilon + H(Y)$)
+also makes the cipher value distribution match the latent value
+distribution, defeating frequency analysis.}
+\label{fig:acceptance-partition}
+\end{figure}
+
 \begin{remark}[XOR-scrambled decode]
 The decode function applies a secret-derived XOR mask before checking
 acceptance boundaries: $\dec(r)$ checks whether $r \oplus s_{\mathrm{key}}$
@@ -642,7 +1013,8 @@ bits per element when acceptance probabilities are Shannon-optimal
 implementation simplicity.
 
 \paragraph{Shannon-optimal allocation and frequency hiding.}
-Setting $\alpha(y) \propto \Pr[f(X)=y]$ simultaneously achieves two goals.
+Setting $\alpha(y) \propto \Pr[f(X)=y]$ simultaneously achieves two
+goals (\Cref{fig:acceptance-partition}).
 First, it minimizes space: the per-element encoding cost
 $-\log_2 \alpha(y) \approx -\log_2 p_y$ is the Shannon information content
 of value $y$, and the average cost
@@ -717,42 +1089,70 @@ possible: failures are not clustered at the end by a fixed ordering.
 
 \subsection{Space Optimality}
 
-\begin{theorem}[Space complexity]
+\begin{theorem}[Information-theoretic space complexity]
 \label{thm:space-optimal}
-The batch construction achieves space complexity
+The batch construction has information-theoretic space complexity
 \begin{equation}
 (1-\eta)\bigl(-\log_2 \varepsilon + \mu\bigr) \text{ bits per element},
 \end{equation}
-where $\mu = H(Y)$ is the mean encoding length.  When $\eta = 0$, this
-matches the lower bound of Theorem~\ref{thm:lower-bound}.
+where $\mu = H(Y)$ is the mean encoding length.  This is the information
+content of the $(1-\eta)n$ correctly encoded elements.  When $\eta = 0$,
+the bound matches the lower bound of Theorem~\ref{thm:lower-bound}.
 \end{theorem}
 
 \begin{proof}
 \emph{Step 1: False negative reduction.}
 When false negatives are permitted at rate $\eta$, only $(1-\eta)n$ of the
-$n$ elements must decode correctly, reducing the effective element count.
+$n$ elements must decode correctly; the failing elements carry no
+information about the latent function and contribute zero to the
+information content of the construction.
 
-\emph{Step 2: Per-element bit cost.}
-For each stored element $x_i$, the hash $h(\ell) \oplus h(x_i)$ must fall
-in the acceptance set $A(y_i)$ (Definition~\ref{def:acceptance}).  Under the
-random oracle model, this occurs with probability $\alpha(y_i)$.  Shannon-optimal
-allocation sets $\alpha(y_i) \propto p_{y_i}$, giving per-element
-information cost $-\log_2 \alpha(y_i) \approx -\log_2 p_{y_i}$ and expected
-cost per element $\sum_y p_y (-\log_2 \alpha(y)) = \mu = H(Y)$.
+\emph{Step 2: Per-element seed-table storage cost.}
+For each correctly stored element $x_i$ with target value $y_i$, the
+construction must record which of the $1/\alpha(y_i)$ candidate seeds
+satisfies the acceptance constraint $h(\ell) \oplus h(x_i) \in A(y_i)$
+(Definition~\ref{def:acceptance}).  Under the random oracle model with
+Shannon-optimal allocation $\alpha(y) = \varepsilon \cdot p_y$
+(proportional to value frequency, normalized so $\sum_y \alpha(y) =
+\varepsilon$), the seed-table storage cost per element is
+$-\log_2 \alpha(y_i) = -\log_2 \varepsilon - \log_2 p_y$ bits.  Per-element
+storage costs sum across the $(1-\eta)n$ correctly encoded elements (by
+independence of the per-element acceptance events under the random
+oracle model).  We emphasise that this is the storage cost (bits to
+record the chosen seed), separate from the construction-time cost
+(number of seed trials, which scales as $1/\alpha(y_i)$ per element and
+is analysed in \S\ref{subsec:tractability}).  Averaging the storage cost
+over the value distribution gives
+\[
+\mathbb{E}_{y \sim p}\bigl[-\log_2 \alpha(y)\bigr]
+\;=\; \mathbb{E}_{y \sim p}\bigl[-\log_2 \varepsilon - \log_2 p_y\bigr]
+\;=\; -\log_2 \varepsilon \;+\; H(Y).
+\]
+The two terms have distinct interpretations: $-\log_2 \varepsilon$ is
+the constant cost of distinguishing a valid encoding from one of the
+$2^n(1-\varepsilon)$ noise-decoding bit strings, and $H(Y) = \mu$ is the
+amortized cost of identifying \emph{which} value an encoding carries.
+Choosing $\alpha(y) \propto p_y$ achieves the entropy lower bound on the
+second term while pinning the first.
 
-\emph{Step 3: False positive control.}
-For non-stored elements $x \notin M$, the hash $h(\ell) \oplus h(x)$ is
-uniformly distributed under the random oracle model.  The probability of
-falling in \emph{any} acceptance set is
-$\varepsilon = \sum_y \alpha(y)$, the noise-decode probability.  Achieving
-target rate $\varepsilon$ requires $-\log_2 \varepsilon$ bits of hash
-beyond the value encoding.
-
-\emph{Step 4: Combining.}
-Each stored element costs $-\log_2 \varepsilon + \mu$ bits, and
-$(1-\eta)n$ elements are stored, giving total space
-$(1-\eta)n(-\log_2 \varepsilon + \mu)$ bits.
+\emph{Step 3: Combining.}
+Each correctly encoded element carries $-\log_2 \varepsilon + \mu$ bits of
+information, and $(1-\eta)n$ such elements are encoded, giving total
+information content $(1-\eta)n(-\log_2 \varepsilon + \mu)$ bits.
 \end{proof}
+
+\begin{remark}[Information-theoretic vs.\ physical storage]
+\label{rem:physical-storage}
+The $(1-\eta)$ factor is an information-theoretic statement about useful
+content, not an automatic reduction in physical storage.  In the two-level
+hash construction (Algorithm~\ref{alg:singular-hash}), the seed table
+contains the same number of entries regardless of $\eta$: the $\eta n$
+failing elements still occupy slots, but their seeds are ``don't cares.''
+Physical storage matches the bound when the seed table is entropy-coded;
+uncompressed storage is $-\log_2 \varepsilon + \mu$ bits per element
+regardless of $\eta$.  The $\eta$ parameter primarily reduces construction
+difficulty (fewer constraints to satisfy), not raw storage.
+\end{remark}
 
 \begin{corollary}[Asymptotic optimality]
 When $\eta = 0$, the batch construction achieves $-\log_2 \varepsilon + H(Y)$
@@ -858,9 +1258,11 @@ elements to slots in $O(m)$ time, avoiding the seed search entirely.  A PHF
 maps the $m$ cipher keys to $m$ distinct slots; each slot stores the
 XOR-masked value encoding.  Construction time drops from exponential in
 bucket size to linear in $m$.  A reference implementation using a
-RecSplit-family PHF achieves 700 documents per second on the 20~Newsgroups
-corpus (18{,}266 documents, 58{,}903 words), compared to approximately
-10~documents per second with the seed search construction.
+RecSplit-family PHF~\cite{esposito2020recsplit} achieves $\sim$~713
+documents per second on the full 20~Newsgroups corpus (18{,}266
+documents, 58{,}903 words; 25.6~s wall-clock), compared to approximately
+10 documents per second with the seed search construction.  Detailed
+construction-time scaling appears in \S\ref{subsec:eval-20ng}.
 
 \subsection{Instantiations}
 \label{subsec:instantiations}
@@ -1009,14 +1411,32 @@ $\Pr[\text{wrong}] = p_1(1-p_2)$ and
 $\Pr[\text{correct}] = 1 - p_1(1-p_2) = 1 - p_1 + p_1 p_2$.
 \end{proof}
 
-The output is a \emph{4th-order Bernoulli Boolean}: four distinct
-correctness probabilities despite the Boolean type having only two values.
-Rather than tracking all four, we can bound them by an interval
+The output has a \emph{four-case correctness profile}: four distinct
+correctness probabilities, one per input pair $(a, b) \in \{0,1\}^2$,
+despite the Boolean output taking only two values.  Rather than tracking
+all four cases separately, interval arithmetic propagates a bound
 $[\min_{\text{cases}} p_{\text{correct}},\; \max_{\text{cases}} p_{\text{correct}}]$.
 For AND with $p_1, p_2 \in (0.5, 1)$: minimum $p_1 p_2$ (case $(1,1)$);
 maximum $p_1 + p_2 - p_1 p_2$ (case $(0,0)$).
 
 \subsection{General Composition Theorem}
+
+\begin{definition}[Re-randomization condition]
+\label{def:re-randomization}
+A composition $\ghat \circ \fhat$ satisfies the \emph{re-randomization
+condition} when (i)~$\fhat$ and $\ghat$ are constructed with
+independent operational sub-derivations of the master secret (automatic
+under the random oracle model with distinct domain separators per
+cipher map; see Remark~\ref{rem:master-vs-op}), and
+(ii)~conditional on $\fhat$ producing a particular output, $\ghat$'s
+correctness on that output is independent of whether $\fhat$ was
+correct.  Operationally, this requires that the encoded output of
+$\fhat$ is statistically indistinguishable from a freshly drawn cipher
+value at $\ghat$'s input, so that $\ghat$'s acceptance behavior cannot
+be correlated with $\fhat$'s error events.  Domain-separated sub-keys
+suffice for (i); fresh per-call multiplicities $K(x) > 1$ or noise
+injection between maps are mechanisms for (ii).
+\end{definition}
 
 \begin{theorem}[Composition correctness]
 \label{thm:composition}
@@ -1025,11 +1445,10 @@ and $\ghat$ a cipher map for $g : Y \to Z$ with correctness $\eta_g$.  Then
 $\ghat \circ \fhat$ is a cipher map for $g \circ f$ with correctness
 \begin{equation}
 \eta_{g \circ f} \leq \eta_f + \eta_g - \eta_f \eta_g
-  = 1 - (1 - \eta_f)(1 - \eta_g).
+  = 1 - (1 - \eta_f)(1 - \eta_g),
 \end{equation}
-Equality holds when $\fhat$ and $\ghat$ use independent seeds and
-$\ghat$'s correctness on $\fhat(c)$ is independent of whether $\fhat$
-was correct (the re-randomization condition).
+with equality under the re-randomization condition
+(Definition~\ref{def:re-randomization}).
 \end{theorem}
 
 \begin{proof}
@@ -1037,6 +1456,12 @@ The composition is incorrect when at least one map errs.  Let
 $A = \{\fhat \text{ errs}\}$ and $B = \{\ghat \text{ errs}\}$.
 By inclusion-exclusion,
 $\Pr[A \cup B] = \Pr[A] + \Pr[B] - \Pr[A \cap B]$.
+Note that the bound $\Pr[A \cup B]$ is pessimistic: it counts every
+case in which at least one map errs as a composition error, but
+occasional error cancellation occurs when $\fhat$ produces a wrong
+intermediate value $y' \neq f(x)$ on which $\ghat$ nonetheless evaluates
+to $g(f(x))$.  Such cancellations are rare in well-chosen codomains and
+we do not attempt to credit them in the bound below.
 
 \emph{Loose bound.}  Dropping $\Pr[A \cap B] \geq 0$ gives the union bound
 $\eta_{g \circ f} \leq \eta_f + \eta_g$.
@@ -1074,11 +1499,13 @@ distinction is negligible.
 \label{cor:chain}
 For a chain of $m$ cipher maps $\fhat_1, \ldots, \fhat_m$:
 \begin{equation}
-\eta_{\mathrm{total}} = 1 - \prod_{i=1}^{m}(1 - \eta_i).
+\eta_{\mathrm{total}} \leq 1 - \prod_{i=1}^{m}(1 - \eta_i),
 \end{equation}
-If all $\eta_i = \eta$:
+with equality under the re-randomization condition
+(Definition~\ref{def:re-randomization}) applied pairwise along the
+chain.  If all $\eta_i = \eta$:
 \begin{equation}
-\eta_{\mathrm{total}} = 1 - (1-\eta)^m \approx m\eta
+\eta_{\mathrm{total}} \leq 1 - (1-\eta)^m \approx m\eta
 \quad \text{for small } \eta.
 \end{equation}
 \end{corollary}
@@ -1086,18 +1513,18 @@ If all $\eta_i = \eta$:
 \begin{proof}
 By induction on Theorem~\ref{thm:composition}.  The base case $m=2$ is the
 theorem.  For the inductive step, the composition of $m-1$ maps has
-correctness $1 - \prod_{i=1}^{m-1}(1-\eta_i)$; composing with $\fhat_m$
-gives
-$1 - \prod_{i=1}^{m-1}(1-\eta_i) \cdot (1-\eta_m) = 1 - \prod_{i=1}^m
-(1-\eta_i)$.
+correctness bounded by $1 - \prod_{i=1}^{m-1}(1-\eta_i)$; composing with
+$\fhat_m$ and applying Theorem~\ref{thm:composition} again gives
+$\eta_{\mathrm{total}} \leq 1 - \prod_{i=1}^{m-1}(1-\eta_i) \cdot (1-\eta_m)
+= 1 - \prod_{i=1}^m (1-\eta_i)$.
 The approximation follows from $\ln(1-\eta) \approx -\eta$ for small
-$\eta$, giving
-$(1-\eta)^m \approx e^{-m\eta} \approx 1 - m\eta$.
+$\eta$, giving $(1-\eta)^m \approx e^{-m\eta} \approx 1 - m\eta$.
 \end{proof}
 
 \begin{example}
 A circuit of 100 cipher maps each with $\eta = 10^{-6}$:
-$\eta_{\mathrm{total}} = 1 - (1-10^{-6})^{100} \approx 10^{-4}$.
+$\eta_{\mathrm{total}} \leq 1 - (1-10^{-6})^{100} \approx 10^{-4}$
+(equality under re-randomization).
 \end{example}
 
 \subsection{Error Accumulation by Gate Type}
@@ -1179,6 +1606,22 @@ $x_1$ and $x_2$.  An adversary observing $N$ draws can estimate this joint
 distribution and recover the correlation structure of $(x_1, x_2)$.
 \end{proof}
 
+\begin{remark}[Granularity trade-offs in adjacent frameworks]
+The space-vs-correlation-hiding trade-off via the entanglement parameter
+$p$ has analogues in oblivious RAM and private information retrieval.
+ORAM constructions trade access-pattern hiding against per-access
+overhead (polylogarithmic in storage size); PIR constructions trade
+query unlinkability against communication and server work (one server
+or computational PIR pays for unlinkability with cryptographic
+overhead, multi-server information-theoretic PIR pays with replication).
+The cipher map granularity knob is the analogous trade-off in the
+parameterized-leakage setting: hiding the joint distribution of $k$
+correlated values requires storage growing as $|Y|^k$, but obviates the
+per-access protocols ORAM and PIR rely on.  Companion
+work~\cite{towell2026maxconf} treats the granularity lever in detail
+within the entropy-ratio framework.
+\end{remark}
+
 \subsection{Compositional Leakage}
 \label{subsec:comp-leakage}
 
@@ -1256,8 +1699,10 @@ each $x \in X$,
 $\Pr[\dec(\fhat(\enc(x,k))) \neq f(x)] = \eta(x)$,
 where the failing elements are deterministic for a given seed.
 
-The composition formula
-$\eta_{g \circ f} = 1 - (1-\eta_f)(1-\eta_g)$
+The composition bound
+$\eta_{g \circ f} \leq 1 - (1-\eta_f)(1-\eta_g)$
+(equality under the re-randomization condition,
+Definition~\ref{def:re-randomization})
 is the standard error accumulation for independent Bernoulli events,
 identical to the formula derived in the noisy gates framework for AND gates
 over Bernoulli Booleans.  This is not coincidental: a cipher map \emph{is} a
@@ -1306,92 +1751,52 @@ complementary trade-offs: batch achieves information-theoretically optimal
 space with tunable correctness; online enables incremental construction and
 algebraic composition at the cost of space exponential in set size.
 
-\subsection{Application: Encrypted Search}
-\label{subsec:encrypted-search}
+\subsection{Bounded Composition as a Security Feature}
+\label{subsec:bounded-composition}
 
-Encrypted search---information retrieval over confidential data by an
-untrusted provider---is a direct application of the cipher map abstraction.
-The domain-specific vocabulary maps to the general framework as follows.
+A cipher map composition $\cipherS{g}{s} \circ \cipherS{f}{s}$ stays
+within the cipher space $\cipherS{\cdot}{s}$ indefinitely: there is no
+construction-imposed limit on chain length under a single secret.  But
+when secrets are rotated to mitigate accumulating leakage, a different
+picture emerges.  The companion cipher rekeying
+paper~\cite{towell2026rekeying} introduces a rekeying functor
+$r_{s_i \to s_{i+1}} : \cipherS{X}{s_i} \to \cipherS{X}{s_{i+1}}$,
+which transports cipher values across secret boundaries while preserving
+latent meaning.  An $n$-step rekeying chain
+\[
+\cipherS{X}{s_0} \xrightarrow{r_{s_0 \to s_1}}
+\cipherS{X}{s_1} \xrightarrow{r_{s_1 \to s_2}}
+\cdots \xrightarrow{r_{s_{n-1} \to s_n}}
+\cipherS{X}{s_n}
+\]
+admits the bound $H(X \mid \mathcal{V}) \geq H(X) - \log_2(n+1)$
+where $\mathcal{V}$ is the adversary's view of all intermediate cipher
+values~\cite[Thm.~7.1]{towell2026rekeying}: each rekeying step costs at
+most one bit of latent entropy.
 
-\begin{description}
-\item[Search agent] $=$ trusted machine $T$.  Holds the trapdoor $s$,
-    encodes queries, decodes results.
-\item[Encrypted search provider] $=$ untrusted machine $U$.  Holds cipher
-    maps and cipher values; evaluates $\fhat(c)$ for any
-    $c \in \{0,1\}^n$ without decoding.
-\item[Information need] $=$ latent function $f : X \to Y$.  For keyword
-    search, $f = \mathbf{1}_A$ (set indicator); for ranked retrieval, $f$
-    is a scoring function.
-\item[Hidden query] $=$ cipher value $\enc(x, k)$.  The provider evaluates
-    the cipher map on this value without learning $x$.
-\item[Secure index] $=$ cipher map $\fhat$ stored on the provider.
-\end{description}
+This couples a security guarantee to a complexity restriction.  The
+trusted machine's pre-provisioned set of rekeying maps determines an
+upper bound on chain length: programs whose composition depth depends
+on input size cannot be expressed unless the trusted machine refreshes
+the rekeying budget on demand.  In particular, the framework as
+described here is not Turing-complete: it captures bounded-depth
+straight-line composition (the typical $n = 2$ to $5$ regime of
+encrypted search, classification cascades, or fixed-depth circuits) but
+not unbounded recursion or input-dependent loops.
 
-\noindent
-The four properties specialize to encrypted search:
-\begin{enumerate}
-\item \textbf{Totality}: The provider can evaluate the index on any bit
-    string; filler queries produce output indistinguishable from real queries.
-\item \textbf{Representation uniformity}: Hidden queries are $\delta$-close
-    to uniform; frequency analysis of query traffic is bounded by $\delta$.
-\item \textbf{Correctness}: The search agent recovers the correct answer
-    with probability $\geq 1 - \eta$; nonzero $\eta$ provides plausible
-    deniability.
-\item \textbf{Composability}: Boolean combinations of queries (AND, OR, NOT)
-    compose as cipher map chains with predictable error accumulation.
-\end{enumerate}
-
-\paragraph{Experimental validation.}
-A reference implementation (\texttt{cipher-maps}, Python) validates
-the encrypted search application on the 20 Newsgroups corpus
-(18{,}266 documents, 58{,}903 unique words).
-Construction uses perfect hash functions (via \texttt{phobic})
-with $n = 8$-bit cipher Booleans ($p_T = 0.05$, $p_F = 0.90$,
-$p_N = 0.05$).
-At 5{,}000 documents: construction takes 5.9 seconds (843 documents
-per second), single-term queries achieve perfect recall ($1.0$) with
-precision $0.39$ (matching the theoretical false positive rate
-$p_T = 0.05$ per document).
-Multi-term AND queries improve precision (FP drops from 248 to 12
-for 3-term AND) while maintaining perfect recall.
-OR and NOT queries lose recall (0.97 and 0.88 respectively) due to
-noise propagation through the cipher Boolean operations.
-The full 18{,}266-document index builds in 25.6 seconds.
-
-Boolean search queries composed from AND, OR, and NOT can be evaluated
-entirely on the untrusted machine using cipher Boolean types.  A cipher
-Boolean type partitions the hash space into True, False, and noise regions
-(e.g., 5\%, 90\%, 5\% respectively).  AND, OR, and NOT are themselves cipher
-maps over the cipher Boolean space.  Members of a cipher set are forced into
-the True region by construction; non-members land randomly in True (5\%, the
-false positive rate), False (90\%), or noise (5\%).  Experimental validation
-on 5{,}000 documents shows perfect recall for AND queries with false
-positives decreasing from 248 (single term) to 12 (3-term AND).  Details are
-developed in the companion paper on algebraic cipher
-types~\cite{towell2026algebraic}.
-
-The correctness parameter $\eta$ has a precise deniability interpretation
-for Boolean-valued cipher maps.
-
-\begin{proposition}[Bayesian deniability]
-\label{prop:deniability}
-Let $\fhat$ be a cipher map for $f : X \to \{0,1\}$ with symmetric error
-rate $\eta$ (i.e., $\Pr[y=1 \mid f(x)=0] = \Pr[y=0 \mid f(x)=1] = \eta$),
-and let $\pi = \Pr[f(x) = 1]$ be the prior.  If the adversary observes the
-decoded output $y = 1$, then
-\begin{equation}
-\Pr[f(x) = 1 \mid y = 1]
-    = \frac{\pi(1-\eta)}{\pi(1-\eta) + (1-\pi)\eta}.
-\end{equation}
-For $\eta = 0$, the posterior equals $1$ (no deniability).  For
-$\eta = 1/2$, the posterior equals $\pi$ (observation is useless).
-\end{proposition}
-
-\begin{proof}
-By Bayes' rule: $\Pr[y=1 \mid f(x)=1] = 1-\eta$ (correct positive) and
-$\Pr[y=1 \mid f(x)=0] = \eta$ (false positive).  Applying Bayes' theorem
-with prior $\pi$ gives the stated formula.
-\end{proof}
+We frame this as a feature rather than a limitation.  Sub-Turing
+computation models have a long history in security
+contexts---capability machines bound resource use, total functional
+languages exclude non-termination, structurally recursive type theories
+exclude unbounded fixpoints---each trading expressivity for static
+guarantees.  Cipher rekeying provides the analogous trade in the
+information-theoretic setting: chain length $n$ is the explicit
+expressivity budget, and $\log_2(n+1)$ is the explicit confidentiality
+cost.  An adversary that wants more leakage must pay for it in chain
+length, which the trusted machine controls.  The expressivity envelope
+is exactly the kind of computation typical encrypted-search and
+encrypted-inference workloads need; programs that need more are
+out of scope by design.
 
 \subsection{Open Questions}
 
@@ -1446,6 +1851,226 @@ To set clear expectations:
     untrusted machine's view can be simulated.  The guarantees are
     parameterized ($\delta$, $\varepsilon$) rather than negligible in a
     security parameter.
+\end{itemize}
+
+
+%% ============================================================
+%% ============================================================
+\section{Implementation and Evaluation}
+\label{sec:eval}
+
+A reference implementation of the cipher map abstraction is available
+as the open-source \texttt{cipher-maps} Python
+library.\footnote{\url{https://github.com/queelius/cipher-maps}}  This
+section connects the formal framework to a concrete encrypted search
+application on the 20 Newsgroups corpus.  Additional empirical
+investigations (K(x) allocation under finite-sample observation,
+homophonic prescription on real corpora, online adaptation under
+distribution drift) appear in companion
+work~\cite{towell2026maxconf}.
+
+\subsection{Reference Implementation}
+\label{subsec:impl}
+
+The library provides two construction backends: a brute-force seed
+search backend (\S\ref{subsec:tractability}) for small domains with
+exact $\eta$ control, and a perfect hash function (PHF) backend for
+large domains, built on the
+\texttt{phobic}\footnote{\url{https://pypi.org/project/phobic/}}
+implementation of the RecSplit minimal perfect hash
+construction~\cite{esposito2020recsplit}.  Cipher Boolean types,
+arbitrary-codomain cipher maps, and cipher set membership are exposed
+as composable abstractions with a typed composition discipline that
+prevents cross-level mixing.  The library's confidentiality measurement
+module computes the entropy ratio $e$ on observed query streams and
+reports its Fannes--Audenaert lower bound, providing the operational
+link to Proposition~\ref{prop:confidentiality}.
+
+\subsection{Application: Encrypted Search}
+\label{subsec:encrypted-search}
+
+Encrypted search (information retrieval over confidential data by an
+untrusted provider) is a direct application of the cipher map
+abstraction.  The domain-specific vocabulary maps to the general
+framework as follows.
+
+\begin{description}
+\item[Search agent] $=$ trusted machine $T$.  Holds the trapdoor $s$,
+    encodes queries, decodes results.
+\item[Encrypted search provider] $=$ untrusted machine $U$.  Holds
+    cipher maps and cipher values; evaluates $\fhat(c)$ for any
+    $c \in \{0,1\}^n$ without decoding.
+\item[Information need] $=$ latent function $f : X \to Y$.  For keyword
+    search, $f = \mathbf{1}_A$ (set indicator); for ranked retrieval,
+    $f$ is a scoring function.
+\item[Hidden query] $=$ cipher value $\enc(x, k)$.  The provider
+    evaluates the cipher map on this value without learning $x$.
+\item[Secure index] $=$ cipher map $\fhat$ stored on the provider.
+\end{description}
+
+\noindent
+The four properties specialize to encrypted search:
+\begin{enumerate}
+\item \textbf{Totality}: the provider can evaluate the index on any bit
+    string; filler queries produce output indistinguishable from real
+    queries.
+\item \textbf{Representation uniformity}: hidden queries are
+    $\delta$-close to uniform; frequency analysis of query traffic is
+    bounded by $\delta$ (Proposition~\ref{prop:confidentiality}).
+\item \textbf{Correctness}: the search agent recovers the correct
+    answer with probability $\geq 1 - \eta$; nonzero $\eta$ provides
+    plausible deniability (Proposition~\ref{prop:deniability} below).
+\item \textbf{Composability}: Boolean combinations of queries (AND,
+    OR, NOT) compose as cipher map chains with predictable error
+    accumulation (Theorem~\ref{thm:composition}).
+\end{enumerate}
+
+\subsection{20 Newsgroups: Boolean Search Validation}
+\label{subsec:eval-20ng}
+
+The vocabulary mapping above (\S\ref{subsec:encrypted-search}) becomes
+operational on a real corpus.  We instantiate the encrypted search
+application on the 20 Newsgroups corpus (18{,}266 documents, 58{,}903
+unique words after tokenization).  Each document is encoded as a
+cipher set of its tokens; queries evaluate Boolean combinations (AND,
+OR, NOT) over those sets via cipher Boolean types entirely on the
+untrusted side.
+
+\paragraph{Setup.}
+\begin{itemize}
+\item Per-document index: a PHF-backed cipher map (\texttt{cipher-maps},
+    \texttt{phobic} backend) over each document's token vocabulary,
+    with values in the cipher Boolean space.
+\item Cipher Boolean partition: $n = 8$-bit cipher value space, split
+    into True ($p_T = 0.05$), False ($p_F = 0.90$), and noise
+    ($p_N = 0.05$) regions.  The partition reflects the empirical
+    sparsity of keyword presence in the corpus (mean per-document
+    presence rate $\approx 0.05$ for moderate-frequency terms);
+    matching $p_T$ to the operational rate places the construction
+    in the regime where Property~2 ($\delta$-bounded) is most useful.
+\item Query distribution: uniform over the corpus vocabulary.
+\item Hardware: single-thread CPython 3.12, commodity x86\_64 desktop.
+    Numbers below are wall-clock from the published library benchmarks
+    in the \texttt{examples/} subdirectory; a single run per cell, no
+    cross-replicate aggregation.
+\end{itemize}
+
+\paragraph{Construction.}
+At 5{,}000 documents, construction completes in 5.9 seconds (843
+documents per second).  The full 18{,}266-document index builds in
+25.6 seconds.  Construction time is dominated by per-document PHF
+fitting; query latency is a single hash evaluation per cipher map.
+
+\paragraph{Single-term queries.}
+Single-term queries achieve perfect recall ($1.0$) with precision
+$0.39$.  The precision corresponds to expected per-document false
+positives $5000 \cdot p_T = 250$ over $\approx 4{,}840$ true
+non-matches, consistent with the $p_T = 0.05$ partition (the
+``matching $p_T$'' relation is to the per-document false-positive
+\emph{rate}, not to query precision; precision additionally depends on
+term frequency).
+
+\paragraph{Multi-term Boolean queries.}
+Multi-term AND queries reduce false positives sharply (from 248
+single-term to 12 for 3-term AND) while maintaining perfect recall.
+The reduction is significant but does not match the naive prediction
+$5000 \cdot p_T^k = 0.6$ for $k=3$ that pure independent-FPR
+multiplication would give.  The dominant mechanism is the
+\emph{noise floor} of cipher Boolean composition: for non-matching
+documents, each per-term cipher Boolean output is uniformly
+distributed over the partition, landing in the Noise region with
+probability $p_N = 0.05$.  The AND cipher map, total by Property~1,
+must produce some output on noise inputs as well; under the
+construction's design these outputs contribute to the False-positive
+probability at a rate bounded above by $p_T$ per noise input.  The
+effective $k$-term FP rate is therefore approximately bounded by
+\begin{equation}
+\Pr[\text{FP}_{k\text{-AND}}] \;\lesssim\; p_T^k
+  \;+\; k \cdot p_N \cdot p_T \cdot (1-p_N)^{k-1},
+\end{equation}
+dominated by the noise term for $k \geq 2$.  The observed 3-term FP
+rate of $12/5000 = 2.4 \times 10^{-3}$ is consistent with this
+noise-floor regime (the upper bound for $k=3$ is approximately
+$6.5 \times 10^{-3}$); the precise per-construction FP rate depends
+on how the cipher Boolean AND routes noise-region inputs through its
+PHF, characterized in companion work~\cite{towell2026algebraic}.
+
+OR and NOT queries lose recall ($0.97$ and $0.88$ respectively) due
+to the symmetric mechanism on the recall side: noise inputs to OR
+hit the False region with probability $p_F$ and to NOT with
+probability $1 - p_T - p_N$, contaminating disjunctions and
+complement operations on true matches.  The asymmetric
+recall/precision degradation between AND, OR, and NOT is consistent
+with the gate-by-gate analysis in \S\ref{subsec:and-gate}.
+
+\paragraph{Reproducibility.}
+The benchmark scripts and inputs are published with the library at
+the \texttt{examples/} subdirectory; a single command reproduces the
+table above.  The numbers reported here are from one run; variance
+characterization across replicates and against Bloom-filter and SSE
+baselines at matched operating points is work in progress
+(\S\ref{subsec:eval-future}).
+
+\subsection{Deniability via the Correctness Parameter}
+\label{subsec:deniability}
+
+The 20 Newsgroups validation above used $\eta = 0$ (PHF construction
+gives exact correctness).  But the framework permits tuning $\eta > 0$
+to provide explicit deniability, and the relationship between $\eta$
+and posterior confidence is closed-form.  The correctness parameter
+$\eta$ has a precise Bayesian deniability interpretation for
+Boolean-valued cipher maps: the posterior on the latent value, given
+an observed decoded output, can be tuned by the choice of $\eta$.  This is a theoretical complement to the empirical
+Boolean search results above; the construction below is a direct
+restatement of Warner's randomized response
+mechanism~\cite{warner1965randomized} cast in cipher map terms (the
+correctness parameter $\eta$ plays the role of Warner's response
+randomization probability).
+
+\begin{proposition}[Bayesian deniability]
+\label{prop:deniability}
+Let $\fhat$ be a cipher map for $f : X \to \{0,1\}$ with symmetric
+error rate $\eta$ (i.e., $\Pr[y=1 \mid f(x)=0] = \Pr[y=0 \mid f(x)=1]
+= \eta$), and let $\pi = \Pr[f(x) = 1]$ be the prior.  If the
+adversary observes the decoded output $y = 1$, then
+\begin{equation}
+\Pr[f(x) = 1 \mid y = 1]
+    = \frac{\pi(1-\eta)}{\pi(1-\eta) + (1-\pi)\eta}.
+\end{equation}
+For $\eta = 0$, the posterior equals $1$ (no deniability).  For
+$\eta = 1/2$, the posterior equals $\pi$ (the observation is useless).
+\end{proposition}
+
+\begin{proof}
+By Bayes' rule: $\Pr[y=1 \mid f(x)=1] = 1-\eta$ (correct positive)
+and $\Pr[y=1 \mid f(x)=0] = \eta$ (false positive).  Applying Bayes'
+theorem with prior $\pi$ gives the stated formula.
+\end{proof}
+
+\subsection{Further Empirical Investigations}
+\label{subsec:eval-future}
+
+The 20 Newsgroups validation and the deniability proposition together
+exercise the framework on a single workload at a single operating
+point.  The reference implementation supports several empirical
+investigations across larger scales, alternative workloads, and
+adversarial settings, all currently in progress:
+
+\begin{itemize}
+\item Bloom-filter baseline at matched FPR for the 20 Newsgroups
+    workload, relating cipher set space cost to a non-trapdoor
+    baseline at equivalent operating points.
+\item Construction-time scaling beyond $10^5$ documents (the current
+    construction-time table in \S\ref{subsec:tractability} uses toy
+    parameters $m = 100$).
+\item Empirical entropy ratio $e$ on adversarial query distributions,
+    validating Proposition~\ref{prop:confidentiality} against
+    measured Fannes--Audenaert predictions (the sister
+    work~\cite{towell2026maxconf} reports related K(x) tuning
+    experiments on this corpus).
+\item Variance characterization: per-cell replicates, hardware
+    sensitivity, and end-to-end timing under realistic adversary
+    workloads.
 \end{itemize}
 
 
