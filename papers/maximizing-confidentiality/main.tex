@@ -1229,22 +1229,29 @@ is dominated by sampling noise and will overstate leakage.
 Proposition~\ref{prop:compression} states that gzip-style
 compression yields a positively-biased estimator $\hat H$ of the
 per-symbol entropy.  We anchor this prediction empirically across
-three streams whose entropy rates are known analytically.  Each
-stream uses 16-bit cipher values ($n = 16$, byte-aligned for gzip)
-and is averaged over $5$ random seeds.
+three synthetic streams (i.i.d.\ uniform sanity check, first-order
+Markov auto-correlation, and the noise mixture of
+Theorem~\ref{thm:noise-dilution}) plus one real-corpus stream
+(20 Newsgroups token sequence).  Synthetic streams use 16-bit
+cipher values ($n = 16$, byte-aligned for gzip) and are averaged
+over $5$ random seeds.
 
 \begin{figure}[ht]
 \centering
 \includegraphics[width=\linewidth]{compression_validation}
 \caption{Compression-based entropy estimation against analytically
-known entropy rates ($n = 16$, $N = 10^5$, $5$ seeds, error bars
-$\pm 1\sigma$).
-\textbf{Left}: first-order Markov stream with auto-correlation
-parameter $p$, entropy rate $H_{\mathrm{rate}} = (1-p)n$.
-\textbf{Right}: real Zipf queries ($s=1$, $m = 10\,000$) mixed
+known entropy rates and a real-corpus reference.
+\textbf{Left}: first-order Markov stream ($n = 16$, $N = 10^5$,
+5 seeds, error bars $\pm 1\sigma$) with auto-correlation parameter
+$p$, entropy rate $H_{\mathrm{rate}} = (1-p)n$.
+\textbf{Centre}: real Zipf queries ($s=1$, $m = 10\,000$) mixed
 with uniform filler at fraction $\rho$, predicted entropy
 $H_{\mathrm{mix}} = h_2(\rho) + \rho H(D) + (1-\rho)n$ from
-Theorem~\ref{thm:noise-dilution}.}
+Theorem~\ref{thm:noise-dilution}.
+\textbf{Right}: 20 Newsgroups token stream (uint16-capped
+encoding) versus the i.i.d.\ unigram entropy $H(D)$ and the
+empirical bigram conditional entropy $H(W_t \mid W_{t-1})$ as a
+model-based reference.  Stream length on log scale.}
 \label{fig:compression-validation}
 \end{figure}
 
@@ -1266,23 +1273,63 @@ even where its absolute level is biased: a defender comparing two
 configurations would see the relative ordering preserved.
 
 \paragraph{Noise mixture (right panel).}
-The estimator tracks $H_{\mathrm{mix}}$ from $\rho = 0.1$
+The mixture panel tests Theorem~\ref{thm:noise-dilution}'s
+formula on its own terms: both real (Zipf) and filler (uniform)
+draws are i.i.d., matching the i.i.d.\ assumption Theorem~\ref{thm:noise-dilution}
+makes.  The estimator tracks $H_{\mathrm{mix}}$ from $\rho = 0.1$
 ($\hat H = 15.90$, predicted $15.82$) to $\rho = 1.0$ pure Zipf
 ($\hat H = 11.72$, predicted $9.53$).  Bias grows monotonically
-with $\rho$ because Zipf queries lack the temporal structure that
-LZ77 can exploit; in the pure-Zipf regime gzip degenerates into a
-byte-level Huffman coder, and the byte-pair entropy of 16-bit Zipf
-samples is higher than the 14-bit symbol entropy of the underlying
-distribution.  Adding filler dilutes this confound.
+with $\rho$ because i.i.d.\ Zipf queries have no temporal structure
+for LZ77 to exploit; in the pure-Zipf regime gzip degenerates into
+a byte-level Huffman coder, and the byte-pair entropy of 16-bit
+Zipf samples is higher than the 14-bit symbol entropy of the
+underlying distribution.  Adding filler dilutes this confound.
+
+\paragraph{Real corpus (right panel).}
+Real query streams are not i.i.d.: natural-language queries have
+sessional repetition, topical bursts, and grammatical structure
+that an i.i.d.\ analysis cannot capture.  The 20 Newsgroups
+training split provides such a stream: $2.31\,\text{M}$ tokens of
+natural English, encoded as uint16 token IDs (vocab capped at
+65{,}535).  Two model-based references bound the entropy rate from
+above and below: the i.i.d.\ unigram entropy
+$H(D) = 10.59$ bits/token (computed from the empirical word
+frequencies), and the first-order Markov conditional entropy
+$H(W_t \mid W_{t-1}) = 6.43$ bits/token (computed from empirical
+bigram counts).
+
+The compression estimator lands at $\hat H \approx 10.56$ bits per
+token at $N = 10^6$, just below the i.i.d.\ bound of $10.59$.
+gzip therefore detects \emph{some} of the natural-language
+correlation that an i.i.d.\ unigram analysis would miss, but the
+margin is small (roughly $0.03$ bits, near the noise floor of
+single-corpus measurement).  The bigram model-based estimate of
+$6.43$ bits/token sits four bits below $\hat H$, indicating that
+gzip's LZ77 window and Huffman literal coding miss most of the
+deeper grammatical and topical structure.  Encoding choice matters:
+the same stream encoded as uint32 yields $\hat H \approx 12.16$
+bits/token (worse than the i.i.d.\ bound, because two of the four
+bytes are mostly zero and inflate the per-token cost).  A tight
+encoding is necessary for the estimator to be informative at all.
 
 \paragraph{Operational reading.}
-Compression estimators give a useful relative measurement of
-confidentiality changes (noise-injection effects, before-vs-after
-comparisons), and the bias direction matches Proposition~\ref{prop:compression}.
-For absolute Shannon-entropy measurements on cipher-value streams
-that lack temporal structure, a model-based estimator (e.g.,
-context-tree weighting~\cite{cover2006elements}) is preferable.
-Operators tracking confidentiality over time should fix the
+Three lessons emerge.  First, the bias direction matches
+Proposition~\ref{prop:compression} on every stream: $\hat H$ is an
+upper bound on the entropy rate, never below it.  Second,
+gzip's value as an absolute estimator is sharply limited by both
+the input encoding and the compressor's effective context window:
+on the 20NG token stream, gzip captures only the marginal symbol
+distribution (matching the i.i.d.\ unigram bound to within
+$0.03$ bits) and misses the bigram structure that brings the true
+entropy rate down by four bits.  For absolute Shannon-entropy
+measurements on cipher-value streams a model-based estimator
+(context-tree weighting~\cite{cover2006elements}, or higher-order
+Markov models) is preferable.  Third, gzip remains useful for
+\emph{relative} measurements: the Markov panel shows $\hat H$
+tracks $H_{\mathrm{rate}}$'s slope across the full
+$p \in [0, 0.9]$ range, and the noise-mixture panel shows $\hat H$
+tracks $H_{\mathrm{mix}}$'s slope across $\rho$.  Operators
+tracking confidentiality changes over time should fix the
 estimator and compare $\hat H$ trajectories rather than read
 absolute values.
 
