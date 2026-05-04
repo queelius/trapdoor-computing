@@ -1223,6 +1223,69 @@ budget from roughly $10^4 |\im|$ to $10^6 |\im|$, a hundredfold
 growth.  Below this threshold the empirical estimate $\hat{\delta}_N$
 is dominated by sampling noise and will overstate leakage.
 
+\subsection{Empirical Anchor for the Compression Estimator}
+\label{subsec:compression-validation}
+
+Proposition~\ref{prop:compression} states that gzip-style
+compression yields a positively-biased estimator $\hat H$ of the
+per-symbol entropy.  We anchor this prediction empirically across
+three streams whose entropy rates are known analytically.  Each
+stream uses 16-bit cipher values ($n = 16$, byte-aligned for gzip)
+and is averaged over $5$ random seeds.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=\linewidth]{compression_validation}
+\caption{Compression-based entropy estimation against analytically
+known entropy rates ($n = 16$, $N = 10^5$, $5$ seeds, error bars
+$\pm 1\sigma$).
+\textbf{Left}: first-order Markov stream with auto-correlation
+parameter $p$, entropy rate $H_{\mathrm{rate}} = (1-p)n$.
+\textbf{Right}: real Zipf queries ($s=1$, $m = 10\,000$) mixed
+with uniform filler at fraction $\rho$, predicted entropy
+$H_{\mathrm{mix}} = h_2(\rho) + \rho H(D) + (1-\rho)n$ from
+Theorem~\ref{thm:noise-dilution}.}
+\label{fig:compression-validation}
+\end{figure}
+
+Figure~\ref{fig:compression-validation} shows the results.  The
+sanity check is omitted from the figure for clarity but is reported
+here: on i.i.d.\ uniform streams of length $N = 10^5$, $\hat H = 16.007 \pm 0.000$ bits, a bias of $7 \times 10^{-3}$ bits per
+symbol attributable to gzip's header.
+
+\paragraph{Markov auto-correlation (left panel).}
+The estimator tracks the predicted $H_{\mathrm{rate}}$ across the
+full range $p \in [0, 0.9]$, dropping from $\approx 16$ bits at
+$p = 0$ (i.i.d.\ uniform) to $\approx 2.5$ bits at $p = 0.9$
+(highly redundant).  Bias is consistently positive (1--3 bits) and
+peaks near $p \approx 0.5$, reflecting gzip's byte-level dictionary
+on a 16-bit-symbol source: when half the stream is repeated, gzip's
+LZ77 backreferences capture the structure but Huffman entropy on
+the literal pairs adds overhead.  The estimator's slope is correct
+even where its absolute level is biased: a defender comparing two
+configurations would see the relative ordering preserved.
+
+\paragraph{Noise mixture (right panel).}
+The estimator tracks $H_{\mathrm{mix}}$ from $\rho = 0.1$
+($\hat H = 15.90$, predicted $15.82$) to $\rho = 1.0$ pure Zipf
+($\hat H = 11.72$, predicted $9.53$).  Bias grows monotonically
+with $\rho$ because Zipf queries lack the temporal structure that
+LZ77 can exploit; in the pure-Zipf regime gzip degenerates into a
+byte-level Huffman coder, and the byte-pair entropy of 16-bit Zipf
+samples is higher than the 14-bit symbol entropy of the underlying
+distribution.  Adding filler dilutes this confound.
+
+\paragraph{Operational reading.}
+Compression estimators give a useful relative measurement of
+confidentiality changes (noise-injection effects, before-vs-after
+comparisons), and the bias direction matches Proposition~\ref{prop:compression}.
+For absolute Shannon-entropy measurements on cipher-value streams
+that lack temporal structure, a model-based estimator (e.g.,
+context-tree weighting~\cite{cover2006elements}) is preferable.
+Operators tracking confidentiality over time should fix the
+estimator and compare $\hat H$ trajectories rather than read
+absolute values.
+
 
 
 %% ====================================================================
@@ -1245,9 +1308,11 @@ The empirical results in Tables~\ref{tab:boolean}, \ref{tab:fpr},
 \texttt{examples/experiment\_paper\_tables.py} with the parameters
 listed in each caption ($n=5$ seeds throughout).
 Figure~\ref{fig:finite-sample-gap} is produced by
-\texttt{experiments/finite\_sample.py}, and
+\texttt{experiments/finite\_sample.py},
 Figure~\ref{fig:newsgroups-homophonic} by
-\texttt{experiments/newsgroups\_homophonic.py}.  All scripts read no
+\texttt{experiments/newsgroups\_homophonic.py}, and
+Figure~\ref{fig:compression-validation} by
+\texttt{experiments/compression\_validation.py}.  All scripts read no
 external state beyond the 20 Newsgroups corpus shipped with
 \texttt{scikit-learn}; runtime on a single x86\_64 core is under five
 minutes for the full table set.  Table~\ref{tab:case-study} is
