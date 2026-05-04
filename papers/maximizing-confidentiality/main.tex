@@ -1333,6 +1333,24 @@ tracking confidentiality changes over time should fix the
 estimator and compare $\hat H$ trajectories rather than read
 absolute values.
 
+\paragraph{Scope: stream archetypes, not specific cipher programs.}
+The four streams above test $\hat H$ on archetypes of structure
+(i.i.d.\ uniform, first-order Markov, i.i.d.\ mixture, real
+correlated text), not on the cipher-value output of any specific
+multi-primitive cipher program.  For a single-cipher-map system
+the adversary's stream is a sequence of cipher values from one
+cipher map and the validation here applies directly.  For a
+compositional cipher program (cipher Boolean queries
+of~\S\ref{sec:experiments}, depth-$k$ Boolean chains, or richer
+pipelines) the adversary's stream is a concatenation of cipher
+values from multiple cipher maps, with structure shaped by the
+program's call pattern and by the compositional leakage of
+Theorem~\ref{thm:comp-leakage}.  Validating $\hat H$ on
+program-specific streams would require a separate
+program-by-program study; this paper establishes the measurement
+tool against generic archetypes and leaves the program-shape
+mapping to deployment-time analysis.
+
 
 
 %% ====================================================================
@@ -1631,6 +1649,38 @@ complete confidentiality analysis requires both: high $e$ (passive) and
 small orbit (active).  Connecting these two measures---showing that high
 $e$ implies small effective orbit under certain conditions---is an open
 problem.
+
+\paragraph{Practical depth in cipher programs.}
+A useful cipher program is typically structured in two layers: a
+trusted-side orchestrator (e.g., a Python control loop) that decides
+which cipher map to invoke and in what order, and a set of cipher-map
+primitives (membership, comparison, lookup, conjunction) that the
+untrusted machine evaluates blindly on cipher values.  How deep can
+the call chain through the untrusted machine go?  The framework does
+not impose a structural ceiling, but two confidentiality budgets
+constrain practical depth.  First, FPR compounding
+(\S\ref{subsec:fpr-compounding}) imposes a correctness ceiling:
+after roughly $k = 3$ AND levels at $p_T = 0.05$, the empirical
+false-positive rate hits a construction-level noise floor of about
+$4 \times 10^{-3}$ (Table~\ref{tab:fpr}); deeper AND chains cannot
+drive precision below this floor.  Second, each chain level exposes
+an additional intermediate cipher value to the untrusted machine,
+which combines with Theorem~\ref{thm:comp-leakage} (compositional
+leakage from shared variables) and the orbit-closure
+bound~\cite[Thm.~5.3]{towell2026algebraic} to erode confidentiality
+super-linearly with depth.  Empirically (\S\ref{subsec:granularity})
+the leaf encoding of a 7-function pipeline exposes seven
+intermediate cipher values per query, against the root encoding's
+one; the Theorem~\ref{thm:comp-leakage-lb} minimax rate then gives
+the adversary a sharper joint estimator at the leaf level.  In
+practice, useful cipher programs span depth 2--5: end-to-end
+encrypted Boolean search at depth 2--3 (cipher membership plus
+cipher AND/OR), cipher decision trees at depth equal to the tree
+depth, and analytics pipelines at depth 3--5 (filter, aggregate,
+threshold).  Beyond depth 5 the granularity-vs-leakage trade-off
+typically argues for re-rooting the chain: collapse the deep
+sub-pipeline into a single cipher map for the joint computation, at
+the space cost of $O(|Y|^k)$ from Proposition~\ref{prop:granularity}.
 
 \paragraph{Adaptive $K(x)$.}
 The multiplicity $K(x)$ is set at construction time based on an assumed
