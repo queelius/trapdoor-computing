@@ -71,11 +71,18 @@ operational design target, and we analyze two constructions that
 reduce it with explicit costs (noise injection and multiple
 representations), plus a third, encoding granularity, inherited from
 the cipher maps framework.  The paper's main result is a compositional
-leakage theorem: even when each cipher map is marginally
-$\delta$-uniform, observing multiple evaluations on a shared cipher
-value lets the untrusted machine recover the latent joint distribution
-at the standard parametric rate $O(|Y_1|\cdot|Y_2|/\xi^2)$, so reducing
-$\delta$ is necessary but not sufficient.  Experimental validation on
+leakage theorem with a matching minimax lower bound: even when each
+cipher map is marginally $\delta$-uniform, observing multiple
+evaluations on a shared cipher value lets the untrusted machine
+recover the latent joint distribution at the
+\emph{information-theoretically optimal} rate
+$\Theta(|Y_1|\cdot|Y_2|/\xi^2)$ (matching upper bound from plug-in
+estimation, matching lower bound via Le Cam's two-point method).  The
+compositional channel is therefore not merely exploitable but
+unavoidable for any choice of per-cipher-map parameters; reducing
+$\delta$ is necessary but not sufficient, and only system-level
+interventions (observation limits, joint encoding, or noise
+injection) reduce the adversary's effective advantage.  Experimental validation on
 encrypted Boolean search over the 20 Newsgroups corpus confirms the
 theoretical predictions for FPR compounding and the encoding
 granularity spectrum.
@@ -163,23 +170,27 @@ here.
 
 \paragraph{Compositional scale.}
 The constructions above all act at the marginal scale: each cipher map
-on its own.  The paper's main result, Theorem~\ref{thm:comp-leakage},
-shows that this is not enough.  When the untrusted machine observes
-multiple cipher map evaluations on a shared cipher value, the joint
-distribution over latent outputs is recoverable at standard parametric
-rate $O(|Y_1|\cdot|Y_2|/\xi^2)$ even when each marginal is
-$\delta$-uniform; mutual information is preserved exactly,
-$I(\fhat_1(C); \fhat_2(C)) = I(f_1(X); f_2(X))$.  The compositional
-channel is intrinsic to the framework's composability, not a bug:
-the same property that lets the untrusted machine chain evaluations
-blindly is the property that creates the channel.  Defending against
-a distribution-estimation adversary at the compositional scale
-therefore requires either reducing the number of shared-$c$
-observations, joint encoding via Prop.~\ref{prop:granularity}, or
-noise injection.  This is the operational reason practitioners cannot
-stop at multiplicity, and is the paper's headline contribution.  We
-also include, for completeness, FPR compounding through Boolean
-chains, which is inherited from~\cite[Sec.~8]{towell2026cipher}.
+on its own.  The paper's main result is that this is not enough, and
+in a strong sense.  When the untrusted machine observes multiple
+cipher map evaluations on a shared cipher value, the joint
+distribution over latent outputs is recoverable at the
+information-theoretically optimal rate $\Theta(|Y_1|\cdot|Y_2|/\xi^2)$
+(matching upper bound from plug-in estimation in
+Theorem~\ref{thm:comp-leakage}; matching lower bound via Le Cam's
+two-point method in Theorem~\ref{thm:comp-leakage-lb}); mutual
+information is preserved exactly,
+$I(\fhat_1(C); \fhat_2(C)) = I(f_1(X); f_2(X))$.  No per-cipher-map
+parameter (including arbitrarily small $\delta$) changes the rate.
+The compositional channel is intrinsic to the framework's
+composability, not a bug: the same property that lets the untrusted
+machine chain evaluations blindly is the property that creates the
+channel.  Defending against a distribution-estimation adversary at
+the compositional scale therefore requires system-level interventions
+(reducing shared-$c$ observations, joint encoding via
+Prop.~\ref{prop:granularity}, or noise injection); marginal-scale
+parameter tuning alone does not.  We also include, for completeness,
+FPR compounding through Boolean chains, which is inherited
+from~\cite[Sec.~8]{towell2026cipher}.
 
 \paragraph{Practical measurement.}
 We provide practical measurement tools that close the loop between
@@ -190,20 +201,23 @@ explicit probabilistic models of the adversary.
 
 \paragraph{Contributions.}
 \begin{enumerate}
-\item \textbf{Compositional leakage theorem (main result).}
-  Theorem~\ref{thm:comp-leakage} shows that $\delta$-uniform marginals
-  do not prevent joint recovery: when the untrusted machine observes
+\item \textbf{Compositional leakage at the optimal rate (main result).}
+  Theorems~\ref{thm:comp-leakage} and~\ref{thm:comp-leakage-lb}
+  together establish that when the untrusted machine observes
   multiple cipher map evaluations on a shared cipher value, the joint
-  distribution over latent outputs is recoverable from
-  $O(|Y_1|\cdot|Y_2|/\xi^2)$ observations, with mutual-information
-  preservation $I(\fhat_1(C); \fhat_2(C)) = I(f_1(X); f_2(X))$.  A
-  matching minimax lower bound (Theorem~\ref{thm:comp-leakage-lb})
-  shows the rate is sharp: no estimator can do better, so the
-  compositional channel is information-theoretically optimal for the
-  adversary.  Reducing $\delta$ is therefore necessary but not
-  sufficient.  FPR compounding through Boolean chains is included for
-  context; it is inherited from~\cite{towell2026cipher}
-  (\S\ref{sec:composition}).
+  distribution over latent outputs is recoverable at the
+  information-theoretically optimal rate
+  $\Theta(|Y_1|\cdot|Y_2|/\xi^2)$, with mutual-information preservation
+  $I(\fhat_1(C); \fhat_2(C)) = I(f_1(X); f_2(X))$.  The upper bound is
+  attained by the empirical-distribution plug-in estimator; the
+  matching minimax lower bound is via Le Cam's two-point method.  No
+  per-cipher-map parameter (including arbitrarily small $\delta$)
+  changes the rate, so reducing $\delta$ is necessary but not
+  sufficient: only system-level interventions (observation limits,
+  joint encoding via Prop.~\ref{prop:granularity}, or noise injection)
+  reduce the adversary's effective advantage at this scale.  FPR
+  compounding through Boolean chains is included for context; it is
+  inherited from~\cite{towell2026cipher} (\S\ref{sec:composition}).
 
 \item \textbf{Fannes bridge.}  The representation-uniformity parameter
   $\delta$ directly lower-bounds the entropy ratio,
@@ -249,11 +263,14 @@ worst-case measure; Alvim et al.~\cite{alvim2020science} provide a
 comprehensive treatment of information-theoretic leakage measures.
 The measure itself is not our contribution, and we do not claim
 novelty there.  What is new here is (i) the compositional leakage
-bound showing that $\delta$-uniform marginals are insufficient when
+result showing that $\delta$-uniform marginals are insufficient when
 shared cipher values recur across evaluations
-(Theorem~\ref{thm:comp-leakage}), the paper's main result, and
-(ii) the \emph{Fannes bridge} connecting the representation-uniformity
-parameter $\delta$ of cipher maps to the entropy ratio
+(Theorems~\ref{thm:comp-leakage} and~\ref{thm:comp-leakage-lb})
+establishing the information-theoretically optimal rate
+$\Theta(|Y_1|\cdot|Y_2|/\xi^2)$ via matching upper and lower bounds,
+the paper's main result, and (ii) the \emph{Fannes bridge} connecting
+the representation-uniformity parameter $\delta$ of cipher maps to
+the entropy ratio
 ($e \geq 1 - \delta - h_2(\delta)/n$), making $\delta$ the operational
 handle QIF does not have.  The QIF literature treats leakage of a
 function; the cipher map setting adds a four-parameter construction
@@ -1736,13 +1753,19 @@ different confidentiality profiles.
 We have developed a quantitative confidentiality theory for cipher map
 systems, grounded in the cipher map framework
 of~\cite{towell2026cipher}.  The headline result is the compositional
-leakage theorem (Theorem~\ref{thm:comp-leakage}): even when each cipher
-map's marginal cipher distribution is $\delta$-uniform, observing
-multiple evaluations on a shared cipher value lets the untrusted machine
-recover the latent joint at the standard parametric rate
-$O(|Y_1|\cdot|Y_2|/\xi^2)$.  Marginal uniformity is necessary but not
-sufficient; the cipher map composition discipline that buys
-functionality also creates an information channel through shared values.
+leakage pair (Theorems~\ref{thm:comp-leakage}
+and~\ref{thm:comp-leakage-lb}): even when each cipher map's marginal
+cipher distribution is $\delta$-uniform, observing multiple
+evaluations on a shared cipher value lets the untrusted machine
+recover the latent joint at the information-theoretically optimal
+rate $\Theta(|Y_1|\cdot|Y_2|/\xi^2)$, with matching upper bound from
+plug-in estimation and matching lower bound via Le Cam's two-point
+method.  No per-cipher-map parameter changes the rate, so marginal
+uniformity is necessary but not sufficient; the cipher map composition
+discipline that buys functionality also creates an information
+channel through shared values, and only system-level interventions
+(observation limits, joint encoding, or noise injection) reduce the
+adversary's effective advantage at this scale.
 
 To make the marginal target itself operational, we connect $\delta$ to
 the entropy ratio $e = H/H^*$ (a normalized form of Shannon leakage
