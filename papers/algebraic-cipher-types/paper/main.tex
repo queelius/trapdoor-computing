@@ -39,29 +39,30 @@
 \maketitle
 
 \begin{abstract}
-A cipher map is a total function on bit strings that implements a trapdoor
-approximation of a latent function: the untrusted machine evaluates it
-blindly; only the trusted machine, holding the secret, can encode inputs
-and decode outputs.
-We study what happens when algebraic type constructors---products, sums,
-and exponentials---are applied to cipher values.
-Each constructor forces a specific confidentiality/functionality trade-off
-that is absent in plaintext programming.
-Our main result is a sum-type impossibility: for $A + B$, either the tag
-(which variant) is hidden and pattern matching requires the trapdoor, or
-pattern matching is available to the untrusted machine and the tag is
-leaked.
-No encoding achieves both simultaneously.
-We introduce the \emph{orbit closure} of a cipher value under a set of
-available operations and prove that confidentiality is bounded by the
-fraction of the cipher space reachable from any single value.
+Cipher types form an algebra: starting from primitive ciphered values,
+the type constructors of ordinary programming (products, sums,
+exponentials) build complex cipher types from simpler ones, with each
+constructor inducing a specific confidentiality cost absent in
+plaintext programming.
+We characterize the algebra constructor-by-constructor: products
+leak correlations, sums force a categorical impossibility (tag
+hiding and untrusted pattern matching cannot coexist), and the
+cipher exponential is the cipher map abstraction itself, closing
+the algebra back on the trapdoor framework.
+A uniform information-theoretic bound holds across the algebra:
+the conditional entropy of the latent value given the untrusted
+machine's view is at least $H(X) - \log_2 |\mathrm{orbit}|$, where
+the orbit is the set of cipher values reachable under the operations
+the untrusted machine holds.
 A typed-composition discipline turns this bound into a design-time
-budget: the type of a cipher program determines how deep its orbit
-can go.
-We realize cipher programs as expression-tree decompositions with
-cipher-map cut points (exposed in Python via a
-\texttt{@cipher\_node} decorator) and evaluate the cipher Boolean
-algebra specialization on a 20~Newsgroups Boolean search task.
+budget: the type of a cipher program determines how deeply its
+orbit can grow.
+We realize cipher programs as Python expression-tree decompositions
+with cipher-map cut points (a \texttt{@cipher\_node} decorator
+marks the cipher subtrees; unmarked nodes run as plain code over
+opaque bit strings) and evaluate the cipher Boolean specialization
+on a 20~Newsgroups Boolean search task, where the cut-point
+discipline measurably bounds confidentiality loss.
 \end{abstract}
 
 
@@ -97,28 +98,42 @@ This paper identifies and formalizes those costs.
 The main contributions are:
 
 \begin{enumerate}
-\item \textbf{Sum-type impossibility} (\Cref{thm:sum-impossibility}).
-  For cipher values of sum type $A + B$, tag hiding and pattern matching
-  by the untrusted machine are mutually exclusive.
-  This is an information-theoretic result, independent of the cipher map
-  construction.
+\item \textbf{An algebra of cipher types} (\Cref{sec:types}).
+  We survey the standard type constructors over cipher values
+  (void, unit, product, sum, exponential) and identify the
+  confidentiality cost each one introduces.
+  Products leak correlations under component-wise encoding
+  (\Cref{prop:product-tradeoff}); sums force an impossibility
+  between tag hiding and untrusted pattern matching
+  (\Cref{thm:sum-impossibility}); the cipher exponential is
+  exactly the cipher map abstraction
+  (\Cref{prop:exponential-identity}), closing the algebra back on
+  the trapdoor framework, with its own granularity trade-off
+  (\Cref{prop:exponential-tradeoff}).
+  The encoding-granularity knob (joint vs.\ component-wise) runs
+  uniformly through the algebra; the costs differ by constructor.
 
-\item \textbf{Orbit closure and confidentiality bound}
-  (\Cref{sec:orbit}).
-  We define the orbit closure of a cipher value under
-  available operations, prove monotonicity
-  (\Cref{thm:monotonicity}), and derive an upper bound on
-  confidentiality in terms of orbit size
-  (\Cref{thm:confidentiality-bound}).
-  A typed-composition discipline (\Cref{sec:typed-chains}) converts this
-  bound into a design-time budget: the type of a cipher program bounds
-  its orbit depth and hence its worst-case confidentiality loss.
+\item \textbf{A uniform information-theoretic bound} (\Cref{sec:orbit}).
+  We define the orbit closure of a cipher value under the
+  operations available to the untrusted machine
+  (\Cref{def:orbit}), prove monotonicity
+  (\Cref{thm:monotonicity}), and derive an entropy-form
+  confidentiality bound
+  $H(X \mid \mathcal{V}_F(c)) \geq H(X) - \log_2 |\mathrm{orbit}_F(c)|$
+  (\Cref{thm:confidentiality-bound}) that is independent of the
+  underlying cipher-map construction.
+  A typed-composition discipline (\Cref{sec:typed-chains}) converts
+  the bound into a design-time budget: the type of a cipher
+  program bounds its orbit depth, and hence its worst-case
+  confidentiality loss.
 
 \item \textbf{Expression-tree realization} (\Cref{sec:realizing}).
-  We decompose cipher programs into cipher-map pieces via cipher-node
-  annotations on the program's expression tree.
-  Each annotated node becomes a cipher map; unmarked nodes above
-  them remain as plain operations on the cipher bytes.
+  We realize the algebra at the program level: a cipher program is
+  a composition of cipher maps and plain operations over opaque bit
+  strings.
+  Cipher-node annotations on a program's expression tree mark which
+  subtrees become cipher maps; unmarked nodes run as plain code on
+  the cipher bytes.
   The placement of annotations selects the cut points, and the type
   of the cut-point cipher spaces determines the orbit budget per
   \Cref{prop:typed-orbit}.
@@ -290,12 +305,38 @@ Property~1).
 \label{sec:types}
 %% ====================================================================
 
-We now examine how the standard algebraic type constructors interact with
-cipher values.
-For each constructor, there is a choice: apply the cipher operation to the
-entire constructed type, or construct from already-ciphered components.
-These two strategies yield different confidentiality and functionality
-properties.
+Cipher types form an algebra: starting from primitive ciphered values,
+the type constructors of ordinary programming (void, unit, product,
+sum, exponential) build complex cipher types from simpler ones.
+We examine each constructor in turn and identify its
+\emph{confidentiality cost}: the irreducible information the untrusted
+machine learns when the constructor is realized over cipher values.
+
+A common knob runs through the algebra.
+For every binary type constructor, the cipher type can be built by
+\emph{joint encoding} (the constructed type as a single cipher value,
+$\cipher{A \star B}$) or \emph{component-wise encoding} (the
+constructed type as a structure over the cipher types of its
+components, $\cipher{A} \star \cipher{B}$).
+Joint encoding hides more structure but demands a fresh cipher map for
+each operation that exposes it (projection, pattern matching);
+component-wise encoding makes operations available to the untrusted
+machine at the cost of leaking exactly the structural relationship
+that joint encoding was hiding.
+The cost is constructor-specific:
+products leak \emph{correlations} (\Cref{prop:product-tradeoff}),
+sums leak the \emph{tag} (\Cref{thm:sum-impossibility}),
+and exponentials leak the \emph{computation pattern}
+(\Cref{prop:exponential-tradeoff}).
+
+The same encoding-granularity knob extends to the orbit-closure
+analysis of \Cref{sec:orbit}: the operations a constructor exposes
+to the untrusted machine determine the size of the reachable cipher
+space, and the typed-composition discipline of
+\Cref{sec:typed-chains} bounds the resulting confidentiality loss.
+Together, the per-constructor costs of this section and the uniform
+information-theoretic bound of the next combine into a confidentiality
+calculus over the cipher-type algebra.
 
 
 %% --------------------------------------------------------------------
@@ -550,29 +591,148 @@ the trapdoor.
 \label{sec:exponentials}
 %% --------------------------------------------------------------------
 
-The exponential type $B^A = A \to B$ is the type of functions from $A$ to
-$B$.
-A cipher map $\fhat$ for $f : A \to B$ is already an element of the cipher
-exponential type: it is a total function on $\B^n$ that, when restricted
-to valid encodings of $A$, produces (approximate) encodings of $B$-values.
+The exponential type $B^A = A \to B$ is the type of functions from $A$
+to $B$.
+The cipher exponential closes the algebra back on itself.
 
-This observation, developed in~\cite{towell2026cipher}, means the cipher
-exponential type is not a new construction but the cipher map abstraction
-itself.
-The four properties (totality, representation uniformity, correctness,
-composability) are exactly the conditions that make $\fhat$ a well-behaved
-element of $\cipher{A \to B}$.
+\begin{proposition}[Cipher exponential is the cipher map abstraction]
+\label{prop:exponential-identity}
+For finite types $A$ and $B$, the cipher exponential $\cipher{A \to B}$
+is precisely the set of cipher maps for functions $f : A \to B$.
+A function $\fhat : \B^n \to \B^n$ is a well-formed element of
+$\cipher{A \to B}$ if and only if it satisfies the four cipher-map
+properties of \Cref{def:cipher-map} (totality, representation
+uniformity, correctness, composability).
+\end{proposition}
 
-The encoding granularity trade-off from \Cref{sec:products} extends to
-exponentials.
-Given cipher maps $\fhat : \B^n \to \B^n$ and $\hat{g} : \B^n \to \B^n$,
-applying them independently (component-wise) to the two components of a
-product cipher value reveals that both functions are being applied---leaking
-the computation pattern.
-Encoding the pair of function applications as a single cipher map
-$\widehat{(f,g)} : \B^n \to \B^n$ for the product function
-$(f, g)(a, b) = (f(a), g(b))$ hides the computation pattern but requires
-a dedicated construction.
+\begin{proof}
+A cipher map $\fhat$ for $f : A \to B$ is by construction a total
+function on $\B^n$ that, when restricted to valid encodings of $A$,
+produces approximate encodings of $B$-values
+(per~\cite{towell2026cipher}).
+Conversely, any total function on $\B^n$ that is correct (with
+parameter $\eta$) on some encoding of $A$ is a cipher map for the
+function it computes on the latent values.
+The four cipher-map properties are exactly the well-formedness
+conditions for membership in $\cipher{A \to B}$.
+\end{proof}
+
+This identity has a structural consequence: every cipher type
+constructor in the paper, including products, sums, and exponentials,
+ultimately reduces to a question about cipher maps.
+The orbit-closure framework of \Cref{sec:orbit} therefore applies
+uniformly to operations on cipher exponentials, just as it applies
+to operations on cipher products and sums.
+
+The encoding-granularity knob applies to exponentials too, with its
+own constructor-specific cost.
+
+\begin{proposition}[Exponential confidentiality trade-off]
+\label{prop:exponential-tradeoff}
+Let $f : A \to B$ and $g : C \to D$ be functions with cipher
+realizations $\fhat$ and $\hat{g}$.
+\begin{enumerate}
+\item Under \emph{component-wise} application
+  $(\fhat, \hat{g}) : \cipher{A} \times \cipher{C} \to
+  \cipher{B} \times \cipher{D}$, the untrusted machine sees the two
+  cipher maps applied independently and learns that both $f$ and $g$
+  are being computed (the \emph{computation pattern}).
+\item Under \emph{joint} application
+  $\widehat{(f, g)} : \cipher{A \times C} \to \cipher{B \times D}$
+  realized as a single cipher map for the product function
+  $(f, g)(a, c) = (f(a), g(c))$, the untrusted machine sees one
+  opaque cipher-map invocation and cannot determine which constituent
+  functions were applied.
+  This requires a dedicated cipher map of size
+  $O(|A| \cdot |C|)$ rather than $O(|A|) + O(|C|)$.
+\end{enumerate}
+\end{proposition}
+
+\begin{proof}
+Part~(1): The untrusted machine evaluates $\fhat$ and $\hat{g}$
+separately and observes that two distinct cipher maps were applied.
+The identities of $\fhat$ and $\hat{g}$, as objects in
+$\cipher{A \to B}$ and $\cipher{C \to D}$ respectively, are
+themselves part of the cipher-program code visible to the untrusted
+machine.
+
+Part~(2): A single cipher map $\widehat{(f, g)}$ over the product
+domain has only one invocation, indistinguishable from any other
+cipher-map invocation of the same arity and shape.
+The product-domain construction has size proportional to
+$|A \times C| = |A| \cdot |C|$ rather than the sum of the component
+domains, per the lookup-table cost in~\cite[Sec.~6]{towell2026cipher}.
+\end{proof}
+
+The asymmetry in part~(2) recapitulates the product-type trade-off
+of \Cref{prop:product-tradeoff}: hiding the computation pattern is
+itself an instance of joint product encoding, applied to the
+exponentials rather than to their inputs.
+
+
+%% --------------------------------------------------------------------
+\subsection{Summary: The Cipher-Type Algebra}
+\label{sec:type-summary}
+%% --------------------------------------------------------------------
+
+\Cref{tab:algebra-summary} consolidates the per-constructor results.
+Three observations stand out.
+
+\begin{table}[ht]
+\centering
+\small
+\caption{Confidentiality cost by type constructor.
+``Joint'' encodes the constructed type as a single cipher value;
+``component-wise'' builds the cipher type from cipher types of the
+components.}
+\label{tab:algebra-summary}
+\begin{tabular}{@{}lll@{}}
+\toprule
+Constructor & Joint encoding hides & Component-wise encoding leaks \\
+\midrule
+$\mathbf{0}$ (void) & N/A & N/A \\
+$\mathbf{1}$ (unit) & nothing to hide & nothing to leak \\
+$A \times B$ (\Cref{prop:product-tradeoff}) & correlations between $a$, $b$ & joint distribution as $N \to \infty$ \\
+$A + B$ (\Cref{thm:sum-impossibility}) & the tag (which variant) & the tag, by impossibility \\
+$A \to B$ (\Cref{prop:exponential-tradeoff}) & the computation pattern & which functions are being applied \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Universal granularity knob.}
+For every binary constructor, the choice between joint and
+component-wise encoding is a continuous spectrum
+(\Cref{rem:sum-vs-product}, the entanglement parameter $p$
+of~\cite[Sec.~9]{towell2026cipher}), and the constructor determines
+\emph{what} is on each side of the spectrum.
+The product spectrum runs from full correlation hiding to
+correlation-leaking projections; the sum spectrum runs from full
+tag hiding to tag-leaking pattern matching; the exponential
+spectrum runs from a single product cipher map to independent
+component cipher maps.
+
+\paragraph{Sums are categorically different.}
+Products and exponentials admit \emph{intermediate} encodings: an
+adversary can recover correlations or computation patterns
+asymptotically but never exactly from a finite observation.
+The sum-type result is sharper: tag hiding and untrusted pattern
+matching cannot \emph{coexist} at any encoding, intermediate or
+otherwise (\Cref{thm:sum-impossibility}).
+The asymmetry is structural, not quantitative: products and
+exponentials always have both components present so the question is
+which relationships are observable; sums commit to one variant per
+value so the question is whether the variant itself is observable.
+
+\paragraph{Closure under the orbit framework.}
+The per-constructor costs of \Cref{tab:algebra-summary} are local:
+they describe what one cipher value or one operation reveals.
+The next section lifts these into a uniform information-theoretic
+bound (\Cref{thm:confidentiality-bound}) that controls what the
+untrusted machine learns by \emph{actively composing} the operations
+exposed to it.
+The typed-composition discipline (\Cref{sec:typed-chains}) is the
+algebra's design-time budget: the type of a cipher program bounds
+how deeply the untrusted machine can chase those compositions.
 
 
 %% ====================================================================
@@ -1469,21 +1629,26 @@ confidentiality and minimum functionality.
 \section{Conclusion}
 %% ====================================================================
 
-We have shown that algebraic type constructors create unavoidable
-confidentiality costs in trapdoor computing.
-The sum-type impossibility theorem establishes that tag hiding and
-untrusted pattern matching are mutually exclusive for any encoding.
-The orbit closure framework provides a quantitative bound on
-confidentiality degradation as the untrusted machine applies
-operations, and a typed-composition discipline converts that bound
-into a design-time budget.
-These results apply to any cipher map construction, not just specific
-implementations.
+Cipher types form an algebra with a coherent confidentiality
+calculus.
+We surveyed the algebra constructor by constructor: products leak
+correlations, sums force a categorical impossibility (tag hiding
+and untrusted pattern matching cannot coexist), and the cipher
+exponential is the cipher map abstraction itself, closing the
+algebra back on the trapdoor framework.
+Across the algebra, a uniform information-theoretic bound holds:
+the conditional entropy of the latent value given the untrusted
+machine's view is at least $H(X) - \log_2 |\mathrm{orbit}|$.
+A typed-composition discipline turns this bound into a design-time
+budget; these results apply to any cipher map construction, not
+just specific implementations.
 
-The expression-tree realization concretizes these trade-offs at the
-program level: cipher-node annotations on a Python program select the
-cut points where cipher maps replace plaintext subtrees, while
-unmarked nodes run as plain code on the cipher bytes.
+The algebra realizes at the program level as expression-tree
+decomposition.
+A cipher program is a composition of cipher maps and plain code over
+opaque bit strings: cipher-node annotations on a Python program
+select the cut points where cipher maps replace plaintext subtrees,
+while unmarked nodes run as plain code on the cipher bytes.
 The placement of annotations selects which intermediate structure
 the untrusted machine observes; the type discipline of the
 cut-point cipher spaces bounds the orbit per
