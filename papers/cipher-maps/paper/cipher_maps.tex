@@ -53,14 +53,14 @@
 \maketitle
 
 \begin{abstract}
-Outsourcing function evaluation to an untrusted machine typically requires
-oblivious RAM (hiding access patterns), fully homomorphic encryption
-(exact computation on ciphertexts), or garbled circuits (encrypted
-lookup tables, single-use).  Each carries substantial cost.  We propose
-the \emph{cipher map}: a total function on bit strings whose privacy
-properties emerge from a one-way trapdoor (a cryptographic hash with a
-secret seed) combined with a frequency-equalized output distribution.
-Cipher maps fit the quantitative information flow
+Outsourcing function evaluation to an untrusted machine typically
+requires oblivious RAM (hiding access patterns), fully homomorphic
+encryption (exact computation on ciphertexts), or garbled circuits
+(encrypted lookup tables, single-use).  Each carries substantial cost.
+We propose the \emph{cipher map}: a total function on bit strings whose
+privacy properties emerge from a one-way trapdoor (a cryptographic
+hash with a secret seed) combined with a frequency-equalized output
+distribution.  Cipher maps fit the quantitative information flow
 tradition~\cite{smith2009foundations,alvim2012measuring}: rather than
 achieving negligible leakage in a security parameter, they bound
 observable leakage by measurable parameters $\delta$ (representation
@@ -68,16 +68,24 @@ uniformity), $\varepsilon$ (noise-decode probability), and $\eta$
 (correctness), with the entropy ratio serving as the security measure
 (formal framework in companion work~\cite{towell2026maxconf}).  The
 construction reduces to a single design choice: an \emph{acceptance
-predicate} that partitions hash space among output values.
-Shannon-optimal allocation of this partition simultaneously minimizes
-space (achieving $-\log_2 \varepsilon + H(Y)$ bits per element, the
-information-theoretic lower bound), maximizes output indistinguishability
-(noise and real outputs share the same frequency profile), and enables
-predictable error composition
-($\eta_{\mathrm{total}} \leq 1 - \prod(1 - \eta_i)$).  We formalize the
-framework through four measurable properties, prove the composition and
-space-optimality theorems, and illustrate the construction on arbitrary
-maps, set membership, and encrypted search.
+predicate} that partitions hash space among output values.  Acceptance
+predicates expose a Pareto frontier between expected codeword length
+$L$ and TV-leakage; the Shannon-optimal corner ($L = -\log_2
+\varepsilon + H(Y)$, matching the information-theoretic lower bound)
+and the TV-optimal corner are distinct under integer codeword
+constraints, with the gap reaching $42\times$ in TV at $17\%$ length
+overhead on heavy-tailed value distributions.  Composition is
+predictable: the chain bound
+$\eta_{\mathrm{total}} \leq 1 - \prod(1 - \eta_i)$ holds for sequential
+composition, and a coincidence-oracle bound (accuracy $1 - \tfrac{1}{2}
+\sum_y \alpha(y)^t$ for $t$ shared-$f$ instances under independent
+seeds) characterizes multi-instance leakage and inverts the
+single-instance Shannon recommendation at $t \geq 2$.  We formalize the
+framework through four measurable properties, prove the
+space-optimality, composition, and multi-instance theorems, validate
+the Le Cam attacker bound empirically across a codec sweep, and
+illustrate the construction on arbitrary maps, set membership, and
+encrypted search.
 \end{abstract}
 
 
@@ -129,7 +137,16 @@ a composition theorem with error bounds
 representation uniformity to a quantitative leakage measure
 (Proposition~\ref{prop:confidentiality}), and a unification of three
 prior threads (approximate data structures, frequency-hiding
-encryption, encrypted search) under one abstraction.
+encryption, encrypted search) under one abstraction.  Two further
+contributions sharpen the value-side security analysis: a
+multi-instance composition theorem
+(Theorem~\ref{thm:coincidence-oracle}) characterizing equality-pattern
+leakage when the same latent function is published as $t$ cipher maps
+under independent seeds, and an empirical evaluation
+(\S\ref{subsec:eval-codec-security}) confirming the Le Cam bound is
+realized by the Bayes-optimal attacker across a sweep of acceptance
+predicates and exposing a $42\times$ TV reduction available off the
+single-instance Shannon-optimal corner.
 
 \paragraph{Bernoulli error model.}
 The error framework underlying cipher maps is the Bernoulli
@@ -778,9 +795,14 @@ bound under specific adversary goals.
     $n$-bit cipher values, and the cipher value distribution is
     $\delta$-close to uniform by Property~2.  Consequently, no
     statistical test distinguishes real from filler with advantage
-    exceeding $\delta/2$ (Le Cam's two-point lemma applied to the
-    cipher value marginals; we report $\delta$ as a conservative upper
-    bound throughout to match the total-variation normalization).
+    exceeding $\delta/2$ (Le Cam's two-point
+    lemma~\cite{lecam1986asymptotic} applied to the cipher value
+    marginals; we report $\delta$ as a conservative upper bound
+    throughout to match the total-variation normalization).  The same
+    Le Cam bound applies at the decoded-value level
+    (\S\ref{subsec:eval-codec-security}), where it limits any
+    membership-inference attacker observing $\dec(\fhat(c))$ to
+    accuracy $1/2 + \delta/2$ at balanced class prior.
 \item \emph{Domain identification is bounded by~$\delta$ (Property~2).}
     For any binary discrimination question $U$ poses (e.g., ``is this
     cipher value a real domain element or noise?''), $U$'s advantage
@@ -1682,8 +1704,328 @@ granularity of this trade-off.
     only joint encoding or noise injection can mitigate it.
 \item Equality pattern leakage is fundamental: any deterministic encoding
     leaks the equality pattern of its inputs.  Multiple representations
-    ($K(x) > 1$) reduce but do not eliminate this.
+    ($K(x) > 1$) reduce but do not eliminate this.  The next subsection
+    quantifies this leakage as a function of instance count and
+    acceptance allocation, and analyzes randomized encoding as a
+    defense.
 \end{enumerate}
+
+
+%% ============================================================
+%% [INTEGRATION 2026-05-07] New subsection §8.3
+\subsection{Multi-Instance Composition Leakage}
+\label{subsec:multi-instance}
+
+The previous subsection identified equality-pattern leakage as
+fundamental for deterministic encodings.  We now quantify it precisely
+for the case of \emph{multi-instance composition}: the same latent
+function $f : X \to Y$ encoded as $t$ cipher maps
+$\fhat_1, \ldots, \fhat_t$, all observed by the same untrusted machine.
+This deployment pattern arises whenever the same data is published
+multiple times under different keys, when a cipher map is updated and
+both versions remain accessible, or when an attacker collects
+observations across multiple cipher map snapshots.
+
+\subsubsection*{The coincidence oracle}
+
+Consider $t$ cipher maps $\fhat_1, \ldots, \fhat_t$ for the same $f$
+under independent secret seeds (so that filler-query outputs are
+independent across instances by the random-oracle assumption), with
+acceptance partitions $\{\alpha_i(y)\}_{y \in Y}$.  Under canonical
+encoding ($K(x) = 1$ per value) and $\eta = 0$, members produce
+identical decoded values across instances; non-members produce
+independent decoded draws.  The simplest attacker, the
+\emph{coincidence oracle}, predicts ``in-domain'' iff
+$\dec_1(\fhat_1(c)) = \cdots = \dec_t(\fhat_t(c))$ and the common
+decoded value is not~$\bot$.
+
+\begin{theorem}[Coincidence-oracle accuracy]
+\label{thm:coincidence-oracle}
+Let $\fhat_1, \ldots, \fhat_t$ be canonical cipher maps for the same
+latent function $f : X \to Y$ under independent secret seeds, each
+with its own encoder $\enc_i$, decoder $\dec_i$, and acceptance
+partition $\{\alpha_i(y)\}_{y \in Y}$, with $K(x) = 1$ for all $x$
+(canonical encoding) and $\eta = 0$ (exact correctness).  Assume the
+codec is public (the acceptance predicates $A_i$ are known to $U$).
+Then under balanced class prior $\pi = 1/2$ between members
+($x \in \mathrm{dom}(f)$ with $f(x) \in Y$) and non-members (filler queries),
+the coincidence-oracle attacker's classification accuracy is
+\begin{equation}
+\mathrm{accuracy}(t)
+\;=\; 1 \;-\; \tfrac{1}{2} \sum_{y \in Y} \prod_{i=1}^{t} \alpha_i(y).
+\label{eq:coincidence-bound}
+\end{equation}
+For homogeneous instances (same partition $\alpha$ across all $i$):
+\begin{equation}
+\mathrm{accuracy}_{\mathrm{hom}}(t)
+\;=\; 1 \;-\; \tfrac{1}{2} \sum_{y \in Y} \alpha(y)^t.
+\label{eq:coincidence-homogeneous}
+\end{equation}
+\end{theorem}
+
+\begin{proof}
+We compute the attacker's conditional accuracy on each class, then
+combine at the balanced prior.
+
+\emph{Members.}
+For a member $x \in \mathrm{dom}(f)$ with $f(x) \in Y$, the trusted side
+publishes one cipher value per instance, $c_i = \enc_i(x, 0)$ (the
+single multiplicity index under $K(x) = 1$).  Under $\eta = 0$ each
+cipher map decodes correctly, so
+$\dec_i(\fhat_i(c_i)) = f(x)$ for every~$i$.  All $t$ decoded values
+equal the common value $f(x) \in Y$; the coincidence-oracle predicate
+``all match a common $y \in Y$'' is satisfied, and the attacker
+correctly predicts ``in-domain'':
+$\Pr[\text{predict in} \mid \text{member}] = 1$.
+
+\emph{Non-members (filler).}
+For a non-member input, the $t$ cipher values $(c_1, \ldots, c_t)$
+fed to the cipher maps are not stored in any instance.  Under the
+random oracle model with independent per-instance seeds, the hash
+outputs $\fhat_i(c_i)$ are independent across $i$ and each uniform
+on~$\B^n$.  The per-instance decoded value distribution is therefore
+$\Pr[\dec_i(\fhat_i(c_i)) = y] = \alpha_i(y)$ for each $y \in Y$
+and $\Pr[\dec_i(\fhat_i(c_i)) = \bot] = 1 - \varepsilon_i$, with
+events independent across instances.  The attacker's predicate
+explicitly excludes the common-$\bot$ case (it requires the common
+value to lie in $Y$), so by independence,
+\[
+\Pr[\text{predict in} \mid \text{filler}]
+  = \sum_{y \in Y} \Pr\!\left[\bigwedge_{i=1}^{t} \dec_i(\fhat_i(c_i)) = y\right]
+  = \sum_{y \in Y} \prod_{i=1}^{t} \alpha_i(y).
+\]
+All other outcomes (some pair disagrees, or all agree on $\bot$)
+correctly classify the input as ``not in-domain''.
+
+\emph{Combining at $\pi = 1/2$.}
+\begin{align*}
+\mathrm{accuracy}
+  &= \pi \cdot \Pr[\text{predict in} \mid \text{member}]
+   + (1 - \pi) \cdot \Pr[\text{predict not in} \mid \text{filler}] \\
+  &= \tfrac{1}{2} \cdot 1
+   + \tfrac{1}{2} \left(1 - \sum_{y \in Y} \prod_{i=1}^{t} \alpha_i(y)\right)
+   = 1 - \tfrac{1}{2} \sum_{y \in Y} \prod_{i=1}^{t} \alpha_i(y).
+\end{align*}
+The homogeneous case follows by setting $\alpha_i = \alpha$ for
+all~$i$, giving $\prod_i \alpha_i(y) = \alpha(y)^t$.
+\end{proof}
+
+\begin{remark}[General class prior and threat model]
+\label{rem:coincidence-prior}
+For general prior $\pi \in (0, 1)$, the same calculation gives
+$\mathrm{accuracy}(t, \pi) = 1 - (1 - \pi) \sum_y \prod_i \alpha_i(y)$
+when the coincidence-oracle rule is preferred to the trivial
+``always predict not in domain'' rule (which has accuracy $1 - \pi$).
+The crossover is at $(1 - \pi) \sum_y \prod_i \alpha_i(y) = \pi$;
+for $\pi$ very small the coincidence-oracle rule loses to trivial,
+but at any $\pi \geq \tfrac{1}{2}$ the bound \eqref{eq:coincidence-bound}
+applies.  The public-codec assumption is essential: under a private
+codec, the attacker cannot apply $\dec_i$ and must fall back on the
+weaker pattern-coincidence attacker analyzed in
+Proposition~\ref{prop:rand-encoding}.
+\end{remark}
+
+\paragraph{Empirical verification.}
+A homogeneous sweep across five acceptance predicates and $t \in \{1,
+2, 3, 4, 5\}$ (codec-controlled retrieval, balanced class prior,
+$|S| = 2000$, $|Y| = 8$, 5000 evaluation queries per class per cell)
+finds $24$ of $25$ cells with the predicted accuracy from
+\eqref{eq:coincidence-homogeneous} inside the empirical Wilson 95\%
+confidence interval; the single miss is at $0.003$ absolute sampling
+noise.  Reported in \S\ref{subsec:eval-codec-security}.
+
+\subsubsection*{Geometric corollary: \texorpdfstring{$t$}{t}-dependent allocation}
+
+For homogeneous instances, $\sum_y \alpha(y)^t$ is dominated by
+$(\max_y \alpha(y))^t$ as $t$ grows.  The codec choice minimizing
+multi-instance coincidence-oracle leakage at large $t$ is therefore
+the one minimizing $\max_y \alpha(y)$.  At fixed $\varepsilon = \sum_y
+\alpha(y)$, this is the \emph{uniform} partition $\alpha(y) =
+\varepsilon / |Y|$.
+
+\begin{corollary}[$t$-dependent acceptance allocation]
+\label{cor:t-dependent}
+Among acceptance partitions with fixed $\varepsilon$:
+\begin{itemize}
+\item \textbf{$t = 1$ optimum:}  $\alpha(y) \propto p_y$ (Shannon-optimal
+    allocation, \S\ref{subsec:acceptance}) minimizes single-instance
+    leakage by matching real and noise frequency profiles.
+\item \textbf{$t \geq 2$ shared-$f$ optimum:}  $\alpha(y) =
+    \varepsilon / |Y|$ (uniform allocation) minimizes
+    coincidence-oracle leakage by equalizing the geometric tail of the
+    non-member distribution.
+\end{itemize}
+\end{corollary}
+
+The two regimes pull in opposite directions when $f$ has skewed value
+distribution.  For $|Y| = 8$ with a Zipf $p_y$ (skew parameter $s = 1$),
+the Shannon-optimal Huffman partition gives $\max_y \alpha(y) \approx
+0.5$ (the dominant value claims half the codespace), while uniform
+gives $\max_y \alpha(y) = 1/8 = 0.125$.  At $t = 5$, uniform's
+coincidence-oracle accuracy is $\approx 0.9999$ while the Shannon-optimal
+Huffman partition gives $\approx 0.984$.  The Shannon-optimal partition
+that wins at $t = 1$ leaks $\approx 16\times$ more under shared-$f$
+multi-instance composition than the uniform partition.
+
+\paragraph{Implication for deployment.}  The acceptance predicate is
+not chosen on purely Shannon-optimal grounds.  A deployment publishing
+a single cipher map should use $\alpha(y) \propto p_y$.  A deployment
+publishing $t \geq 2$ instances over the same $f$ under independent
+seeds should either use the uniform allocation, sacrificing
+single-instance indistinguishability for multi-instance robustness, or
+apply the randomized-encoding defense below.
+
+\subsubsection*{Randomized encoding as a defense}
+
+The coincidence oracle exploits the equality pattern of canonical
+encoding.  Property~2 already permits $K(x) > 1$ (homophonic
+substitution) as a representation-uniformity mechanism; we now
+quantify it as a defense against the multi-instance attacker.
+
+\begin{definition}[Randomized encoding]
+\label{def:rand-encoding}
+A cipher map uses \emph{randomized encoding} if the encoder samples
+$k$ uniformly from $\{0, \ldots, K(x) - 1\}$ at each query and emits
+$\enc(x, k)$.  Across instances, the per-query sample $k$ values are
+independent.
+\end{definition}
+
+\begin{definition}[Pattern-coincidence and decode-coincidence attackers]
+\label{def:pattern-decode-attackers}
+Given $t$ cipher map instances $\fhat_1, \ldots, \fhat_t$ for the
+same latent function $f$ under independent seeds and a probe
+$\mathbf{c} = (c_1, \ldots, c_t)$ constructed by the trusted side as
+$c_i = \enc_i(x, k_i)$ for a candidate input $x$:
+\begin{description}
+\item[Pattern-coincidence attacker (private-codec threat).]  Observes
+    the raw cipher map outputs $\mathbf{M} = (\fhat_1(c_1), \ldots,
+    \fhat_t(c_t)) \in (\B^n)^t$ and predicts ``in-domain'' iff all
+    $t$ are equal as bit strings: $\fhat_1(c_1) = \cdots =
+    \fhat_t(c_t)$.  Does not invoke $\dec_i$.
+\item[Decode-coincidence attacker (public-codec threat).]  Observes
+    the decoded values $\mathbf{D} = (\dec_1(\fhat_1(c_1)), \ldots,
+    \dec_t(\fhat_t(c_t)))$ and predicts ``in-domain'' iff all $t$
+    decoded values agree on a common value in $Y$.  Requires
+    knowledge of the per-instance acceptance predicates.
+\end{description}
+\end{definition}
+
+\begin{proposition}[Randomized-encoding defense, two threat models]
+\label{prop:rand-encoding}
+Let $\fhat_1, \ldots, \fhat_t$ be cipher maps for $f$ under
+randomized encoding with multiplicity $K(x) \geq 1$ (each $\enc_i$
+samples $k_i$ uniformly from $\{0, \ldots, K(x) - 1\}$ at every
+query) and $\eta = 0$ (exact correctness).  Write $|A_i(y)|$ for
+the size in bit strings of the value-$y$ acceptance region in
+instance $i$, and assume the construction \emph{saturates} each
+acceptance region: every bit string in $A_i(y)$ is reachable as
+$\fhat_i(c)$ for some member cipher value $c$ encoding a value-$y$
+plaintext (this holds, e.g., for Huffman codespace classes where
+$K(x)$ equals the codespace class size $2^{n - \ell_{f(x)}}$).  Then
+under the random oracle model with independent seeds:
+
+\textbf{Pattern-coincidence (private codec).}
+Conditional on $f(x) = y$,
+\[
+\Pr[\text{predict in} \mid \text{member, } f(x) = y]
+  \;=\; \prod_{i=2}^{t} \frac{1}{|A_i(y)|},
+\qquad
+\Pr[\text{predict in} \mid \text{filler}]
+  \;=\; \frac{1}{2^{n(t-1)}}.
+\]
+Increasing $|A_i(y)|$ via larger multiplicity $K(x)$ cuts the
+in-domain coincidence probability by a factor of $|A_i(y)|^{t-1}$
+relative to canonical encoding ($K(x) = 1$ gives $|A_i(y)| = 1$ and
+$\Pr[\text{predict in} \mid \text{member}] = 1$).
+
+\textbf{Decode-coincidence (public codec).}
+The decoded value distribution is invariant under the
+canonical-vs-randomized choice (every pattern in $A_i(y)$ decodes to
+$y$ regardless of which is sampled).  Accuracy equals the
+coincidence-oracle bound \eqref{eq:coincidence-homogeneous} of
+Theorem~\ref{thm:coincidence-oracle}.
+\end{proposition}
+
+\begin{proof}
+\emph{Pattern-coincidence, member.}
+Fix a member $x$ with $f(x) = y$.  Each instance $i$ samples
+$k_i \sim \mathrm{Unif}(\{0, \ldots, K(x) - 1\})$ and emits cipher
+value $c_i = \enc_i(x, k_i)$.  Under $\eta = 0$, $\fhat_i(c_i) \in
+A_i(y)$ for every $i$ (correctness, Property~3).  Under the random
+oracle model with independent seeds and the saturation assumption,
+the specific pattern $\fhat_i(c_i) \in A_i(y)$ chosen by instance
+$i$ is uniformly distributed on the $|A_i(y)|$ patterns and
+statistically independent across instances.  The probability that
+all $t$ patterns coincide is the probability that instances
+$2, 3, \ldots, t$ each match the pattern fixed by instance~$1$:
+$\prod_{i=2}^{t} 1/|A_i(y)|$.
+
+\emph{Pattern-coincidence, filler.}
+For a filler input, each $\fhat_i(c_i)$ is uniform on $\B^n$ under
+the random oracle model with independent seeds, and independent
+across instances.  Then $\Pr[\text{all equal}] = \sum_{p \in \B^n}
+(2^{-n})^t = 2^{n} \cdot 2^{-nt} = 2^{-n(t-1)}$.
+
+\emph{Decode-coincidence.}
+The decoded value $\dec_i(\fhat_i(c_i))$ depends only on which
+acceptance set $A_i(y)$ contains $\fhat_i(c_i)$, not on the specific
+pattern within that set.  Replacing the canonical sample
+$\enc_i(x, 0)$ with the randomized $\enc_i(x, k_i)$ changes which
+pattern in $A_i(y)$ is observed for member queries but not
+\emph{which} acceptance set is hit; the decoded value marginals
+are therefore identical to the canonical case.
+Theorem~\ref{thm:coincidence-oracle}'s accuracy formula
+\eqref{eq:coincidence-homogeneous} applies verbatim.
+\end{proof}
+
+\begin{remark}[Member coincidence under Huffman]
+\label{rem:huffman-member-coincidence}
+For a homogeneous Huffman codec with codeword lengths $\ell_v
+\approx -\log_2 p_f(v)$ over a value distribution $p_f$, the
+saturation assumption holds with $|A_i(v)| = 2^{n - \ell_v}$.
+Marginalizing the member coincidence over $p_f$:
+\[
+\Pr[\text{predict in} \mid \text{member}]
+  = \sum_{v} p_f(v) \cdot 2^{-(n - \ell_v)(t-1)}
+  = 2^{-n(t-1)} \sum_v p_f(v) \cdot 2^{\ell_v(t-1)}.
+\]
+For $t = 2$ this reduces to $|Y| / 2^n$ (each summand contributes
+$\approx 1$ under $2^{\ell_v} \approx 1/p_f(v)$).  For $t > 2$ the
+summand $p_f(v) \cdot 2^{\ell_v(t-1)} \approx p_f(v)^{2-t}$ is
+dominated by the rarest values and grows with $t$; the closed form
+no longer collapses but remains tractable numerically.  Empirical
+values appear in \S\ref{subsec:eval-codec-security}.
+\end{remark}
+
+\paragraph{Empirical verification.}
+A sweep at $|S| = 1000$, $|Y| = 8$, $n = 4$~bits, codec-controlled
+retrieval shows that randomized encoding reduces pattern-coincidence
+accuracy from $1.000$ (canonical) to $0.699$ (randomized) for the
+Huffman partition at $t = 4$, and to $0.543$ at $n = 5$~bits.
+Decode-coincidence accuracy is unaffected by the encoding mode,
+confirming the threat-model distinction.  Marginal output distribution
+at $t = 1$ is identical between canonical and randomized encoding to
+within $0.001$, confirming the defense is free in the single-instance
+regime.  Reported in \S\ref{subsec:eval-codec-security}.
+
+\paragraph{Honest limitations.}
+\begin{enumerate}
+\item Randomized encoding requires the codec (the acceptance
+    predicate) to remain private.  When the codec is published or
+    recoverable from queries, decode-coincidence applies and
+    randomized encoding provides no protection.
+\item The defense incurs space cost only when $\kappa(y) > 1$, which
+    requires acceptance predicates with codespace slack.  The Dense
+    partition ($\alpha(y) = 1/|Y|$, saturated) has $\kappa(y) = 1$ for
+    all $y$ and gets no benefit from randomized encoding.
+\item The decode-coincidence accuracy formula
+    \eqref{eq:coincidence-homogeneous} still applies under the
+    public-codec threat; the only structural defenses in that regime
+    are the $t$-dependent allocation of
+    Corollary~\ref{cor:t-dependent} and the encode-different-$f$-per-instance
+    deployment recommended in \S\ref{subsec:eval-codec-security}.
+\end{enumerate}
+%% [/INTEGRATION 2026-05-07]
 
 
 %% ============================================================
@@ -1852,6 +2194,43 @@ To set clear expectations:
     parameterized ($\delta$, $\varepsilon$) rather than negligible in a
     security parameter.
 \end{itemize}
+
+%% [INTEGRATION 2026-05-07] New subsection §9.6
+\subsection{Threat Model Scope: Value-Side and Key-Side Channels}
+\label{subsec:threat-scope}
+
+The four properties of \S\ref{sec:properties} bound \emph{value-side}
+leakage: the cipher value distribution $Q$ and its $\delta$-bounded TV
+from uniform, the $\eta$-bounded correctness gap, the
+$\varepsilon$-bounded noise-decode probability, and the entropy ratio
+that aggregates these.  An attacker observing $\fhat(c)$ and decoded
+outputs $\dec(\fhat(c))$ as $c$ ranges over query traffic faces the
+Le~Cam bound of \S\ref{subsec:operational}.
+
+\paragraph{Out of scope: structured key universes.}  When the latent
+domain $X$ carries features that are deterministically derivable from
+the encoded query $c$ at the trusted side (e.g., $X = \mathbb{Z}_N$
+with $S = \{x : x \equiv 0 \bmod 7\}$), an attacker who can recover or
+guess these features at the cipher value can predict membership
+without exercising the cipher map at all.  An empirical study of three
+key-universe configurations
+(\S\ref{subsec:eval-codec-security}) finds that a key-feature attacker
+saturates accuracy at $0.997$ for fully-structured~$S$, exceeding the
+value-only Le Cam bound of $0.572$ at the same operating point.  When
+$S$ is randomly drawn from $X$, key features carry no signal and the
+Le Cam bound is tight.
+
+The codec choice is the right defense only when $X$ is unstructured
+or when key features are independent of membership.  Structured key
+universes require complementary access-control mechanisms (e.g.,
+restricting which $c$ values the trusted machine submits to the
+untrusted machine, or applying a membership-hiding pre-permutation
+to $X$).  This is a clarification of scope, not a defect of the
+framework: the parameters $(\delta, \eta, \varepsilon, \mu)$ remain
+meaningful, but they bound only the channel from cipher map outputs
+to the adversary, not auxiliary side channels carried by the encoded
+queries themselves.
+%% [/INTEGRATION 2026-05-07]
 
 
 %% ============================================================
@@ -2072,6 +2451,200 @@ adversarial settings, all currently in progress:
     sensitivity, and end-to-end timing under realistic adversary
     workloads.
 \end{itemize}
+
+%% [INTEGRATION 2026-05-07] New subsection §10.6
+\subsection{Codec Security: A Direct Membership-Inference Study}
+\label{subsec:eval-codec-security}
+
+This subsection reports a controlled empirical study of the value-side
+security claim, complementing the encrypted-search application of
+\S\ref{subsec:eval-20ng}.  Where the 20 Newsgroups validation
+exercises a real corpus end-to-end, this study isolates the
+acceptance-predicate (codec) choice and measures how much an attacker
+can learn about membership from observed cipher map outputs.  All
+experiments use stdlib-only Python (no external machine-learning
+dependencies); the source is available as a companion experiment
+suite~\cite{towell2026codec}.
+
+\paragraph{Setup.}
+Build set $S$ of $|S| = 2000$ keys (random $16$-byte strings).
+Codomain $Y = \{y_0, \ldots, y_7\}$, latent value distribution $p_y$
+Zipf with skew $s = 1$.  Cipher value space $\{0,1\}^n$ with $n = 4$
+or $n = 5$ bits.  Six acceptance predicates compared:
+$\mathrm{Dense}(\alpha_y = 1/|Y|)$,
+two $\mathrm{Padded}$ variants with default values $y_0$ and $y_7$,
+$\mathrm{Huffman}$ from $p_y$ at $n = 4$ and $n = 5$, and
+$\mathrm{AntiHuffman}$ from $p_y$ at $n = 5$ (a worst-case codec
+that swaps the value-to-codeword-length pairing).  Three attacker
+classes are evaluated: a Bayes likelihood-ratio classifier over the
+decoded output, vanilla logistic regression on one-hot value features,
+and 1-nearest-neighbor.  Train and test sets are 5000 each at balanced
+class prior; AUC is Mann-Whitney $U$ with tie correction.  All numbers
+below are single-run (no replicates).
+
+\paragraph{Le Cam tightness across attackers.}
+\Cref{tab:le-cam-tight} reports empirical accuracy across the codec
+sweep.  All three attackers achieve the same accuracy to within $0.014$
+sampling noise; mean Bayes gap to the Le Cam bound
+$1/2 + \mathrm{TV}(P_{\mathrm{member}}, P_{\mathrm{filler}})/2$ is
+$-0.0004$ (statistically zero).  Empirical accuracy tracks the bound
+linearly across the codec sweep, with maximum absolute deviation
+$0.014$ (mean $0.006$).
+
+\begin{table}[ht]
+\centering
+\small
+\begin{tabular}{lrrr}
+\toprule
+Codec & TV & Le Cam UB & Best attacker \\
+\midrule
+Huffman ($n = 5$)        & 0.096 & 0.548 & 0.542 \\
+Huffman ($n = 4$)        & 0.121 & 0.560 & 0.575 \\
+Dense ($n = 4$)          & 0.218 & 0.610 & 0.607 \\
+Padded (default $= y_7$) & 0.560 & 0.780 & 0.778 \\
+AntiHuffman ($n = 5$)    & 0.616 & 0.808 & 0.811 \\
+\bottomrule
+\end{tabular}
+\caption{Le Cam tightness across acceptance predicates.  Empirical
+best-attacker accuracy tracks $1/2 + \mathrm{TV}/2$ to within
+sampling noise.  Multiple attacker classes (Bayes, logistic
+regression, 1-nearest-neighbor) tie; in the codomain
+$|Y| = 8$ the feature space saturates and all reasonable attackers
+collapse to per-value majority vote.  This empirically realizes
+the Le Cam upper bound.}
+\label{tab:le-cam-tight}
+\end{table}
+
+\paragraph{$(\mathrm{TV}, L)$ Pareto frontier and the Shannon
+duality refinement.}
+For each value distribution and cipher-value-space size, we enumerate
+all Kraft-feasible length assignments $\{\ell_y\}$ and compute both
+the expected codeword length $L = \sum_y p_y \ell_y$ and the TV gap
+$\sum_y |p_y - \alpha(y)|/2$ (where $\alpha(y) = 2^{-\ell_y}$).
+Across $14$ configurations covering $|Y| \in \{4, 6, 8\}$,
+$n \in \{4, 6\}$, and four $p_y$ shapes (uniform, Zipf, two-mode,
+heavy-tail), we find:
+\begin{itemize}
+\item Huffman from $p_y$ is always on the $(\mathrm{TV}, L)$ Pareto
+    frontier ($14$ of $14$).
+\item Huffman is \emph{not} always TV-optimal: the TV-min length
+    assignment differs from Huffman in $7$ of $14$ cases.  Huffman is
+    TV-optimal only when $p_y$ is dyadic or near-dyadic.
+\item For heavy-tailed $p_y = (0.9, 0.0143, \ldots)$ at $n = 6$ bits,
+    Huffman has $\mathrm{TV} = 0.40$ while the TV-min assignment
+    achieves $\mathrm{TV} = 0.0094$, a $42\times$ leakage reduction at
+    only $17\%$ overhead in expected codeword length.  Mechanism:
+    Huffman saturates Kraft, dumping all surplus codespace onto the
+    heavy mode; TV-min leaves Kraft slack and pushes long codewords
+    onto the tail to better match $p_y$.
+\end{itemize}
+
+This refines the Shannon-frequency duality of
+\S\ref{subsec:acceptance}.  In the continuous (fractional-codeword)
+setting, $\alpha(y) \propto p_y$ is exactly achievable and the
+Shannon-optimal corner coincides with the TV-optimal corner.  Under
+integer codeword constraints, the practical regime for prefix-free
+acceptance predicates, the L-optimal allocation (Huffman) and the
+TV-optimal allocation are not in general the same.
+Theorem~\ref{thm:space-optimal} establishes the L-optimal
+($-\log_2 \varepsilon + H(Y)$) corner; the TV-optimal corner is a
+separate Pareto-optimal design point reachable by spending modest
+expected length to achieve substantially lower value-side leakage on
+skewed $p_y$.
+
+\paragraph{Multi-instance leakage and the coincidence oracle.}
+Theorem~\ref{thm:coincidence-oracle} predicts coincidence-oracle
+accuracy $1 - \tfrac{1}{2} \sum_y \alpha(y)^t$ for $t$ shared-$f$
+cipher map instances under independent seeds.  An empirical sweep
+over $5$ codecs at $t \in \{1, 2, 3, 4, 5\}$ finds $24$ of $25$ cells
+inside the empirical Wilson $95\%$ CI of the predicted accuracy; the
+single miss is sampling noise at $0.003$ absolute.  The geometric
+corollary (Corollary~\ref{cor:t-dependent}) is verified empirically:
+at $t = 5$, the uniform Dense partition achieves accuracy
+$\approx 0.9999$ while the Shannon-optimal Huffman partition achieves
+$\approx 0.984$; the uniform allocation defends $\approx 16\times$
+better at large $t$ in this configuration.
+
+The single-instance versus multi-instance trade-off is sharp: Huffman
+dominates at $t = 1$ (small $\delta$); Dense dominates at $t \geq 2$
+under shared-$f$ multi-instance composition.  Practical deployments
+publishing $t \geq 2$ cipher maps for the same latent function should
+select the acceptance predicate based on expected $t$ rather than
+purely on the single-instance Shannon optimum.
+
+\paragraph{Randomized encoding.}
+The randomized-encoding defense
+(Proposition~\ref{prop:rand-encoding}) is verified at $|S| = 1000$,
+$n = 4$~bits, $t \in \{2, 3, 4\}$, codec-controlled retrieval.  At
+$n = 4$ with the Huffman partition: canonical encoding gives
+pattern-coincidence accuracy $1.000$ at $t = 4$, while randomized
+encoding reduces it to $0.699$.  At $n = 5$, the reduction is to
+$0.543$.  Decode-coincidence accuracy is unchanged by the encoding
+mode to within $0.01$ noise, confirming that the public-codec threat
+model is unaffected.  Marginal output distribution at $t = 1$ is
+identical between canonical and randomized encoding to within
+$0.001$, confirming the defense is free in the single-instance regime.
+The Dense partition (with $\kappa(y) = 1$ for all $y$) gets no
+benefit from randomized encoding, as predicted.
+
+\paragraph{Threat model scope: value-side versus key-side channels.}
+The Le Cam bound applies to value-side attackers.  When $S$ carries
+membership-correlated structure on the key universe, key-side
+attackers can exceed the value-side bound.  An evaluation across
+three key-universe configurations confirms the
+\S\ref{subsec:threat-scope} scope claim:
+
+\begin{table}[ht]
+\centering
+\small
+\begin{tabular}{lrrrr}
+\toprule
+Universe & TV (val) & TV (joint) & Value-only acc & Key-feature acc \\
+\midrule
+$U_{\mathrm{random}}$  & 0.147 & 0.147 & 0.565 & 0.533 \\
+$U_{\mathrm{modular}}$ ($x \equiv 0 \bmod 7$) & 0.153 & 1.000 & 0.572 & 0.997 \\
+$U_{\mathrm{partial}}$ (mod 7, not mod 13)    & 0.147 & 1.000 & 0.574 & 0.990 \\
+\bottomrule
+\end{tabular}
+\caption{Value-side Le Cam bound versus key-feature attackers across
+three key-universe configurations.  When $S$ is randomly drawn, the
+value-only attacker matches the Le Cam bound and the key-feature
+attacker offers no advantage.  When $S$ carries membership-correlated
+modular structure, the key-feature attacker saturates near $1$,
+exceeding the value-only bound.  The Huffman codec is held fixed
+across the three rows.}
+\label{tab:scope-keys}
+\end{table}
+
+These results delimit the scope of the codec-side security claim
+(\S\ref{subsec:threat-scope}): the codec choice defends against
+value-side attackers when keys are unstructured.  Structured key
+universes require auxiliary access-control mechanisms beyond the
+acceptance predicate.
+
+\paragraph{Summary.}
+The empirical study confirms five claims:
+(i) the Le Cam upper bound on value-side membership inference is
+realized in practice across a sweep of acceptance predicates and
+attacker classes;
+(ii) the Shannon-frequency duality refines under integer-codeword
+constraints into a $(\mathrm{TV}, L)$ Pareto frontier with a
+TV-optimal corner separate from the L-optimal Huffman corner, and
+spending modest $L$ overhead can buy a $42\times$ leakage reduction
+on heavy-tailed value distributions;
+(iii) shared-$f$ multi-instance composition leaks catastrophically
+via the coincidence oracle, with a closed form
+(Theorem~\ref{thm:coincidence-oracle}) matching empirical accuracy to
+within sampling noise;
+(iv) the $t$-dependent acceptance allocation
+(Corollary~\ref{cor:t-dependent}) is verified, and randomized
+encoding (Proposition~\ref{prop:rand-encoding}) provides a free
+single-instance defense against pattern-coincidence under a
+private-codec threat model; and
+(v) the value-side analysis applies only to unstructured key
+universes; structured key universes require complementary
+access-control mechanisms.
+%% [/INTEGRATION 2026-05-07]
 
 
 %% ============================================================
