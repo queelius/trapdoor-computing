@@ -79,8 +79,11 @@ predictable: the chain bound
 $\eta_{\mathrm{total}} \leq 1 - \prod(1 - \eta_i)$ holds for sequential
 composition, and a coincidence-oracle bound (accuracy $1 - \tfrac{1}{2}
 \sum_y \alpha(y)^t$ for $t$ shared-$f$ instances under independent
-seeds) characterizes multi-instance leakage and inverts the
-single-instance Shannon recommendation at $t \geq 2$.  We formalize the
+seeds) characterizes multi-instance leakage in closed form.  Both
+single-instance and multi-instance optima favor concentrated
+(Huffman-style) partitions; when multi-instance leakage exceeds
+deployment tolerance, the appropriate defense is randomized encoding
+($K(x) > 1$) rather than codec retuning.  We formalize the
 framework through four measurable properties, prove the
 space-optimality, composition, and multi-instance theorems, validate
 the Le Cam attacker bound empirically across a codec sweep, and
@@ -1837,43 +1840,49 @@ noise.  Reported in \S\ref{subsec:eval-codec-security}.
 \subsubsection*{Geometric corollary: \texorpdfstring{$t$}{t}-dependent allocation}
 
 For homogeneous instances, $\sum_y \alpha(y)^t$ is dominated by
-$(\max_y \alpha(y))^t$ as $t$ grows.  The codec choice minimizing
-multi-instance coincidence-oracle leakage at large $t$ is therefore
-the one minimizing $\max_y \alpha(y)$.  At fixed $\varepsilon = \sum_y
-\alpha(y)$, this is the \emph{uniform} partition $\alpha(y) =
-\varepsilon / |Y|$.
+$(\max_y \alpha(y))^t$ as $t$ grows.  At fixed $\varepsilon = \sum_y
+\alpha(y)$, this sum is minimized when $\alpha$ is uniform
+($\alpha(y) = \varepsilon / |Y|$) and maximized when $\alpha$ is
+concentrated on a single value (e.g., $\alpha(y^*) = \varepsilon$ for
+some $y^*$ with $\alpha(y) = 0$ elsewhere).  Since the attacker's
+prediction accuracy is $1 - \tfrac{1}{2} \sum_y \alpha(y)^t$,
+\emph{smaller} $\sum_y \alpha(y)^t$ means \emph{higher} attacker
+accuracy, i.e., \emph{worse} defense.
 
-\begin{corollary}[$t$-dependent acceptance allocation]
-\label{cor:t-dependent}
-Among acceptance partitions with fixed $\varepsilon$:
-\begin{itemize}
-\item \textbf{$t = 1$ optimum:}  $\alpha(y) \propto p_y$ (Shannon-optimal
-    allocation, \S\ref{subsec:acceptance}) minimizes single-instance
-    leakage by matching real and noise frequency profiles.
-\item \textbf{$t \geq 2$ shared-$f$ optimum:}  $\alpha(y) =
-    \varepsilon / |Y|$ (uniform allocation) minimizes
-    coincidence-oracle leakage by equalizing the geometric tail of the
-    non-member distribution.
-\end{itemize}
+\begin{corollary}[Coincidence-oracle accuracy and partition geometry]
+\label{cor:t-geometry}
+Among acceptance partitions with fixed $\varepsilon$, the
+coincidence-oracle attacker's accuracy
+$1 - \tfrac{1}{2} \sum_y \alpha(y)^t$ is maximized (worst for the
+defender) by the uniform allocation $\alpha(y) = \varepsilon / |Y|$
+and minimized (best for the defender) by concentrating $\alpha$ on
+the heaviest values.  Concentrated, Huffman-style partitions are
+therefore preferred at every $t \geq 1$; there is no codec-choice
+regime change between $t = 1$ and $t \geq 2$.
 \end{corollary}
 
-The two regimes pull in opposite directions when $f$ has skewed value
-distribution.  For $|Y| = 8$ with a Zipf $p_y$ (skew parameter $s = 1$),
-the Shannon-optimal Huffman partition gives $\max_y \alpha(y) \approx
+\paragraph{Numerical illustration.}
+For $|Y| = 8$ with a Zipf $p_y$ (skew parameter $s = 1$), the
+Shannon-optimal Huffman partition gives $\max_y \alpha(y) \approx
 0.5$ (the dominant value claims half the codespace), while uniform
-gives $\max_y \alpha(y) = 1/8 = 0.125$.  At $t = 5$, uniform's
-coincidence-oracle accuracy is $\approx 0.9999$ while the Shannon-optimal
-Huffman partition gives $\approx 0.984$.  The Shannon-optimal partition
-that wins at $t = 1$ leaks $\approx 16\times$ more under shared-$f$
-multi-instance composition than the uniform partition.
+gives $\max_y \alpha(y) = 1/8 = 0.125$.  At $t = 5$: Huffman has
+$\sum_y \alpha(y)^5 \approx 0.031$ and attacker accuracy $\approx
+0.984$ (attacker error rate $\approx 0.016$); uniform has $\sum_y
+\alpha(y)^5 = 8 \cdot (1/8)^5 \approx 2.4 \times 10^{-4}$ and
+attacker accuracy $\approx 0.9999$ (attacker error rate
+$\approx 1.2 \times 10^{-4}$).  Huffman therefore defends
+$\approx 132 \times$ better than uniform in this configuration
+(error rate ratio $0.016 / 0.00012$).  The single-instance Le Cam
+mechanism and the multi-instance coincidence mechanism both favor
+the same concentrated partition.
 
-\paragraph{Implication for deployment.}  The acceptance predicate is
-not chosen on purely Shannon-optimal grounds.  A deployment publishing
-a single cipher map should use $\alpha(y) \propto p_y$.  A deployment
-publishing $t \geq 2$ instances over the same $f$ under independent
-seeds should either use the uniform allocation, sacrificing
-single-instance indistinguishability for multi-instance robustness, or
-apply the randomized-encoding defense below.
+\paragraph{Implication for deployment.}
+Both single-instance and multi-instance pressures favor Shannon-optimal
+(Huffman-style) concentrated partitions.  The randomized-encoding
+defense below addresses the multi-instance regime by raising
+multiplicity $K(x) > 1$ rather than by retuning the codec; it is the
+appropriate response when shared-$f$ multi-instance composition is
+unavoidable.
 
 \subsubsection*{Randomized encoding as a defense}
 
@@ -2020,9 +2029,10 @@ regime.  Reported in \S\ref{subsec:eval-codec-security}.
     all $y$ and gets no benefit from randomized encoding.
 \item The decode-coincidence accuracy formula
     \eqref{eq:coincidence-homogeneous} still applies under the
-    public-codec threat; the only structural defenses in that regime
-    are the $t$-dependent allocation of
-    Corollary~\ref{cor:t-dependent} and the encode-different-$f$-per-instance
+    public-codec threat; the structural defenses in that regime are
+    concentrating $\alpha$ on the heavy modes
+    (Corollary~\ref{cor:t-geometry} shows Huffman-style partitions
+    are optimal at every $t$) and the encode-different-$f$-per-instance
     deployment recommended in \S\ref{subsec:eval-codec-security}.
 \end{enumerate}
 %% [/INTEGRATION 2026-05-07]
@@ -2559,18 +2569,23 @@ cipher map instances under independent seeds.  An empirical sweep
 over $5$ codecs at $t \in \{1, 2, 3, 4, 5\}$ finds $24$ of $25$ cells
 inside the empirical Wilson $95\%$ CI of the predicted accuracy; the
 single miss is sampling noise at $0.003$ absolute.  The geometric
-corollary (Corollary~\ref{cor:t-dependent}) is verified empirically:
-at $t = 5$, the uniform Dense partition achieves accuracy
-$\approx 0.9999$ while the Shannon-optimal Huffman partition achieves
-$\approx 0.984$; the uniform allocation defends $\approx 16\times$
-better at large $t$ in this configuration.
+corollary (Corollary~\ref{cor:t-geometry}) is verified empirically:
+at $t = 5$, the uniform Dense partition produces attacker accuracy
+$\approx 0.9999$ (error rate $\approx 1.2 \times 10^{-4}$) while the
+Shannon-optimal Huffman partition produces attacker accuracy
+$\approx 0.984$ (error rate $\approx 0.016$).  Huffman therefore
+defends $\approx 132\times$ better than uniform at $t = 5$ in this
+configuration, consistent with the geometry: Huffman concentrates
+the partition mass on the heavy mode, raising $\sum_y \alpha(y)^t$
+and lowering attacker accuracy.
 
-The single-instance versus multi-instance trade-off is sharp: Huffman
-dominates at $t = 1$ (small $\delta$); Dense dominates at $t \geq 2$
-under shared-$f$ multi-instance composition.  Practical deployments
-publishing $t \geq 2$ cipher maps for the same latent function should
-select the acceptance predicate based on expected $t$ rather than
-purely on the single-instance Shannon optimum.
+There is no single-instance versus multi-instance trade-off in
+codec choice: Huffman dominates at every $t$, both under the
+single-instance Le Cam bound and under the multi-instance
+coincidence-oracle bound.  Practical deployments publishing $t \geq 2$
+cipher maps for the same latent function should retain the
+Shannon-optimal partition and address multi-instance leakage via
+randomized encoding (Proposition~\ref{prop:rand-encoding}).
 
 \paragraph{Randomized encoding.}
 The randomized-encoding defense
@@ -2636,10 +2651,12 @@ on heavy-tailed value distributions;
 via the coincidence oracle, with a closed form
 (Theorem~\ref{thm:coincidence-oracle}) matching empirical accuracy to
 within sampling noise;
-(iv) the $t$-dependent acceptance allocation
-(Corollary~\ref{cor:t-dependent}) is verified, and randomized
-encoding (Proposition~\ref{prop:rand-encoding}) provides a free
-single-instance defense against pattern-coincidence under a
+(iv) the coincidence-oracle accuracy is maximized by uniform
+allocation and minimized by concentrated Huffman-style allocation
+(Corollary~\ref{cor:t-geometry}), so the Shannon-optimal partition is
+preferred at every $t$ with no codec-choice regime change, and
+randomized encoding (Proposition~\ref{prop:rand-encoding}) provides a
+free single-instance defense against pattern-coincidence under a
 private-codec threat model; and
 (v) the value-side analysis applies only to unstructured key
 universes; structured key universes require complementary

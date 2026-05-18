@@ -8,17 +8,17 @@ authors:
     orcid: "0000-0001-6443-9897"
 
 thesis:
-  claim: "We propose the cipher map abstraction as a unifying framework for parameterized-leakage outsourced function evaluation in the quantitative information flow tradition. The framework characterizes value-side security through four measurable properties (totality, representation-uniformity delta, correctness eta, composability) and the Le Cam bound 1/2 + delta/2 on attacker accuracy (realized tight empirically across Bayes / logistic / 1-NN attackers). The acceptance-predicate apparatus exposes a Pareto frontier between expected codeword length L and TV-leakage, refining the Shannon-frequency duality: the Shannon-optimal corner (L = -log2(eps) + H(Y)) and the TV-optimal corner are distinct under integer codeword constraints, and the TV-optimal corner can achieve order-of-magnitude lower leakage at modest length overhead on skewed value distributions (42x TV reduction at 17% length overhead measured on heavy-tailed p_y). The framework also yields a multi-instance composition theorem (the coincidence oracle: accuracy(t) = 1 - 1/2 sum_y alpha(y)^t for t shared-f cipher maps under independent seeds), under which the single-instance Shannon-optimal recommendation INVERTS at t >= 2: uniform-allocation codecs (Dense) dominate Shannon-optimal codecs (Huffman) by polynomial factors. The framework subsumes Bloom filters, frequency-hiding encryption, and encrypted Boolean search as instances; quantitative confidentiality is established through the entropy ratio bound (proved in companion work towell2026maxconf)."
+  claim: "We propose the cipher map abstraction as a unifying framework for parameterized-leakage outsourced function evaluation in the quantitative information flow tradition. The framework characterizes value-side security through four measurable properties (totality, representation-uniformity delta, correctness eta, composability) and the Le Cam bound 1/2 + delta/2 on attacker accuracy (realized tight empirically across Bayes / logistic / 1-NN attackers). The acceptance-predicate apparatus exposes a Pareto frontier between expected codeword length L and TV-leakage, refining the Shannon-frequency duality: the Shannon-optimal corner (L = -log2(eps) + H(Y)) and the TV-optimal corner are distinct under integer codeword constraints, and the TV-optimal corner can achieve order-of-magnitude lower leakage at modest length overhead on skewed value distributions (42x TV reduction at 17% length overhead measured on heavy-tailed p_y). The framework also yields a multi-instance composition theorem (the coincidence oracle: accuracy(t) = 1 - 1/2 sum_y alpha(y)^t for t shared-f cipher maps under independent seeds); both single-instance and multi-instance pressures favor concentrated (Huffman-style) partitions (Huffman defends ~132x better than uniform Dense at t=5 on heavy-tailed p_y in the codec-security study), and the deployment-side defense for multi-instance leakage is randomized encoding (multiplicity K(x) > 1) rather than codec retuning. The framework subsumes Bloom filters, frequency-hiding encryption, and encrypted Boolean search as instances; quantitative confidentiality is established through the entropy ratio bound (proved in companion work towell2026maxconf)."
   novelty: |
     1. The cipher map abstraction with four measurable properties as the unit of analysis for parameterized-leakage outsourced computation (the framework contribution).
     2. The acceptance predicate as the universal knob, with the (TV, L) Pareto frontier refining the Shannon-frequency duality: Shannon-optimal (Huffman) and TV-optimal allocations are distinct under integer constraints (continuous-codeword duality recovers when integer constraints relax).
-    3. The multi-instance composition theorem (coincidence-oracle accuracy = 1 - 1/2 sum_y alpha(y)^t), showing single-instance and multi-instance optima differ qualitatively and that codec choice should depend on the expected publication count t.
+    3. The multi-instance composition theorem (coincidence-oracle accuracy = 1 - 1/2 sum_y alpha(y)^t), giving a closed form for shared-f multi-instance leakage. Concentrated (Huffman-style) partitions are optimal at every t; randomized encoding (K(x) > 1) provides a defense against multi-instance leakage when shared-f composition is unavoidable.
     4. Empirical Le Cam tightness across the codec sweep + cross-attacker comparison demonstrating the bound is realized by Bayes-optimal classifiers in practice (not just an information-theoretic upper bound).
     5. Unification of three previously-disconnected literatures (approximate data structures, frequency-hiding encryption, encrypted search) under one formalism with measurable parameters and explicit sister-paper deferrals (formal entropy-ratio proof to towell2026maxconf, bounded-Turing chain bound to towell2026rekeying).
-  refined: "v3 (framework-first with multi-instance + Pareto frontier, 2026-05-04). Restructures the thesis to lead with the framework contribution, with the Shannon-frequency duality recast as a Pareto frontier (not a coincidence) once integer codeword constraints are taken seriously. Adds the multi-instance composition theorem (coincidence oracle, integrated into 8.3 on 2026-05-07) as a co-equal technical contribution showing that single-instance and multi-instance optima invert. Names sister-paper deferrals explicitly. Prior versions: v1 (initial 2026-03-19), v2 acceptance-predicate-forward (2026-03-27), R5/R6 QIF positioning + Path A landings (2026-04-30 / 2026-05-02), v3 framework-first synthesis incorporating parallel-session multi-instance and Pareto-frontier results (2026-05-04)."
+  refined: "v4 (R7 CRIT-1 correction, 2026-05-17). Drops the inversion claim that uniform Dense allocation dominates Huffman at t >= 2; the coincidence-oracle formula is correct but the defender-vs-attacker direction was reversed in the v3 framing. Truth: smaller sum_y alpha(y)^t = higher attacker accuracy = worse defense; uniform Dense minimizes the sum (worst defense) and Huffman concentrates the sum on the heavy mode (best defense). Huffman wins at every t. The multi-instance contribution is the closed-form theorem plus randomized encoding as the deployment-side defense, not a codec-choice regime change. Prior versions: v1 (initial 2026-03-19), v2 acceptance-predicate-forward (2026-03-27), v3 framework-first with Pareto frontier + (incorrect) inversion claim (2026-05-04), v4 corrected (2026-05-17). Five sites in cipher_maps.tex updated to remove inversion framing: abstract, Corollary 8.x (renamed cor:t-dependent -> cor:t-geometry), numerical-example paragraph, Section 10.6 multi-instance paragraph, Summary item (iv). Bernoulli source RESULTS_14.md and 14_coincidence_oracle.py docstring still need the same correction."
 
 prior_art:
-  last_survey: "2026-05-02"
+  last_survey: "2026-05-17"
   key_references:
     - "bloom1970space: Bloom filters (HashSet subsumes as k=1 special case)"
     - "fredman1984storing: FKS perfect hashing"
@@ -39,19 +39,37 @@ prior_art:
     - "kerschbaum2015frequency: Frequency-hiding OPE (added R6 fix)"
     - "kamara2019computationally: Volume-hiding STE (added R6 fix)"
     - "esposito2020recsplit: RecSplit MPHF (added R6 fix)"
+    - "lecam1986asymptotic: Le Cam two-point lemma (used at §5.2)"
+    - "warner1965randomized: Randomized response (added R6 NOV-4)"
+    - "towell2026codec: Companion experiment suite (added R7 §10.6)"
+    - "towell2026algebraic: Companion algebraic types (now used at §10.3 R7)"
   gaps:
-    - "Patel-Persiano-Yeo-Yung 2019 volume-hiding STE (NOT in bib; R6 strong recommend)"
-    - "Alvim et al 2020 Science of QIF textbook (NOT in bib; R6 recommend)"
-    - "Kopf-Smith 2010 min-entropy leakage (NOT in bib; R6 strong recommend - foundational measure choice)"
-    - "Pouliot-Wright 2016 Kraken co-occurrence attack (NOT in bib; R6 recommend for §8.2)"
+    - "Huffman 1952 (NOT in bib; R7 CITE-2 strong recommend - paper centers Huffman codes)"
+    - "Patel-Persiano-Yeo-Yung 2019 volume-hiding STE (NOT in bib; R6/R7 strong recommend)"
+    - "Alvim et al 2020 Science of QIF textbook (NOT in bib; R6/R7 recommend)"
+    - "Kopf-Smith 2010 min-entropy leakage (NOT in bib; R6/R7 strong recommend - foundational measure choice)"
+    - "Cover-Thomas 2006 (NOT in bib; R7 recommend - Kraft inequality and coding background)"
+    - "Pouliot-Wright 2016 Kraken co-occurrence attack (NOT in bib; R6/R7 recommend for §8.2)"
+    - "Geng-Smith 2025 or equivalent QIF multi-instance work (NOT in bib; R7 CITE-MIN-3 recommend for §8.3)"
     - "Bellare-Ristenpart-Rogaway-Stegers 2009 FPE (NOT in bib; R6 consider)"
-    - "Warner 1965 randomized response for deniability proposition (NOT in bib; carry-over)"
 
 experiments:
   - name: "20 Newsgroups encrypted search"
-    location: "§10.3 lines 1853-1915"
-    status: "promoted to §10 in R6; structurally complete but arithmetic inconsistencies discovered (R6 CRIT-1)"
-    note: "R6 §10 promotion landed (5 subsections: Reference Implementation, Application, 20 Newsgroups, Deniability, Future Investigations). However, R6 review found CRIT-1: 3-term AND FP count (12) is 5x-20x higher than the model prediction p_T^k for independent terms (0.6-2.3 expected). Either correlated terms within corpus or noise floor in cipher Boolean implementation. Also MAJ-4: throughput numbers (700 in §6.4 vs 843 at 5K vs 713 at 18K in §10.3) inconsistent. Single-run, no replicates, no Bloom filter baseline (METH-2 carry-over)."
+    location: "§10.3 lines 2307-2391"
+    status: "R6 CRIT-1 noise-floor explanation landed; R7 verified consistent. Single-run, no Bloom baseline (R7 MAJ-10)."
+    note: "R6 CRIT-1 (3-term AND FP arithmetic) is now addressed via explicit noise-floor formula at §10.3 lines 2366-2375 with the derivation deferred to towell2026algebraic. Throughput numbers consistent (713 docs/sec full corpus, 843 at 5K). R7 carries over the single-run / no-replication / no-Bloom-baseline limitations."
+  - name: "Codec security empirical study (R7 new)"
+    location: "§10.6 lines 2455-2647"
+    status: "R7 introduced; setup careful, formula and numerical values verified correct, but interpretation inverted (R7 CRIT-1)"
+    note: "5 codecs x 5 t-values = 25 cells, 24/25 inside Wilson 95% CI. The formula 1 - (1/2) sum_y alpha(y)^t and the empirical numbers (0.9999 uniform, 0.9844 Huffman at t=5) match perfectly. The Corollary 8.x interpretation ('uniform defends 16x better at t>=2') is the direction-reversed reading: higher attacker accuracy = WORSE defense, so uniform is WORSE defense. Huffman wins at every t. Source experiment bernoulli/.../14_coincidence_oracle.py / RESULTS_14.md has the same inversion in its writeup."
+  - name: "Le Cam tightness sweep (R7 new)"
+    location: "§10.6 lines 2485-2516"
+    status: "R7 introduced; clean result, well-supported"
+    note: "Three attacker classes (Bayes, logistic, 1-NN) achieve same accuracy to within 0.014 sampling noise at n=5000; mean Bayes gap to Le Cam UB is -0.0004 (statistically zero). Empirical confirmation that Le Cam UB is realized by Bayes-optimal attackers in practice."
+  - name: "(TV, L) Pareto frontier (R7 new)"
+    location: "§10.6 lines 2518-2554"
+    status: "R7 introduced; sharp empirical finding, no direction issues"
+    note: "14 configurations enumerated as |Y| x n x p_y shape combinations. Huffman is on the Pareto frontier in 14/14, TV-optimal in 7/14. Heavy-tailed p_y = (0.9, 0.0143, ...) gives 42x TV reduction (0.40 to 0.0094) at 17% L overhead. 14 configs not enumerated in detail (R7 MAJ-9)."
 
 venue:
   target: "PoPETs 2027"
@@ -90,7 +108,12 @@ review_history:
     reviewer: "papermill (Round 6 single-orchestrator; subagent dispatch unavailable)"
     recommendation: "major-revision"
     summary: "1 critical (CRIT-1: 3-term AND FP arithmetic 12 observed vs 0.6-2.3 expected under independence model; breaks headline empirical claim), 7 major (MAJ-1 entropy ratio defined H(X|view)/H*(X) in intro vs H(Q)/n in §5.1; MAJ-2 entropy ratio not in Definition environment; MAJ-3 Theorem 6.2 Step 2 still loose conflating search-time and storage cost; MAJ-4 throughput numbers inconsistent across §6.4 and §10.3; MAJ-5 NOV-N2 framework contribution needs explicit framing in §1; MAJ-6 CITE-6 load-bearing sister paper preprints not yet posted; MAJ-7 LOG-S1 same-secret composition vs Definition 7.2 independent seeds mismatch carry-over), 22 minor, 10 suggestions."
-    resolution: "Pending. R6 closed all 3 R5 critical findings. R6 introduced 1 critical and 4 major from §10 promotion exposure (CRIT-1 arithmetic, MAJ-2 missing definition env, MAJ-4 throughput inconsistency) and §5 refactor residuals (MAJ-1 entropy ratio mismatch, MAJ-3 Theorem 6.2 carry-over). Path to minor-revision: 4-8 hours focused editorial work to close MAJ-1+MAJ-2 (single Definition env + intro update), MAJ-3 (Theorem 6.2 Step 2 separation of search vs storage), MAJ-4 (consistent throughput reporting), MAJ-5 (1-paragraph framework framing in §1), plus CRIT-1 resolution (depends on what experiment actually measured)."
+    resolution: "R7 (2026-05-17) confirmed: CRIT-1 noise-floor formula landed at §10.3 with explicit derivation and bound; MAJ-1+MAJ-2 entropy ratio Definition env landed at §5.1; MAJ-3 Theorem 6.2 Step 2 separation of storage vs search costs landed; MAJ-4 throughput consistent (713 docs/sec full corpus); MAJ-5 framework framing landed at §1 lines 120-149; MAJ-6 sister-paper preprints still pending; MAJ-7 master-secret vs operational-subderivation clarified at Remark 4.x."
+  - date: "2026-05-17"
+    reviewer: "papermill (Round 7 single-orchestrator; subagent dispatch unavailable)"
+    recommendation: "major-revision"
+    summary: "1 critical (CRIT-1: t-dependent allocation recommendation in abstract/Corollary 8.x/§10.6 is direction-inverted; formula and empirical numbers correct but interpretation reverses defender-vs-attacker), 19 major (MAJ-1 Theorem 8.1 verbal-def-vs-proof tuple mismatch, MAJ-2 Proposition 8.2 needs bijectivity not just saturation, MAJ-3 Prop 8.2 homogeneous-instances formula, MAJ-4 Huffman saturation encoder gloss, MAJ-5 sister-paper preprints carry-over, MAJ-6 article class carry-over, MAJ-7 §10.6 single-run, MAJ-8 no Bloom baseline carry-over, MAJ-9 14 Pareto configs unenumerated, MAJ-10 §10.3 single-run carry-over, MAJ-11 attacker-tie sample-size, MAJ-12 abstract inverts wording, MAJ-13 §8.3 subsubsection style, MAJ-14 §10.6 paragraph density, MAJ-15 abstract Pareto sentence, MAJ-16 Huffman 1952 missing, MAJ-17 bernoulli-types URL stale, MAJ-18 118.9pt overfull, MAJ-19 36 pages exceeds PoPETs target), 49 minor, 17 suggestions."
+    resolution: "Pending. R7 critical (CRIT-1) is a regression in interpretation introduced by the new §8.3 multi-instance content. The formula and empirical numbers from the bernoulli experiment file are correct, but the cipher-maps paper (and the source experiment writeup) reads the defender-vs-attacker direction backwards. Resolution requires v4 thesis revision: either preserve formula and fix interpretation (Huffman wins at every t; randomized-encoding defense becomes headline), or redefine attacker to make a genuine inversion exist (distinguish-which-value attacker). Path A (preserve formula, fix interpretation) takes ~4-6 hours editorial plus a half-day thesis restructure. R7 also closed R6 issues: entropy ratio definition unified, Theorem 6.2 Step 2 separated, throughput consistent, framework framing landed."
 
 related_papers:
   - path: ~/github/trapdoor-computing/papers/boolean-algebra-over-trapdoor-sets
@@ -111,6 +134,9 @@ related_papers:
   - path: ~/github/trapdoor-computing/papers/cipher-rekeying
     rel: sister
     label: "R6 verified: Theorem 7.1 is the chain bound at §7 Information-Theoretic Cost; cite chain correct. Still Manuscript-in-prep; preprint posting pending."
+  - path: ~/github/bernoulli/src/bernoulli/experiments/14_coincidence_oracle.py
+    rel: source
+    label: "R7 source experiment for §10.6 multi-instance results. RESULTS_14.md has the same direction-inverted interpretation that cipher-maps inherits. Fix needed in both places."
 ---
 
 ## Notes
@@ -147,82 +173,119 @@ R6 review (2026-05-02) found:
 
 R6 review history: subagent dispatch unavailable in this orchestrator session; orchestrator performed all specialist reads directly. 7 specialist reports + literature context + unified review in `.papermill/reviews/2026-05-02/`.
 
+R7 (2026-05-17) verified R6 closures and reviewed new content:
+
+R6 closures confirmed:
+- R6 CRIT-1 (3-term AND FP arithmetic): RESOLVED via noise-floor formula at §10.3 lines 2366-2375; observed 12 FPs = 2.4e-3 consistent with k=3 upper bound 6.5e-3 under noise-floor model.
+- R6 MAJ-1+MAJ-2 (entropy ratio definition unification): RESOLVED via Definition 5.1 at lines 701-716 with `e = H(Q)/n`; consistent across §1 line 168 and §5.1.
+- R6 MAJ-3 (Theorem 6.2 Step 2): RESOLVED via separation of storage cost (per-element seed-table) from search-time cost (parenthetical) at lines 1132-1158.
+- R6 MAJ-4 (throughput consistency): RESOLVED; §6.4 line 1283 says "713 documents per second on the full 20 Newsgroups corpus" matching §10.3's "25.6 seconds / 18,266 docs". §10.3 also reports 843 docs/sec at 5K with explicit corpus size.
+- R6 MAJ-5 (framework framing in §1): RESOLVED via new paragraph at lines 120-149 "Contribution: framework, not new construction".
+- R6 MAJ-7 (master vs operational subkeys): RESOLVED via Remark 4.x "Master secret vs operational sub-derivations" at lines 563-574.
+- R6 MAJ-6 (sister-paper preprints): NOT addressed; carry-over as R7 MAJ-5.
+
+R7 critical (CRIT-1): t-dependent allocation recommendation direction inverted. The Round 7 commit 6a0f594 added §8.3 (multi-instance composition leakage), the abstract "inverts the single-instance Shannon recommendation at t >= 2" claim, Corollary 8.x ($t \geq 2$ optimum: uniform allocation), §10.6 paragraph "Multi-instance leakage and the coincidence oracle" with "uniform defends 16x better at large t", and Summary item (iv) verification claim. All five locations encode the same direction-inverted reading. The formula 1 - (1/2) sum_y alpha(y)^t is the attacker's classification accuracy; higher accuracy = attacker more successful = worse for defender. By Jensen, uniform minimizes sum alpha^t, which MAXIMIZES attacker accuracy (worst defense). Skewed Huffman keeps sum larger, MINIMIZES attacker accuracy (best defense). Numerical verification: at |Y|=8, t=5: uniform attacker acc 0.99988, Huffman attacker acc 0.98387; Huffman has 132x higher attacker error rate (better defense). The paper inherits the inversion from the bernoulli experiment writeup RESULTS_14.md which makes the same misreading.
+
+R7 introduced majors: 19 total. 6 logic-side (Theorem 8.1 verbal-vs-proof tuple, Proposition 8.2 saturation-vs-bijectivity, Prop 8.2 homogeneous-instances formula, Huffman saturation encoder gloss, sister-paper preprints carry-over, article class carry-over); 5 methodology-side (§10.6 single-run, no Bloom baseline, unenumerated 14 configs, §10.3 single-run, attacker-tie sample-size); 4 prose-side (abstract inverts wording, §8.3 subsubsection style, §10.6 paragraph density, abstract Pareto sentence); 2 citation-side (Huffman 1952, bernoulli-types URL); 2 format-side (118.9pt overfull, 36-page count).
+
+R7 review history: subagent dispatch unavailable; orchestrator performed all specialist reads directly. 6 specialist reports (logic, novelty, methodology, prose, citation, format) + literature context + unified review in `.papermill/reviews/2026-05-17/`.
+
 ## Next Actions
 
 Ordered by impact-per-effort:
 
-1. **R6 critical fix (1-4 hours)**:
-   - Fix CRIT-1: resolve the 3-term AND FP arithmetic. Either:
-     (a) Document term correlation in the test query selection (likely cause; reword "approximately p_T^k for independent terms; observed 12 vs predicted 0.6-2.3 indicates correlated terms in test queries").
-     (b) Document a noise floor in the cipher Boolean AND implementation if one exists.
-     (c) Re-run the 3-term experiment with explicitly random independent triples and report the actual result.
-     The fix depends on understanding what the experiment actually measured.
+1. **R7 critical fix (4-6 hours editorial + half-day v3 thesis revision)**:
+   - Fix CRIT-1: revise the v3 thesis (claim field above) and the manuscript to drop the "inversion" framing. Path A (recommended) preserves the formula and fixes the interpretation:
+     - Abstract lines 80-83: replace "inverts the single-instance Shannon recommendation at t >= 2" with something like "shows the Shannon-optimal allocation provides both single-instance frequency hiding and high coincidence cover at large t (the dominant value supplies a high-probability decoy lane for filler queries)".
+     - Corollary 8.x lines 1846-1858: replace the "$t \geq 2$ optimum: uniform allocation" bullet with "$t \geq 2$ optimum: allocations with larger $\max_y \alpha(y)$ (e.g., Shannon-optimal Huffman) provide more coincidence cover, slowing the attacker's accuracy growth at rate $\max_y \alpha(y)$ rather than $\varepsilon/|Y|$".
+     - §10.6 lines 2555-2573 (paragraph "Multi-instance leakage and the coincidence oracle"): rewrite "the uniform allocation defends 16x better" as "the Huffman allocation provides 132x higher attacker error rate, i.e. better defense, in this configuration". Update "Dense dominates at t >= 2" to "Huffman dominates at every t (single-instance TV-min AND multi-instance coincidence cover)".
+     - §10.6 Summary item (iv) lines 2640-2643: replace "verified" with the corrected reading.
+     - state.md thesis claim and novelty bullet 3: mark v4 pending; restate without "inversion".
+     - Also update the source experiment file bernoulli/.../RESULTS_14.md Defense implications section to match.
 
-2. **R6 major editorial fixes (4-8 hours)**:
-   - Fix MAJ-1 + MAJ-2 together: pick `e = H(Q)/n` everywhere (matches §5.1 and maxconf); update intro line 129-130 from `H(X|view)/H*(X)` to `H(Q)/n`; wrap §5.1 line 644-660 in `\begin{definition}[Entropy ratio]\label{def:entropy-ratio}`; update Proposition 5.1 and §5.2 items 2-4 to reference `Definition~\ref{def:entropy-ratio}`.
-   - Fix MAJ-3: rewrite Theorem 6.2 Step 2 to separate search-time cost (`1/α(y)` trials) from seed-table storage cost (`log₂(1/α(y))` bits per element). Lead with storage; mention search time as a parenthetical.
-   - Fix MAJ-4: report consistent throughput across §6.4 (rounded full-corpus number) and §10.3 (per-cell numbers with explicit corpus size). Add one sentence on per-document scaling: "throughput drops from 843 docs/sec at 5K to 713 at 18K, reflecting growing PHF construction cost per document."
-   - Fix MAJ-5: add 1-paragraph "framework contribution" framing to §1 (e.g., "This paper does not propose a new construction; it identifies a framework that unifies existing approximate-membership and frequency-hiding constructions under measurable parameters (η, ε, δ). Bloom filters become cipher maps with K(x)=1, prefix-free coding gives the entropy cipher map, Shannon-optimal partition shaping unifies space optimality with frequency hiding.").
-   - Fix MAJ-7 (LOG-S1): clarify in Definition 4.4 or §7.2 that "same secret" means "same master secret with domain-separated subkeys"; relax Definition 7.2 (i) to subkey independence.
+2. **R7 major editorial fixes (4-8 hours)**:
+   - MAJ-1: Rewrite Theorem 8.1 verbal definition (lines 1738-1740) to use tuple-probe notation matching the proof.
+   - MAJ-2: Replace "saturates" with "uniform-saturating" (bijectivity) in Proposition 8.2 statement (lines 1918-1926).
+   - MAJ-3: Restrict Proposition 8.2 to homogeneous instances or clarify that $A_i(y)$ is codec-level.
+   - MAJ-4: Add construction note showing how the Huffman encoder achieves the bijection.
+   - MAJ-7: Run 3 replicates for §10.6 headline numbers and report mean ± std.
+   - MAJ-8: Add Bloom row to Table tab:le-cam-tight at matched $\varepsilon$.
+   - MAJ-12: Rewrite abstract sentence to match corrected CRIT-1 interpretation.
+   - MAJ-13: Replace §8.3 subsubsection* with paragraph headings or numbered subsubsections.
+   - MAJ-14: Add structure-setting sentence at start of §10.6.
+   - MAJ-18: Fix 118.9pt overfull at Definition 8.x by moving math to display style.
 
-3. **Sister-paper preprint posting (1-2 days; closes MAJ-6 = CITE-6)**:
-   - Post `towell2026maxconf` as arXiv preprint with permanent DOI.
-   - Post `towell2026rekeying` as arXiv preprint with permanent DOI.
-   - Post `towell2026algebraic` as arXiv preprint with permanent DOI (lower priority; currently UNUSED in cipher-maps).
-   - Update bib entries with arXiv IDs / DOIs (closes CITE-6 + CITE-N1).
+3. **Sister-paper preprint posting (1-2 days; closes MAJ-5)**:
+   - Post `towell2026maxconf` as arXiv preprint with DOI.
+   - Post `towell2026rekeying` as arXiv preprint with DOI.
+   - Lower priority: `towell2026algebraic` (now used at §10.3 R7), `bernoulli-types` (split into per-paper citations).
 
-4. **R6 minor backlog (2-3 days)**:
-   - LOG-1a: Le Cam normalization (advantage at most δ vs δ/2).
-   - LOG-N6 (R5 LOG-4): note Stirling 1.44n drop in Theorem 6.1 proof.
-   - LOG-N7 (R5 LOG-5): add δ ≤ 1/2 condition to Proposition 5.1.
-   - LOG-N8 (R5 LOG-6): explicit independence note in Theorem 6.2 Step 2.
-   - METH-N3 / R5 METH-3: note uniform query distribution is the strawman; acknowledge or report at least one non-uniform alternative (Zipf or empirical log).
-   - METH-N4: add Bloom filter strawman comparison cell at matched FPR (1-2 hours).
-   - METH-N7: expand hardware/software spec (CPU model, RAM, library versions, random seed).
-   - NOV-1 residual: add explicit "Scope" subsection at end of §1 listing what cipher-maps contributes vs what is deferred.
-   - NOV-4 (CITE-S2): cite Warner 1965 randomized response for Proposition 10.4.1.
-   - NOV-5: add Shannon vs min-entropy QIF rationale in §5.1.
-   - PROSE-N1: add 1-sentence transitions between §10.2/§10.3, §10.3/§10.4, §10.4/§10.5.
-   - PROSE-N3: shorten §5.2 item 4 to a forward-pointer to maxconf for the latent-vs-cipher normalization.
-   - CITE-N1: cite or remove `towell2026algebraic`.
-   - CITE-3 sub: add `\cite{esposito2020recsplit}` at §6.4 line 1192 first mention.
-   - CITE-7 (R4 m11): add DOI fields throughout bib.
-   - CITE-S3: split bernoulli-types cite key into specific paper references.
-   - FMT-N1: fix 104pt overfull at line 1875-1880 (long URL line in §10.3 Setup itemize).
-   - R4 m3: K(x) → κ(x) rename, or remove from backlog.
-   - R4 m9: hash notation unification, or remove from backlog.
+4. **R7 minor backlog (2-3 days)**:
+   - CITE-MIN-2: Add Huffman 1952 to bib; cite at first Huffman mention.
+   - CITE-MIN-3: Add Cover-Thomas for Kraft inequality background.
+   - CITE-MIN-4 to 6: Add Patel-Persiano-Yeo-Yung, Köpf-Smith, Pouliot-Wright (carry-overs).
+   - CITE-MIN-7: Add QIF multi-instance cite (Geng-Smith 2025 or equivalent).
+   - CITE-MIN-8: Add DOI fields throughout bib.
+   - CITE-MIN-9: Add Le Cam page number for two-point lemma.
+   - METH-MIN-1 to 7: §10.6 setup paragraph density, codec naming, Padded(y_0) missing, $n=5$ codec ambiguity, key-feature attacker thin, Pareto frontier definition, §10.3 uniform query.
+   - PROSE-MIN-1 to 10: bulleted list in §8.3, prose-to-theorem bridge, coincidence-oracle terminology, $\sim$ vs approximately, §9.6 header style, §1 Bernoulli paragraph standalone, abstract sentence length, Bernoulli terminology drift, §10.6 "sampling noise" wording.
+   - FMT-MIN-3: Standardize on \Cref throughout.
+   - FMT-MIN-5: Wrap §6.4 / §6.6.1 tables in table env.
+   - FMT-MIN-7: Anonymize author block for double-blind.
+   - FMT-MIN-10: Update title page date.
 
-5. **R6 suggestions (optional polish)**:
-   - NOV-N1: sharpen abstract novelty claim with one sentence.
-   - NOV-N4: connect §10.3 OR/NOT recall to §7.4 gate analysis with quantitative prediction.
-   - PROSE-N4: promote §9.5 framing to a sentence in §1.
-   - PROSE-N6: soften "achieving the information-theoretic lower bound" abstract phrasing.
-   - PROSE-N8: anchor "sub-Turing" with a one-line operational gloss.
-   - FMT-N2: standardize on `\Cref` throughout.
-   - FMT-N4, FMT-N5: wrap embedded tables in §6.4, §6.6.1 in `\begin{table}` environments.
-   - METH-N6: add a proper LaTeX table for §10.3 query results.
-   - METH-N8: lead §10.3 Construction paragraph with query latency, not throughput.
+5. **R7 suggestions (optional polish)**:
+   - SUG-1: Add threat-model summary table (logic + format cross-ref).
+   - SUG-2: Add reproducibility appendix.
+   - SUG-3: After CRIT-1, consider leading with (TV, L) Pareto frontier as headline.
+   - METH-SUG-1: §10.7 Reproducibility and Limitations subsection.
+   - METH-SUG-2: Move setup tables to appendix.
+   - METH-SUG-3: Codec sweep at larger |Y|.
+   - PROSE-SUG-2: "How to read this paper" guide paragraph in §1.
+   - PROSE-SUG-3: Promote randomized encoding to §8.4.
+   - CITE-SUG-1: "Concurrent and prior work in multi-instance composition" subsection.
+   - CITE-SUG-3: Split bernoulli-types into specific sub-paper refs.
+   - FMT-SUG-1: Add glossary or notation table near §3.
+   - FMT-SUG-2: Move Algorithm 1 to appendix.
 
-6. **Pre-submission cleanup**:
-   - FMT-1: port to PoPETs 2027 template (1-2 hours; mechanical work, brings page count down).
-   - FMT-5: anonymize for double-blind review (30 minutes; remove author block, replace library URLs with placeholders).
-   - PoPETs page-count optimization (~3-5 page trim; partly handled by template port).
-   - Address remaining R4 minor backlog (m1 demonstrate→illustrate; m3 K(x)→κ(x); etc.).
+6. **Pre-submission cleanup (R6/R7 carry-over)**:
+   - MAJ-6/FMT-2: Port to PoPETs 2027 template (closes MAJ-19 partially).
+   - FMT-MIN-7: Anonymize for double-blind review.
+   - Page trim: §9.1 (Bernoulli relationship), §9.4 (Bounded composition), §10.4 (Deniability) candidates for compression.
 
-## R6 Review Summary
+## R7 Review Summary
 
-- Critical: 1 (CRIT-1: multi-term AND FP arithmetic discrepancy)
-- Major: 7 (MAJ-1 entropy ratio defn mismatch, MAJ-2 missing Definition env, MAJ-3 Thm 6.2 Step 2 loose, MAJ-4 throughput inconsistency, MAJ-5 NOV-N2 framing, MAJ-6 CITE-6 preprints pending, MAJ-7 LOG-S1 carry-over)
-- Minor: ~22
-- Suggestions: ~10
-- Build: clean (4 overfull hboxes, one significant 104pt at line 1875-1880)
-- Page count: 28 (need 8-10 page trim for PoPETs target 18-20)
+- Critical: 1 (CRIT-1: t-dependent allocation direction inverted across abstract, Corollary 8.x, §10.6 paragraph, Summary; formula and empirical numbers correct, interpretation reversed)
+- Major: 19 (6 logic, 5 methodology, 4 prose, 2 citation, 2 format)
+- Minor: 49 (7 logic, 7 methodology, 10 prose, 12 citation, 10 format, plus 3 cross-listed)
+- Suggestions: 17 (3 logic, 3 methodology, 3 prose, 3 citation, 3 format, plus 2 cross-listed)
+- Build: clean (5 overfull hboxes, one severe 118.9pt at Definition 8.x lines 1905-1910)
+- Page count: 36 (up from R6's 28 due to §8.3 + §10.6 additions; need 8-10 page trim for PoPETs target 18-20 in their template)
 - Recommendation: major-revision
 
-R6 progress vs R5: closed all 3 R5 critical findings. The §10 promotion exposed the empirical numbers to closer scrutiny; one arithmetic discrepancy emerged (CRIT-1). The §5 refactor closed the LOG prose issues but left two definitional residuals (MAJ-1 mismatched definitions across §1/§5; MAJ-2 missing Definition environment).
+R7 progress vs R6: closed all 7 R6 majors (entropy ratio definition unified, Theorem 6.2 Step 2 separated, throughput consistent, framework framing landed, master/operational subkey clarified, RecSplit cite at §6.4; sister-paper preprints still pending). R6 CRIT-1 (3-term AND FP arithmetic) closed via noise-floor formula. R7's §8.3 + §10.6 additions are technically motivated but exposed a critical direction-of-inequality error in the central new contribution.
 
-Path to minor-revision: 4-8 hours focused editorial work on MAJ-1+MAJ-2 (single Definition env + intro fix), MAJ-3 (Step 2 separation), MAJ-4 (consistent throughput), MAJ-5 (framework framing paragraph in §1), MAJ-7 (Definition 7.2 subkey clarification), plus resolving CRIT-1 (depends on what experiment actually measured). With sister-paper preprints + Bloom baseline + anonymization + venue port, the paper is plausibly PoPETs-submittable.
+Path to minor-revision: 4-6 hours CRIT-1 editorial + half-day v4 thesis revision + 4-8 hours R7 major editorial fixes + sister-paper preprint posting. Total ~1-2 weeks if preprints can be posted in parallel.
 
-Path to ready: items above plus 3-replicate variance characterization and at least one head-to-head baseline comparison.
+Path to ready: above plus 3-replicate variance characterization for §10.6 and §10.3 + Bloom baseline cell + PoPETs template port + anonymization + Huffman 1952 cite + bernoulli-types URL fix.
 
-Honest PoPETs survivability: technical content is solid. Production gaps and the four major editorial items are addressable in 1-2 weeks if sister-paper preprints can be posted in parallel, 3-4 weeks otherwise. The R6 §10 promotion was the right move strategically; it surfaced empirical issues that needed surfacing. Once CRIT-1 is resolved and the four major editorial items land, R7 should drop to minor-revision.
+Honest PoPETs survivability: NOT survivable without CRIT-1 fix; a careful reviewer will catch the direction error in the abstract. WITH CRIT-1 fix (Path A) and sister-paper preprints posted, plausibly minor-revision territory in 1-2 reviewing cycles. The framework contribution and three-literature unification remain strong; the (TV, L) Pareto frontier with 42x TV reduction is a sharp non-controversial finding; the Le Cam tightness empirical validation is clean. The technical content is solid; the issue is one of interpretation in the new multi-instance content.
+
+## Source-experiment cross-reference
+
+The R7 critical finding (CRIT-1) is rooted in a misreading shared between
+the cipher-maps paper and its source experiment in the bernoulli repo.
+Both should be updated:
+
+- `bernoulli/src/bernoulli/experiments/14_coincidence_oracle.py` lines
+  34-37 docstring claim "uniform codecs (Dense) are better defenses
+  against multi-instance attacks". This is the same inversion.
+- `bernoulli/src/bernoulli/experiments/RESULTS_14.md` lines 99-117
+  "Defense implications" section repeats the inverted reading
+  ("Dense defends best at large t", "At t=1 prefer Huffman, at large
+  t prefer Dense"). Should be corrected to match the formula.
+
+The formula is correct in both files; the empirical numbers are
+correct in both files; only the defender-vs-attacker direction reading
+is reversed in both files. Fixing one without the other will leave a
+visible inconsistency.
