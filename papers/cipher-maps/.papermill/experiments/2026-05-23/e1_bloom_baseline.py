@@ -128,36 +128,43 @@ class BloomFilter:
 
 @dataclass
 class CipherSetSpec:
-    """Cipher set parameters."""
-    n_bits: int  # cipher value space dimension; p_T = 2^-n_bits region
-    p_T: float  # target True-region probability (= per-document FPR target)
-    p_F: float  # False-region probability
-    p_N: float  # Noise-region probability
+    """Cipher set parameters.
+
+    n_bits is the slot fingerprint width.  Target FPR is 1 / 2^n_bits.
+    """
+    n_bits: int
+    target_fpr: float
 
 
 def make_cipher_spec(eps: float) -> CipherSetSpec:
-    """Choose cipher Boolean partition for target FPR eps.
+    """Choose slot fingerprint width so target FPR <= eps.
 
-    n_bits chosen as ceil(log_2(1/eps)) + 2 (gives partition granularity
-    for p_T = eps with a small buffer for the partition boundaries).
-    p_T set to eps, p_N set to eps (symmetric), p_F = 1 - 2*eps.
+    n_bits chosen as ceil(log_2(1/eps)); this gives FPR = 1/2^n_bits.
     """
-    n_bits = max(2, math.ceil(math.log2(1.0 / eps)) + 2)
-    return CipherSetSpec(
-        n_bits=n_bits,
-        p_T=eps,
-        p_F=1.0 - 2.0 * eps,
-        p_N=eps,
-    )
+    n_bits = max(1, math.ceil(math.log2(1.0 / eps)))
+    return CipherSetSpec(n_bits=n_bits, target_fpr=2.0 ** (-n_bits))
+
+
+def _fingerprint(key: bytes, n_bits: int, salt: int) -> int:
+    """Deterministic n_bits fingerprint of key, salted to decorrelate from PHF hashes.
+
+    SHA-256 truncated to n_bits, salted with the cipher set's seed.
+    """
+    h = hashlib.sha256(salt.to_bytes(8, "big") + key).digest()
+    mask = (1 << n_bits) - 1
+    return int.from_bytes(h[:8], "big") & mask
 
 
 class CipherSet:
-    """Cipher set membership test backed by a PHF with cipher Boolean slot values.
+    """PHF-backed cipher set membership test (perfect hash filter construction).
 
-    Members are stored at PHF slots with cipher Boolean True region;
-    non-members hashed at the PHF query produce a slot value drawn
-    uniformly from the cipher Boolean space (since the slot is filled
-    with noise at non-member positions).
+    For each member m, store the fingerprint h(m) at slot PHF(m).
+    For non-member slot positions, store a random n_bits fingerprint.
+    Membership test for query q: compute h(q) and slot[PHF(q)]; member iff equal.
+
+    The fingerprint salt is independent of the PHF seed (so a query that
+    collides with a member's PHF position rarely also collides on
+    fingerprint).  FPR = 1 / 2^n_bits asymptotically.
     """
 
     def __init__(self, members: Iterable[str], spec: CipherSetSpec, seed: int = 0) -> None:
@@ -165,6 +172,7 @@ class CipherSet:
         self.members = list(members)
         self.n = len(self.members)
         self.rng = random.Random(seed)
+        self.fp_salt = self.rng.randrange(2**63)
         self._build_phf()
         self._fill_slots()
 
@@ -176,42 +184,41 @@ class CipherSet:
                 "E1 requires phobic. Install with: pip install phobic"
             )
         keys = [m.encode("utf-8") for m in self.members]
-        self.phf = phobic.build(keys, alpha=0.95, seed=self.rng.randrange(2**32))
+        last_err: Exception | None = None
+        for lf in (0.95, 0.90, 0.80, 0.70, 0.50):
+            try:
+                self.phf = phobic.build(
+                    keys, load_factor=lf, seed=self.rng.randrange(2**32)
+                )
+                break
+            except RuntimeError as e:
+                last_err = e
+                continue
+        else:
+            raise RuntimeError(f"PHF build failed at all load factors: {last_err}")
         self.n_slots = self.phf.range_size
         self.phf_bits_per_key = self.phf.bits_per_key
 
     def _fill_slots(self) -> None:
-        """Slot encoding: True region = [0, 2^(n_bits) * p_T), Noise = [.., +p_N), False = rest.
-
-        Members get a True-region slot value (set to a deterministic True value).
-        Non-member slot positions are filled with random n_bits values.
-        """
         n_bits = self.spec.n_bits
-        slot_size = 2 ** n_bits
-        true_max = max(1, int(slot_size * self.spec.p_T))
-        noise_max = true_max + max(1, int(slot_size * self.spec.p_N))
-        # rest is False
-        self.true_region = (0, true_max)
-        self.noise_region = (true_max, noise_max)
-        self.false_region = (noise_max, slot_size)
-
         slot_width_bytes = (n_bits + 7) // 8
-        self.slots = bytearray(self.n_slots * slot_width_bytes)
         self.slot_width_bytes = slot_width_bytes
+        self.slots = bytearray(self.n_slots * slot_width_bytes)
 
+        # Members: store their fingerprint at PHF position
         member_positions: set[int] = set()
-        for m in self.members:
-            key = m.encode("utf-8")
-            pos = self.phf.lookup([key])[0]
+        keys_bytes = [m.encode("utf-8") for m in self.members]
+        positions = self.phf.lookup(keys_bytes)
+        for key, pos in zip(keys_bytes, positions, strict=True):
             member_positions.add(pos)
-            value = self.rng.randrange(self.true_region[0], self.true_region[1])
-            self._write_slot(pos, value)
-        # fill non-member slots with random n_bits values
+            fp = _fingerprint(key, n_bits, self.fp_salt)
+            self._write_slot(pos, fp)
+        # Non-member slots: fill with random n_bits value
+        slot_max = 1 << n_bits
         for pos in range(self.n_slots):
             if pos in member_positions:
                 continue
-            value = self.rng.randrange(0, slot_size)
-            self._write_slot(pos, value)
+            self._write_slot(pos, self.rng.randrange(slot_max))
 
     def _write_slot(self, pos: int, value: int) -> None:
         off = pos * self.slot_width_bytes
@@ -226,26 +233,29 @@ class CipherSet:
         return v
 
     def contains(self, key: str) -> bool:
-        """Membership test: True iff slot value decodes to True region."""
-        pos = self.phf.lookup_one(key.encode("utf-8"))
-        v = self._read_slot(pos)
-        return self.true_region[0] <= v < self.true_region[1]
+        """Membership test: fingerprint of query matches stored slot value."""
+        kb = key.encode("utf-8")
+        pos = self.phf.lookup([kb])[0]
+        stored = self._read_slot(pos)
+        expected = _fingerprint(kb, self.spec.n_bits, self.fp_salt)
+        return stored == expected
 
     def bits_per_element_practical(self) -> float:
-        """Practical: PHF bits/key + n_bits per element."""
+        """Practical: PHF bits/key + n_bits per element (slot fingerprint storage)."""
         return self.phf_bits_per_key + self.spec.n_bits
 
     def bits_per_element_theoretical(self) -> float:
-        """Theoretical lower bound: PHF bits/key + log_2(number of partition regions)."""
-        return self.phf_bits_per_key + math.log2(3.0)
+        """Theoretical lower bound: PHF bits/key + log_2(1/FPR) = PHF bits + n_bits.
+
+        For a perfect hash filter, theoretical and practical coincide;
+        the only slack is in the PHF bits/key constant (RecSplit gives
+        ~1.8 bits/key asymptotically, plus a per-bucket constant).
+        """
+        return self.phf_bits_per_key + self.spec.n_bits
 
     def serialized_bytes(self) -> int:
-        """Slot array + PHF backing structure."""
-        try:
-            phf_bytes = len(self.phf.to_bytes())
-        except Exception:
-            phf_bytes = math.ceil(self.phf_bits_per_key * self.n / 8)
-        return len(self.slots) + phf_bytes + 32
+        """Slot array + PHF backing structure (theoretical)."""
+        return len(self.slots) + math.ceil(self.phf_bits_per_key * self.n / 8) + 32
 
 
 # ----------------------------------------------------------------------
@@ -343,9 +353,9 @@ def run_cell(docs: list[set[str]], eps: float, n_queries: int, seed: int) -> Cel
     mean_vocab = sum_vocab / n_with_vocab
 
     bloom_bits_theoretical = 1.4427 * math.log2(1.0 / eps)
-    # cipher theoretical lower bound: PHF bits + log2(3) regions
-    # Use a typical PHF bits/key constant; in practice phobic gives ~1.18 bits/key
-    cipher_bits_theoretical = 1.18 + math.log2(3.0)
+    # Cipher set (PHF filter) theoretical: PHF asymptotic bits/key + n_bits fingerprint
+    # phobic RecSplit asymptotic is ~1.8 bits/key; n_bits = ceil(log_2(1/eps))
+    cipher_bits_theoretical = 1.8 + spec.n_bits
 
     return CellResult(
         m=len(docs),
