@@ -2392,12 +2392,63 @@ complement operations on true matches.  The asymmetric
 recall/precision degradation between AND, OR, and NOT is consistent
 with the gate-by-gate analysis in \S\ref{subsec:and-gate}.
 
+\paragraph{Bloom-filter baseline at matched FPR.}
+To anchor the space cost of the trapdoor structure, we compare
+per-document cipher set indexes against optimal Bloom filters at
+matched per-document false-positive rate, on the same 20 Newsgroups
+corpus.  For $m \in \{1000, 5000, 18266\}$ documents and target
+$\varepsilon \in \{0.01, 0.05, 0.10\}$, mean per-document
+bits-per-element are reported below.
+
+\begin{table}[ht]
+\centering
+\small
+\begin{tabular}{lrrrr}
+\toprule
+$\varepsilon$ & Bloom (bits/elem) & Cipher (bits/elem) & Ratio & Cipher FPR \\
+\midrule
+0.01 & 9.60 & 30.7 & 3.20 & 0.0078 \\
+0.05 & 6.25 & 28.7 & 4.59 & 0.0312 \\
+0.10 & 4.81 & 27.7 & 5.76 & 0.0625 \\
+\bottomrule
+\end{tabular}
+\caption{Per-document cipher set vs.\ optimal Bloom filter at matched
+FPR on 20 Newsgroups.  Numbers averaged across the three $m$ values
+(differences across $m$ are within $0.04$ bits/element for cipher and
+within $0.02$ for Bloom).  Cipher empirical FPR matches the theoretical
+$1/2^{n_{\mathrm{bits}}}$ target to within $0.0001$; Bloom matches
+the asymptotic optimal-$k$ prediction to within $30\%$.}
+\label{tab:bloom-baseline}
+\end{table}
+
+The 3-6$\times$ overhead is dominated by phobic's per-PHF fixed-cost
+overhead at the per-document scale (mean vocabulary $\sim 98$
+tokens).  Decomposing the cipher cost as $\mathrm{PHF}_{\mathrm{bits}}
++ n_{\mathrm{bits}}$: the PHF contribution is roughly $23.6$
+bits/key (constant across $m$ and $\varepsilon$), while the
+fingerprint contribution scales as $\lceil \log_2(1/\varepsilon) \rceil$.
+Bloom shrinks with $\varepsilon$ (per the
+$1.44 \cdot \log_2(1/\varepsilon)$ formula) while cipher is roughly
+flat, so the ratio widens at large $\varepsilon$.  The
+\emph{theoretical} lower-bound ratio (replacing the per-PHF
+$23.6$ overhead with the asymptotic $\sim 1.8$ bits/key that phobic
+approaches at scale) is $1.07$: at single-PHF deployment over all
+$(\mathrm{doc}, \mathrm{token})$ pairs (~$1.8 \times 10^6$ keys),
+cipher set space would be within $7\%$ of Bloom.  The $4.5\times$
+overhead reported here is the price of per-document trapdoor
+isolation; deployments that can share a single PHF across documents
+recover near-Bloom space at the cost of giving up document-level
+independence.
+
 \paragraph{Reproducibility.}
 The benchmark scripts and inputs are published with the library at
 the \texttt{examples/} subdirectory; a single command reproduces the
-table above.  The numbers reported here are from one run; variance
-characterization across replicates and against Bloom-filter and SSE
-baselines at matched operating points is work in progress
+boolean-search numbers above.  The Bloom-baseline experiment is at
+\texttt{.papermill/experiments/2026-05-23/e1\_bloom\_baseline.py};
+results in CSV form at \texttt{.../e1/results.csv}, full discussion
+at \texttt{.../e1/summary.md}.  The numbers above are from one run
+per cell; variance characterization across replicates and against
+SSE baselines at matched operating points is work in progress
 (\S\ref{subsec:eval-future}).
 
 \subsection{Deniability via the Correctness Parameter}
@@ -2446,9 +2497,13 @@ investigations across larger scales, alternative workloads, and
 adversarial settings, all currently in progress:
 
 \begin{itemize}
-\item Bloom-filter baseline at matched FPR for the 20 Newsgroups
-    workload, relating cipher set space cost to a non-trapdoor
-    baseline at equivalent operating points.
+\item Single-PHF deployment over all $(\mathrm{doc}, \mathrm{token})$
+    pairs to verify the theoretical ratio-1.07 prediction at scale
+    (per the Bloom-baseline analysis in
+    \S\ref{subsec:eval-20ng}: the per-document deployment incurs a
+    $4.5\times$ overhead vs.\ Bloom that is dominated by phobic's
+    per-PHF fixed cost; a single-PHF deployment over $\sim 10^6$ keys
+    should recover near-Bloom space).
 \item Construction-time scaling beyond $10^5$ documents (the current
     construction-time table in \S\ref{subsec:tractability} uses toy
     parameters $m = 100$).
