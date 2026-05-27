@@ -1829,13 +1829,13 @@ Proposition~\ref{prop:rand-encoding}.
 \end{remark}
 
 \paragraph{Empirical verification.}
-A homogeneous sweep across five acceptance predicates and $t \in \{1,
-2, 3, 4, 5\}$ (codec-controlled retrieval, balanced class prior,
-$|S| = 2000$, $|Y| = 8$, 5000 evaluation queries per class per cell)
-finds $24$ of $25$ cells with the predicted accuracy from
-\eqref{eq:coincidence-homogeneous} inside the empirical Wilson 95\%
-confidence interval; the single miss is at $0.003$ absolute sampling
-noise.  Reported in \S\ref{subsec:eval-codec-security}.
+A replicated sweep over five acceptance predicates and
+$t \in \{1, 2, 3, 4, 5\}$, with $10$ replicates per cell at
+$|S| = 2000$ and $|Y| = 8$, finds $23$ of $25$ cells with the
+predicted accuracy inside the pooled Wilson $95\%$ confidence
+interval; mean absolute gap between empirical and predicted is
+$4 \times 10^{-4}$ (max $1.7 \times 10^{-3}$).  See
+\S\ref{subsec:eval-codec-security} for the full sweep.
 
 \subsubsection*{Geometric corollary: \texorpdfstring{$t$}{t}-dependent allocation}
 
@@ -1912,10 +1912,13 @@ $c_i = \enc_i(x, k_i)$ for a candidate input $x$:
     $t$ are equal as bit strings: $\fhat_1(c_1) = \cdots =
     \fhat_t(c_t)$.  Does not invoke $\dec_i$.
 \item[Decode-coincidence attacker (public-codec threat).]  Observes
-    the decoded values $\mathbf{D} = (\dec_1(\fhat_1(c_1)), \ldots,
-    \dec_t(\fhat_t(c_t)))$ and predicts ``in-domain'' iff all $t$
-    decoded values agree on a common value in $Y$.  Requires
-    knowledge of the per-instance acceptance predicates.
+    the decoded values
+    \[
+    \mathbf{D} = (\dec_1(\fhat_1(c_1)), \ldots, \dec_t(\fhat_t(c_t)))
+    \]
+    and predicts ``in-domain'' iff all $t$ decoded values agree on a
+    common value in $Y$.  Requires knowledge of the per-instance
+    acceptance predicates.
 \end{description}
 \end{definition}
 
