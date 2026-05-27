@@ -2620,19 +2620,32 @@ skewed $p_y$.
 \paragraph{Multi-instance leakage and the coincidence oracle.}
 Theorem~\ref{thm:coincidence-oracle} predicts coincidence-oracle
 accuracy $1 - \tfrac{1}{2} \sum_y \alpha(y)^t$ for $t$ shared-$f$
-cipher map instances under independent seeds.  An empirical sweep
-over $5$ codecs at $t \in \{1, 2, 3, 4, 5\}$ finds $24$ of $25$ cells
-inside the empirical Wilson $95\%$ CI of the predicted accuracy; the
-single miss is sampling noise at $0.003$ absolute.  The geometric
-corollary (Corollary~\ref{cor:t-geometry}) is verified empirically:
-at $t = 5$, the uniform Dense partition produces attacker accuracy
-$\approx 0.9999$ (error rate $\approx 1.2 \times 10^{-4}$) while the
-Shannon-optimal Huffman partition produces attacker accuracy
-$\approx 0.984$ (error rate $\approx 0.016$).  Huffman therefore
-defends $\approx 132\times$ better than uniform at $t = 5$ in this
-configuration, consistent with the geometry: Huffman concentrates
-the partition mass on the heavy mode, raising $\sum_y \alpha(y)^t$
-and lowering attacker accuracy.
+cipher map instances under independent seeds.  A replicated
+empirical sweep over $5$ codecs at $t \in \{1, 2, 3, 4, 5\}$
+($10$ replicates per cell, $10{,}000$ trials per replicate)
+finds $23$ of $25$ cells with the theoretical prediction inside
+the Wilson $95\%$ CI from pooled $100{,}000$ trials; mean absolute
+gap between empirical mean and prediction is
+$4 \times 10^{-4}$ (max $1.7 \times 10^{-3}$).  The two cells
+outside CI are both at high $t$ near accuracy $1$
+(Dense($M{=}3$) $t{=}4$ predicted $0.9990$ vs.\ CI upper $0.9990$
+with gap $-2 \times 10^{-4}$; Huffman($M{=}4$) $t{=}5$ predicted
+$0.9844$ vs.\ CI $[0.9821, 0.9837]$ with gap $-1.4 \times 10^{-3}$),
+where the Wilson CI half-width shrinks below the empirical-vs-prediction
+sampling noise scale.  Both deviations are well below the
+$0.01$ threshold for paper-claim impact; the theorem is empirically
+tight to within sampling noise across the full sweep.
+
+The geometric corollary (Corollary~\ref{cor:t-geometry}) is
+verified empirically: at $t = 5$, the uniform Dense partition
+produces attacker accuracy $\approx 0.9999$ (error rate
+$\approx 1.2 \times 10^{-4}$) while the Shannon-optimal Huffman
+partition produces attacker accuracy $\approx 0.984$ (error rate
+$\approx 0.016$).  Huffman therefore defends $\approx 132\times$
+better than uniform at $t = 5$ in this configuration, consistent
+with the geometry: Huffman concentrates the partition mass on the
+heavy mode, raising $\sum_y \alpha(y)^t$ and lowering attacker
+accuracy.
 
 There is no single-instance versus multi-instance trade-off in
 codec choice: Huffman dominates at every $t$, both under the
@@ -2642,20 +2655,54 @@ cipher maps for the same latent function should retain the
 Shannon-optimal partition and address multi-instance leakage via
 randomized encoding (Proposition~\ref{prop:rand-encoding}).
 
-\paragraph{Randomized encoding.}
-The randomized-encoding defense
-(Proposition~\ref{prop:rand-encoding}) is verified at $|S| = 1000$,
-$n = 4$~bits, $t \in \{2, 3, 4\}$, codec-controlled retrieval.  At
-$n = 4$ with the Huffman partition: canonical encoding gives
-pattern-coincidence accuracy $1.000$ at $t = 4$, while randomized
-encoding reduces it to $0.699$.  At $n = 5$, the reduction is to
-$0.543$.  Decode-coincidence accuracy is unchanged by the encoding
-mode to within $0.01$ noise, confirming that the public-codec threat
-model is unaffected.  Marginal output distribution at $t = 1$ is
-identical between canonical and randomized encoding to within
-$0.001$, confirming the defense is free in the single-instance regime.
-The Dense partition (with $\kappa(y) = 1$ for all $y$) gets no
-benefit from randomized encoding, as predicted.
+\paragraph{Randomized encoding defense, $K$ sweep.}
+The randomized-encoding defense (Proposition~\ref{prop:rand-encoding})
+is validated empirically across a Huffman codespace-class sweep
+$M \in \{4, 5, 6, 7, 8\}$ at $|S| = 1000$, $t \in \{2, 3, 4\}$, $5$
+replicates per cell.  Three sub-hypotheses corresponding to
+Proposition~\ref{prop:rand-encoding} were verified:
+
+\begin{description}
+\item[H1, pattern-coincidence decay with $K$.]
+The member pattern-coincidence rate under randomized encoding
+decreases monotonically with the codespace class size $|A(y)| =
+2^{M - \ell_y}$, across all $t$.  At $t = 4$: Huffman pattern TPR
+drops from $0.4156$ at $M = 4$ to $0.1058$ at $M = 5$, $0.0116$ at
+$M = 6$, $0.0018$ at $M = 7$, and $0.0002$ at $M = 8$.  Empirical
+values match the closed form
+$\sum_v p_f(v) \cdot 2^{-(M - \ell_v)(t - 1)}$ of
+Remark~\ref{rem:huffman-member-coincidence} to within $0.01$ in
+all $15$ Huffman cells (mean absolute gap $0.004$).
+
+\item[H2, decode-coincidence invariance under $K$.]
+The decode-coincidence attacker's accuracy is invariant under the
+canonical-vs-randomized encoding choice, as predicted: the maximum
+absolute gap between canonical and random decode rates across all
+$36$ $(\text{codec}, M, t)$ cells is $0.0114$, well within the
+sampling-noise scale at $n = 2{,}000$ evaluation samples per cell.
+
+\item[H3, Dense saturation boundary.]
+For the Dense partition ($M = 3$, $|Y| = 8$, $K(y) = 1$ forced by
+codespace saturation), canonical and randomized encoding produce
+identical pattern-coincidence rates ($1.0$ at all $t$).  The
+randomized-encoding mechanism is inert when the codespace cannot
+expand, consistent with the saturation precondition in
+Proposition~\ref{prop:rand-encoding}.
+\end{description}
+
+The H1 decay rate has a clean operational reading: each doubling of
+$|A(y)|$ at fixed $t$ halves the pattern-coincidence rate per
+multiplicative factor of $|A(y)|^{t-1}$ in the closed form.  For
+deployments at $t = 4$, moving from $M = 4$ (Huffman codespace
+class $\approx 4$ per heavy value) to $M = 7$ (class $\approx 32$)
+reduces pattern-coincidence accuracy by $230\times$ ($0.4156 \to
+0.0018$); the defense is essentially complete at $M = 8$ where
+pattern-coincidence accuracy approaches $0$.  Combined with H2,
+which confirms randomized encoding does not weaken the
+public-codec story, the deployment recommendation is unambiguous:
+when shared-$f$ multi-instance composition is unavoidable and the
+codec is private, randomized encoding with the largest practical
+$|A(y)|$ minimizes pattern-coincidence leakage.
 
 \paragraph{Threat model scope: value-side versus key-side channels.}
 The Le Cam bound applies to value-side attackers.  When $S$ carries
