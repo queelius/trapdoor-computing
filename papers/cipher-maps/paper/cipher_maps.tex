@@ -512,7 +512,12 @@ The cipher map has \emph{$\delta$-representation uniformity} if
 \begin{equation}
 \TV(Q,\, \Uniform(\{0,1\}^n)) \leq \delta,
 \end{equation}
-where $\TV$ is total variation distance.
+where $\TV$ is the total variation distance between probability
+distributions on $\{0,1\}^n$, given by
+\begin{equation}
+\TV(P, Q) \;=\; \tfrac{1}{2} \!\!\!\! \sum_{c \in \{0,1\}^n} \!\!\!\! |P(c) - Q(c)|
+  \;=\; \!\! \sup_{A \subseteq \{0,1\}^n} \!\!\!\! |P(A) - Q(A)|.
+\end{equation}
 \end{definition}
 
 Total variation distance has the operational interpretation that no
