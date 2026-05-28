@@ -2550,18 +2550,26 @@ suite~\cite{towell2026codec}.
 \paragraph{Setup.}
 Build set $S$ of $|S| = 2000$ keys (random $16$-byte strings).
 Codomain $Y = \{y_0, \ldots, y_7\}$, latent value distribution $p_y$
-Zipf with skew $s = 1$.  Cipher value space $\{0,1\}^n$ with $n = 4$
-or $n = 5$ bits.  Six acceptance predicates compared:
-$\mathrm{Dense}(\alpha_y = 1/|Y|)$,
-two $\mathrm{Padded}$ variants with default values $y_0$ and $y_7$,
-$\mathrm{Huffman}$ from $p_y$ at $n = 4$ and $n = 5$, and
-$\mathrm{AntiHuffman}$ from $p_y$ at $n = 5$ (a worst-case codec
-that swaps the value-to-codeword-length pairing).  Three attacker
-classes are evaluated: a Bayes likelihood-ratio classifier over the
-decoded output, vanilla logistic regression on one-hot value features,
-and 1-nearest-neighbor.  Train and test sets are 5000 each at balanced
-class prior; AUC is Mann-Whitney $U$ with tie correction.  All numbers
-below are single-run (no replicates).
+Zipf with skew $s = 1$.  Cipher value space $\{0,1\}^n$ with $n$
+between $3$ and $5$ bits depending on codec; specific codec sets
+differ per analysis paragraph below.  The \emph{single-instance
+Le~Cam tightness study} uses five codecs at $n \in \{4, 5\}$:
+$\mathrm{Huffman}(n{=}5)$, $\mathrm{Huffman}(n{=}4)$,
+$\mathrm{Dense}(n{=}4)$, $\mathrm{Padded}(n{=}4, \text{default}{=}y_7)$,
+and $\mathrm{AntiHuffman}(n{=}5)$ (worst-case codec that swaps the
+value-to-codeword-length pairing).  The \emph{replicated coincidence-oracle
+sweep} (E3) uses a different five-codec set chosen for multi-instance
+analysis: $\mathrm{Dense}(M{=}3)$, $\mathrm{Dense}(M{=}4)$,
+$\mathrm{Padded}(M{=}4, v_0)$, $\mathrm{Huffman}(M{=}4, p_f)$,
+$\mathrm{AntiHuffman}(M{=}4)$.  The \emph{randomized-encoding sweep}
+(E4) uses Huffman codecs at $n \in \{4, 5, 6, 7, 8\}$ plus
+$\mathrm{Dense}(n{=}3)$.  Three attacker classes are evaluated in the
+Le Cam study: a Bayes likelihood-ratio classifier over the decoded
+output, vanilla logistic regression on one-hot value features, and
+1-nearest-neighbor.  Train and test sets are 5000 each at balanced
+class prior; AUC is Mann-Whitney $U$ with tie correction.  Le Cam
+results are single-run; E3 uses $10$ replicates per cell, E4 uses
+$5$ replicates per cell.
 
 \paragraph{Le Cam tightness across attackers.}
 \Cref{tab:le-cam-tight} reports empirical accuracy across the codec
@@ -2687,8 +2695,10 @@ drops from $0.4156$ at $M = 4$ to $0.1058$ at $M = 5$, $0.0116$ at
 $M = 6$, $0.0018$ at $M = 7$, and $0.0002$ at $M = 8$.  Empirical
 values match the closed form
 $\sum_v p_f(v) \cdot 2^{-(M - \ell_v)(t - 1)}$ of
-Remark~\ref{rem:huffman-member-coincidence} to within $0.01$ in
-all $15$ Huffman cells (mean absolute gap $0.004$).
+Remark~\ref{rem:huffman-member-coincidence} to within $0.02$ across
+all $15$ Huffman cells ($13$ of $15$ within $0.01$; two
+$\mathrm{Huffman}(M{=}5)$ cells at $t \in \{2, 3\}$ have gaps
+$0.010$ and $0.016$ respectively; mean absolute gap $0.004$).
 
 \item[H2, decode-coincidence invariance under $K$.]
 The decode-coincidence attacker's accuracy is invariant under the
