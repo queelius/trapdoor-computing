@@ -1,0 +1,33 @@
+{
+  "title": "The Entropy Ratio: Quantitative Confidentiality for Trapdoor Computing",
+  "description": "Develops the entropy ratio e = H(Q)/n as the security measure for trapdoor computing primitives in the quantitative information flow (QIF) tradition. Proves the Fannes-Audenaert bridge connecting the representation-uniformity parameter delta to a lower bound e >= 1 - delta - h_2(delta)/n, reducing confidentiality engineering to the concrete problem of minimizing delta. Analyzes three mechanisms for reducing delta (noise injection, multiple representations, joint encoding granularity) with explicit cost analyses. Provides empirical validation on the 20 Newsgroups corpus.",
+  "creators": [
+    {
+      "name": "Towell, Alexander",
+      "affiliation": "Southern Illinois University Edwardsville",
+      "orcid": "0000-0001-6443-9897"
+    }
+  ],
+  "keywords": [
+    "trapdoor computing",
+    "quantitative information flow",
+    "entropy ratio",
+    "Fannes-Audenaert inequality",
+    "cipher maps",
+    "parameterized leakage",
+    "homophonic substitution",
+    "encrypted search",
+    "privacy-preserving computation"
+  ],
+  "license": "CC-BY-4.0",
+  "upload_type": "publication",
+  "publication_type": "preprint",
+  "access_right": "open",
+  "related_identifiers": [
+    {
+      "relation": "isPartOf",
+      "identifier": "https://github.com/queelius/trapdoor-computing",
+      "resource_type": "software"
+    }
+  ]
+}

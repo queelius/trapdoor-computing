@@ -1,0 +1,34 @@
+{
+  "title": "Algebraic Cipher Types: Confidentiality Trade-offs in Type Constructors over Trapdoor Computing",
+  "description": "A functorial framework for structured computation over trapdoor encodings. Develops cipher type constructors (sum, product, function) with explicit confidentiality trade-offs, including the orbit-closure bound on what an adversary can learn from cipher value observations. Establishes the encoding-granularity principle: component-wise encoding leaks correlations across cipher values, joint encoding hides them at storage cost growing as |Y|^k. Provides the formal noise-floor analysis for cipher Boolean composition that cipher-maps defers to (the noise propagation under cipher AND, OR, NOT operations on the cipher Boolean partition).",
+  "creators": [
+    {
+      "name": "Towell, Alexander",
+      "affiliation": "Southern Illinois University Edwardsville",
+      "orcid": "0000-0001-6443-9897"
+    }
+  ],
+  "keywords": [
+    "trapdoor computing",
+    "cipher types",
+    "algebraic data types",
+    "type constructors",
+    "functorial framework",
+    "orbit closure",
+    "cipher Boolean",
+    "noise propagation",
+    "quantitative information flow",
+    "privacy-preserving computation"
+  ],
+  "license": "CC-BY-4.0",
+  "upload_type": "publication",
+  "publication_type": "preprint",
+  "access_right": "open",
+  "related_identifiers": [
+    {
+      "relation": "isPartOf",
+      "identifier": "https://github.com/queelius/trapdoor-computing",
+      "resource_type": "software"
+    }
+  ]
+}
