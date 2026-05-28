@@ -312,13 +312,19 @@ incurs substantial computational overhead from noise management in lattice
 operations.
 
 \paragraph{Homophonic substitution.}
-The representation uniformity property (multiple encodings per value,
-$K(x) \propto 1/D(x)$) is a modern instance of homophonic
-substitution~\cite{simmons1979symmetric}, in which frequent plaintext
-symbols are assigned multiple ciphertext equivalents to flatten frequency
-distributions.  The connection is direct: representation uniformity
-generalizes homophonic substitution from substitution ciphers to arbitrary
-total functions.
+The representation uniformity property is a modern instance of
+homophonic substitution~\cite{simmons1979symmetric}, in which frequent
+plaintext symbols are assigned multiple ciphertext equivalents to
+flatten frequency distributions.  Writing $D(x)$ for the prior
+probability that the trusted machine encodes latent value $x$ and
+$K(x) \geq 1$ for the number of cipher representations assigned to $x$
+(formal definitions in \S\ref{sec:abstraction} and
+\S\ref{sec:properties}), the standard Simmons prescription
+$K(x) \propto D(x)$ assigns more representations to frequent values so
+that each cipher representation is queried with equal expected
+frequency.  The connection is direct: representation uniformity
+generalizes homophonic substitution from substitution ciphers to
+arbitrary total functions.
 
 
 %% ============================================================
@@ -448,7 +454,7 @@ inputs---both produce $n$-bit output.  This yields \textbf{Property~1
 Replace each value $x$ with $K(x) \geq 1$ distinct representations, keyed
 by the secret $s$.  Representational equality implies value equality, but
 value equality does not imply representational equality.  Assigning
-$K(x) \propto 1/D(x)$ equalizes frequencies.  This yields
+$K(x) \propto D(x)$ equalizes frequencies.  This yields
 \textbf{Property~2 (Representation Uniformity)}.
 
 \medskip
@@ -493,8 +499,12 @@ inputs produce valid output.
 
 \begin{definition}[Representation uniformity]
 \label{def:rep-uniformity}
-Let $D$ be a distribution on $X$.  Define the induced distribution on cipher
-values:
+Let $D : X \to [0, 1]$ be the prior probability distribution from which
+the trusted machine draws latent values for encoding (the query
+distribution).  Let $K(x) \geq 1$ be the multiplicity assigned to $x$
+(Definition~\ref{def:cipher-map}: the number of distinct cipher
+representations of $x$).  Define the induced distribution on cipher
+values observed by the untrusted machine:
 \begin{equation}
 Q(c) = \sum_{x \in X} D(x) \cdot \frac{|\{k : \enc(x,k) = c\}|}{K(x)}.
 \end{equation}
@@ -506,10 +516,13 @@ where $\TV$ is total variation distance.
 \end{definition}
 
 Total variation distance has the operational interpretation that no
-statistical test can distinguish $Q$ from uniform with advantage exceeding
-$\delta$.  To achieve small $\delta$, assign $K(x) \propto 1/D(x)$
-encodings per value (homophonic substitution), so that frequent values get
-more representations.
+statistical test can distinguish $Q$ from uniform with advantage
+exceeding $\delta$.  To achieve small $\delta$, assign
+$K(x) \propto D(x)$ encodings per value (the classical Simmons
+homophonic prescription~\cite{simmons1979symmetric}): frequent values
+get more representations, so the per-representation query frequency
+$D(x) / K(x)$ is constant across~$x$, and $Q$ is flat across
+cipher values.
 
 \begin{remark}[Marginal uniformity only]
 \label{rem:marginal-only}
@@ -628,7 +641,7 @@ $\mu$ (value cost) & $(0,\infty)$ & Bits per element for values &
 $\delta$ (uniformity) & $[0,1]$ & TV distance from uniform &
     Multiplicity $K(x)$ \\
 $K(x)$ (multiplicity) & $\{1,2,\ldots\}$ & Encodings per element &
-    Set to $\propto 1/D(x)$ \\
+    Set to $\propto D(x)$ \\
 $p$ (entanglement) & $\{1, \ldots, k\}$ & Encoding granularity &
     Correlation structure (\S\ref{subsec:granularity}) \\
 \bottomrule
