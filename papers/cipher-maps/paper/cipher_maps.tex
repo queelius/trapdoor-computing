@@ -527,7 +527,60 @@ $K(x) \propto D(x)$ encodings per value (the classical Simmons
 homophonic prescription~\cite{simmons1979symmetric}): frequent values
 get more representations, so the per-representation query frequency
 $D(x) / K(x)$ is constant across~$x$, and $Q$ is flat across
-cipher values.
+cipher values.  The following proposition makes this precise: the
+representation-uniformity gap is exactly the total variation distance
+between the query distribution $D$ and the normalized integer
+allocation $K/N$.
+
+\begin{proposition}[Homophonic allocation]
+\label{prop:homophonic}
+Suppose $\enc$ is injective, so the image $\im(\enc)$ contains exactly
+$N := \sum_{x \in X} K(x)$ cipher values, and let $A(x) := K(x)/N$
+denote the normalized allocation (a probability distribution on $X$).
+Then the induced cipher value distribution $Q$ of
+Definition~\ref{def:rep-uniformity} satisfies
+\begin{equation}
+\TV\bigl(Q,\, \Uniform(\im(\enc))\bigr)
+  \;=\; \tfrac{1}{2} \sum_{x \in X} \Bigl| D(x) - \tfrac{K(x)}{N} \Bigr|
+  \;=\; \TV(D, A).
+\end{equation}
+In particular, the Simmons allocation $K(x) = \lceil c\,D(x) \rceil$
+gives $\TV(Q, \Uniform(\im(\enc))) \leq |X|/N$, which vanishes as the
+budget $c$ (and hence $N \geq c$) grows.
+\end{proposition}
+
+\begin{proof}
+By injectivity, $\im(\enc)$ partitions into $|X|$ groups
+$\{\enc(x,0), \ldots, \enc(x,K(x){-}1)\}$, one per $x$, of total size
+$N$.  For $c = \enc(x,k)$ we have $Q(c) = D(x)/K(x)$ (draw $x$ with
+probability $D(x)$, then $k$ uniform over its $K(x)$ indices) and
+$\Uniform(\im(\enc))$ assigns mass $1/N$.  Summing the
+absolute differences group by group,
+\[
+\sum_{c \in \im(\enc)} \bigl|Q(c) - \tfrac1N\bigr|
+  = \sum_{x \in X} K(x)\,\Bigl|\tfrac{D(x)}{K(x)} - \tfrac1N\Bigr|
+  = \sum_{x \in X} \Bigl| D(x) - \tfrac{K(x)}{N} \Bigr|,
+\]
+and halving gives the first equality; the second is the definition of
+$\TV(D, A)$, valid since $\sum_x A(x) = N/N = 1$.  For the Simmons
+allocation write $K(x) = c\,D(x) + r(x)$ with rounding excess
+$r(x) \in [0, 1)$, so $N = c + R$ where $R = \sum_x r(x) < |X|$ and
+$K(x)/N - D(x) = (r(x) - R\,D(x))/N$.  Hence
+\[
+\TV\bigl(Q, \Uniform(\im(\enc))\bigr)
+  = \frac{1}{2N} \sum_{x \in X} |r(x) - R\,D(x)|
+  \leq \frac{1}{2N}\Bigl(\sum_x r(x) + R \sum_x D(x)\Bigr)
+  = \frac{R}{N} < \frac{|X|}{N}. \qedhere
+\]
+\end{proof}
+
+The proposition bounds the gap to uniformity \emph{within the image}
+$\im(\enc)$; the residual gap to $\Uniform(\{0,1\}^n)$ in
+Definition~\ref{def:rep-uniformity} is the noise region outside the
+image, populated by totality (Property~1) and noise injection
+(\S\ref{sec:trust-model}).  Tighter constants under additional
+budget hypotheses are developed in the companion entropy-ratio
+work~\cite{towell2026maxconf}.
 
 \begin{remark}[Marginal uniformity only]
 \label{rem:marginal-only}
