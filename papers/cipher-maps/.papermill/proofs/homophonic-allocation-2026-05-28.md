@@ -1,92 +1,100 @@
-# Proof verification: Homophonic allocation (Proposition 4.x)
+# Proof: Homophonic allocation (cipher-maps Proposition prop:homophonic)
 
-Date: 2026-05-28
-Skill: papermill:proof, Candidate A (homophonic prescription optimality)
+Dates: developed 2026-05-28; numerics partially RETRACTED 2026-05-30.
+Skill: papermill:proof, Candidate A.
 
-## What was proven and added to the paper
+## ANALYTICALLY CERTAIN (this is what the cipher-maps paper states)
 
-Proposition (Homophonic allocation), inserted in cipher_maps.tex after
-the Definition 4.2 prose, before the "Marginal uniformity only" remark.
+These are proven by hand, no numerics, and are exactly what the
+committed cipher-maps Proposition contains:
 
-**Exact identity** (the valuable result):
-For injective enc with N = sum_x K(x) cipher values in the image and
-A(x) = K(x)/N the normalized allocation,
+1. Exact identity. For injective enc with N = sum_x K(x) image cipher
+   values and A(x) = K(x)/N,
 
-    TV(Q, Uniform(im enc)) = (1/2) sum_x |D(x) - K(x)/N| = TV(D, A).
+       TV(Q, Uniform(im enc)) = (1/2) sum_x |D(x) - K(x)/N| = TV(D, A).
 
-Representation uniformity is *exactly* how well the integer allocation
-K/N approximates the query distribution D. Verified to machine
-precision in homophonic_tv_check.py / homophonic_tv_structured.py.
+   Representation uniformity equals how well the integer allocation
+   K/N approximates the query distribution D.
 
-**Provable sufficient bound** (Simmons allocation K(x) = ceil(c D(x))):
+2. Rigorous upper bound for the Simmons allocation K(x) = ceil(c D(x)).
+   Write K(x) = c D(x) + r(x), r(x) in [0,1), N = c + R,
+   R = sum_x r(x) < |X|, K(x)/N - D(x) = (r(x) - R D(x))/N. Then
 
-    TV(Q, Uniform(im enc)) <= R/N < |X|/N,  R = sum_x r(x), r(x) in [0,1)
+       TV = (1/2N) sum_x |r(x) - R D(x)|
+          <= (1/2N)(sum_x r(x) + R sum_x D(x)) = R/N < |X|/N.
 
-vanishing as budget c grows. Triangle-inequality proof. Held in all
-200,000 adversarial trials (max ratio to |X|/N was 0.734 < 1).
+   No hypothesis on c is required. TV -> 0 as c (hence N) grows.
 
-## IMPORTANT FINDING: the |X|/(2N) constant is FALSE for naive ceil allocation
+The cipher-maps Proposition states (1) and the |X|/N bound from (2).
+Both are solid. The paper is correct.
 
-The parent CLAUDE.md (Core Principle 7), the cipher-maps library
-README (cited as "Thm 6.2"), and the maxconf design notes all assert
+## RETRACTED: all session numerics on the |X|/(2N) question
 
-    delta <= |X| / (2 * sum K(x))   [i.e., TV <= |X|/(2N)]
+This session's environment was unreliable (output buffering/garbling
+across many tool calls). I produced THREE mutually inconsistent
+adversarial-search results for "how often does maxconf's |X|/(2N)
+bound fail under its hypothesis c >= 1/min D":
 
-For K(x) = ceil(c D(x)), this is VIOLATED. Adversarial search over
-200,000 random distributions (homophonic_tv_check.py):
+    run A (tv_hyp): ~10 / 300k violations, worst ratio 1.17
+    run B (my notes, NOW RETRACTED): "130,860 / 300k, ratio 1.9995"
+        -- this number was a conflation/transcription error; it does
+        NOT match any clean run output and must not be trusted or cited
+    run C (tv_clean, stratified by multiplier, cleanest):
+        ~2.7%-6.3% violations per stratum, worst ratio ~1.22,
+        worst cases at n=2 and at the hypothesis boundary c = 1/min D;
+        |X|/N never violated in any stratum
 
-- 885 violations out of 200,000 trials
-- max ratio TV / (|X|/(2N)) = 1.468
-- worst case: n=5, c=2, TV=0.6116, bound |X|/(2N)=0.4167
+Because A, B, and C disagree by orders of magnitude, NONE of the
+numeric violation-rate or tightness claims from this session are
+trustworthy. In particular:
 
-Structured example that violates it at every budget:
-heavy-tail D = (0.9, 0.0111 x 9):
+- The earlier "case (3): maxconf is confirmed wrong by 2x" CONCLUSION
+  is RETRACTED. It was based on run B's fabricated numbers.
+- The "|X|/N is tight / TV approaches |X|/N" claim (briefly added to
+  the cipher-maps paper and now removed) is RETRACTED: the cleanest
+  run C suggests worst TV ~ 0.6 |X|/N, i.e. |X|/N is loose, not tight.
 
-    c       sumK    TV         |X|/(2N)    violated?
-    10      18      0.400000   0.277778    yes
-    100     108     0.066667   0.046296    yes
-    1000    1008    0.007143   0.004960    yes
-    10000   10008   0.000719   0.000500    yes
+## What is actually KNOWN vs OPEN
 
-Mechanism: when D is concentrated and the budget is small relative to
-the skew, ceil rounding forces the allocation toward uniform while D
-stays near a point mass, so TV is large. The factor-2-tighter bound
-fails precisely in the regime where multiplicity is too coarse to
-track a skewed D.
+KNOWN (analytic): exact identity; TV < |X|/N (no hypothesis).
+OPEN (needs clean re-verification, ideally analytic not numeric):
+  whether maxconf's |X|/(2N) holds under c >= 1/min D. The least-bad
+  numeric evidence (run C) suggests it is violated mildly (a few
+  percent of cases, by <= ~1.22x), concentrated at n=2 and at the
+  hypothesis boundary -- i.e. maxconf's bound may be "almost right"
+  (correct up to a small constant / small-n correction), NOT
+  catastrophically wrong. But run C is single-environment and was not
+  independently reproduced.
 
-### What this means
+## maxconf proof: a real gap exists regardless of the constant
 
-The exact identity TV = TV(D, K/N) is correct and is what cipher-maps
-now states. The |X|/(2N) constant must NOT be cited in cipher-maps
-for the naive ceil allocation. Three possibilities for the ecosystem:
+Independently of the numeric question, the maxconf Theorem 5.x proof
+(main.tex ~lines 668-674) has a genuine logical gap: it bounds the
+per-cipher discrepancy of Q(v) = D(x)/K(x) against 1/c, but TV is
+measured against U_im = 1/M (M = sum K), and 1/c != 1/M since
+M in [c, c+|X|]. The "aggregating gives |X|/(2M)" step is not derived;
+it asserts a constant the proof's own per-term bounds do not visibly
+sum to. This proof needs rewriting whether or not the final constant
+|X|/(2N) survives a careful analysis. The clean exact-identity proof
+above is the recommended replacement skeleton; the only open question
+is what tight constant it yields under the c >= 1/min D hypothesis.
 
-1. maxconf's Theorem proves |X|/(2N) under an additional hypothesis
-   the naive model omits (e.g., large-budget regime where every
-   K(x) >= some threshold so ceil rounding is non-binding; or a
-   water-filling / largest-remainder allocation rather than
-   independent per-element ceil). If so, cite it WITH that hypothesis.
-2. maxconf uses a different normalization (e.g., bound on TV to
-   Uniform over a fixed 2^n space, not the image; or floor instead
-   of ceil; or K(x) = round(c D(x))). Re-derive under the actual
-   maxconf statement.
-3. The |X|/(2N) constant in maxconf is simply wrong and should be
-   corrected to |X|/N (or R/N), propagating to the parent CLAUDE.md
-   Principle 7, the library README "Thm 6.2", and the entropy-ratio
-   chain e >= 1 - delta - h_2(delta)/n wherever delta = |X|/(2N) is
-   substituted.
+## REQUIRED NEXT STEP (do in a clean environment / session)
 
-ACTION REQUIRED (user / maxconf-side): determine which of (1)-(3)
-holds by checking the actual maxconf Theorem statement and proof.
-cipher-maps is safe either way: it states the exact identity and the
-provable |X|/N, and defers "tighter constants under additional budget
-hypotheses" to maxconf without committing to a specific value.
+Re-derive the tight constant for TV(Q, U_im) under K(x)=ceil(c D(x))
+and c >= 1/min D ANALYTICALLY (the exact identity makes this a clean
+optimization: maximize (1/2N) sum_x |r(x) - R D(x)| over admissible
+D, r). Do not rely on this session's numeric runs. Then:
+- if the tight constant is |X|/(2N): maxconf is right, cipher-maps can
+  optionally cite the tighter constant; the maxconf PROOF still needs
+  the rewrite above.
+- if it is c |X|/N for some c in (1/2, 1]: correct maxconf's stated
+  constant accordingly and propagate.
 
-## Verification scripts
+## Scripts (this session; treat outputs as unverified)
 
-- homophonic_tv_check.py: 200k-trial adversarial search; reports
-  violations and max ratio for |X|/(2N).
-- homophonic_tv_structured.py: structured sweep (uniform, zipf-8,
-  zipf-32, heavy-tail) x (c in 10,100,1000,10000); prints exact TV,
-  both candidate bounds, and pass/fail per cell.
-
-Both stdlib-only Python; run directly.
+- homophonic_tv_check.py: hypothesis-FREE search (small c allowed).
+- homophonic_tv_structured.py: structured sweep.
+- homophonic_tv_hypothesis_respecting.py: hypothesis-enforced search.
+All stdlib Python. Re-run in a clean environment and cross-check
+before trusting any output.
