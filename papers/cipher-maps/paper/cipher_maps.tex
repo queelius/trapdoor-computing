@@ -924,9 +924,10 @@ Detect cross-query correlations & \textbf{Not bounded} & Marginal uniformity onl
 \end{tabular}
 \end{table}
 
-The last row is the honest limitation: marginal $\delta$-uniformity per
-cipher map does not bound joint correlations across multiple cipher maps
-sharing inputs.  The compositional leakage analysis in
+Table~\ref{tab:guarantees} collects these bounds against the
+honest-but-curious $U$.  Its last row is the honest limitation:
+marginal $\delta$-uniformity per cipher map does not bound joint
+correlations across multiple cipher maps sharing inputs.  The compositional leakage analysis in
 \S\ref{subsec:comp-leakage} treats this case; the encoding granularity
 parameter $p$ controls the trade-off between space and joint correlation
 hiding.
@@ -2472,7 +2473,7 @@ matched per-document false-positive rate, on the 20 Newsgroups
 training split ($11{,}004$ documents after removing empties).  For
 $m \in \{1000, 5000, 11004\}$ documents and target
 $\varepsilon \in \{0.01, 0.05, 0.10\}$, mean per-document
-bits-per-element are reported below.
+bits-per-element are reported in Table~\ref{tab:bloom-baseline}.
 
 \begin{table}[ht]
 \centering
@@ -2515,14 +2516,12 @@ recover near-Bloom space at the cost of giving up document-level
 independence.
 
 \paragraph{Reproducibility.}
-The benchmark scripts and inputs are published with the library at
-the \texttt{examples/} subdirectory; a single command reproduces the
-boolean-search numbers above.  The Bloom-baseline experiment is at
-\texttt{.papermill/experiments/2026-05-23/e1\_bloom\_baseline.py};
-results in CSV form at \texttt{.../e1/results.csv}, full discussion
-at \texttt{.../e1/summary.md}.  The numbers above are from one run
-per cell; variance characterization across replicates and against
-SSE baselines at matched operating points is work in progress
+The benchmark scripts and inputs are published with the reference
+library; a single command reproduces the boolean-search numbers above,
+and the Bloom-filter comparison (script, raw results, and discussion)
+ships alongside them.  The numbers above are from one run per cell;
+variance characterization across replicates and against SSE baselines
+at matched operating points is work in progress
 (\S\ref{subsec:eval-future}).
 
 \subsection{Deniability via the Correctness Parameter}
@@ -2792,8 +2791,8 @@ $|A(y)|$ minimizes pattern-coincidence leakage.
 The Le Cam bound applies to value-side attackers.  When $S$ carries
 membership-correlated structure on the key universe, key-side
 attackers can exceed the value-side bound.  An evaluation across
-three key-universe configurations confirms the
-\S\ref{subsec:threat-scope} scope claim:
+three key-universe configurations (Table~\ref{tab:scope-keys})
+confirms the scope claim of \S\ref{subsec:threat-scope}:
 
 \begin{table}[ht]
 \centering

@@ -1,5 +1,5 @@
 cff-version: 1.2.0
-title: "Cipher Maps: A Unified Framework for Oblivious Function Approximation Through Algebraic Structures and Bernoulli Models"
+title: "Cipher Maps: Total Functions as Trapdoor Approximations"
 message: "If you use this work, please cite it as below."
 type: article
 authors:
@@ -9,30 +9,34 @@ authors:
     email: lex@metafunctor.com
     orcid: "https://orcid.org/0000-0001-6443-9897"
     affiliation: "Southern Illinois University Edwardsville"
-repository-code: "https://github.com/oblivious-computing/papers"
+repository-code: "https://github.com/queelius/trapdoor-computing"
 url: "https://metafunctor.com"
 abstract: >-
-  We present cipher maps, a comprehensive theoretical framework unifying
-  oblivious function approximation, algebraic cipher types, and Bernoulli
-  data models. Building on cipher functors that lift monoids into cipher
-  monoids, we develop oblivious Bernoulli maps with controllable error rates
-  and space-optimal implementations. We introduce the Singular Hash Map,
-  achieving -log₂ε + μ bits per element asymptotically. The framework
-  formalizes the cipher functor as a proper functor on the category of
-  monoids, develops encoding set theory characterizing the security-efficiency
-  design space, and proves that nested cipher compositions yield predictable
-  error rates.
+  We propose the cipher map as a unifying framework for
+  parameterized-leakage outsourced function evaluation in the
+  quantitative information flow tradition. A cipher map is a total
+  function on bit strings whose privacy properties emerge from a one-way
+  trapdoor combined with a frequency-equalized output distribution; its
+  value-side security is characterized by four measurable properties
+  (totality, representation uniformity, correctness, composability). The
+  acceptance-predicate apparatus exposes a Pareto frontier between
+  expected codeword length and total-variation leakage, refining the
+  Shannon-frequency duality. A multi-instance composition theorem gives a
+  closed form for shared-function leakage, with randomized encoding as
+  the deployment-side defense. The framework subsumes Bloom filters,
+  frequency-hiding encryption, and encrypted Boolean search as instances.
 keywords:
-  - oblivious computation
-  - Bernoulli approximation
-  - cipher types
-  - cipher functor
-  - category theory
-  - privacy-preserving computation
-  - probabilistic data structures
-  - homomorphic encryption
+  - trapdoor computing
+  - cipher maps
+  - quantitative information flow
+  - parameterized leakage
+  - acceptance predicate
+  - Shannon-frequency duality
+  - Le Cam bound
+  - homophonic substitution
   - encrypted search
-  - secure multi-party computation
+  - perfect hash function
+  - privacy-preserving computation
 license: CC-BY-4.0
 preferred-citation:
   type: article
@@ -43,5 +47,5 @@ preferred-citation:
       email: lex@metafunctor.com
       orcid: "https://orcid.org/0000-0001-6443-9897"
       affiliation: "Southern Illinois University Edwardsville"
-  title: "Cipher Maps: A Unified Framework for Oblivious Function Approximation Through Algebraic Structures and Bernoulli Models"
-  year: 2025
+  title: "Cipher Maps: Total Functions as Trapdoor Approximations"
+  year: 2026

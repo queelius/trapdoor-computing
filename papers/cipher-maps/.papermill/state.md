@@ -79,6 +79,11 @@ venue:
     - "STACS/ISAAC (theory of computation)"
 
 review_history:
+  - date: "2026-06-02"
+    reviewer: "papermill (Round 9 single-orchestrator; subagent dispatch unavailable)"
+    recommendation: "minor-revision (conditional on MAJ-1 sister-paper Zenodo DOIs + LOG-MAJ-1 one-char skew fix)"
+    summary: "0 critical, 2 major (LOG-MAJ-1/METH-MAJ-1 NEW: Zipf skew mislabeled s=1 at section 8.3 line 1934 and section 10.6 Setup line 2609, but headline numbers max alpha=0.5 / acc 0.984 / 132x require s=1.2 which is what source experiment 14_coincidence_oracle.py line 77 actually uses [1/(i+1)^1.2]; literal Huffman on s=1 gives max alpha=0.25 and does not reproduce; MAJ-1 sister-paper preprints carry-over R6/R7/R8 [exposure reduced: new homophonic prop now self-contained, only Prop 5.1 still defers to maxconf Thm 4.1 part 3]), 9 minor (METH-MIN-1 NEW E1 table caption claims m up to 18266 but experiment ran on 11,004-doc training split; LOG-MIN-1 kappa(y) undefined lines 2098-2101; LOG-MIN-3 n-vs-M bit-width unreconciled section 10.6; LOG-MIN-2 Prop 8.2 saturation informal carry-over; METH-MIN-2/3/4 single-run Le Cam/key-universe/Pareto carry-overs; CITE-MIN-1 Huffman 1952; presentation carry-overs), 6 suggestions. Format majors FMT-MAJ-1/2/3 (article class + 39pp + anonymization) carry-over, counted per-domain."
+    resolution: "Pending. THE ROUND'S CENTERPIECE VERIFIED CLEAN: new Proposition prop:homophonic (exact TV identity + Simmons bound TV<|X|/N) is mathematically correct [confirmed numerically 6 configs], fully self-contained [no maxconf, no unproven general-n result], correctly targets within-image uniformity with clean prose bridge to full-space delta. K(x) propto D(x) direction correct at all 5 sites, D/K defined before use. d_TV-inline + removed-deferral + codec-inventory edits introduced NO regressions. R8 MAJ-2 (codec inventory) + MAJ-3 (E4 H1 wording) both CLOSED. 16 proofs re-verified all PASS. R7 CRIT-1 + K prescription stay closed. The aggressive direction/parameter sweep found a FOURTH error of the user-flagged family: s=1 mislabel (a parameter/constant slip, not direction; evaded R8 because ratio was checked vs formula without reconstructing Huffman code from stated skew). Fix is one char at 2 sites; numbers stay correct [validated vs E3 CSV max_q=0.5]. Direct answer to user: paper IS submission-ready once (a) Zenodo DOIs minted and (b) s=1.2 fix applied, plus the planned template/anonymization editorial pass. NO substantive technical work remains: no proof needs fixing, no experiment needs rerunning, no claim unsupported once s=1.2 and m=11004 labels corrected. Confidence: high."
   - date: "2026-03-19"
     reviewer: "papermill"
     recommendation: "major-revision"
@@ -109,6 +114,11 @@ review_history:
     recommendation: "major-revision"
     summary: "1 critical (CRIT-1: 3-term AND FP arithmetic 12 observed vs 0.6-2.3 expected under independence model; breaks headline empirical claim), 7 major (MAJ-1 entropy ratio defined H(X|view)/H*(X) in intro vs H(Q)/n in §5.1; MAJ-2 entropy ratio not in Definition environment; MAJ-3 Theorem 6.2 Step 2 still loose conflating search-time and storage cost; MAJ-4 throughput numbers inconsistent across §6.4 and §10.3; MAJ-5 NOV-N2 framework contribution needs explicit framing in §1; MAJ-6 CITE-6 load-bearing sister paper preprints not yet posted; MAJ-7 LOG-S1 same-secret composition vs Definition 7.2 independent seeds mismatch carry-over), 22 minor, 10 suggestions."
     resolution: "R7 (2026-05-17) confirmed: CRIT-1 noise-floor formula landed at §10.3 with explicit derivation and bound; MAJ-1+MAJ-2 entropy ratio Definition env landed at §5.1; MAJ-3 Theorem 6.2 Step 2 separation of storage vs search costs landed; MAJ-4 throughput consistent (713 docs/sec full corpus); MAJ-5 framework framing landed at §1 lines 120-149; MAJ-6 sister-paper preprints still pending; MAJ-7 master-secret vs operational-subderivation clarified at Remark 4.x."
+  - date: "2026-05-27"
+    reviewer: "papermill (Round 8 single-orchestrator; subagent dispatch unavailable)"
+    recommendation: "minor-revision (conditional on MAJ-1 sister-paper Zenodo posting)"
+    summary: "0 critical (R7 CRIT-1 closed, K(x) prescription direction closed), 6 major (MAJ-1 sister-paper preprints carry-over R6/R7; MAJ-2 codec inventory mismatch between section 10.6 Le Cam table and E3 multi-instance table; MAJ-3 E4 H1 within-0.01 wording overstates (2 of 15 cells exceed; mean 0.004 is correct); MAJ-4 article class not PoPETs template carry-over; MAJ-5 38 pages exceeds PoPETs target carry-over; MAJ-6 anonymization for double-blind upgraded from minor), 28 minor, 12 suggestions."
+    resolution: "Pending. MAJ-1 closes with 1-2 days Zenodo DOI posting. MAJ-2 closes with 30 min Setup-level note or rerun of Le Cam table on E3 codec set. MAJ-3 closes with one-clause wording fix. MAJ-4 + MAJ-5 + MAJ-6 close with 1-2 days editorial (template port + page trim + anonymization). With MAJ-1 closed and identified majors addressed, plausibly ready for PoPETs submission. R7 closure rate this round: 5 R7 majors fully closed (CRIT-1 + MAJ-8 + MAJ-12 + MAJ-17 + MAJ-18), 3 partially closed (MAJ-1 + MAJ-7 + MAJ-10), 11 still open. R8 introduced 0 new critical findings; mismatches identified are precision-of-wording, not data fabrication. Direction-of-prescription audit performed: 15+ propto and 20+ min/max/favor sites verified consistent. Confidence: moderate-high that this paper is ready for PoPETs once sister-paper DOIs land."
   - date: "2026-05-17"
     reviewer: "papermill (Round 7 single-orchestrator; subagent dispatch unavailable)"
     recommendation: "major-revision"
@@ -252,6 +262,46 @@ Ordered by impact-per-effort:
    - MAJ-6/FMT-2: Port to PoPETs 2027 template (closes MAJ-19 partially).
    - FMT-MIN-7: Anonymize for double-blind review.
    - Page trim: §9.1 (Bernoulli relationship), §9.4 (Bounded composition), §10.4 (Deniability) candidates for compression.
+
+## R9 Review Summary (2026-06-02)
+
+- Critical: 0
+- Major: 2 (LOG-MAJ-1/METH-MAJ-1 NEW Zipf skew s=1 should be s=1.2; MAJ-1 sister-paper preprints carry-over)
+- Minor: 9 (METH-MIN-1 NEW E1 m=11004 vs claimed 18266; LOG-MIN-1 kappa undefined; LOG-MIN-3 n-vs-M; LOG-MIN-2 Prop 8.2 saturation; METH-MIN-2/3/4 single-run carry-overs; CITE-MIN-1 Huffman 1952; presentation carry-overs)
+- Suggestions: 6
+- Build: clean (39 pages, 0 undefined refs, 0 bibtex warnings, 4 overfulls max 14.3pt; R7 critical 118.9pt stays closed)
+- Recommendation: minor-revision (conditional on MAJ-1 + LOG-MAJ-1)
+- Mode: orchestrator-direct (subagent dispatch unavailable, as R6/R7/R8)
+- Reports: .papermill/reviews/2026-06-02/ (review.md + 6 specialist reports + literature-context.md)
+
+### What this round verified (the homophonic arc)
+
+The new Proposition prop:homophonic is the centerpiece and it is CLEAN:
+- Exact identity TV(Q, Uniform(im enc)) = (1/2) sum_x |D(x) - K(x)/N| = TV(D, A): confirmed numerically across 6 random (X, D, c) configs.
+- Simmons bound TV < |X|/N for K(x)=ceil(c D(x)): confirmed; triangle-inequality proof arithmetic is right (1/(2N) prefactor cancels to R/N < |X|/N).
+- Fully self-contained: uses only injectivity + def of Q + def of TV + triangle inequality. No maxconf, no unproven general-n |X|/(2N) result, no c >= 1/min D hypothesis. The removed deferral sentence (commit c9e830b) was the correct call.
+- Correctly targets within-image uniformity; the prose remark after the proof cleanly bridges to the full-space delta of Definition 4.2 (the residual gap is the noise region).
+
+K(x) propto D(x) direction: correct at all 5 sites (lines 323, 457, 526, 547, 700). D and K introduced at line 318-320 before formal use; redefined in Definition 4.2.
+
+No regressions from d_TV-inline (Definition 4.2 lines 515-520), removed deferral (no dangling refs), or codec-inventory fix (section 10.6 Setup now enumerates per-sweep codec sets).
+
+R8 MAJ-2 (codec inventory) and MAJ-3 (E4 H1 "within 0.01" -> "within 0.02, 13 of 15 within 0.01") both CLOSED (commit 9b60c2b verified in current text).
+
+### The NEW finding (LOG-MAJ-1 / METH-MAJ-1): Zipf skew mislabel
+
+Lines 1934 (section 8.3) and 2609 (section 10.6) say "Zipf ... skew s = 1".
+But:
+- Literal Huffman on Zipf(s=1), |Y|=8: p[0]=0.368, lengths [2,2,3,3,4,4,4,4], max alpha=0.25, t=5 acc ~0.999. Does NOT match the paper's max alpha=0.5 / acc 0.984 / 132x.
+- Source experiment 14_coincidence_oracle.py line 77 uses 1/(i+1)^1.2 = Zipf s=1.2: p[0]=0.4286, lengths [1,3,3,4,4,4,5,5], max alpha=0.5, sum alpha^5=0.0313, acc=0.9843. MATCHES exactly. E3 results.csv max_q=0.5 for Huffman(M=4,p_f) confirms.
+
+So the numbers are correct and validated; only the stated skew is wrong. Fix: s=1 -> s=1.2 at lines 1934, 2609. One char each. Triple cross-verified (independent Huffman build + source file + E3 CSV).
+
+This is the FOURTH direction/parameter error of the user-flagged family caught over the revision cycle (after K direction, CRIT-1 inversion, K prescription). It evaded R8 because that round checked the ratio against the formula without reconstructing the Huffman code from the stated skew. RECOMMENDATION (LOG-SUG-1, now urgent): add a direction/parameter-summary table pairing each distribution with its resulting max alpha and each prescription with its better-defense direction, so the next such error is visible at edit time.
+
+### Honest verdict for the user
+
+YES, submission-ready once: (a) Zenodo DOIs minted (MAJ-1, user task, 1-2 days), and (b) s=1.2 skew label fixed at 2 sites (LOG-MAJ-1, 5 minutes). Plus the already-planned template port + page trim + anonymization editorial pass (FMT majors, 1-2 days). NO substantive technical work remains: no proof needs fixing, no experiment needs rerunning (artifacts are correct), no claim is unsupported once the s=1.2 and m=11004 labels are corrected. Minor adds (E1 m label, kappa, n-vs-M, Huffman 1952 cite) are 1-2 hours total. Confidence: high.
 
 ## R7 Review Summary
 
