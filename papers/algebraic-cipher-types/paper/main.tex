@@ -229,7 +229,7 @@ work~\cite{towell2026maxconf}.
 We recall the cipher map abstraction from~\cite{towell2026cipher}.
 All notation follows that paper; we cite rather than re-derive.
 
-\begin{definition}[Cipher map~{\cite[Def.~1.1]{towell2026cipher}}]
+\begin{definition}[Cipher map~{\cite[Def.~3.1]{towell2026cipher}}]
 \label{def:cipher-map}
 A \emph{cipher map} for a latent function $f : X \to Y$ is a tuple
 $(\fhat, \enc, \dec, s)$ where
@@ -260,7 +260,9 @@ $(\eta, \varepsilon, \mu, \delta)$~\cite[Sec.~4]{towell2026cipher}:
 \item \textbf{Composability.}
   For cipher maps $\fhat$ (correctness $\eta_f$) and $\hat{g}$ (correctness
   $\eta_g$), the composition $\hat{g} \circ \fhat$ has correctness
-  $\eta_{g \circ f} = 1 - (1-\eta_f)(1-\eta_g)$.
+  $\eta_{g \circ f} \leq 1 - (1-\eta_f)(1-\eta_g)$, with equality under
+  the re-randomization condition
+  of~\cite[Thm.~4.2]{towell2026cipher}.
 \end{enumerate}
 
 The Bernoulli error model~\cite{towell2026bernoulli} provides the
@@ -396,7 +398,7 @@ component has marginal representation uniformity ($\delta \approx 0$),
 the correlation between $a$ and $b$ is preserved in the joint distribution
 of the cipher pair.
 This is the encoding granularity principle
-of~\cite[Sec.~9]{towell2026cipher}: coarser encoding hides more
+of~\cite[Sec.~8.1]{towell2026cipher}: coarser encoding hides more
 correlations but blocks more operations.
 
 \begin{proposition}[Product confidentiality trade-off]
@@ -700,16 +702,14 @@ $A \to B$ (\Cref{prop:exponential-tradeoff}) & the computation pattern & which f
 \end{table}
 
 \paragraph{Universal granularity knob.}
-For every binary constructor, the choice between joint and
-component-wise encoding is a continuous spectrum
-(\Cref{rem:sum-vs-product}, the entanglement parameter $p$
-of~\cite[Sec.~9]{towell2026cipher}), and the constructor determines
-\emph{what} is on each side of the spectrum.
-The product spectrum runs from full correlation hiding to
-correlation-leaking projections; the sum spectrum runs from full
-tag hiding to tag-leaking pattern matching; the exponential
-spectrum runs from a single product cipher map to independent
-component cipher maps.
+For each binary constructor, joint versus component-wise encoding
+forms a continuous spectrum (\Cref{rem:sum-vs-product}, the
+entanglement parameter $p$ of~\cite[Sec.~8.1]{towell2026cipher}), and
+the constructor determines \emph{what} sits on each side.
+The product spectrum runs from full correlation hiding to projections
+that leak it; the sum spectrum runs from full tag hiding to pattern
+matching that leaks it; the exponential spectrum runs from a single
+product cipher map to independent component cipher maps.
 
 \paragraph{Sums are categorically different.}
 Products and exponentials admit \emph{intermediate} encodings: an
@@ -839,9 +839,16 @@ adversary observes, and the number of such signals upper-bounds how
 much can be learned about the latent value.
 
 Let $X$ denote the random latent value encoded by $c$ (drawn from the
-distribution over inputs that the trusted machine uses) and let
-$\mathcal{V}_F(c) = \orbitF(c)$ denote the adversary's view: the set
-of cipher values reachable from $c$ under $F$.
+distribution over inputs that the trusted machine uses).
+The untrusted machine's probing under $F$ yields an \emph{observation}
+$\mathcal{V}_F(c)$: the cipher value its computation resolves to among
+those reachable from $c$.
+By construction $\mathcal{V}_F(c)$ takes values in $\orbitF(c)$, so it
+ranges over at most $|\orbitF(c)|$ distinct outcomes.
+(The orbit set is the \emph{support} of this observation; the orbit
+map $c \mapsto \orbitF(c)$ is trapdoor-independent, but which outcome
+the untrusted machine resolves to is what carries information about
+$X$.)
 The adversary's residual uncertainty about $X$ is quantified by the
 conditional entropy $H(X \mid \mathcal{V}_F(c))$.
 
@@ -856,38 +863,19 @@ H(X \mid \mathcal{V}_F(c)) \;\geq\; H(X) - \log_2 |\orbitF(c)|.
 \end{theorem}
 
 \begin{proof}
-The view $\mathcal{V}_F(c)$ takes at most $|\orbitF(c)|$ distinct
-values as $X$ ranges over its distribution, since the orbit is a
-finite set of bit strings computable from $c$.
+The observation $\mathcal{V}_F(c)$ takes values in the finite set
+$\orbitF(c)$, hence has at most $|\orbitF(c)|$ distinct outcomes, so
+$H(\mathcal{V}_F(c)) \leq \log_2 |\orbitF(c)|$.
 Therefore
 \[
 I(X; \mathcal{V}_F(c)) \;\leq\; H(\mathcal{V}_F(c)) \;\leq\; \log_2 |\orbitF(c)|,
 \]
-and $H(X \mid \mathcal{V}_F(c)) = H(X) - I(X; \mathcal{V}_F(c))$.
-\end{proof}
-
-\begin{corollary}[Confidentiality bound, set form]
-\label{cor:confidentiality-set}
-Let $S_F(c) \subseteq X$ denote the set of latent values the adversary
-cannot rule out from $\mathcal{V}_F(c)$, and define the
-\emph{confidentiality} of $c$ under $F$ as
-$\mathrm{conf}_F(c) = 1 - |S_F(c)|/|X|$.
-Then
-\[
-\mathrm{conf}_F(c) \;\geq\; 1 - \frac{|\orbitF(c)|}{|X|}.
-\]
-\end{corollary}
-
-\begin{proof}
-Each element of $S_F(c)$ is distinguished from the others by at least
-one observable feature of the view, and the view takes at most
-$|\orbitF(c)|$ distinct values, so
-$|S_F(c)| \leq |\orbitF(c)|$.
-The bound follows.
+and since $H(X \mid \mathcal{V}_F(c)) = H(X) - I(X; \mathcal{V}_F(c))$,
+the claim follows.
 \end{proof}
 
 \begin{remark}[Loose bound, tight in the worst case]
-Both forms are loose: they ignore the functional relationships between
+The bound is loose: it ignores the functional relationships between
 orbit elements (the adversary knows $c' = \fhat(c)$, which constrains
 the possible latent values beyond mere set size) and the algebraic
 structure of $F$.
@@ -898,11 +886,13 @@ random oracles~\cite{bellare1993random}.
 \end{remark}
 
 \begin{remark}[Extremes]
-When $|\orbitF(c)| \geq |X|$, the set-form bound is vacuous; in
-principle the orbit can identify every latent value.
+When $|\orbitF(c)| \geq |X|$ the bound is vacuous (the subtracted term
+exceeds $H(X)$); in principle a rich enough operation set can identify
+every latent value.
 When $|\orbitF(c)| = 1$ (no operations available, per
-\Cref{cor:empty-ops}), confidentiality is maximal:
-$H(X \mid \mathcal{V}_F(c)) = H(X)$ and $\mathrm{conf}_F(c) = 1 - 1/|X|$.
+\Cref{cor:empty-ops}), the bound is tight in the strongest sense:
+$H(X \mid \mathcal{V}_F(c)) = H(X)$, so the untrusted machine learns
+nothing about $X$ beyond what the bare cipher value already revealed.
 \end{remark}
 
 
@@ -1051,8 +1041,9 @@ Two useful special cases:
 \item \textbf{Unary chain} ($a_i = 1$), any $m$:
   $|\orbitF(V_0)| \leq m(k+1)$.
 \end{itemize}
-The corresponding confidentiality bound follows from
-\Cref{cor:confidentiality-set}.
+Substituting $|\orbitF(V_0)| \leq \sum_i N_i$ into
+\Cref{thm:confidentiality-bound} bounds the corresponding
+confidentiality loss at $\log_2 \sum_i N_i$ bits.
 \end{proposition}
 
 \begin{proof}
@@ -1165,7 +1156,7 @@ untrusted machine observes two cipher values $\enc_f(x, k_f)$ and
 $\enc_g(x, k_g)$ derived from the same latent $x$.
 Even if both encodings are individually $\delta$-close to uniform, the
 joint distribution of $(\enc_f(x), \enc_g(x))$ preserves the correlation
-(as in \cite[Prop.~9.1]{towell2026cipher}).
+(as in \cite[Prop.~8.1]{towell2026cipher}).
 The only mitigation is to merge $f$ and $g$ into a single cipher node
 (eliminating the shared intermediate) or to inject noise queries that
 dilute the correlation signal.
@@ -1233,8 +1224,8 @@ Decompositions that reuse a single cipher space across cut points
 (equivalently, that admit a self-loop in the cipher-map dependency
 graph) fall outside the typed-chain hypothesis and require a separate
 argument; for deterministic iterated computations of length $T$, a
-single-trajectory bound of $T+1$ orbit elements per starting tape
-configuration is straightforward but the leakage profile is severe:
+single-trajectory bound of $T+1$ orbit elements per starting cipher
+value is straightforward but the leakage profile is severe:
 every per-step plaintext signal needed to advance the loop (selectors,
 indices, halting time) is observable.
 
@@ -1554,6 +1545,19 @@ explores the cipher space).
 The cipher map paper focuses on individual maps and their four properties;
 this paper studies how those properties interact with type constructors and
 how confidentiality degrades under active use.
+The two frameworks measure confidentiality on complementary axes.
+The cipher map paper bounds the leakage of a single cipher value's
+\emph{marginal} distribution through the representation-uniformity
+parameter $\delta$~\cite[Prop.~5.1]{towell2026cipher}, and analyzes
+cross-instance \emph{collision} leakage when many cipher values are
+observed together~\cite[\S 8.2]{towell2026cipher}; the entropy-ratio
+treatment is developed further in~\cite{towell2026maxconf}.
+Our orbit-closure bound (\Cref{thm:confidentiality-bound}) measures a
+third, orthogonal axis: the \emph{reachability} leakage an adversary
+accrues by actively composing the operations it holds.
+The three are complementary, not competing: a cipher value can be
+marginally uniform ($\delta \approx 0$), collision-free, and still
+leak through a large orbit if the exposed operation set is rich.
 
 \paragraph{Relationship to Bernoulli data types.}
 The accuracy-side analysis of algebraic types over approximate values is
@@ -1569,10 +1573,10 @@ confidentiality) for algebraic types over trapdoor computing.
 \paragraph{The encoding granularity principle.}
 The product and sum trade-offs in \Cref{sec:products,sec:sums} are
 instances of a single principle developed
-in~\cite[Sec.~9]{towell2026cipher}: coarser encoding granularity
+in~\cite[Sec.~8.1]{towell2026cipher}: coarser encoding granularity
 (encoding more values as a single unit) yields better confidentiality but
 fewer operations available to the untrusted machine.
-The entanglement parameter $p$~\cite[Sec.~9.3]{towell2026cipher} controls
+The entanglement parameter $p$~\cite[Sec.~8.1]{towell2026cipher} controls
 the spectrum: $p = 1$ (component-wise) gives maximum functionality and
 minimum confidentiality; $p = k$ (whole-state) gives maximum
 confidentiality and minimum functionality.
@@ -1663,7 +1667,7 @@ loss to $\approx 0.91$ for queries containing OR or NOT.
 The most striking empirical finding is that AND-chain FPR diverges
 from the Bernoulli independence prediction by orders of magnitude:
 empirical FPR exceeds $p_T^k$ by $35\times$ at $k = 3$ and by
-$10^4 \times$ at $k = 5$, while OR chains stay within $10\%$ of
+over $10^4\times$ at $k = 5$, while OR chains stay within $10\%$ of
 theory at every depth.
 This points to a structural correction term for composed deterministic
 cipher maps as future work.
