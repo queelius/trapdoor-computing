@@ -1931,7 +1931,7 @@ regime change between $t = 1$ and $t \geq 2$.
 \end{corollary}
 
 \paragraph{Numerical illustration.}
-For $|Y| = 8$ with a Zipf $p_y$ (skew parameter $s = 1$), the
+For $|Y| = 8$ with a Zipf $p_y$ (skew parameter $s = 1.2$), the
 Shannon-optimal Huffman partition gives $\max_y \alpha(y) \approx
 0.5$ (the dominant value claims half the codespace), while uniform
 gives $\max_y \alpha(y) = 1/8 = 0.125$.  At $t = 5$: Huffman has
@@ -2095,10 +2095,11 @@ regime.  Reported in \S\ref{subsec:eval-codec-security}.
     predicate) to remain private.  When the codec is published or
     recoverable from queries, decode-coincidence applies and
     randomized encoding provides no protection.
-\item The defense incurs space cost only when $\kappa(y) > 1$, which
-    requires acceptance predicates with codespace slack.  The Dense
-    partition ($\alpha(y) = 1/|Y|$, saturated) has $\kappa(y) = 1$ for
-    all $y$ and gets no benefit from randomized encoding.
+\item The defense incurs space cost only when the acceptance region
+    has codespace slack, $|A(y)| > 1$ (equivalently, multiplicity
+    $K(x) > 1$ is achievable).  The Dense partition
+    ($\alpha(y) = 1/|Y|$, saturated) has $|A(y)| = 1$ for all $y$ and
+    gets no benefit from randomized encoding.
 \item The decode-coincidence accuracy formula
     \eqref{eq:coincidence-homogeneous} still applies under the
     public-codec threat; the structural defenses in that regime are
@@ -2467,8 +2468,9 @@ with the gate-by-gate analysis in \S\ref{subsec:and-gate}.
 \paragraph{Bloom-filter baseline at matched FPR.}
 To anchor the space cost of the trapdoor structure, we compare
 per-document cipher set indexes against optimal Bloom filters at
-matched per-document false-positive rate, on the same 20 Newsgroups
-corpus.  For $m \in \{1000, 5000, 18266\}$ documents and target
+matched per-document false-positive rate, on the 20 Newsgroups
+training split ($11{,}004$ documents after removing empties).  For
+$m \in \{1000, 5000, 11004\}$ documents and target
 $\varepsilon \in \{0.01, 0.05, 0.10\}$, mean per-document
 bits-per-element are reported below.
 
@@ -2606,7 +2608,7 @@ suite~\cite{towell2026codec}.
 \paragraph{Setup.}
 Build set $S$ of $|S| = 2000$ keys (random $16$-byte strings).
 Codomain $Y = \{y_0, \ldots, y_7\}$, latent value distribution $p_y$
-Zipf with skew $s = 1$.  Cipher value space $\{0,1\}^n$ with $n$
+Zipf with skew $s = 1.2$.  Cipher value space $\{0,1\}^n$ with $n$
 between $3$ and $5$ bits depending on codec; specific codec sets
 differ per analysis paragraph below.  The \emph{single-instance
 Le~Cam tightness study} uses five codecs at $n \in \{4, 5\}$:
