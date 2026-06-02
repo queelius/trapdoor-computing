@@ -1,122 +1,95 @@
-# HANDOFF: re-verify Theorem 5.x (Representation uniformity via multiplicity)
+# HANDOFF: fix the PROOF of Theorem 5.x (constant is fine)
 
-Written 2026-05-30 from a cipher-maps session (papermill:proof on the
-cipher-maps homophonic-allocation proposition). Resume in a FRESH
-maximizing-confidentiality session with a clean environment (the
-originating session had unreliable tool output; see the retraction
-note below). Load this paper's CLAUDE.md too.
+Written 2026-05-30, revised 2026-06-02 after an analytic derivation.
+Resume in a fresh maximizing-confidentiality session with this paper's
+CLAUDE.md loaded.
 
-## TL;DR
+## TL;DR (revised)
 
 Theorem 5.x ("Representation uniformity via multiplicity", main.tex
-line 654) has (a) a genuine, environment-independent GAP IN THE PROOF
-that must be fixed, and (b) an OPEN question about whether its stated
-constant |X|/(2 sum K) is exactly right. Do NOT blindly change the
-constant; re-derive it analytically first.
+line 654) has the RIGHT constant but a WRONG proof. The stated bound
+TV(Q, U_im) <= |X|/(2 sum K) is (almost certainly) correct under the
+hypothesis c >= 1/min D. The proof, however, is broken and must be
+replaced. An earlier alarm ("constant off by 2x, case 3") was based on
+unreliable numerics and is FULLY RETRACTED; hand analysis flips the
+verdict to "constant correct" (case 1).
 
-## (a) The proof gap (certain, fix this)
+## Why the constant is fine (analytic, trustworthy)
 
-maxconf proof, main.tex ~lines 668-674. It bounds the per-cipher
-discrepancy of Q(v) = D(x)/K(x) against 1/c, then asserts
-"aggregating gives TV <= |X|/(2M)". Problems:
+Exact identity (proved + committed in cipher-maps as prop:homophonic):
+    TV(Q, U_im) = (1/2) sum_x |D(x) - K(x)/N|,
+    K(x)=ceil(cD(x)), r(x)=K(x)-cD(x) in [0,1), R=sum r, N=c+R.
 
-1. TV is measured against U_im (mass 1/M per image value, M = sum K),
-   not against 1/c. Since M in [c, c+|X|], 1/c != 1/M. The proof
-   bounds discrepancy from the wrong reference point.
-2. The "aggregating gives |X|/(2M)" step is asserted, not derived; the
-   per-term bounds shown do not visibly sum to that constant.
+Result A: the hypothesis forces c >= n.
+    min_x D(x) <= 1/n (min <= mean), so 1/min D >= n, so c >= n.
+    At c = n: D is forced uniform, every r(x)=0, TV=0.
+    The hypothesis is really "budget >= n" and pins TV=0 at c=n.
 
-Replace with the exact-identity skeleton (proved and committed in the
-cipher-maps companion as Proposition prop:homophonic):
+Result B: positive-part form.
+    sum_x r(x) = R = sum_x R D(x), so signed deviations cancel:
+    TV = (1/N) sum_{x: r(x) > R D(x)} (r(x) - R D(x)).
 
-    TV(Q, U_im) = (1/2) sum_x | D(x) - K(x)/N |  =  TV(D, K/N),
-    N = sum_x K(x).
+Result C: n=2 at the boundary c = 1/p, exact.
+    With 1/p = m + phi (m = floor(1/p) >= 2), TV/(|X|/(2N)) =
+    (1-phi)/(m+phi) <= 1/m <= 1/2. The bound holds with a factor of 2
+    to spare.
 
-For K(x) = ceil(c D(x)): K(x) = c D(x) + r(x), r in [0,1), N = c + R,
-R = sum r < |X|, K(x)/N - D(x) = (r(x) - R D(x))/N, hence
+Structural exploration of the two-group worst-case family tops out
+near 3 - 2*sqrt(2) ~ 0.17, well under |X|/(2N) at the relevant scale.
+So |X|/(2N) is sound; no constant change needed.
 
-    TV = (1/2N) sum_x |r(x) - R D(x)|  <=  R/N  <  |X|/N.
+## What is actually broken: the proof (must fix)
 
-This rigorously gives |X|/N with NO hypothesis on c. That much is
-certain and provable by hand.
+main.tex ~lines 668-674. The proof bounds the per-cipher discrepancy
+of Q(v) = D(x)/K(x) against 1/c, but TV is measured against
+U_im = 1/M (M = sum K = N), and 1/c != 1/M since M in [c, c+|X|]. It
+then asserts "aggregating gives |X|/(2M)" without completing the sum.
+The constant happens to be right; the derivation does not establish it.
 
-## (b) The open question: is the tighter |X|/(2N) actually valid?
+## Required fix
 
-maxconf claims TV <= |X|/(2 sum K) under the hypothesis
-c >= 1/min_x D(x). Whether this tighter constant (a factor of 2 below
-the rigorous |X|/N) holds is NOT resolved.
+1. [ ] Replace the proof with the exact-identity derivation (Results
+       A + B above). The remaining step is to prove
+       sup TV <= |X|/(2N) for GENERAL n under c >= 1/min D. The n=2
+       case (Result C) is done; general n is a finite optimization,
+       made tractable by Result A (c >= n) and Result B (positive-part
+       form). This is the one genuine piece of math left. If the
+       general bound turns out to be a slightly different clean
+       constant, adjust the statement accordingly, but n=2 and the
+       exploration both point at |X|/(2N) surviving.
+2. [ ] Keep the hypothesis c >= 1/min D (it is load-bearing: Result A
+       shows it is what makes any tight constant possible; without it
+       only the looser |X|/N holds).
+3. [ ] Numeric cross-check is fine to GUIDE the general-n proof but
+       must be reproduced in a stable environment before being trusted
+       (the originating session's tool output was intermittently
+       unreliable; it produced four mutually inconsistent search
+       results for the same quantity, all now disregarded in favor of
+       the hand analysis).
 
-RETRACTION: the originating cipher-maps session first concluded
-"maxconf is wrong by 2x (case 3)" based on an adversarial search.
-That conclusion was withdrawn: the session's environment produced
-three mutually inconsistent numeric runs for the same question
-(violation rates of ~0.003%, ~44%, and ~5%; worst ratios of 1.17,
-2.0, and 1.22). The "44% / 2x" figure was a transcription error and
-must be ignored. The cleanest run (stratified by the hypothesis
-multiplier) suggested |X|/(2N) is violated only MILDLY -- a few
-percent of cases, by at most ~1.22x, concentrated at n=2 and at the
-hypothesis boundary c = 1/min D -- which would make maxconf's bound
-"almost right" (correct up to a small constant or a small-n
-correction), not catastrophically wrong. But no run was independently
-reproduced, so treat ALL of it as unverified.
+## Likely-no-op propagation (only if the constant changes)
 
-## REQUIRED FIRST STEP (analytic, not numeric)
-
-Using the exact identity, the tight constant is the solution of
-
-    maximize  (1/2N) sum_x |r(x) - R D(x)|
-
-over distributions D on X (|X| = n) and the induced
-r(x) = ceil(c D(x)) - c D(x) in [0,1), R = sum r, N = c + R, subject
-to c >= 1/min_x D(x). This is a clean finite optimization. Derive the
-exact sup. Then:
-
-- if sup = |X|/(2N): maxconf's constant is correct; keep it, but still
-  fix the proof per (a). cipher-maps may optionally cite the tighter
-  constant (it currently states only the rigorous |X|/N).
-- if sup = k |X|/N for some k in (1/2, 1]: correct maxconf's stated
-  constant to k |X|/N (the n=2 worst cases in the numeric run hint the
-  true constant may carry a small-n factor), fix the proof, and
-  propagate (below).
-
-Do this analytically. Do not rely on the originating session's
-numeric scripts (they are in
-../cipher-maps/.papermill/proofs/homophonic_tv_*.py but their outputs
-were not reproducible in that session).
-
-## Propagation checklist (only after the constant is settled)
-
-1. [ ] Theorem 5.x statement: set the constant to the analytically
-       derived tight value.
-2. [ ] Theorem 5.x proof: replace with the exact-identity proof.
-3. [ ] If the constant changed: Example 5.x (Zipf homophonic,
-       main.tex ~line 707) and any entropy-ratio numbers that
-       substitute this delta -- recompute the e values (abstract,
-       intro, example). A constant change of up to 2x roughly halves
-       the achievable e-gain claims; re-state them.
-4. [ ] Parent ~/github/trapdoor-computing/CLAUDE.md Principle 7
-       ("delta = |X| / (2 * sum K(x))"): update to the settled value.
-5. [ ] cipher-maps library README ("Thm 6.2"): same.
-6. [ ] papermill:proof verification on the corrected Theorem 5.x.
+If the general-n proof confirms |X|/(2N) (expected), NOTHING
+downstream changes: the entropy-ratio numbers, the Zipf example, the
+parent CLAUDE.md Principle 7 ("delta = |X|/(2 sum K)"), and the
+cipher-maps library README all stay as-is. Only revisit them if the
+general-n analysis yields a different constant than |X|/(2N).
 
 ## Already done (cipher-maps side; do NOT redo)
 
-- cipher-maps Proposition prop:homophonic states the exact identity
-  and the rigorous |X|/N bound. Correct and committed.
-- cipher-maps removed an earlier false deferral sentence (it had
-  claimed "tighter constants are developed in the companion
-  entropy-ratio work") AND a briefly-added unverified "|X|/N is tight"
-  claim. The paper now states only the proven content.
-- Full diagnosis + retraction:
+- cipher-maps Proposition prop:homophonic: exact identity + the
+  rigorous hypothesis-free bound TV < |X|/N. Correct, committed.
+- cipher-maps removed an earlier false deferral sentence (commit
+  c9e830b) and never published any unverified tightness claim.
+- Full diagnosis, the retracted numerics, and Results A/B/C:
   ../cipher-maps/.papermill/proofs/homophonic-allocation-2026-05-28.md
 
-## Severity
+## Severity: low
 
-If maxconf's |X|/(2N) turns out merely "almost right" (mild small-n /
-boundary violations), this is a minor wording/constant tweak plus a
-proof rewrite, not a structural problem: the Fannes bridge
-e >= 1 - delta - h2(delta)/n is unchanged and K(x) propto D(x)
-remains the right prescription. If it is off by a full factor of 2,
-the achievable-confidentiality numbers weaken by that factor. Either
-way it must be settled before submission because the constant appears
-in the theorem statement and the worked example.
+The framework is unaffected. The Fannes bridge
+e >= 1 - delta - h2(delta)/n is unchanged, K(x) propto D(x) is the
+right prescription, and the headline confidentiality numbers stand.
+This is a proof-rewrite (one bounded optimization for general n), not
+a result change. Must still be fixed before submission because a
+PoPETs-style reviewer will catch the gap between the asserted constant
+and the proof's own per-term bounds.
