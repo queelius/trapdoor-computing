@@ -545,8 +545,10 @@ Definition~\ref{def:rep-uniformity} satisfies
   \;=\; \TV(D, A).
 \end{equation}
 In particular, the Simmons allocation $K(x) = \lceil c\,D(x) \rceil$
-gives $\TV(Q, \Uniform(\im(\enc))) \leq |X|/N$, which vanishes as the
-budget $c$ (and hence $N \geq c$) grows.
+gives $\TV(Q, \Uniform(\im(\enc))) < (|X|-1)/N$, which vanishes as the
+budget $c$ (and hence $N \geq c$) grows.  The constant $|X|-1$ is tight:
+distributions concentrating mass on one value while the other $|X|-1$
+values sit just above the rounding boundary approach it.
 \end{proposition}
 
 \begin{proof}
@@ -564,13 +566,23 @@ absolute differences group by group,
 and halving gives the first equality; the second is the definition of
 $\TV(D, A)$, valid since $\sum_x A(x) = N/N = 1$.  For the Simmons
 allocation write $K(x) = c\,D(x) + r(x)$ with rounding excess
-$r(x) \in [0, 1)$, so $N = c + R$ where $R = \sum_x r(x) < |X|$ and
-$K(x)/N - D(x) = (r(x) - R\,D(x))/N$.  Hence
+$r(x) \in [0, 1)$, so $N = c + R$ where $R = \sum_x r(x)$ and
+$K(x)/N - D(x) = (r(x) - R\,D(x))/N$.  The deviations
+$r(x) - R\,D(x)$ sum to zero, since $\sum_x r(x) = R$ and
+$\sum_x R\,D(x) = R$; hence their positive and negative parts are
+equal and
 \[
 \TV\bigl(Q, \Uniform(\im(\enc))\bigr)
-  = \frac{1}{2N} \sum_{x \in X} |r(x) - R\,D(x)|
-  \leq \frac{1}{2N}\Bigl(\sum_x r(x) + R \sum_x D(x)\Bigr)
-  = \frac{R}{N} < \frac{|X|}{N}. \qedhere
+  = \frac{1}{N} \sum_{x \in P} \bigl(r(x) - R\,D(x)\bigr),
+  \qquad P := \{x : r(x) > R\,D(x)\}.
+\]
+Because the deviations sum to zero they cannot all be positive, so $P$
+is a proper subset of $X$ and $|P| \leq |X| - 1$.  Using
+$R\,D(x) \geq 0$ and $r(x) < 1$,
+\[
+\TV\bigl(Q, \Uniform(\im(\enc))\bigr)
+  \leq \frac{1}{N} \sum_{x \in P} r(x)
+  < \frac{|P|}{N} \leq \frac{|X|-1}{N}. \qedhere
 \]
 \end{proof}
 

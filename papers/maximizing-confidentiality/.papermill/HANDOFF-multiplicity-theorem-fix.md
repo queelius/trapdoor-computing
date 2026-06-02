@@ -1,95 +1,102 @@
-# HANDOFF: fix the PROOF of Theorem 5.x (constant is fine)
+# HANDOFF: fix Theorem 5.x (constant is WRONG for n >= 3, and proof)
 
-Written 2026-05-30, revised 2026-06-02 after an analytic derivation.
-Resume in a fresh maximizing-confidentiality session with this paper's
-CLAUDE.md loaded.
+Written 2026-05-30, revised twice; THIS version (2026-06-02, final) is
+authoritative. Earlier revisions flip-flopped; see "provenance" at the
+bottom. Resume in a fresh maximizing-confidentiality session.
 
-## TL;DR (revised)
+## TL;DR
 
 Theorem 5.x ("Representation uniformity via multiplicity", main.tex
-line 654) has the RIGHT constant but a WRONG proof. The stated bound
-TV(Q, U_im) <= |X|/(2 sum K) is (almost certainly) correct under the
-hypothesis c >= 1/min D. The proof, however, is broken and must be
-replaced. An earlier alarm ("constant off by 2x, case 3") was based on
-unreliable numerics and is FULLY RETRACTED; hand analysis flips the
-verdict to "constant correct" (case 1).
+line 654) is WRONG as stated for |X| >= 3. It claims
+TV(Q, U_im) <= |X|/(2 sum K); the correct tight bound is
+TV < (|X|-1)/(sum K) = (|X|-1)/N. The stated constant is too small by
+a factor approaching 2 (the violation ratio is 2(|X|-1)/|X|, which is
+1 at |X|=2 and grows to 2). Both the constant and the proof need
+fixing, and downstream e-numbers must be recomputed.
 
-## Why the constant is fine (analytic, trustworthy)
+## Hand-verified counterexample (n=3)
 
-Exact identity (proved + committed in cipher-maps as prop:homophonic):
-    TV(Q, U_im) = (1/2) sum_x |D(x) - K(x)/N|,
-    K(x)=ceil(cD(x)), r(x)=K(x)-cD(x) in [0,1), R=sum r, N=c+R.
+D = (0.0101, 0.0101, 0.9798), c = 100.
+- min D = 0.0101, 1/min D = 99.01, so c >= 1/min D: hypothesis HOLDS.
+- cD = (1.01, 1.01, 97.98); K = ceil(cD) = (2, 2, 98); N = 102.
+- TV = (1/2)( 2*|0.0101 - 2/102| + |0.9798 - 98/102| ) = 0.019016.
+- maxconf claim |X|/(2N) = 3/204 = 0.014706.
+- TV / claim = 1.293 > 1.  VIOLATION.
+Reproduced exactly by
+../cipher-maps/.papermill/proofs/homophonic_counterexample_n3.py
+(deterministic; also checks n=2..8, violation ratios 1.00, 1.33, 1.50,
+1.60, 1.66, 1.71, 1.75 -> 2).
 
-Result A: the hypothesis forces c >= n.
-    min_x D(x) <= 1/n (min <= mean), so 1/min D >= n, so c >= n.
-    At c = n: D is forced uniform, every r(x)=0, TV=0.
-    The hypothesis is really "budget >= n" and pins TV=0 at c=n.
+n=2 is the exceptional case where |X|/(2N) holds (ratio -> 1). It does
+NOT generalize; an earlier handoff revision wrongly extrapolated from
+n=2.
 
-Result B: positive-part form.
-    sum_x r(x) = R = sum_x R D(x), so signed deviations cancel:
-    TV = (1/N) sum_{x: r(x) > R D(x)} (r(x) - R D(x)).
+## Correct theorem and proof (drop-in)
 
-Result C: n=2 at the boundary c = 1/p, exact.
-    With 1/p = m + phi (m = floor(1/p) >= 2), TV/(|X|/(2N)) =
-    (1-phi)/(m+phi) <= 1/m <= 1/2. The bound holds with a factor of 2
-    to spare.
+Exact identity (cipher-maps prop:homophonic):
+    TV(Q, U_im) = (1/2) sum_x |D(x) - K(x)/N|.
+Deviations r(x) - R D(x) (with r(x) = K(x) - cD(x), R = sum r,
+N = c + R) sum to zero, so with P = {x : r(x) > R D(x)}:
+    TV = (1/N) sum_{x in P} (r(x) - R D(x)).
+P is a PROPER subset (deviations summing to zero cannot all be
+positive), so |P| <= |X| - 1, and using R D(x) >= 0, r(x) < 1:
+    TV <= (1/N) sum_{x in P} r(x) < |P|/N <= (|X|-1)/N.
+No hypothesis on c is required. Tight: the n>=3 construction above
+approaches (|X|-1)/N (script ratios 0.998-0.999).
 
-Structural exploration of the two-group worst-case family tops out
-near 3 - 2*sqrt(2) ~ 0.17, well under |X|/(2N) at the relevant scale.
-So |X|/(2N) is sound; no constant change needed.
+Suggested statement:
+    Theorem. For K(x) = ceil(c D(x)) with N = sum_x K(x), under
+    injective enc, TV(Q, U_im) < (|X|-1)/N, vanishing as c -> infinity.
+    The constant |X|-1 is tight.
 
-## What is actually broken: the proof (must fix)
+The hypothesis c >= 1/min D can be DROPPED (the bound holds without it).
 
-main.tex ~lines 668-674. The proof bounds the per-cipher discrepancy
-of Q(v) = D(x)/K(x) against 1/c, but TV is measured against
-U_im = 1/M (M = sum K = N), and 1/c != 1/M since M in [c, c+|X|]. It
-then asserts "aggregating gives |X|/(2M)" without completing the sum.
-The constant happens to be right; the derivation does not establish it.
+## Required fixes (all needed)
 
-## Required fix
-
-1. [ ] Replace the proof with the exact-identity derivation (Results
-       A + B above). The remaining step is to prove
-       sup TV <= |X|/(2N) for GENERAL n under c >= 1/min D. The n=2
-       case (Result C) is done; general n is a finite optimization,
-       made tractable by Result A (c >= n) and Result B (positive-part
-       form). This is the one genuine piece of math left. If the
-       general bound turns out to be a slightly different clean
-       constant, adjust the statement accordingly, but n=2 and the
-       exploration both point at |X|/(2N) surviving.
-2. [ ] Keep the hypothesis c >= 1/min D (it is load-bearing: Result A
-       shows it is what makes any tight constant possible; without it
-       only the looser |X|/N holds).
-3. [ ] Numeric cross-check is fine to GUIDE the general-n proof but
-       must be reproduced in a stable environment before being trusted
-       (the originating session's tool output was intermittently
-       unreliable; it produced four mutually inconsistent search
-       results for the same quantity, all now disregarded in favor of
-       the hand analysis).
-
-## Likely-no-op propagation (only if the constant changes)
-
-If the general-n proof confirms |X|/(2N) (expected), NOTHING
-downstream changes: the entropy-ratio numbers, the Zipf example, the
-parent CLAUDE.md Principle 7 ("delta = |X|/(2 sum K)"), and the
-cipher-maps library README all stay as-is. Only revisit them if the
-general-n analysis yields a different constant than |X|/(2N).
+1. [ ] Theorem 5.x statement: |X|/(2 sum K) -> (|X|-1)/(sum K), and
+       |X|/(2c) -> (|X|-1)/c (since N >= c). Drop the c >= 1/min D
+       hypothesis or keep it as harmless.
+2. [ ] Replace the proof with the exact-identity + proper-subset
+       argument above. (The old proof bounded discrepancy against 1/c
+       instead of 1/N and asserted |X|/(2M) without summing; both are
+       fixed by the new proof.)
+3. [ ] Recompute downstream e-numbers. delta roughly DOUBLES for a
+       given budget (|X|/(2N) -> (|X|-1)/N is up to 2x larger), so
+       e >= 1 - delta - h2(delta)/n weakens. Affected: the Zipf
+       worked example (main.tex ~line 707) and any e-values in the
+       abstract, intro, and experiments that were computed from the
+       old delta. This is a REAL change, not cosmetic.
+4. [ ] Propagate the corrected delta bound to:
+       - parent ~/github/trapdoor-computing/CLAUDE.md Principle 7
+         ("delta = |X|/(2 sum K)" -> "delta < (|X|-1)/(sum K)")
+       - the cipher-maps library README / docs if it cites "Thm 6.2".
+5. [ ] papermill:proof verification on the corrected theorem.
 
 ## Already done (cipher-maps side; do NOT redo)
 
-- cipher-maps Proposition prop:homophonic: exact identity + the
-  rigorous hypothesis-free bound TV < |X|/N. Correct, committed.
-- cipher-maps removed an earlier false deferral sentence (commit
-  c9e830b) and never published any unverified tightness claim.
-- Full diagnosis, the retracted numerics, and Results A/B/C:
+- cipher-maps Proposition prop:homophonic now states the correct,
+  tight TV < (|X|-1)/N with the proper-subset proof (committed this
+  session). It is hypothesis-free and strictly stronger than the
+  |X|/N it replaced.
+- Full diagnosis + counterexample + script:
   ../cipher-maps/.papermill/proofs/homophonic-allocation-2026-05-28.md
+  ../cipher-maps/.papermill/proofs/homophonic_counterexample_n3.py
 
-## Severity: low
+## Severity: moderate (constant + downstream numbers)
 
-The framework is unaffected. The Fannes bridge
-e >= 1 - delta - h2(delta)/n is unchanged, K(x) propto D(x) is the
-right prescription, and the headline confidentiality numbers stand.
-This is a proof-rewrite (one bounded optimization for general n), not
-a result change. Must still be fixed before submission because a
-PoPETs-style reviewer will catch the gap between the asserted constant
-and the proof's own per-term bounds.
+NOT a framework change: the Fannes bridge e >= 1 - delta - h2(delta)/n
+is unchanged, and K(x) propto D(x) is still right. But the achievable-
+delta numbers are off by up to 2x, so any quantitative confidentiality
+claim derived from Theorem 5.x must be restated. Must be fixed before
+submission.
+
+## Provenance (why this revision is trustworthy)
+
+This question flip-flopped across a session with an unreliable tool-
+output channel: (a) flaky-numerics "case 3, off by 2x" (retracted,
+numbers were garbled); (b) "case 1, constant fine" (wrong, extrapolated
+from the n=2 special case); (c) THIS: case 3, confirmed by a concrete
+hand-checked n=3 counterexample, an elementary proof of the
+replacement bound, and a deterministic script, all agreeing to 4
+significant figures. Trust (c): it does not depend on any random
+search or any single tool output.

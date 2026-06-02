@@ -156,3 +156,61 @@ unchanged) and no longer defers to maxconf for a tighter constant
 (false-deferral sentence removed in commit c9e830b). If/when the
 general-n |X|/(2N) result is proven, cipher-maps MAY optionally cite
 the tighter constant, but is correct as-is.
+
+## FINAL RESOLUTION (2026-06-02, later) -- case (3), hand + proof + script
+
+I previously flip-flopped: flaky-numerics "case 3" (retracted) ->
+"case 1, proven n=2, generalizes" (WRONG: over-generalized from n=2).
+The truth, now confirmed THREE independent ways (hand arithmetic, a
+clean elementary proof, and a deterministic script, all agreeing to
+4 digits):
+
+### maxconf's |X|/(2N) is WRONG for n >= 3.
+
+Hand-verified counterexample. n=3, c=100, D=(0.0101, 0.0101, 0.9798):
+- min D = 0.0101, 1/min D = 99.01, so c=100 >= 1/min D (hypothesis OK).
+- cD = (1.01, 1.01, 97.98), K = (2, 2, 98), N = 102.
+- TV = (1/2)(|0.0101-2/102|*2 + |0.9798-98/102|) = 0.019016.
+- maxconf claim |X|/(2N) = 3/204 = 0.014706. TV/claim = 1.293 > 1.
+VIOLATION. (homophonic_counterexample_n3.py reproduces this exactly.)
+
+n=2 is the EXCEPTIONAL case where |X|/(2N) holds (ratio -> 1). It does
+NOT generalize. For n >= 3 the violation ratio -> 2(n-1)/n, increasing
+to 2 as n grows (verified n=2..8: ratios 1.00, 1.33, 1.50, 1.60, 1.66,
+1.71, 1.75).
+
+### The correct tight bound is TV < (|X|-1)/N (hypothesis-free).
+
+Clean proof (now in the cipher-maps Proposition prop:homophonic):
+the deviations r(x) - R D(x) sum to zero (sum r = R = sum R D), so the
+set P = {x : r(x) > R D(x)} is a PROPER subset (they cannot all be
+positive), giving |P| <= |X|-1. Then
+  TV = (1/N) sum_{x in P} (r(x) - R D(x))
+     <= (1/N) sum_{x in P} r(x)     [R D >= 0]
+     <  |P|/N <= (|X|-1)/N.          [r(x) < 1]
+No hypothesis on c needed. Tight: the n=3 construction approaches it
+(script ratios to (n-1)/N are 0.998-0.999 across n=2..8).
+
+This STRICTLY IMPROVES the cipher-maps bound from |X|/N to (|X|-1)/N
+(factor n/(n-1)), with a more elegant proof. The cipher-maps paper has
+been updated accordingly (Proposition prop:homophonic).
+
+### Downstream impact on maxconf: REAL, not no-op.
+
+The achievable delta for a given budget is up to ~2x larger than
+maxconf's Theorem 5.x claims (the |X|/(2N) -> (|X|-1)/N correction, a
+factor approaching 2). So the entropy-ratio numbers
+e >= 1 - delta - h2(delta)/n WEAKEN: any e-value computed from
+delta = |X|/(2 sum K) must be recomputed with delta = (|X|-1)/sum K.
+This affects the Zipf example and any e-figures in maxconf's abstract,
+intro, and experiments. Contradicts the earlier "(1) no-op" handoff;
+the handoff is corrected to case (3).
+
+### Why trust THIS over the earlier flip-flops:
+
+- The n=3 counterexample is concrete and checked by hand twice plus a
+  deterministic script (not a 300k random search through a flaky pipe).
+- The (|X|-1)/N bound has an elementary, checkable proof (|P| <= n-1).
+- All three methods agree to 4 significant figures.
+- The proof EXPLAINS n=2's specialness (|P| <= n-1 = 1 for n=2, which
+  is exactly the boundary where ratio -> 1, never exceeding).
