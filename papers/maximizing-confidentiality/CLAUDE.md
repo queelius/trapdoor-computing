@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 LaTeX research paper: "The Entropy Ratio: Quantitative Confidentiality for Trapdoor Computing" (Alexander Towell, 22 pages, 6 theorems, 4 tables, 2 figures). Theory paper grounded in the cipher map framework. The paper is organized around an explicit **two-scale frame**:
 
 - **Marginal scale** (a single cipher map): the representation-uniformity parameter `delta` lower-bounds the entropy ratio via the Fannes-Audenaert continuity inequality, `e >= 1 - delta - h_2(delta)/n`. Two constructions reduce `delta` (noise injection, multiplicity with `K(x) ~ D(x)`).
-- **Compositional scale** (chains of cipher maps): when the untrusted machine observes multiple evaluations on a shared cipher value, the latent joint distribution is recoverable at parametric rate `O(|Y_1||Y_2|/xi^2)`, with mutual information preserved exactly. The matching minimax lower bound (Thm 5.2 via Le Cam) makes this rate sharp. **The compositional leakage theorem (Thm 5.1, with Thm 5.2 as the lower bound) is the paper's headline contribution.** The Fannes bridge is supporting infrastructure.
+- **Compositional scale** (chains of cipher maps): when the untrusted machine observes multiple evaluations on a shared cipher value, the latent joint distribution is recoverable at parametric rate `O(|Y_1||Y_2|/xi^2)`, with mutual information preserved exactly. The matching minimax lower bound (Thm 5.2 via Assouad's lemma, NOT Le Cam, see Mathematical Landmines) makes this rate sharp. **The compositional leakage theorem (Thm 5.1, with Thm 5.2 as the lower bound) is the paper's headline contribution.** The Fannes bridge is supporting infrastructure.
 
 The two scales do not reduce to each other; the compositional channel is intrinsic to the framework's composability, not a bug.
 
@@ -23,17 +23,18 @@ The `git-release` target is interactive and not appropriate for a Claude session
 
 Two propositions in this paper are cited, not re-proven. Future Claude must understand which is which:
 
-- **`towell2026cipher`** at `../cipher-maps/` defines cipher maps, the four properties (totality, representation uniformity, correctness, composability), and the parameter tuple `(eta, epsilon, delta, mu)`. From this paper we inherit:
-  - Sec. 8: FPR compounding (Thm 5.3 here cites it)
-  - Sec. 9 / Prop. 9.1: encoding granularity spectrum (Prop 4.3 here cites it)
-- **`towell2026algebraic`** at `../algebraic-cipher-types/` defines orbit closure; used only in the §5.2 active-probing discussion.
+- **`towell2026cipher`** at `../cipher-maps/` defines cipher maps, the four properties (totality, representation uniformity, correctness, composability), and the parameter tuple `(eta, epsilon, mu, delta)` (spine-canonical order; align to this). From this paper we inherit:
+  - Sec. 7.4 ("Error Accumulation by Gate Type"): gate-type FPR framing. The closed forms `p_T^k` / `1-(1-p_T)^k` are elementary and the explicit forms + empirical validation are actually in `towell2026algebraic` Table 3, NOT cipher-maps; our FPR result is `Proposition` (not Theorem) and cites both. Do not re-credit the closed forms to cipher-maps.
+  - Sec. 8 / Prop. 8.1: encoding granularity spectrum (our Prop 4.3 cites it). cipher-maps was renumbered ("QIF-restructured"); granularity is §8, composition/FPR is §7. Verify any new cite to cipher-maps against `cipher_maps.aux` newlabel entries, NOT by eye.
+  - Thm 8.2: multi-instance coincidence oracle (Measure C2); cross-referenced from the §9 practical-depth paragraph.
+- **`towell2026algebraic`** at `../algebraic-cipher-types/` defines orbit closure (Thm 5.3 is the ENTROPY form `H(X|V) >= H(X) - log2|orbit|`; the set form `conf >= 1 - |orbit|/|X|` uses denominator `|X|`, NOT `2^n` (see Mathematical Landmines)), the sum-type impossibility (Thm 4.2, NOT 4.1, since 4.1 is the product-tradeoff proposition when thm/prop share a counter), and typed composition chains (Sec 5.5, NOT 5.4 which is "Examples"). Used in the §5 active-probing and §9 practical-depth discussions.
 
 The paper's own theorems and contributions:
 - Thm 3.1: Fannes bridge (`delta -> e`)
 - Thm 4.1: Noise dilution (Fisher-info `rho^2` with explicit `C(D)` constant)
 - Thm 4.2: Multiplicity construction (`K(x) = ceil(c * D(x))`, classical homophonic)
 - Thm 5.1: Compositional leakage upper bound (mutual-information preservation, plug-in rate)
-- Thm 5.2: Compositional leakage lower bound (Le Cam two-point method, sharp `Theta(|Y_1||Y_2|/xi^2)`)
+- Thm 5.2: Compositional leakage lower bound (Assouad's lemma over a `2^{m/2}` hypercube packing, sharp `Theta(|Y_1||Y_2|/xi^2)`). NOT "Le Cam's two-point method": two hypotheses cannot produce a dimension-dependent rate. Pairwise TV of the packing is `(2*eps/m)*d_H`, not `(eps/m)*d_H` (factor-2 was a fixed slip).
 - Prop 6.1: Compression-based entropy estimator
 
 Don't promote inherited results to "our contribution" or demote our results to "follows from cipher-maps."
@@ -60,7 +61,11 @@ Two errors were caught in the 2026-04-12 multi-agent review and fixed. They were
 
 2. **`K(x) ~ D(x)`, not `K(x) ~ 1/D(x)`.** Under the paper's sampling model `Q(v) = D(x)/K(x)`, equalizing cipher-value frequencies requires `K(x)` proportional to `D(x)` (classical homophonic substitution: frequent elements get more code symbols, see Simmons 1979). The reverse direction concentrates mass and makes the distribution more skewed. If Theorem 4.2 or Example 4.1 (Zipf homophonic) ever again use `1/D(x)`, this has been reverted.
 
-The same errors **may** still appear in the cipher-maps paper at `../cipher-maps/`. Last verified 2026-04-12; status not re-checked since. The cite-with-correction approach used here keeps this paper internally consistent.
+3. **Orbit-closure set form uses `|X|`, not `2^n`.** The active-adversary confidentiality bound is `conf_F(c) >= 1 - |orbit_F(c)|/|X|` (denominator is the latent domain size `|X|`, the spine §4A.2 set form). An earlier version used `2^n` (the ambient cipher space), which over-claims confidentiality since `|X| <= 2^n`. The source theorem (`towell2026algebraic` Thm 5.3) is the ENTROPY form `H(X|V) >= H(X) - log2|orbit|`; the set form is its normalized restatement. If the orbit bound's denominator reads `2^n` again, it has been reverted (fixed 2026-06-02 cross-paper round).
+
+4. **Thm 5.2 is Assouad, not Le Cam.** The compositional lower bound uses a `2^{m/2}` hypercube packing summed over coordinates: that is Assouad's lemma. "Le Cam's two-point method" (two hypotheses) cannot produce the dimension-dependent `sqrt(|Y1||Y2|/N)` rate. The packing's pairwise TV is `(2*eps/m)*d_H(s,s')`. If the proof sketch ever again says "Le Cam's two-point method" for this `2^{m/2}`-packing, or writes `(eps/m)` for the pairwise TV, it has been reverted (fixed 2026-06-02).
+
+The Fannes/Pinsker and `K(x)` errors **may** still appear in the cipher-maps paper at `../cipher-maps/` (the 2026-05-23 review confirmed cipher-maps still asserts `K(x) ~ 1/D(x)` at four sites; the cite-with-correction footnote in this paper's case study keeps us internally consistent). The 2026-06-02 cross-paper round fixed six stale companion-section citations in THIS paper (the companions were renumbered); always verify a cipher-maps/algebraic cite against the companion's `.aux` newlabel entries before trusting a section/theorem number.
 
 ## Experimental Harness
 

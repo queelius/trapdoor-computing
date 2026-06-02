@@ -77,7 +77,7 @@ evaluations on a shared cipher value lets the untrusted machine
 recover the latent joint distribution at the
 \emph{information-theoretically optimal} rate
 $\Theta(|Y_1|\cdot|Y_2|/\xi^2)$ (matching upper bound from plug-in
-estimation, matching lower bound via Le Cam's two-point method).  The
+estimation, matching lower bound via Assouad's lemma).  The
 compositional channel is therefore not merely exploitable but
 unavoidable for any choice of per-cipher-map parameters; reducing
 $\delta$ is necessary but not sufficient, and only system-level
@@ -106,7 +106,7 @@ learn?
 
 The cipher map framework~\cite{towell2026cipher} provides four properties
 (totality, representation uniformity, correctness, composability)
-parameterized by $(\eta, \varepsilon, \delta, \mu)$ that characterize
+parameterized by $(\eta, \varepsilon, \mu, \delta)$ that characterize
 what the untrusted machine can and cannot do.  Totality ensures every
 input produces output; representation uniformity bounds frequency
 analysis; correctness governs error rates; composability enables chained
@@ -165,7 +165,7 @@ A third construction, \textbf{encoding granularity} (controlled by an
 entanglement parameter $p$ that interpolates between component-wise
 encoding with correlation leakage and joint encoding with space
 $O(|Y|^k)$), is inherited from the cipher maps framework
-\cite[Sec.~9]{towell2026cipher}.  We use it but do not re-prove it
+\cite[Sec.~8]{towell2026cipher}.  We use it but do not re-prove it
 here.
 
 \paragraph{Compositional scale.}
@@ -176,8 +176,8 @@ cipher map evaluations on a shared cipher value, the joint
 distribution over latent outputs is recoverable at the
 information-theoretically optimal rate $\Theta(|Y_1|\cdot|Y_2|/\xi^2)$
 (matching upper bound from plug-in estimation in
-Theorem~\ref{thm:comp-leakage}; matching lower bound via Le Cam's
-two-point method in Theorem~\ref{thm:comp-leakage-lb}); mutual
+Theorem~\ref{thm:comp-leakage}; matching lower bound via Assouad's
+lemma in Theorem~\ref{thm:comp-leakage-lb}); mutual
 information is preserved exactly,
 $I(\fhat_1(C); \fhat_2(C)) = I(f_1(X); f_2(X))$.  No per-cipher-map
 parameter (including arbitrarily small $\delta$) changes the rate.
@@ -190,7 +190,7 @@ the compositional scale therefore requires system-level interventions
 Prop.~\ref{prop:granularity}, or noise injection); marginal-scale
 parameter tuning alone does not.  We also include, for completeness,
 FPR compounding through Boolean chains, which is inherited
-from~\cite[Sec.~8]{towell2026cipher}.
+from~\cite[Sec.~7.4]{towell2026cipher}.
 
 \paragraph{Practical measurement.}
 We provide practical measurement tools that close the loop between
@@ -210,7 +210,7 @@ explicit probabilistic models of the adversary.
   $\Theta(|Y_1|\cdot|Y_2|/\xi^2)$, with mutual-information preservation
   $I(\fhat_1(C); \fhat_2(C)) = I(f_1(X); f_2(X))$.  The upper bound is
   attained by the empirical-distribution plug-in estimator; the
-  matching minimax lower bound is via Le Cam's two-point method.  No
+  matching minimax lower bound is via Assouad's lemma.  No
   per-cipher-map parameter (including arbitrarily small $\delta$)
   changes the rate, so reducing $\delta$ is necessary but not
   sufficient: only system-level interventions (observation limits,
@@ -274,7 +274,7 @@ the entropy ratio
 ($e \geq 1 - \delta - h_2(\delta)/n$), making $\delta$ the operational
 handle QIF does not have.  The QIF literature treats leakage of a
 function; the cipher map setting adds a four-parameter construction
-$(\eta, \varepsilon, \delta, \mu)$ and a composition discipline under
+$(\eta, \varepsilon, \mu, \delta)$ and a composition discipline under
 which that leakage must be reasoned about.  We discuss the
 Shannon-vs-min-entropy choice in \S\ref{sec:discussion}.
 
@@ -468,7 +468,7 @@ following result.
 \begin{theorem}[Entropy ratio decomposition]
 \label{thm:entropy-decomposition}
 Let $(\fhat, \enc, \dec, s)$ be a cipher map for $f : X \to Y$ with
-parameters $(\eta, \varepsilon, \delta, \mu)$.  Let $D$ be the query
+parameters $(\eta, \varepsilon, \mu, \delta)$.  Let $D$ be the query
 distribution on $X$, and let $Q$ be the induced distribution on cipher
 values.  Then the per-query observed entropy satisfies:
 \begin{equation}
@@ -523,6 +523,23 @@ Pinsker gives $D_{\mathrm{KL}} \geq 2\,\TV^2$, an upper bound on TV
 given KL, which does not convert to a KL bound given TV.  The correct
 direction is Fannes--Audenaert.
 \end{proof}
+
+\begin{remark}[Two normalizers for $H^*$]
+\label{rem:hstar}
+The theorem uses two values of $H^*$ for two different questions.  The
+\emph{ambient} entropy ratio normalizes by $H^* = n$, the entropy of
+the uniform distribution on the full cipher space $\B^n$; this is the
+quantity the Fannes bound (part 3) controls and the canonical marginal
+measure (it is what ``the entropy ratio'' means without qualification).
+The \emph{effective-alphabet} ratio in part (2) normalizes by
+$H^* = \log_2|X|$, the entropy of the uniform distribution over the
+$|X|$ in-domain values, and answers a narrower question: how much of
+the \emph{achievable} entropy a simple substitution captures.  When
+$|X| \ll 2^n$ the two differ; the worked entropy ratios reported in
+the examples and case study of \S\ref{sec:levers} and
+\S\ref{sec:experiments} use the effective-alphabet normalizer
+$\log_2|X|$, since the cipher space is sized to the vocabulary.
+\end{remark}
 
 \begin{remark}[Numerical scale]
 Take a 64-bit cipher-value space ($n = 64$, a typical width for the
@@ -729,14 +746,14 @@ says nothing about the joint distribution of multiple cipher
 values.  The \emph{encoding granularity} controls what correlations are
 hidden.
 
-\begin{definition}[Entanglement parameter~{\cite[Sec.~9]{towell2026cipher}}]
+\begin{definition}[Entanglement parameter~{\cite[Sec.~8]{towell2026cipher}}]
 For a system encoding $k$ correlated values, the \emph{entanglement
 parameter} $p$ is the number of values encoded as a single cipher map
 unit.  The system has type $\mathrm{cipher}(\B^p)^{k/p}$, where each
 block of $p$ values is encoded jointly.
 \end{definition}
 
-\begin{proposition}[Granularity spectrum~{\cite[Prop.~9.1]{towell2026cipher}}]
+\begin{proposition}[Granularity spectrum~{\cite[Prop.~8.1]{towell2026cipher}}]
 \label{prop:granularity}
 For a cipher map encoding a pair of values $(a, b) \in A \times B$:
 \begin{enumerate}
@@ -769,7 +786,7 @@ Leaf ($p = 1$) & $k$ & None (marginal only) & $O(k \cdot |Y|)$ & All free \\
 \end{tabular}
 \end{center}
 
-The sum-type impossibility theorem~\cite[Thm.~4.1]{towell2026algebraic}
+The sum-type impossibility theorem~\cite[Thm.~4.2]{towell2026algebraic}
 shows that this trade-off is fundamental for sum types: for
 $A + B$, tag hiding and untrusted pattern matching are mutually
 exclusive.  Products leak correlations; sums leak the tag.
@@ -784,16 +801,20 @@ composing operations in $F$.  The \emph{confidentiality}
 $\mathrm{conf}_F(c)$ measures how much uncertainty the adversary retains
 about the latent value encoded by $c$: it is $1$ when the adversary has
 learned nothing and $0$ when the latent value is uniquely determined.
-The orbit size bounds it~\cite[Thm.~5.3]{towell2026algebraic}:
+The orbit size bounds it.  Theorem~5.3
+of~\cite{towell2026algebraic} gives the entropy form
+$H(X \mid \mathcal{V}_F(c)) \geq H(X) - \log_2|\orbitF_F(c)|$; the
+normalized set form (over the latent domain $X$, not the ambient
+cipher space) is
 \begin{equation}
-\mathrm{conf}_F(c) \geq 1 - \frac{|\orbitF_F(c)|}{2^n}.
+\mathrm{conf}_F(c) \geq 1 - \frac{|\orbitF_F(c)|}{|X|}.
 \end{equation}
 A larger orbit (more reachable cipher values) means the adversary has
-explored more of the cipher space, leaving fewer possibilities for the
+explored more of the latent space, leaving fewer possibilities for the
 latent value.  Fewer exposed operations means smaller orbit means higher
 confidentiality.  This provides a formal justification for the root
 encoding strategy: exposing no intermediate cipher values gives
-$|\orbitF_\emptyset(c)| = 1$ and confidentiality $\geq 1 - 2^{-n}$.
+$|\orbitF_\emptyset(c)| = 1$ and confidentiality $\geq 1 - 1/|X|$.
 
 
 %% ====================================================================
@@ -814,7 +835,7 @@ constructions of~\S\ref{sec:levers} (reducing $\delta$ to zero is
 necessary but not sufficient when cipher values recur).
 Section~\ref{subsec:fpr-compounding} covers the correctness facet:
 how the cipher map error parameter $\eta$ compounds through Boolean
-chains.  This is inherited from~\cite[Sec.~8]{towell2026cipher} and
+chains.  This is inherited from~\cite[Sec.~7.4]{towell2026cipher} and
 included here both for completeness and because it interacts with the
 confidentiality story (e.g., AND chains drive false-positive
 \emph{noise} down, which has confidentiality consequences treated
@@ -825,7 +846,7 @@ in~\S\ref{subsec:fpr-compounding}).
 
 Even when each cipher map has uniform marginal output, evaluating multiple
 cipher maps on the same cipher value leaks
-correlations~\cite[Sec.~9.2]{towell2026cipher}.  If the untrusted machine
+correlations~\cite[Sec.~8.2]{towell2026cipher}.  If the untrusted machine
 evaluates $\fhat_1(c)$ and $\fhat_2(c)$ for the same $c$, the pair
 $(\fhat_1(c), \fhat_2(c))$ is a deterministic function of $c$, and the
 joint distribution preserves the latent correlation between $f_1$ and
@@ -904,20 +925,30 @@ $\Theta(|Y_1| \cdot |Y_2| / \xi^2)$.
 \end{theorem}
 
 \begin{proof}[Proof sketch]
-This is the standard Le Cam minimax bound for distribution estimation
-in TV, applied to the joint support $Y_1 \times Y_2$.  Let
-$m = |Y_1| \cdot |Y_2|$ and pair the cells of $Y_1 \times Y_2$ into
-$m/2$ disjoint pairs $\{(v_i^+, v_i^-)\}_{i=1}^{m/2}$.  For
-$s \in \{\pm 1\}^{m/2}$ and $\varepsilon$ a small constant times the
-target $\xi$, define $P^{(s)}$ by
+This is the standard Assouad minimax bound for distribution estimation
+in TV, applied to the joint support $Y_1 \times Y_2$.\footnote{The
+two-point method (Le Cam) appears at both confidentiality scales of
+the cipher map framework, in opposite roles. At the \emph{marginal}
+scale it gives an \emph{upper} bound on a single-guess membership
+attacker (accuracy $\leq \tfrac12 + \tfrac\delta2$; see the companion
+cipher maps paper). Here, at the \emph{compositional} scale, we need a
+\emph{lower} bound on a dimension-dependent estimation rate, which a
+two-hypothesis argument cannot deliver; the hypercube packing below is
+Assouad's lemma.}  Let $m = |Y_1| \cdot |Y_2|$ and pair the cells of
+$Y_1 \times Y_2$ into $m/2$ disjoint pairs
+$\{(v_i^+, v_i^-)\}_{i=1}^{m/2}$.  For $s \in \{\pm 1\}^{m/2}$ and
+$\varepsilon$ a small constant times the target $\xi$, define
+$P^{(s)}$ by
 \[
 P^{(s)}(v_i^{\pm}) = \tfrac{1}{m}(1 \pm s_i \varepsilon),
 \]
 so each $P^{(s)}$ is a perturbation of uniform on $Y_1 \times Y_2$ with
 total mass~$1$.  Pairwise TV is
-$\TV(P^{(s)}, P^{(s')}) = (\varepsilon/m)\,d_H(s, s')$ where $d_H$ is
-Hamming distance.  Le Cam's two-point lemma applied to this
-$2^{m/2}$-packing, with KL divergence between any pair bounded by
+$\TV(P^{(s)}, P^{(s')}) = (2\varepsilon/m)\,d_H(s, s')$ where $d_H$ is
+Hamming distance (each differing coordinate moves mass $\varepsilon/m$
+at $v_i^+$ and $\varepsilon/m$ at $v_i^-$, contributing $2\varepsilon/m$
+to TV).  Assouad's lemma applied to this $2^{m/2}$-packing, with KL
+divergence between adjacent hypotheses bounded by
 $O(\varepsilon^2/m)$ per coordinate (a standard consequence of the
 bounded-perturbation construction), gives the minimax rate
 $\Omega(\sqrt{m/N}) = \Omega(\sqrt{|Y_1| \cdot |Y_2| / N})$ in expected
@@ -953,7 +984,7 @@ encoding (Prop.~\ref{prop:granularity}), or injecting noise
 (\S\ref{subsec:noise}).
 
 \paragraph{Mitigation strategies.}
-Two approaches, both costly~\cite[Sec.~9.2]{towell2026cipher}:
+Two approaches, both costly~\cite[Sec.~8.2]{towell2026cipher}:
 
 \begin{description}
 \item[Build the composition directly.]  Construct a single cipher map for
@@ -996,7 +1027,7 @@ For out-of-domain elements (not in the construction domain), the hash
 output is effectively random and lands in the True region with
 probability $|T|/2^n$.
 
-\begin{theorem}[FPR compounding~{\cite[Sec.~8]{towell2026cipher}}]
+\begin{proposition}[FPR compounding]
 \label{thm:fpr-compounding}
 For $k$ independent Boolean-valued cipher maps composed via Boolean
 operations:
@@ -1006,7 +1037,13 @@ operations:
 \text{OR of } k \text{ tests:} &\quad
   \mathrm{FPR}_{\mathrm{total}} = 1 - (1 - p_T)^k.
 \end{align}
-\end{theorem}
+These follow from independence of the gate inputs (elementary).  The
+gate-type framing is from the cipher maps
+paper~\cite[Sec.~7.4]{towell2026cipher}; the explicit closed forms and
+their empirical validation, including the construction-level noise
+floor discussed below, are reported in the algebraic cipher types
+paper~\cite[Table~3]{towell2026algebraic}.
+\end{proposition}
 
 AND drives false positive rate down exponentially: each additional
 conjunct is an independent filter.  OR drives it up: each additional
@@ -1073,7 +1110,7 @@ This is exactly the orbit closure
 attack~\cite[Sec.~5]{towell2026algebraic}: each Boolean operation
 enlarges the orbit of reachable cipher values from $c$, and the
 confidentiality degrades as
-$\mathrm{conf}_F(c) \geq 1 - |\orbitF_F(c)|/2^n$.
+$\mathrm{conf}_F(c) \geq 1 - |\orbitF_F(c)|/|X|$.
 The more operations the untrusted machine can apply, the larger the
 orbit, the lower the confidentiality.
 This creates a fundamental tension: exposing AND/OR/NOT enables
@@ -1081,7 +1118,7 @@ untrusted-side Boolean search (a functionality gain) but simultaneously
 provides the adversary with tools to probe the cipher space
 (a confidentiality cost).
 
-One mitigation: \emph{typed composition chains}~\cite[Sec.~5.4]{towell2026algebraic}.
+One mitigation: \emph{typed composition chains}~\cite[Sec.~5.5]{towell2026algebraic}.
 Instead of a single shared cipher Boolean space where AND can be
 self-composed indefinitely, define a tower of distinct cipher spaces
 $\cipher{\mathrm{Bool}}_0, \cipher{\mathrm{Bool}}_1, \ldots$
@@ -1289,7 +1326,7 @@ the literal pairs adds overhead.  The estimator's slope is correct
 even where its absolute level is biased: a defender comparing two
 configurations would see the relative ordering preserved.
 
-\paragraph{Noise mixture (right panel).}
+\paragraph{Noise mixture (centre panel).}
 The mixture panel tests Theorem~\ref{thm:noise-dilution}'s
 formula on its own terms: both real (Zipf) and filler (uniform)
 draws are i.i.d., matching the i.i.d.\ assumption Theorem~\ref{thm:noise-dilution}
@@ -1698,6 +1735,14 @@ threshold).  Beyond depth 5 the granularity-vs-leakage trade-off
 typically argues for re-rooting the chain: collapse the deep
 sub-pipeline into a single cipher map for the joint computation, at
 the space cost of $O(|Y|^k)$ from Proposition~\ref{prop:granularity}.
+A third budget applies when a program reuses the \emph{same}
+primitive across many cipher values (e.g.\ a comparison applied at
+every node of a wide query): the multi-instance coincidence
+oracle~\cite[Thm.~8.2]{towell2026cipher} lets the untrusted machine
+accumulate evidence about a shared latent value at accuracy growing
+with the number of instances, a channel orthogonal to chain depth and
+likewise uncontrolled by $\delta$.  Concentrated acceptance partitions
+and randomized encoding ($K(x) > 1$) are the defenses there.
 
 \paragraph{Adaptive $K(x)$.}
 The multiplicity $K(x)$ is set at construction time based on an assumed
@@ -1759,8 +1804,8 @@ cipher distribution is $\delta$-uniform, observing multiple
 evaluations on a shared cipher value lets the untrusted machine
 recover the latent joint at the information-theoretically optimal
 rate $\Theta(|Y_1|\cdot|Y_2|/\xi^2)$, with matching upper bound from
-plug-in estimation and matching lower bound via Le Cam's two-point
-method.  No per-cipher-map parameter changes the rate, so marginal
+plug-in estimation and matching lower bound via Assouad's lemma.
+No per-cipher-map parameter changes the rate, so marginal
 uniformity is necessary but not sufficient; the cipher map composition
 discipline that buys functionality also creates an information
 channel through shared values, and only system-level interventions
@@ -1776,7 +1821,7 @@ noise injection (bandwidth) and multiple representations with
 $K(x) \propto D(x)$ (space).  A third dimension, encoding granularity,
 is inherited from the cipher maps framework.  The three are
 expressible in terms of the cipher map parameters
-$(\eta, \varepsilon, \delta, \mu)$ and the entanglement parameter $p$.
+$(\eta, \varepsilon, \mu, \delta)$ and the entanglement parameter $p$.
 
 The key insight is that the cipher map's four properties already
 determine the confidentiality profile.  Totality enables noise injection
