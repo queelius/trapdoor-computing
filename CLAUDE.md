@@ -24,6 +24,7 @@ This repo collects the authentic formalism and develops it into papers. The Bern
 4. **Totality as Privacy**: The untrusted machine sees a total function on bit strings. It cannot distinguish real queries from filler, one encoding from another, or correct results from noise. This is NOT ORAM, FHE, or simulation-based security.
 5. **Encoding Granularity Trade-off**: Joint encoding hides correlations; component-wise encoding leaks them. The entanglement parameter p controls the spectrum from marginal uniformity (p=1) to full correlation hiding (p=k, space O(|Y|^k)).
 6. **Boolean Asymmetry**: AND/OR are exact at the bit level; NOT is approximate (complement non-preservation via pigeonhole). This structural constraint applies to all systems built on this framework.
+7. **Confidentiality lives at two scales (do not conflate them)**. The MARGINAL scale measures a single cipher map's leakage by the entropy ratio `e = H(Q)/n` (entropy of the observed cipher-value distribution `Q` over `n` bits, a normalized Shannon-leakage form from QIF), bounded below by Fannes-Audenaert: `e >= 1 - delta - h_2(delta)/n`, linear in `delta`. Small `delta` (Property 2) buys marginal confidentiality; the three levers that lower `delta` are noise injection, multiple representations `K(x) > 1` (homophonic: `K(x) ∝ D(x)`), and joint encoding granularity. The COMPOSITIONAL/ACTIVE scale is governed by DIFFERENT measures that `delta` does NOT control: orbit-closure residual entropy `H(X | view) >= H(X) - log2|orbit_F(c)|` (active adversary with operations), the multi-instance coincidence-oracle accuracy, and shared-variable joint recovery at rate `Θ(|Y1||Y2|/ξ²)`. The canonical definitions, the two-scale framing, and the per-measure ownership table are in `formalism/cipher-map-formalism.md` §4A; see `formalism/cross-paper-consistency.md` for why the old `e = H(X|view)/H*(X)` form was a conflation of the two scales. Papers: marginal `e` in `papers/maximizing-confidentiality/` ("The Entropy Ratio"); orbit closure in `papers/algebraic-cipher-types/`.
 
 ## Provenance and Authenticity
 
@@ -36,21 +37,31 @@ This repo collects the authentic formalism and develops it into papers. The Bern
 
 ## Build Commands
 
-Build systems vary per paper:
+Build systems vary per paper. The legacy 2019-2022 C++ notebook (formerly `papers/algebraic_cipher_types/`, underscore) was archived 2026-04-29 and now lives at `.archive/algebraic_cipher_types-legacy/`; the **paper** at `papers/algebraic-cipher-types/` (hyphen) remains the active artifact. The naming-collision warning is no longer an active concern.
 
 ```bash
-# cipher-maps (Makefile at paper root, builds from paper/ subdir)
+# cipher-maps paper (top-level Makefile or paper/Makefile)
 cd papers/cipher-maps && make
+cd papers/cipher-maps/paper && make   # equivalent
 
-# maximizing-confidentiality (Makefile at paper root, main.tex at root)
+# algebraic-cipher-types paper (rewritten 2026; Makefile in paper/)
+cd papers/algebraic-cipher-types/paper && make
+
+# maximizing-confidentiality (now titled "The Entropy Ratio";
+# Makefile at paper root, main.tex at root)
 cd papers/maximizing-confidentiality && make
 # also: make quick (single pass), make stats (page/section counts)
 
 # boolean-algebra-over-trapdoor-sets (Makefile inside paper/ subdir)
 cd papers/boolean-algebra-over-trapdoor-sets/paper && make
 
-# algebraic_cipher_types (Makefile inside src/ subdir, not paper/)
-cd papers/algebraic_cipher_types/src && make
+# adaptive-trapdoor paper (idea/preliminary; depends on the
+# cipher-maps experimental harness for empirical results)
+cd papers/adaptive-trapdoor/paper && make
+
+# algebraic_cipher_types-legacy: original 2019-2022 C++ library, ARCHIVED 2026-04-29
+# (kept for provenance; do not build, do not edit; see ARCHIVED.md inside)
+# cd .archive/algebraic_cipher_types-legacy/src && make   # historical build path
 
 # General fallback (no Makefile)
 cd <paper_dir> && pdflatex main.tex && bibtex main && pdflatex main.tex && pdflatex main.tex
@@ -62,18 +73,26 @@ cd <paper_dir> && pdflatex main.tex && bibtex main && pdflatex main.tex && pdfla
 trapdoor-computing/
   foundations/          # Authentic 2023-2024 blog posts (source of truth)
   formalism/            # Design docs and formal development
-    cipher-map-formalism.md   # Precise definitions and composition theorem
+    cipher-map-formalism.md       # Precise definitions, composition theorem
     DESIGN-trapdoor-reframing.md  # Four properties, parameter decomposition
   papers/               # Git subtrees, each with its own GitHub remote
-    cipher-maps/              # Core cipher maps paper (rebuilt from formalism)
-    maximizing-confidentiality/  # USENIX target, 43pp entropy optimization
+    cipher-maps/                       # Core cipher-maps paper, QIF-restructured
+    algebraic-cipher-types/            # Algebraic cipher types: type algebra, sum impossibility, orbit closure, cipher Boolean eval
+    cipher-program-construction/       # Realizing programs as cipher-map compositions (spun out of algebraic-cipher-types 2026-06-03; scaffold)
+    cipher-rekeying/                   # Cipher rekeying via closures (2026-04 draft)
+    maximizing-confidentiality/        # "The Entropy Ratio", QIF-grounded
+    adaptive-trapdoor/                 # Distributional drift / online K(x) retuning (idea/preliminary)
     boolean-algebra-over-trapdoor-sets/  # Pre-July-2024 authentic only
-    algebraic_cipher_types/   # Original 2022 algebraic types paper
+  src/                  # Shared source artifacts (cipher-maps Python library, nested git repo)
+  .archive/             # Snapshots of older drafts and superseded variants
+    oblivious-computing-deprecated/    # Pre-July-2024 monorepo with DRIFTED formalism
+    algebraic_cipher_types-legacy/     # Original 2019-2022 C++ notebook (archived 2026-04-29)
+  FUTURE-RESEARCH.md    # Five salient ideas mined from the archived C++ notebook
   ECOSYSTEM-TRIAGE.md   # Classification of all related papers/code
   .papermill/state.md   # Papermill project state (stage, thesis, next actions)
 ```
 
-**Subtree workflow**: Each paper under `papers/` is a git subtree with its own remote (e.g., `cipher-maps -> queelius/cipher-maps.git`). Edit in place and commit normally. To push changes back to a paper's own repo: `git subtree push --prefix=papers/<name> <remote> main`. To pull upstream changes: `git subtree pull --prefix=papers/<name> <remote> main --squash`.
+**Subtree workflow**: Each paper under `papers/` is a git subtree with its own remote. Remote names are short (`cipher-maps`, `boolean-algebra`, `maximizing-confidentiality`, `algebraic-cipher-types`); the directory name uses the long form. Edit in place and commit normally. Push back: `git subtree push --prefix=papers/<dir> <remote> main`. Pull upstream: `git subtree pull --prefix=papers/<dir> <remote> main --squash`.
 
 ## Relationship to Bernoulli Ecosystem
 
@@ -94,8 +113,19 @@ The Bernoulli side provides quantitative error theory. The trapdoor side adds cr
 
 ### Other Related Repos
 
+- `~/github/cipher-maps/`: Python implementation backing the experimental claims in the papers. Provides PHF-backed cipher maps, the cipher Boolean type (AND/OR/NOT as cipher maps over a partitioned hash space), typed composition chains via `CipherSpace` tags, and end-to-end Boolean search. The 20 Newsgroups benchmarks, FPR-compounding validation, and granularity experiments cited in `cipher-maps` and `maximizing-confidentiality` come from this library.
 - `oblivious-computing/`: Legacy monorepo. Foundational papers (F1-F4) and extensions (E1-E2). F2 is DRIFTED (wrong ORAM formalism). Application papers are MIXED.
 - `boolean-algebra-over-trapdoor-sets/`: Pre-July-2024 commits (up to 549091a) are authentic. Later commits are Claude-drifted.
+
+## Publication Surface
+
+Papers in this repo surface on **metafunctor.com** through the `mf` CLI:
+
+- Series page: `metafunctor.com/series/trapdoor-computing/` lists all papers tagged into the `trapdoor-computing` series, in `series_weight` order (paper_db field).
+- Individual paper pages: `metafunctor.com/papers/<slug>/` (e.g., `cipher-maps`, `algebraic-cipher-types`, `max-conf-in-encrypted-search`).
+- Lifecycle index: `metafunctor.com/publications/` tracks status (draft, preprint, submitted, etc.).
+
+Workflow: build PDFs locally, then `mf papers ingest <slug>` to refresh Hugo content from the source repo. Note: ingestion strips `series_weight` and `status` from frontmatter (those fields are not in `paper_db.json` schema), so re-add them by hand after ingest. Use `mf series add trapdoor-computing content/papers/<slug>/index.md` to retag.
 
 ## Writing Style
 
