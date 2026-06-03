@@ -773,6 +773,7 @@ by iterative expansion (breadth-first search from $c$, applying each
 $\fhat_i$ at each step, until no new values appear).
 
 \begin{remark}
+\label{rem:orbit-indep}
 The orbit closure depends only on the cipher maps $F$ available to the
 untrusted machine and the starting cipher value $c$.
 It does not depend on the latent function, the domain, or the trapdoor.
@@ -833,24 +834,28 @@ With $F = \emptyset$, only the base case of the orbit definition applies.
 %% --------------------------------------------------------------------
 
 The orbit closure quantifies reachability.
-We now connect it to confidentiality via an information-theoretic
-bound: each distinct cipher value in $\orbitF(c)$ is a signal the
-adversary observes, and the number of such signals upper-bounds how
-much can be learned about the latent value.
+We now turn it into a confidentiality bound.
+The argument is a one-line counting bound on mutual information; the
+content is in correctly identifying \emph{what the untrusted machine
+observes}.
 
-Let $X$ denote the random latent value encoded by $c$ (drawn from the
-distribution over inputs that the trusted machine uses).
-The untrusted machine's probing under $F$ yields an \emph{observation}
-$\mathcal{V}_F(c)$: the cipher value its computation resolves to among
-those reachable from $c$.
-By construction $\mathcal{V}_F(c)$ takes values in $\orbitF(c)$, so it
-ranges over at most $|\orbitF(c)|$ distinct outcomes.
-(The orbit set is the \emph{support} of this observation; the orbit
-map $c \mapsto \orbitF(c)$ is trapdoor-independent, but which outcome
-the untrusted machine resolves to is what carries information about
-$X$.)
-The adversary's residual uncertainty about $X$ is quantified by the
-conditional entropy $H(X \mid \mathcal{V}_F(c))$.
+Let $X$ be the random latent value encoded by $c$, drawn from the
+trusted machine's input distribution.
+By probing $c$ with the operations in $F$, the untrusted machine
+resolves its computation to one of the cipher values reachable from
+$c$; write $\mathcal{V}_F(c)$ for this \emph{observation} and model it
+as a random variable supported on $\orbitF(c)$.
+Two facts pin down its role.
+First, the orbit \emph{set} is computable from $c$ and $F$ alone,
+without the trapdoor (\Cref{rem:orbit-indep}); it is therefore not
+itself a secret-dependent signal, and the orbit is precisely the
+\emph{support} of the observation, not a set-valued random variable in
+its own right.
+Second, what varies with the latent value, and hence carries
+information about $X$, is \emph{which} element of that support the
+computation resolves to, and there are at most $|\orbitF(c)|$ of those.
+The adversary's residual uncertainty about $X$ is the conditional
+entropy $H(X \mid \mathcal{V}_F(c))$.
 
 \begin{theorem}[Confidentiality bound, entropy form]
 \label{thm:confidentiality-bound}
@@ -863,18 +868,36 @@ H(X \mid \mathcal{V}_F(c)) \;\geq\; H(X) - \log_2 |\orbitF(c)|.
 \end{theorem}
 
 \begin{proof}
-The observation $\mathcal{V}_F(c)$ takes values in the finite set
-$\orbitF(c)$, hence has at most $|\orbitF(c)|$ distinct outcomes, so
+The observation $\mathcal{V}_F(c)$ is supported on the finite set
+$\orbitF(c)$, so it takes at most $|\orbitF(c)|$ distinct values.
+The entropy of a random variable supported on a set of size $M$ is at
+most $\log_2 M$ (with equality iff it is uniform), hence
 $H(\mathcal{V}_F(c)) \leq \log_2 |\orbitF(c)|$.
-Therefore
+Mutual information is bounded by the entropy of either argument, so
 \[
 I(X; \mathcal{V}_F(c)) \;\leq\; H(\mathcal{V}_F(c)) \;\leq\; \log_2 |\orbitF(c)|,
 \]
-and since $H(X \mid \mathcal{V}_F(c)) = H(X) - I(X; \mathcal{V}_F(c))$,
-the claim follows.
+and substituting into
+$H(X \mid \mathcal{V}_F(c)) = H(X) - I(X; \mathcal{V}_F(c))$ gives the
+claim.
 \end{proof}
 
-\begin{remark}[Loose bound, tight in the worst case]
+\begin{remark}[Which scale this bounds]
+\label{rem:two-scales}
+\Cref{thm:confidentiality-bound} is an \emph{active}-adversary bound:
+it limits what the untrusted machine learns by composing the
+operations it holds, and the controlling quantity is the orbit size,
+not the representation-uniformity parameter $\delta$ (Property~2).
+This is a different axis from the \emph{marginal} confidentiality of a
+single cipher value, whose leakage is governed by $\delta$ through the
+entropy-ratio bound of~\cite{towell2026cipher,towell2026maxconf}.
+The two are complementary and do not reduce to each other: a cipher
+value can be marginally near-uniform ($\delta \approx 0$) yet leak its
+latent value through a large orbit if the exposed operation set is
+rich, and conversely a small orbit caps active leakage even when
+$\delta$ is not negligible.
+No value of $\delta$ bounds the orbit, and no orbit bound improves
+$\delta$.
 The bound is loose: it ignores the functional relationships between
 orbit elements (the adversary knows $c' = \fhat(c)$, which constrains
 the possible latent values beyond mere set size) and the algebraic
