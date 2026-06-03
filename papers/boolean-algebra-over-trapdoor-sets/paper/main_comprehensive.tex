@@ -563,7 +563,7 @@ The same hash construction achieves fundamentally different goals by varying enc
 \textbf{Privacy-Optimal Encoding}: $|\ValidEnc{y}| \propto \text{freq}(y)$ (proportional to frequency). Frequent values receive proportionally more encodings, so under the real query distribution each individual cipher value is equiprobable and the observed cipher-value distribution is flat, hiding frequency patterns. This is the classical Simmons homophonic prescription~\cite{simmons1979symmetric}, the key insight connecting approximation to privacy.
 
 \begin{theorem}[Uniformity from Homophonic Allocation]
-\label{thm:inverse-freq}
+\label{thm:homophonic-uniformity}
 Let each output value $y$ occur with probability $\text{freq}(y)$ and be encoded by a uniform choice within $\ValidEnc{y}$. With encoding-set sizes $|\ValidEnc{y}| = c\,\text{freq}(y)$ for constant $c$, every cipher value $v \in \ValidEnc{y}$ is observed with probability
 $$P[\text{cipher value} = v] = \frac{\text{freq}(y)}{|\ValidEnc{y}|} = \frac{1}{N}, \qquad N := \sum_y |\ValidEnc{y}| = c,$$
 so the observed cipher-value distribution is uniform without explicit randomization. (The inverse allocation $|\ValidEnc{y}| \propto 1/\text{freq}(y)$ sharpens the distribution instead, the opposite of the privacy goal.)
