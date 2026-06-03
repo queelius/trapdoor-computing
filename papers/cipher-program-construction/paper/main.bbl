@@ -1,0 +1,26 @@
+\begin{thebibliography}{3}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Fredman et~al.(1984)Fredman, Koml{\'o}s, and
+  Szemer{\'e}di]{fredman1984storing}
+Michael~L Fredman, J{\'a}nos Koml{\'o}s, and Endre Szemer{\'e}di.
+\newblock Storing a sparse table with {$O(1)$} worst case access time.
+\newblock \emph{Journal of the ACM}, 31\penalty0 (3):\penalty0 538--544, 1984.
+
+\bibitem[Towell(2026{\natexlab{a}})]{towell2026algebraic}
+Alexander Towell.
+\newblock Algebraic cipher types: Confidentiality trade-offs in type
+  constructors over trapdoor computing, 2026{\natexlab{a}}.
+\newblock Manuscript in preparation.
+
+\bibitem[Towell(2026{\natexlab{b}})]{towell2026cipher}
+Alexander Towell.
+\newblock Cipher maps: Total functions as trapdoor approximations,
+  2026{\natexlab{b}}.
+\newblock Manuscript in preparation; construction in Sec.~6.
+
+\end{thebibliography}
