@@ -1649,12 +1649,13 @@ Theoretical maximum & 1.00 & $\to \infty$ & $\to \infty$ \\
 
 The combined strategy improves $e$ from 0.72 to 0.98: a 4\% space
 overhead and 50\% bandwidth overhead yields a 26 percentage point
-confidentiality improvement.  The small space cost (compared to prior
-analyses that assumed $K(x) \propto 1/D(x)$, which requires
-$\sum_x K(x) \approx c \cdot m \cdot H_m$ slots) reflects the classical
-homophonic prescription $K(x) \propto D(x)$: concentrating multiplicity
-on the heavy part of $D$ is exponentially cheaper than spreading it
-over the tail.
+confidentiality improvement.  The small space cost reflects the
+classical homophonic prescription $K(x) \propto D(x)$: concentrating
+multiplicity on the heavy part of $D$ is far cheaper than the inverse
+allocation $K(x) \propto 1/D(x)$, which would spend
+$\sum_x K(x) \approx c \cdot m \cdot H_m$ slots flattening the tail
+(and, by the sampling identity $Q(c) = D(x)/K(x)$, would in fact
+\emph{sharpen} the cipher-value distribution rather than flatten it).
 
 
 %% ====================================================================
