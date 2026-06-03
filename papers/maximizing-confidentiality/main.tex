@@ -9,6 +9,7 @@
 \usepackage{graphicx}
 \graphicspath{{img/}}
 \usepackage{hyperref}
+\usepackage{xurl}  % allow long URLs to break, avoiding margin overflow
 \hypersetup{
   hypertexnames=false,
   pdftitle={The Entropy Ratio: Quantitative Confidentiality for Trapdoor Computing},
@@ -1426,6 +1427,7 @@ with perfect hash functions.  All experiments use the 20 Newsgroups
 corpus (18,266 documents, 58,903 unique words).
 
 \paragraph{Reproducibility.}
+{\sloppy
 The empirical results in Tables~\ref{tab:boolean}, \ref{tab:fpr},
 \ref{tab:granularity} and Figures~\ref{fig:finite-sample-gap},
 \ref{fig:newsgroups-homophonic} are produced by the
@@ -1445,6 +1447,7 @@ external state beyond the 20 Newsgroups corpus shipped with
 minutes for the full table set.  Table~\ref{tab:case-study} is
 analytical, computed from the closed-form expressions in
 Theorems~\ref{thm:noise-dilution} and~\ref{thm:multiplicity}.
+\par}
 
 \subsection{Boolean Search: Precision and Recall}
 

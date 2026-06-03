@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-LaTeX research paper: "The Entropy Ratio: Quantitative Confidentiality for Trapdoor Computing" (Alexander Towell, 22 pages, 6 theorems, 4 tables, 2 figures). Theory paper grounded in the cipher map framework. The paper is organized around an explicit **two-scale frame**:
+LaTeX research paper: "The Entropy Ratio: Quantitative Confidentiality for Trapdoor Computing" (Alexander Towell, 25 pages, 6 theorems, 4 tables, 3 figures). Theory paper grounded in the cipher map framework. The paper is organized around an explicit **two-scale frame**:
 
 - **Marginal scale** (a single cipher map): the representation-uniformity parameter `delta` lower-bounds the entropy ratio via the Fannes-Audenaert continuity inequality, `e >= 1 - delta - h_2(delta)/n`. Two constructions reduce `delta` (noise injection, multiplicity with `K(x) ~ D(x)`).
 - **Compositional scale** (chains of cipher maps): when the untrusted machine observes multiple evaluations on a shared cipher value, the latent joint distribution is recoverable at parametric rate `O(|Y_1||Y_2|/xi^2)`, with mutual information preserved exactly. The matching minimax lower bound (Thm 5.2 via Assouad's lemma, NOT Le Cam, see Mathematical Landmines) makes this rate sharp. **The compositional leakage theorem (Thm 5.1, with Thm 5.2 as the lower bound) is the paper's headline contribution.** The Fannes bridge is supporting infrastructure.
@@ -15,7 +15,7 @@ This is **not** a USENIX submission, despite what `README.md` and other artifact
 
 ## Build
 
-`make` runs three pdflatex passes plus bibtex (clean build, 22 pages, **zero warnings**). `make quick` is single-pass nonstopmode for fast feedback. `make stats` reports section/theorem/citation counts and PDF page count. `make help` lists everything.
+`make` runs three pdflatex passes plus bibtex (clean build, 25 pages, **zero LaTeX warnings**; two minor sub-18pt overfull hboxes remain in math-dense paragraphs, cosmetic). `make quick` is single-pass nonstopmode for fast feedback. `make stats` reports section/theorem/citation counts and PDF page count. `make help` lists everything.
 
 The `git-release` target is interactive and not appropriate for a Claude session, leave it for the human.
 
