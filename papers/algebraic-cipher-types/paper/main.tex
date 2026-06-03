@@ -468,9 +468,11 @@ mutually exclusive:
 \item \textbf{Tag hiding}: the untrusted machine cannot determine, from a
   cipher value alone, whether it encodes an $A$-value or a $B$-value with
   advantage better than $\delta$ (the representation uniformity parameter).
-\item \textbf{Untrusted pattern matching}: the untrusted machine can route
-  a cipher value to the correct handler ($A$-handler or $B$-handler)
-  without assistance from the trusted machine.
+\item \textbf{Untrusted pattern matching}: holding the $A$-handler
+  $\fhat$ and the $B$-handler $\hat{g}$ separately, the untrusted machine
+  can apply exactly one of them to a cipher value, choosing which as a
+  function of that value, with no per-query assistance from the trusted
+  machine.
 \end{enumerate}
 \end{theorem}
 
@@ -492,19 +494,23 @@ machine: both are subsets of $\B^n$, and their union is $\delta$-close to
 covering $\B^n$ uniformly.
 Therefore the tag (which variant) is hidden up to $\delta$.
 
-Now suppose the untrusted machine could nonetheless perform pattern matching:
-given $c = \enc(v, k)$, it could determine whether to apply the $A$-handler
-or the $B$-handler.
-This requires a function $\tau : \B^n \to \{A, B\}$ such that
-$\tau(\enc(\mathrm{inl}(a), k)) = A$ for all $a, k$ and
-$\tau(\enc(\mathrm{inr}(b), k)) = B$ for all $b, k$.
-But $\tau$ is exactly a distinguisher between $A$-encodings and
-$B$-encodings.
-Such a distinguisher exists only if the two sets of cipher values are
-disjoint (or nearly so) in a way detectable without the trapdoor.
-If $\tau$ succeeds with probability $1 - \gamma$, then the tag is leaked
+Now suppose the untrusted machine could nonetheless perform dispatch:
+holding $\fhat$ and $\hat{g}$ separately, it applies exactly one of them
+to $c = \enc(v, k)$, choosing which as a function of $c$.
+That choice is a selector $s : \B^n \to \{A, B\}$ with
+$s(\enc(\mathrm{inl}(a), k)) = A$ for all $a, k$ and
+$s(\enc(\mathrm{inr}(b), k)) = B$ for all $b, k$.
+But such an $s$ is exactly a distinguisher between $A$-encodings and
+$B$-encodings, which exists only if the two sets of cipher values are
+separable without the trapdoor.
+If $s$ is correct with probability $1 - \gamma$, then the tag is leaked
 with advantage at least $1 - \gamma - \delta$, contradicting tag hiding
 when $\gamma$ is small.
+Note the obligation is to form the \emph{selector}, not merely to compute
+the eliminator's result: the result of the case analysis can be produced
+as a cipher value with the tag hidden (by a fused eliminator, or by
+evaluating both branches), but neither route forms $s$ or constitutes
+untrusted dispatch (\Cref{rem:oblivious-elim}).
 
 \medskip
 \noindent\textbf{Component-wise encoding ($\cipher{A} + \cipher{B}$)
@@ -527,20 +533,20 @@ $A$-values is observable, leaking $\Pr_{v \sim D}[v \in A]$.
 \medskip
 \noindent\textbf{No intermediate encoding achieves both.}
 Suppose an encoding achieves both tag hiding (advantage $\leq \delta'$
-for some small $\delta'$) and untrusted pattern matching (success
+for some small $\delta'$) and untrusted dispatch (success
 probability $\geq 1 - \gamma$).
-Pattern matching requires a function $\tau : \B^n \to \{A, B\}$ that is
+Dispatch requires a selector $s : \B^n \to \{A, B\}$ that is
 correct on valid encodings with probability $\geq 1 - \gamma$.
 Tag hiding requires that no such function exists with advantage better than
 $\delta'$.
 Let $p = \Pr[v \in A]$ be the prior probability of an $A$-value.
 A trivial strategy that ignores the encoding and always guesses the
 majority type achieves accuracy $\max(p, 1-p)$.
-The advantage of $\tau$ over this baseline is at least
+The advantage of $s$ over this baseline is at least
 $(1 - \gamma) - \max(p, 1-p)$.
 Tag hiding requires this advantage to be at most $\delta'$.
 Therefore $(1-\gamma) - \max(p, 1-p) \leq \delta'$, which means either
-$\gamma \geq 1 - \max(p, 1-p) - \delta'$ (pattern matching fails often)
+$\gamma \geq 1 - \max(p, 1-p) - \delta'$ (dispatch fails often)
 or $\delta' \geq (1-\gamma) - \max(p, 1-p)$ (the tag is substantially
 leaked).
 For the balanced case $p = 1/2$, this simplifies to
@@ -573,6 +579,37 @@ analysis.
 The cost is a communication round, not an impossibility.
 The impossibility is for \emph{untrusted} pattern matching without the
 trapdoor.
+\end{remark}
+
+\begin{remark}[Oblivious elimination without dispatch]
+\label{rem:oblivious-elim}
+\Cref{thm:sum-impossibility} forbids \emph{dispatch}: selecting which of
+two separately held handlers to apply.
+It does not forbid computing the \emph{result} of a case analysis as a
+cipher value with the tag hidden, which is possible in two ways, neither
+of which is untrusted dispatch.
+First, the trusted machine can compile the entire eliminator
+$h(\mathrm{inl}\,a) = f(a)$, $h(\mathrm{inr}\,b) = g(b)$ into a single
+cipher map $\hat{h} : \cipher{A+B} \to \cipher{Z}$ over the joint
+encoding; the untrusted machine evaluates $\hat{h}(c)$ blindly, learning
+neither the tag nor which branch fired.
+This is the efficient form of trusted pattern matching
+(\Cref{rem:trusted-matching}): the case analysis is compiled once at
+construction time instead of paid as a per-query round trip, and no
+trapdoor is needed at evaluation.
+Crucially $\hat{h}$ is a trusted construction over the whole domain
+$A+B$ (building it requires $f$, $g$, and the secret); the untrusted
+machine can evaluate it but could not have formed it, and applying one
+fixed map to every input is not the data-dependent selection that
+\Cref{thm:sum-impossibility} rules out.
+Second, the untrusted machine can evaluate \emph{both} handlers,
+$\fhat(c)$ and $\hat{g}(c)$, and obliviously combine them through a
+cipher multiplexer (the branching construction of
+\Cref{ex:branching-orbit}); this hides the tag as well, at the cost of
+evaluating both branches.
+In both routes the case analysis is internalized---fused into one map,
+or computed on both branches---so the untrusted machine never forms the
+selector $s$ and never branches on the tag.
 \end{remark}
 
 \begin{example}[Cipher optionals]
