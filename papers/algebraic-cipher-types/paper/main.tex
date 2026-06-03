@@ -4,8 +4,6 @@
 \usepackage{mathtools}
 \usepackage[numbers,square]{natbib}
 \usepackage{booktabs}
-\usepackage{tikz}
-\usetikzlibrary{fit}
 \usepackage{hyperref}
 \hypersetup{hypertexnames=false}
 \usepackage{cleveref}
@@ -60,8 +58,9 @@ A typed-composition discipline turns this bound into a design-time
 budget: the depth of a cipher computation determines how deeply its
 orbit can grow.
 We instantiate the algebra in a cipher Boolean type and evaluate it on
-a 20~Newsgroups Boolean search task, and show how the same machinery
-supports partial filtering---returning a superset of the relevant
+a 20~Newsgroups Boolean search task, and show how the same
+bag-gated machinery supports partial filtering---returning a superset
+of the relevant
 documents while hiding which are actually relevant, trading precision
 for confidentiality by a tunable amount.
 \end{abstract}
@@ -1460,20 +1459,23 @@ For a bag holding cipher document handles $d_1, \ldots, d_m$, let
 $b_1, \ldots, b_m \in \cipher{\mathrm{Bool}}$ be the cipher Boolean
 match results of a query against those documents
 (\Cref{sec:cipher-bool}).
-Construct a single \emph{gate} cipher map
+Construct a \emph{gate} in two steps.
+First chain the cipher Boolean operations of \Cref{sec:cipher-bool} to
+compute the cipher Boolean $\bigvee_i b_i$ (an $m$-ary cipher OR, or a
+chain of binary ORs over the input domain $(T\cup F)^m$, cheaper than
+the $O(2^m)$ flat table).
+Then \emph{declassify} that single bit to a cleartext verdict
 \[
-\widehat{\mathrm{gate}} : \cipher{\mathrm{Bool}}^{\,m} \to
-\cipher{\{\text{fire}, \text{idle}\}},
-\qquad
-\widehat{\mathrm{gate}}(b_1,\dots,b_m) =
+\mathrm{gate}(b_1,\dots,b_m) =
 \begin{cases}
 \text{fire} & \text{if } \textstyle\bigvee_i b_i,\\
-\text{idle} & \text{otherwise,}
+\text{idle} & \text{otherwise.}
 \end{cases}
 \]
-realized over the input domain $(T\cup F)^m$ exactly as the cipher
-Boolean operations of \Cref{sec:cipher-bool} (an $m$-ary cipher OR; or a
-chain of binary ORs, which is cheaper than the $O(2^m)$ flat table).
+The declassification is deliberate and is the only thing the scheme
+reveals: the $m$ per-document match bits and every intermediate cipher
+Boolean stay opaque, so the verdict says that the bag contains a match,
+never which document.
 When the gate fires, the untrusted machine returns the bag's $m$ handles
 $d_1, \dots, d_m$; the trusted machine decodes them and applies the
 exact per-document filter privately.
@@ -1492,7 +1494,10 @@ The cost is precision.
 If the $|R|$ relevant documents for a query fall in distinct bags,
 partial filtering returns up to $m|R|$ documents of which $|R|$ are
 relevant, so precision falls to $\approx 1/m$ while recall is preserved
-(every relevant document's bag fires).
+(every relevant document's bag fires)---up to the cipher-OR noise floor,
+since a noise value among the $m$ bits can flip a verdict, the same
+effect that holds OR-query recall to $\approx 0.96$ in
+\Cref{tab:boolean-search} (\Cref{prop:noise-unreliability}).
 This is the same precision axis measured in \Cref{tab:boolean-search},
 now a deliberate, tunable lever rather than an artifact of the
 false-positive rate: larger bags hide the relevant document better and

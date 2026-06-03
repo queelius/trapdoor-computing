@@ -13,7 +13,7 @@ metrics:
   tex_lines: ~1640
   sections: 8
   figures: 0
-  citations: 22
+  citations: 21
   last_built: 2026-06-03
 
 thesis:
@@ -138,6 +138,14 @@ review_history:
     type: scope-restructure
     addresses: "Author decision: the expression-tree -> cipher-program rewriting is a distraction for this paper; this paper only CONSTRUCTS cipher maps of specific functions to analyze leakage/trade-offs, it does not evaluate whole-program realization. Construction machinery already belongs to the foundation paper."
     notes: "Removed §6 'Realizing Cipher Programs' ENTIRELY (365 lines): the lead-in, Expression-Tree Decomposition (Def cipher-node, granularity bullets, rem:cipher-propagation, the tikz figure fig:cipher-tree, rem:shared-vars, the automatic-tracing paragraph), Branching and the Limits of Oblivious Control (prop:no-short-circuit, the three regimes, rem:mux-cost), and Cut-Point Structure (def:cut-point, the regex example). All saved to /tmp/sec6_migration.tex for the companion paper. Decision rationale: (a) single-cipher-map CONSTRUCTION is the foundation paper's contribution (towell2026cipher Sec 6 batch/PHF); this paper now cites it in §3 rather than re-deriving. (b) whole-program REALIZATION (propagation, cut points, branching/control-flow) is a separate problem -> companion paper towell2026cipherprog. (c) this paper's actual scope is cipher TYPES + their leakage/composition (algebra, sum-impossibility, orbit, typed chains) + a concrete instantiation (cipher Booleans, search) -- none of which needs the realization story. Edits: abstract last sentence reframed (drop expression-tree/@cipher_node; mention instantiation + partial filtering); intro contribution #3 changed from 'Expression-tree realization' to 'Instantiation and evaluation' (cipher Booleans, search, FPR divergence, partial filtering); §3 gained a construction-cite paragraph (build via foundation Sec 6, not re-derived; whole-program assembly -> companion); §8 open-questions dropped the two §6-dependent items (plain-ops-on-cipher-bytes, cut-point-optimization) and added a 'Realizing whole programs -> companion' item; conclusion's realization paragraph reframed to construction+companion-pointer; granularity experiment (Table 3/now in §6 Cipher Boolean Eval) reworded to drop annotation/tracing language, tied to product trade-off Prop 4.1. ADDED §6.4 'Partial Filtering' (sec:partial-filter): the bag-gated cipher-OR multiplexer (gate: C(Bool)^m -> fire/idle on OR), returning a superset of relevant docs while hiding which (1-in-m anonymity), orbit bound in operational form (1 bit/bag), precision ~1/m as a tunable confidentiality lever tied to Table 1; analytical, no fabricated numbers. rem:oblivious-elim (the type-level fused-eliminator remark) stays in §4 (referenced only from the §4 proof). Section count 9->8, pages 24->20, figure removed, citations 21->22 (added towell2026cipherprog). Build clean: 0 overfull, 0 undefined, no orphan refs to deleted §6 labels."
+
+  - date: 2026-06-03
+    type: multi-agent
+    recommendation: minor-revision
+    findings: "Coherence pass after the §6 removal. Critical/Major: 0 | Minor: 3 (+2 optional cleanups)."
+    location: ".papermill/reviews/2026-06-03/"
+    status: addressed-in-session
+    notes: "Targeted coherence review: did removing §6 leave gaps? Verdict: arc closes, no dangling prose forward-refs (expression-tree/cut-point/@cipher_node vocabulary survives only in the §7 open-question + conclusion pointers to towell2026cipherprog), abstract/intro-contrib-3/conclusion all match the slimmed body, rem:oblivious-elim still coherent in §4, title still justified by §4-5. Three minors fixed in-session: (M1) §6.4 gate codomain was C({fire,idle}) (opaque per Def 3.2) yet the untrusted machine acted on fire/idle -- reworded so the gate computes the cipher-OR then DECLASSIFIES that one bit to a cleartext verdict (the deliberate bag-level leak), per-doc bits + intermediate cipher Booleans stay opaque, making the 1-bit-per-bag orbit-bound claim exact; (m2) added the cipher-OR noise-floor caveat to the recall-preserved claim (a noise value can flip a verdict, same effect as Table 1's OR recall 0.96, cite prop:noise-unreliability); (m3) abstract 'the same machinery' -> 'the same bag-gated machinery'. Cleanups: dropped now-unused fredman1984storing bib entry (was only cited in deleted §6; citations 22->21, all remaining entries cited), removed now-unused tikz/fit preamble (the figure went to the companion). Build clean: 20pp, 0 overfull, 0 undefined, no uncited bib entries."
 
 related_papers:
   - path: ~/github/trapdoor-computing/papers/cipher-maps

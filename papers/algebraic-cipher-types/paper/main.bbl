@@ -37,12 +37,6 @@ Reza Curtmola, Juan Garay, Seny Kamara, and Rafail Ostrovsky.
 \newblock In \emph{Proceedings of the 13th ACM Conference on Computer and
   Communications Security}, pages 79--88, 2006.
 
-\bibitem[Fredman et~al.(1984)Fredman, Koml{\'o}s, and
-  Szemer{\'e}di]{fredman1984storing}
-Michael~L Fredman, J{\'a}nos Koml{\'o}s, and Endre Szemer{\'e}di.
-\newblock Storing a sparse table with {$O(1)$} worst case access time.
-\newblock \emph{Journal of the ACM}, 31\penalty0 (3):\penalty0 538--544, 1984.
-
 \bibitem[Gentry(2009)]{gentry2009fully}
 Craig Gentry.
 \newblock Fully homomorphic encryption using ideal lattices.
@@ -118,10 +112,16 @@ Alexander Towell.
 \newblock Manuscript in preparation; cross-references (Def.~3.1, \S4--\S5, \S6,
   \S8.1, Thm.~4.2) follow the 2026-05 revision and may shift in later versions.
 
-\bibitem[Towell(2026{\natexlab{c}})]{towell2026maxconf}
+\bibitem[Towell(2026{\natexlab{c}})]{towell2026cipherprog}
+Alexander Towell.
+\newblock Realizing cipher programs: Cut-point decomposition and control-flow
+  obliviousness, 2026{\natexlab{c}}.
+\newblock Manuscript in preparation.
+
+\bibitem[Towell(2026{\natexlab{d}})]{towell2026maxconf}
 Alexander Towell.
 \newblock Maximizing confidentiality under trapdoor computing: Encoding
-  granularity and optimal space, 2026{\natexlab{c}}.
+  granularity and optimal space, 2026{\natexlab{d}}.
 \newblock Manuscript in preparation.
 
 \bibitem[Turing(1936)]{turing1936computable}
