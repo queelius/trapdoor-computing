@@ -76,8 +76,8 @@ main result is a compositional
 leakage theorem with a matching minimax lower bound: even when each
 cipher map is marginally $\delta$-uniform, observing multiple
 evaluations on a shared cipher value lets the untrusted machine
-recover the latent joint distribution at the
-\emph{information-theoretically optimal} rate
+recover the latent joint distribution to total-variation accuracy
+$\xi$ at the \emph{information-theoretically optimal} rate
 $\Theta(|Y_1|\cdot|Y_2|/\xi^2)$ (matching upper bound from plug-in
 estimation, matching lower bound via Assouad's lemma).  The
 compositional channel is therefore not merely exploitable but
@@ -584,6 +584,13 @@ uncertainty per query (the binary entropy of the error event).
 \section{Constructions for Reducing \texorpdfstring{$\delta$}{delta}}
 \label{sec:levers}
 %% ====================================================================
+
+The cipher map framework supplies three mechanisms that reduce
+$\delta$ (\S\ref{sec:intro}); this section analyzes each as a
+cost-attached lever.  The constructions are the framework's; the cost
+characterizations, and the Fisher-information dilution of noise
+injection (\S\ref{subsec:noise}), are this paper's marginal-scale
+contribution.
 
 \subsection{Noise Injection}
 \label{subsec:noise}
@@ -1858,8 +1865,9 @@ $1.04\times$ space and $1.5\times$ bandwidth overhead.
 The theory connects two previously separate lines of work: the cipher map
 formalism (properties and composition) and the entropy-based
 confidentiality analysis (ratios and maximum entropy).  Together, they
-provide a complete framework for designing, measuring, and improving
-confidentiality in systems that compute on data hidden behind a trapdoor.
+give a principled basis for designing, measuring, and improving
+confidentiality in systems that compute on data hidden behind a trapdoor,
+at both the marginal and the compositional scale.
 
 
 \bibliographystyle{plainnat}
