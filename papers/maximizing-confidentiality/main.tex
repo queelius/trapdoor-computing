@@ -1450,10 +1450,12 @@ Figure~\ref{fig:newsgroups-homophonic} by
 Figure~\ref{fig:compression-validation} by
 \texttt{experiments/compression\_validation.py}, and
 Figure~\ref{fig:montecarlo} by
-\texttt{experiments/compositional\_rate.py}.  All scripts read no
-external state beyond the 20 Newsgroups corpus shipped with
-\texttt{scikit-learn}; runtime on a single x86\_64 core is under five
-minutes for the full table set.  Table~\ref{tab:case-study} is
+\texttt{experiments/compositional\_rate.py}, and
+Figure~\ref{fig:realized} by
+\texttt{experiments/realized\_attack.py} (which builds real cipher
+maps via the library).  All scripts read no external state beyond the
+20 Newsgroups corpus shipped with \texttt{scikit-learn}; runtime on a
+single x86\_64 core is under five minutes for the full table set.  Table~\ref{tab:case-study} is
 analytical, computed from the closed-form expressions in
 Theorems~\ref{thm:noise-dilution} and~\ref{thm:multiplicity}.
 \par}
@@ -1695,6 +1697,57 @@ Theorems~\ref{thm:comp-leakage}--\ref{thm:comp-leakage-lb}.
 efficient MLE (Cram\'er--Rao) agree, with the small-$\rho$ slope
 approaching $+2$.}
 \label{fig:montecarlo}
+\end{figure}
+
+\subsection{Realized Attack on the Construction}
+\label{subsec:realized}
+
+The Monte Carlo of~\S\ref{subsec:montecarlo} validates the recovery
+rate in the abstract sampling model: i.i.d.\ draws from a known joint.
+We close the loop by mounting the attack on cipher maps the
+\texttt{trapdoor-maps} library actually builds.  Two maps $\fhat_1,
+\fhat_2$ for latent $f_1, f_2 : X \to \{0,\ldots,7\}$ over a shared
+domain $|X| = 4096$ are constructed with the PHF backend; the trusted
+machine encodes inputs $x_i \mapsto c_i$, the untrusted machine
+evaluates both maps on each shared cipher value, and the joint over
+$Y_1 \times Y_2$ ($m = 64$) is recovered by plug-in
+(Fig.~\ref{fig:realized}; $12$ seeds).
+
+\paragraph{The construction reproduces the rate.}
+At exact correctness ($\eta = 0$), the realized recovery error obeys
+$\TV(\hat P, P) = c\sqrt{m/N}$ with slope $-0.50$ in $N$ and constant
+$c = 0.32$, matching the abstract value $0.31$ of
+\S\ref{subsec:montecarlo} to within seed noise
+(Fig.~\ref{fig:realized}, right).  The hashing, acceptance predicates,
+and finite cipher width of the real construction do not change the
+$\Theta(\sqrt{|Y_1||Y_2|/N})$ leakage rate: the abstract theorem
+describes the deployed system.
+
+\paragraph{Correctness sets a recovery floor.}
+The correctness parameter $\eta$ (the fraction of elements that decode
+incorrectly) bounds the attack from below: an $\eta$-fraction of
+recovered pairs is corrupted, so $\TV(\hat P, P)$ does not vanish but
+floors near $\eta$ (Fig.~\ref{fig:realized}, left: the $\eta = 0.05$
+curve flattens at $\approx 0.050$ and $\eta = 0.02$ at $\approx 0.027$,
+while the exact curve keeps falling past $0.020$).  This is the
+defender's side of the deniability afforded by $\eta > 0$
+(\S\ref{sec:prelim}): the same residual error that gives a real query
+plausible deniability also caps how well an adversary can reconstruct
+the compositional joint.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=\linewidth]{realized_attack}
+\caption{Compositional attack on cipher maps built by the
+\texttt{trapdoor-maps} library ($12$ seeds, $|X| = 4096$, $m = 64$).
+\textbf{Left}: recovery error versus $N$ for three correctness levels;
+the exact ($\eta = 0$) curve falls at slope $-1/2$, while $\eta > 0$
+floors near $\eta$.
+\textbf{Right}: the exact-construction error collapses onto
+$\TV = 0.32\sqrt{m/N}$, matching the abstract-model constant $0.31$ of
+\S\ref{subsec:montecarlo} (dashed): the real construction leaks the
+joint at the predicted rate.}
+\label{fig:realized}
 \end{figure}
 
 \subsection{Case Study: Confidentiality Improvement}
