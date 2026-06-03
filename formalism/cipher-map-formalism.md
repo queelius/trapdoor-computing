@@ -1,11 +1,12 @@
 # Cipher Map Formalism
 
-**Date**: 2026-03-08
-**Status**: Working draft
+**Date**: 2026-06-02 (reconciled with the paper family; supersedes the 2026-03-08 draft)
+**Status**: Canonical source of truth for shared definitions
 **Prerequisite**: `DESIGN-trapdoor-reframing.md` (four properties, parameter decomposition)
-**Source of truth**: Four blog posts in `foundations/` (2023--2024)
+**Authentic source**: Four blog posts in `foundations/` (2023--2024)
+**Reconciliation report**: `cross-paper-consistency.md` (notation drift, bibkey fixes, measure conflations)
 
-This document gives precise mathematical definitions for the four properties of a cipher map, instantiates them against the three concrete constructions from the blog posts, derives the composition theorem, and formalizes the trusted/untrusted machine model.
+This document is the shared spine for the trapdoor-computing paper family. It gives precise definitions for the four properties of a cipher map, instantiates them against the three concrete constructions from the blog posts, derives the composition theorem, formalizes the trusted/untrusted machine model, and (Section 4A) fixes the canonical confidentiality measures the papers build on. Where a result is owned by one paper (acceptance predicates, the coincidence oracle, sum-type impossibility, rekeying), the spine names it and points to the owner; see the Paper Map in Section 8. When a paper and this document disagree on a shared definition, this document is authoritative, and the disagreement is logged in the reconciliation report.
 
 ---
 
@@ -95,7 +96,7 @@ $$d_{\mathrm{TV}}(Q, \mathrm{Uniform}(\{0,1\}^n)) \leq \delta$$
 
 where $d_{\mathrm{TV}}$ denotes total variation distance.
 
-**Construction principle.** To achieve small $\delta$, assign $K(x) \propto 1 / D(x)$ encodings per value, so that frequent values get more representations (homophonic substitution). From the trapdoor boolean algebra appendix: map elements to multiple hashes inversely proportional to $\Pr_D(x)$.
+**Construction principle.** To achieve small $\delta$, assign $K(x) \propto D(x)$ encodings per value, so that frequent values get *more* representations (classical homophonic substitution; Simmons 1979). Setting $K(x) = \lceil c \cdot D(x) \rceil$ for a normalizing constant $c$ flattens the per-cipher-value probability $D(x)/K(x)$ toward a constant. The homophonic-allocation identity (Cipher Maps Prop. 4.1) gives the exact $d_{\mathrm{TV}}(Q, \mathrm{Uniform}(\mathrm{Im}(\mathrm{enc}))) = d_{\mathrm{TV}}(D, K/N)$ with $N = \sum_x K(x)$, bounded by the tight $(|X|-1)/N$. The total budget is $\sum_x K(x) \approx c$, so concentrating multiplicity on the heavy part of $D$ is far cheaper than spreading it over the tail. (See `cross-paper-consistency.md`, item C-1: an earlier version of this document, and the trapdoor-boolean-algebra appendix it quoted, stated the prescription as $K(x) \propto 1/D(x)$, which is inverted and self-contradictory. The papers carry the corrected $K(x) \propto D(x)$; this document now matches.)
 
 **Honest limitation.** $\delta$ bounds the *marginal* distribution of cipher values. It says nothing about *joint* distributions — see Section 4 for encoding granularity.
 
@@ -136,7 +137,7 @@ $$\Pr_{x,k}\bigl[\mathrm{dec}_{g \circ f}((\hat{g} \circ \hat{f})(\mathrm{enc}(x
 | $\varepsilon$ | Noise decode | $(0, 1)$ | Probability random bits form a valid codeword | Encoding scheme (prefix-free code allocation) |
 | $\mu$ | Value cost | $(0, \infty)$ | Bits per element for function values | $\mu = H(Y)$ where $Y$ is output distribution |
 | $\delta$ | Uniformity | $[0, 1]$ | TV distance from uniform over cipher values | Representation multiplicity $K(x)$ |
-| $K(x)$ | Multiplicity | $\{1, 2, \ldots\}$ | Number of encodings per domain element | Set to $\propto 1/D(x)$ for small $\delta$ |
+| $K(x)$ | Multiplicity | $\{1, 2, \ldots\}$ | Number of encodings per domain element | Set to $\propto D(x)$ for small $\delta$ (homophonic) |
 | $p$ | Entanglement | $\{1, \ldots, k\}$ | Number of values encoded as a single unit | Application privacy requirements (§4.3) |
 
 **Space per element:**
@@ -363,7 +364,7 @@ Derivation (under ROM, hash outputs are independent uniform bits): each bit posi
 
 **Problem.** Unigram frequencies in cipher values reflect the latent distribution $D$: frequent elements appear more often, enabling frequency analysis.
 
-**Solution.** Map each element $x$ to $K(x) \propto 1/\Pr_D(x)$ distinct hash values (multiple representations). Then:
+**Solution.** Map each element $x$ to $K(x) \propto \Pr_D(x)$ distinct hash values (more codes for frequent values; see the corrected construction principle under Property 2). Then:
 $$\Pr[\text{observe cipher value } c] \approx \Pr[\text{observe cipher value } c'] \quad \forall c, c'$$
 
 **Limitation (stated honestly in the blog post).** This achieves **marginal** uniformity only. Joint distributions (bigrams, trigrams, etc.) are not equalized. An adversary observing sequences of cipher values can still detect correlations.
@@ -583,6 +584,67 @@ Now let $\hat{f}_1, \hat{f}_2$ be independent cipher maps for $f_1 : X_1 \to Y_1
 
 ---
 
+## 4A. Confidentiality Measures (Two Scales)
+
+The four properties (Section 1.3) characterize a cipher map structurally. This section fixes the quantitative confidentiality measures the papers build on. The central reconciliation point, due to the Entropy Ratio paper, is that **confidentiality lives at two scales that do not reduce to each other**, and each scale has its own measure. Conflating them (as the project `CLAUDE.md` Core Principle 7 did, by writing the entropy ratio as $H(X \mid \text{view})/H^*(X)$, a form that is neither measure below) produces statements that are individually plausible and jointly wrong. Engineering at one scale does not engineer at the other.
+
+### 4A.1 The Marginal Scale
+
+A single cipher map, observed on a stream of cipher values, leaks only through the non-uniformity of that stream. Two equivalent measures quantify this, both controlled by the representation-uniformity parameter $\delta$ (Property 2).
+
+**Measure M1: the entropy ratio.** Let $Q$ be the induced cipher-value distribution (Property 2) and let $U = \mathrm{Uniform}(\{0,1\}^n)$. The per-query **entropy ratio** is
+$$e \;=\; \frac{H(Q)}{H^*}, \qquad H^* = n,$$
+the observed entropy of one cipher value normalized by its maximum $n$ bits. Equivalently $e = 1 - D_{\mathrm{KL}}(Q \,\|\, U)/n$. It satisfies $e \in [0,1]$, with $e = 1$ iff $Q = U$ (perfect uniformity, $\delta = 0$).
+
+**Bridge to $\delta$ (Fannes--Audenaert).** For $\delta \leq 1/2$,
+$$e \;\geq\; 1 - \delta - \frac{h_2(\delta)}{n}, \qquad h_2(\delta) = -\delta\log_2\delta - (1-\delta)\log_2(1-\delta).$$
+This is *linear* in $\delta$. (Pinsker runs the wrong way here: it lower-bounds KL given TV, not the reverse. Fannes--Audenaert is the correct continuity direction.) This bound is proven as Theorem 3.1 in the Entropy Ratio paper and restated as Proposition 5.1 in the Cipher Maps paper; the two agree.
+
+**Measure M2: single-guess distinguishing accuracy (Le Cam, marginal).** A membership-inference attacker who observes a decoded output $\mathrm{dec}(\hat{f}(c))$ and guesses real-vs-filler is limited, at balanced prior, to accuracy
+$$\tfrac{1}{2} + \tfrac{\delta}{2},$$
+i.e. distinguishing advantage at most $\delta/2$. This is Le Cam's two-point lemma applied to the cipher-value marginals (Cipher Maps paper, Section 5.3, stated in prose, not a numbered theorem). **Scope caveat:** this bound is value-side only. An attacker exploiting *structure in the key universe* (e.g. $S = \{x : x \equiv 0 \bmod 7\} \subseteq \mathbb{Z}_N$) can exceed it; when the membership set is drawn at random the bound is tight.
+
+Both M1 and M2 are marginal: they see one cipher value at a time, and small $\delta$ controls them.
+
+### 4A.2 The Compositional / Active Scale
+
+When the untrusted machine can either (a) apply operations to a cipher value, or (b) observe several cipher maps on the same cipher value, it learns things that **no value of $\delta$ prevents**. This is not a flaw; it is the same composability (Property 4) that makes blind chained evaluation possible.
+
+**Measure C1: orbit-closure residual entropy (active adversary).** Let $F = \{\hat{f}_1, \ldots, \hat{f}_k\}$ be the cipher maps available to the untrusted machine and let $\mathrm{orbit}_F(c) \subseteq \{0,1\}^n$ be the smallest set containing $c$ and closed under every $\hat{f}_i$. With the view defined as $\mathcal{V}_F(c) = \mathrm{orbit}_F(c)$,
+$$H(X \mid \mathcal{V}_F(c)) \;\geq\; H(X) - \log_2 |\mathrm{orbit}_F(c)|, \qquad \mathrm{conf}_F(c) \;\geq\; 1 - \frac{|\mathrm{orbit}_F(c)|}{|X|}.$$
+This is the confidentiality bound of the Algebraic Cipher Types paper (entropy form and set form). It is **active**: the leakage is governed by orbit size, which a typed-composition discipline bounds at design time (a depth-$k$ typed chain from $m$ inputs gives $|\mathrm{orbit}| \leq \sum_i N_i$, independent of the cipher-space sizes). Note this is conditional residual entropy of the *latent* $X$, an unnormalized quantity; it is **not** the entropy ratio $e$ of M1, and the two should never be equated.
+
+**Measure C2: multi-instance coincidence (same $f$, independent seeds).** If the untrusted machine holds $t$ cipher maps $\hat{f}_1, \ldots, \hat{f}_t$ for the *same* latent $f$ under independent seeds, with public acceptance partitions $\{\alpha_i(y)\}$, the coincidence-oracle attacker reaches accuracy
+$$\mathrm{accuracy}(t) \;=\; 1 - \tfrac{1}{2}\sum_{y} \prod_{i=1}^{t} \alpha_i(y) \quad\xrightarrow{\text{homogeneous}}\quad 1 - \tfrac{1}{2}\sum_{y} \alpha(y)^t.$$
+This is Theorem 8.2 of the Cipher Maps paper. Concentrated (Huffman-style) acceptance partitions minimize the sum and so defend best at every $t$; the deployment defense when shared-$f$ composition is unavoidable is randomized encoding ($K(x) > 1$), not codec retuning.
+
+**Measure C3: shared-variable joint recovery (different $f$, shared cipher value).** If the untrusted machine observes pairs $(\hat{f}_1(c_i), \hat{f}_2(c_i))$ for $f_1 : X \to Y_1$, $f_2 : X \to Y_2$ on shared in-domain cipher values, mutual information is preserved exactly,
+$$I(\hat{f}_1(C); \hat{f}_2(C)) = I(f_1(X); f_2(X)),$$
+and the joint distribution on $Y_1 \times Y_2$ is recoverable at the minimax-optimal rate $\Theta(|Y_1|\,|Y_2|/\xi^2)$ in TV accuracy $\xi$ (upper bound by plug-in estimation, matching lower bound by **Le Cam's two-point method**). This is the main result of the Entropy Ratio paper (its Theorems 5.1 and 5.2). **No per-cipher-map $\delta$ changes this rate.** The defenses are system-level: reduce observations, encode jointly (raise the entanglement $p$, Section 4.3), or inject noise.
+
+### 4A.3 "Le Cam" Names Two Different Things
+
+The two-point method appears at both scales with opposite roles, and the papers use the bare phrase "Le Cam" for each. Do not conflate:
+
+| Use | Scale | Role | Bound | Owner |
+|---|---|---|---|---|
+| M2 | marginal | upper bound on a single-guess attacker | accuracy $\leq \tfrac12 + \tfrac\delta2$ | Cipher Maps Section 5.3 |
+| C3 | compositional | lower bound on the joint-estimation minimax rate | $\mathbb{E}[\mathrm{TV}] \geq c\sqrt{|Y_1||Y_2|/N}$ | Entropy Ratio Theorem 5.2 |
+
+### 4A.4 Summary of Measures
+
+| Measure | Scale | Quantity | Controlled by $\delta$? | Owner paper |
+|---|---|---|---|---|
+| M1 entropy ratio | marginal | $e = H(Q)/n \geq 1 - \delta - h_2(\delta)/n$ | yes | Entropy Ratio (Thm 3.1), Cipher Maps (Prop 5.1) |
+| M2 single-guess | marginal | accuracy $\leq \tfrac12 + \tfrac\delta2$ | yes | Cipher Maps (Section 5.3) |
+| C1 orbit closure | active | $H(X\mid\mathcal{V}_F) \geq H(X) - \log_2|\mathrm{orbit}_F(c)|$ | no | Algebraic Cipher Types |
+| C2 coincidence | compositional | $\mathrm{acc}(t) = 1 - \tfrac12\sum_y \alpha(y)^t$ | no | Cipher Maps (Thm 8.2) |
+| C3 joint recovery | compositional | minimax rate $\Theta(|Y_1||Y_2|/\xi^2)$ | no | Entropy Ratio (Thms 5.1, 5.2) |
+
+The single sentence to remember: **$\delta$ buys marginal confidentiality (M1, M2) and nothing at the compositional or active scale (C1, C2, C3).** That separation is the spine of the Entropy Ratio paper and the design rationale for typed composition (Algebraic Cipher Types) and rekeying (Cipher Rekeying).
+
+---
+
 ## 5. The Trusted / Untrusted Machine Model
 
 This section formalizes the trust model that is implicit in the blog posts and made explicit in `DESIGN-trapdoor-reframing.md`. This is a new formalization extending the blog post ideas.
@@ -723,13 +785,15 @@ Items 1--5 below are retained from the original draft. Section 7 expands on item
 
 ---
 
-## 7. Unformalized Frontier
+## 7. Frontier (Status Updated 2026-06-02)
 
-The following ideas have been identified across the ecosystem but lack formal treatment. Each is a concrete open problem, not speculative.
+This section listed ideas identified across the ecosystem but not yet formalized. Several have since been formalized in the paper family; each such item is now marked **FORMALIZED** with a pointer to its owning paper. The remaining items are genuinely open. See the Paper Map (Section 8) for the full ownership table.
 
-### 7.1 Sum-Type Confidentiality Trade-Off
+### 7.1 Sum-Type Confidentiality Trade-Off (FORMALIZED)
 
-Source: `algebraic_cipher_types` (2019-2022 notebook).
+**Status: formalized** as the sum-type impossibility theorem in the Algebraic Cipher Types paper (tag hiding and untrusted pattern matching are mutually exclusive, with advantage bounded by $\delta$). The conjecture below was correct; the paper supplies the proof.
+
+Source: `.archive/algebraic_cipher_types-legacy/` (2019-2022 C++ notebook, archived 2026-04-29; formerly `papers/algebraic_cipher_types/`).
 
 For a sum type $X + Y$, there are two cipher constructions with incompatible guarantees:
 
@@ -739,27 +803,29 @@ For a sum type $X + Y$, there are two cipher constructions with incompatible gua
 
 This trade-off is structural: no construction can simultaneously hide the tag and support pattern matching without the trapdoor. A formal proof would show that any cipher type satisfying both properties implies a trapdoor inversion, contradicting the one-way assumption.
 
-### 7.2 Orbit/Closure Information Leak Bounds
+### 7.2 Orbit/Closure Information Leak Bounds (FORMALIZED)
 
-Source: `algebraic_cipher_types`.
+**Status: formalized** as the confidentiality bound (Measure C1, Section 4A.2) in the Algebraic Cipher Types paper: $\mathrm{conf}_F(c) \geq 1 - |\mathrm{orbit}_F(c)|/|X|$, with proven monotonicity (more operations enlarge the orbit and lower confidentiality) and the typed-composition refinement that bounds orbit size at design time. The Cipher Rekeying paper extends it to cross-secret rekeying chains. The open problem below is closed.
+
+Source: `.archive/algebraic_cipher_types-legacy/` (archived 2026-04-29; formerly `papers/algebraic_cipher_types/`).
 
 Given a computational basis $F$ (a set of operations on cipher type $\mathrm{OT}(T)$), the *orbit closure* of a known cipher value $c$ under $F$ is the set of all cipher values reachable from $c$ by applying operations in $F$. Examples: $\mathrm{and}(x, \mathrm{not}(x)) = \mathrm{false}$ reveals $\mathrm{OT}(\mathrm{false})$; successor cascades from $\mathrm{OT}(0)$ reveal the entire integer type.
 
-**Open problem.** Formalize orbit closure for cipher types. Prove monotonicity (more operations yield larger orbit closure yield less confidentiality). Give a quantitative bound: residual confidentiality $\leq 1 - |\mathrm{orbit}(c, F)| / |\mathrm{OT}(T)|$.
+### 7.3 Cipher Turing Machine (EXPLORED, THEN CUT)
 
-### 7.3 Cipher Turing Machine
+**Status: explored and removed.** A cipher TM construction (space $O(|\text{program}|)$, leaking head movement) was drafted in the Algebraic Cipher Types paper and then cut (2026-04) to collapse the paper to a single realization, the expression-tree decomposition with `@cipher_node` cut points. The idea is recorded in `FUTURE-RESEARCH.md`; it is not currently a target. Retained here for provenance.
 
-Source: `algebraic_cipher_types`.
+Source: `.archive/algebraic_cipher_types-legacy/` (archived 2026-04-29; formerly `papers/algebraic_cipher_types/`).
 
 Cipher maps as defined here are lookup tables with space $O(|X|)$. A cipher Turing machine replaces states, alphabet symbols, and transition functions with their cipher counterparts, divorcing space complexity from domain cardinality. Space becomes $O(|\text{program}|)$ rather than $O(|X|)$, at the cost of revealing execution patterns (head movements, step count).
 
-**Open problem.** Define the cipher TM formally. Characterize the information leaked by execution patterns. Determine whether multiple TM implementations indexed by cipher tags can mitigate pattern leakage.
+### 7.4 Adaptive Encoding Granularity (PAPER IN PROGRESS)
 
-### 7.4 Adaptive Encoding Granularity
+**Status: active draft.** This is the subject of the `papers/adaptive-trapdoor/` paper (idea/preliminary stage): maintaining confidentiality under a drifting query distribution $D$, where a static $K(x)$ (and, by extension, a static entanglement choice $p$) goes stale. The streaming observer, online $K(x)$ retuning, and drift-sensitivity experiments live in the `cipher-maps` library `experiments/` subpackage. The granularity-adaptation half stated below remains open within that paper.
 
 The entanglement parameter $p$ (§4.3) is currently uniform: all $p$-tuples of values are encoded jointly. In practice, some values are correlated and others are independent.
 
-**Open problem.** Define an adaptive scheme where $p$ varies per value pair based on measured or known correlation. The scheme should encode correlated values jointly ($p = 2$ or higher) and independent values separately ($p = 1$), achieving a finer privacy/efficiency trade-off. The challenge is that the choice of $p$ for each pair is itself a signal that may leak correlation structure to the adversary.
+**Open sub-problem.** Define an adaptive scheme where $p$ varies per value pair based on measured or known correlation. The scheme should encode correlated values jointly ($p = 2$ or higher) and independent values separately ($p = 1$), achieving a finer privacy/efficiency trade-off. The challenge is that the choice of $p$ for each pair is itself a signal that may leak correlation structure to the adversary.
 
 ### 7.5 Noise-to-Signal Under Composition
 
@@ -776,3 +842,48 @@ Two error rates in the trapdoor boolean algebra lack closed-form expressions:
 2. **NOT error rate.** $\eta_{\mathrm{NOT}}(|A|, n)$: the fraction of bit positions where ${\sim}F(A)$ disagrees with $F(A^\complement)$, as a function of set size and bit width.
 
 Both are computable in principle from the bit-occupation probability $(1 - 2^{-k})$ per position, but the existing analysis stops at asymptotic bounds. Closed-form expressions would complete the parameter instantiation for the trapdoor boolean algebra (§2.3).
+
+
+---
+
+## 8. Paper Map
+
+How the paper family sits on this spine. Every paper imports the cipher-map tuple (Definition 1.1) and the four properties (Section 1.3) by citation; none redefines them. Each paper then owns a distinct layer of the theory.
+
+| Paper | Bibkey | Builds on the spine via | Owns (canonical home) |
+|---|---|---|---|
+| **Cipher Maps** | `towell2026cipher` | Definition 1.1, four properties, composition theorem (Section 3), space bound (§1.4) | The hub. Acceptance predicates and the (TV, $L$) Pareto frontier; Measure M1 (entropy ratio, Prop 5.1) and M2 (single-guess Le Cam, §5.3); Measure C2 (coincidence oracle, Thm 8.2). |
+| **The Entropy Ratio** | `towell2026maxconf` | Definition 1.1 (cited), Property 2 ($\delta$), Measure M1 | The two-scale framing (Section 4A here). Measure C3 (shared-variable joint recovery, Thms 5.1/5.2). The three levers (noise injection, multiplicity, granularity) as $\delta$-reduction with costs. |
+| **Algebraic Cipher Types** | `towell2026algebraic` | Definition 1.1 (cited), four properties, Property 2 ($\delta$ as the advantage bound) | Cipher types as an algebra (void/unit/product/sum/exponential). The sum-type impossibility theorem. Measure C1 (orbit closure) and the typed-composition design-time budget. |
+| **Cipher Rekeying** | `towell2026rekeying` | Definition 1.1 (cited), Measure C1 (orbit closure, from Algebraic Cipher Types) | Cipher closures (SICP-style closures over a secret). The rekeying functor as a cipher map; naturality; $n$-step chain leakage; randomized rekeying. |
+| **Adaptive Trapdoor** | (draft) | Property 2 ($\delta$), Measure M1, the homophonic $K(x) \propto D(x)$ construction | Confidentiality maintenance under drift in $D$: streaming observer, online $K(x)$ retuning, drift sensitivity. Idea/preliminary stage. |
+| **Boolean Algebra over Trapdoor Sets** | `towell2026boolean` | The trapdoor boolean algebra construction (§2.3), composition theorem | The pre-2024 authentic systems treatment (HBOS, microsecond set operations). Predates the QIF machinery; consistent with the spine but does not use Measures M1/C1/C2/C3. |
+
+**Canonical citation keys.** Use `towell2026algebraic` for the Algebraic Cipher Types paper everywhere. The key `towell2026actypes` (used only inside Cipher Rekeying) is a duplicate of the same paper and should be renamed; see `cross-paper-consistency.md` item C-2. The Cipher Maps `.bib` entry for that paper also carries a stale title ("A Functorial Framework...") that must be updated to the real title ("Confidentiality Trade-offs in Type Constructors over Trapdoor Computing").
+
+**Shared macro vocabulary.** All papers share the same LaTeX macros for the core objects: `\fhat` ($\hat{f}$), `\enc`, `\dec`, `\B` ($\{0,1\}$), `\cipher{X}` ($\mathsf{C}(X)$), `\cipherS{X}{s}` ($\mathsf{C}_s(X)$), `\orbitF` ($\mathrm{orbit}_F$). A future shared `trapdoor.bib` plus a common macro preamble would remove the remaining per-paper drift; see the reconciliation report.
+
+### Canonical Notation (the shared spine)
+
+| Concept | Canonical symbol | Notes |
+|---|---|---|
+| Latent function | $f : X \to Y$ | known only to the trusted machine |
+| Cipher map (function part) | $\hat{f} : \{0,1\}^n \to \{0,1\}^n$ | total; held by the untrusted machine |
+| Encode / decode | $\mathrm{enc}$, $\mathrm{dec}$ | trusted only; $\mathrm{enc}: X \times \{0,\dots,K(x){-}1\} \to \{0,1\}^n$, $\mathrm{dec}: \{0,1\}^n \to Y \cup \{\bot\}$ |
+| Secret / trapdoor | $s$ | derives $\hat{f}, \mathrm{enc}, \mathrm{dec}$ |
+| Cipher type / space | $\mathsf{C}(X)$, $\mathsf{C}_s(X)$ | the image of $\mathrm{enc}$; sans-serif C |
+| Query distribution on $X$ | $D$ | prior the trusted machine encodes from |
+| Induced cipher-value distribution | $Q$ | what the untrusted machine observes |
+| Representation uniformity | $\delta = d_{\mathrm{TV}}(Q, \mathrm{Uniform}(\{0,1\}^n))$ | marginal only |
+| Correctness | $\eta$ | $\Pr[\mathrm{dec}(\hat f(\mathrm{enc}(x,k))) \neq f(x)] \leq \eta$ |
+| Noise-decode / space | $\varepsilon$ | $\Pr[\text{random bits decode}]$; space $-\log_2\varepsilon + H(Y)$ |
+| Value cost | $\mu = H(Y)$ | |
+| Multiplicity | $K(x) \geq 1$ | homophonic: $K(x) \propto D(x)$ |
+| Entanglement / granularity | $p$ | values encoded jointly per unit |
+| Entropy ratio (M1) | $e = H(Q)/n \in [0,1]$ | **not** $H(X\mid\text{view})/H^*(X)$ |
+| Orbit closure (C1) | $\mathrm{orbit}_F(c)$, view $\mathcal{V}_F(c)$ | active-adversary reachable set |
+| Acceptance probability | $\alpha(y) = |A(y)|/2^n$ | $\varepsilon = \sum_y \alpha(y)$ |
+
+This table is the reference any new paper or revision should match. Deviations are drift and belong in the reconciliation report, not in a paper.
+
+For the *conventions* behind these symbols (the value / function / type notational levels, the cipher functor that unifies them, the rule for when to write `\hat f` versus `\mathsf{C}_s(f)`, the secret-versus-function subscript rule, and worked resolutions of recurring notation questions), see `notation.md`. That document is subordinate to this table: where they disagree on a symbol, this table wins.
