@@ -67,10 +67,11 @@ Quantitative Information Flow literature.  We connect this measure to
 the cipher map framework's representation-uniformity parameter $\delta$
 via the Fannes--Audenaert continuity inequality, giving
 $e \geq 1 - \delta - h_2(\delta)/n$.  This bridge makes $\delta$ the
-operational design target, and we analyze two constructions that
-reduce it with explicit costs (noise injection and multiple
-representations), plus a third, encoding granularity, inherited from
-the cipher maps framework.  The paper's main result is a compositional
+operational design target, and we characterize the explicit costs of
+the framework's three $\delta$-reduction mechanisms (noise injection,
+multiple representations, and encoding granularity), contributing a
+Fisher-information dilution result for noise injection.  The paper's
+main result is a compositional
 leakage theorem with a matching minimax lower bound: even when each
 cipher map is marginally $\delta$-uniform, observing multiple
 evaluations on a shared cipher value lets the untrusted machine
@@ -144,29 +145,36 @@ e \;\geq\; 1 - \delta - h_2(\delta)/n,
 where $h_2$ is the binary entropy.  This reduces marginal-scale
 engineering to the concrete problem of minimizing $\delta$.
 
-We analyze two constructions that reduce $\delta$ with explicit costs:
+The cipher map framework provides three mechanisms that reduce
+$\delta$.  The cipher maps paper names them and explicitly defers
+their cost analysis to this companion
+work~\cite[Rem.~5.1]{towell2026cipher}; the \emph{constructions} are
+the framework's, and our contribution at the marginal scale is their
+analysis as cost-attached levers (the Fisher-information dilution of
+the first is the one new mechanism-level result):
 
 \begin{enumerate}
 \item \textbf{Noise injection.}  The trusted machine mixes $R$ filler
-  queries per $N$ real queries.  By totality, the untrusted machine
-  cannot distinguish real from filler.  Cost: bandwidth
-  ($1 + R/N$).  Effect: Fisher information for any correlation
-  estimator is reduced by $\rho^2 = (N/(N+R))^2$.
+  queries per $N$ real queries; by totality the untrusted machine
+  cannot distinguish real from filler.  Cost: bandwidth ($1 + R/N$).
+  Effect: Fisher information for any correlation estimator is reduced
+  by $\rho^2 = (N/(N+R))^2$ (Theorem~\ref{thm:noise-dilution}, new
+  here).
 
 \item \textbf{Multiple representations.}  Each element receives
   $K(x) \geq 1$ encodings, with $K(x) \propto D(x)$ to flatten the
   cipher value distribution (classical homophonic substitution:
   frequent elements get more code symbols so that per-cipher frequency
-  equalizes).  Cost: space ($\sum_x K(x)$ slots).  Effect:
-  $\delta \to 0$ as the normalizing constant grows.
-\end{enumerate}
+  equalizes).  The flattening identity is the framework's homophonic
+  allocation result~\cite[Prop.~4.1]{towell2026cipher};
+  Theorem~\ref{thm:multiplicity} attaches the cost (space:
+  $\sum_x K(x)$ slots, with $\delta \to 0$ as the budget grows).
 
-A third construction, \textbf{encoding granularity} (controlled by an
-entanglement parameter $p$ that interpolates between component-wise
-encoding with correlation leakage and joint encoding with space
-$O(|Y|^k)$), is inherited from the cipher maps framework
-\cite[Sec.~8]{towell2026cipher}.  We use it but do not re-prove it
-here.
+\item \textbf{Encoding granularity}, controlled by an entanglement
+  parameter $p$ that interpolates between component-wise encoding
+  (correlation leakage) and joint encoding (space $O(|Y|^k)$),
+  inherited from~\cite[Sec.~8]{towell2026cipher}.
+\end{enumerate}
 
 \paragraph{Compositional scale.}
 The constructions above all act at the marginal scale: each cipher map
@@ -226,13 +234,17 @@ explicit probabilistic models of the adversary.
   This makes $\delta$ the operational handle for confidentiality
   engineering in cipher map systems (\S\ref{sec:measure}).
 
-\item \textbf{Two constructions that reduce $\delta$.}  Noise injection
-  (bandwidth cost $1 + R/N$, Fisher-information dilution $\rho^2$;
-  Theorem~\ref{thm:noise-dilution}) and multiple representations
-  (space cost $\sum_x K(x)$ with $K(x)\propto D(x)$, the classical
-  homophonic prescription; Theorem~\ref{thm:multiplicity}).  A third
-  construction, encoding granularity, is inherited from the cipher
-  maps framework and used without re-proof (\S\ref{sec:levers}).
+\item \textbf{Cost analysis of the framework's $\delta$-reduction
+  levers.}  The cipher maps framework supplies three mechanisms
+  (noise injection, multiple representations, encoding granularity) and
+  defers their cost analysis to this paper~\cite[Rem.~5.1]{towell2026cipher}.
+  We characterize each: noise injection (bandwidth cost $1 + R/N$) with
+  a Fisher-information dilution $\rho^2$ that is new here
+  (Theorem~\ref{thm:noise-dilution}); multiple representations (space
+  cost $\sum_x K(x)$ with $K(x)\propto D(x)$), building on the
+  framework's homophonic identity~\cite[Prop.~4.1]{towell2026cipher}
+  (Theorem~\ref{thm:multiplicity}); and encoding granularity, used as
+  inherited (\S\ref{sec:levers}).
 
 \item \textbf{Practical measurement and validation.}  Compression-based
   entropy estimation avoiding explicit adversary models, and a case
@@ -672,41 +684,37 @@ $K(x) \propto D(x)$.
 \label{thm:multiplicity}
 Let $D$ be a distribution on $X$ with $D(x) > 0$ for all $x$, and let
 $c \geq 1/\min_x D(x)$ be a normalizing constant.  Set
-$K(x) = \lceil c \cdot D(x) \rceil$.  Then the cipher value
-distribution $Q$ induced on the image of $\enc$ satisfies
+$K(x) = \lceil c \cdot D(x) \rceil$, and write $N = \sum_x K(x)$.
+Then the cipher value distribution $Q$ induced on the image of $\enc$
+satisfies the homophonic allocation
+identity~\cite[Prop.~4.1]{towell2026cipher},
 \begin{equation}
-\TV(Q, U_{\mathrm{im}}) \;\leq\; \frac{|X|}{2\,\sum_x K(x)}
-\;\leq\; \frac{|X|}{2c},
+\TV(Q, U_{\mathrm{im}}) \;=\; \TV\!\bigl(D,\, K/N\bigr)
+\;<\; \frac{|X| - 1}{N} \;\leq\; \frac{|X| - 1}{c},
 \end{equation}
 where $U_{\mathrm{im}}$ is the uniform distribution on
-$\mathrm{im}(\enc)$.  In particular, $\TV(Q, U_{\mathrm{im}}) \to 0$
-as $c \to \infty$.  Under the random oracle model,
-$\mathrm{im}(\enc)$ is a pseudorandom subset of $\B^n$, so
-$\TV(Q, U)$ inherits the same bound up to a birthday-bound term
-$O(\sum_x K(x) / 2^n)$.
+$\mathrm{im}(\enc)$ and the constant $|X|-1$ is tight.  In particular,
+$\TV(Q, U_{\mathrm{im}}) \to 0$ as $c \to \infty$.  Under the random
+oracle model, $\mathrm{im}(\enc)$ is a pseudorandom subset of $\B^n$,
+so $\TV(Q, U)$ inherits the same bound up to a birthday-bound term
+$O(N / 2^n)$.
 \end{theorem}
 
 \begin{proof}
 Under the random oracle model, distinct $(x, k)$ pairs map to distinct
-cipher values with high probability, so each $v \in \mathrm{im}(\enc)$
-is the image of exactly one pair $(x, k)$ and $Q(v) = D(x)/K(x)$.  With
-$K(x) = \lceil c\, D(x) \rceil$, rounding gives
-\[
-\frac{1}{c + 1/D(x)} \;\leq\; \frac{D(x)}{K(x)} \;\leq\; \frac{1}{c},
-\]
-so $Q(v) \in [1/(c + 1/\min_x D(x)),\ 1/c]$ for every $v$ in the image.
-The image has $M = \sum_x K(x) \in [c,\ c + |X|]$ values, and the
-uniform distribution on the image assigns mass $1/M$ to each.  TV
-distance aggregates the per-cipher discrepancy:
-\[
-\TV(Q, U_{\mathrm{im}}) = \tfrac{1}{2}\sum_v |Q(v) - 1/M|.
-\]
-Since each $K(x) - c\,D(x) \in [0, 1]$ by the ceiling, the per-source
-discrepancy in $Q(v) = D(x)/K(x)$ around $1/c$ is at most $1/(c\,K(x))$
-in absolute value, and aggregating gives $\TV(Q, U_{\mathrm{im}}) \leq
-|X|/(2M) \leq |X|/(2c)$.  The image-to-$\B^n$ step follows from the
-random-oracle assumption: a pseudorandom image of size $M$ inside
-$\B^n$ contributes at most $O(M / 2^n)$ additional TV distance.
+cipher values with high probability, so $\enc$ is injective on the
+image and $Q(v) = D(x)/K(x)$ for the unique $(x, k)$ with
+$\enc(x, k) = v$.  The homophonic allocation
+proposition~\cite[Prop.~4.1]{towell2026cipher} gives the exact
+identity $\TV(Q, U_{\mathrm{im}}) = \TV(D, K/N)$ and bounds the Simmons
+allocation $K(x) = \lceil c\,D(x) \rceil$ by $(|X|-1)/N$, with the
+constant $|X|-1$ tight (mass concentrated on one value, the remaining
+$|X|-1$ values sitting just above the rounding boundary, attains it).
+This paper's addition is the cost reading: the bound is bought with
+$N = \sum_x K(x)$ cipher-map slots, so driving $\delta$ down trades
+linearly against space.  The image-to-$\B^n$ step follows from the
+random-oracle assumption: a pseudorandom image of size $N$ inside
+$\B^n$ contributes at most $O(N / 2^n)$ additional TV distance.
 \end{proof}
 
 \paragraph{Cost.}
@@ -1621,7 +1629,7 @@ resolve it.
 
 \subsection{Case Study: Confidentiality Improvement}
 
-We demonstrate the two constructions of~\S\ref{sec:levers} (noise
+We demonstrate two of the levers of~\S\ref{sec:levers} (noise
 injection and multiplicity) on a system with vocabulary
 $m = 10{,}000$ and Zipf-distributed queries.  Table~\ref{tab:case-study}
 gives the resulting entropy ratios under combinations of the two
@@ -1629,8 +1637,9 @@ levers.
 
 \begin{table}[ht]
 \centering
-\caption{Confidentiality improvement via the two constructions of
-\S\ref{sec:levers}.  Values are analytical, computed from the Zipf
+\caption{Confidentiality improvement via two of the levers of
+\S\ref{sec:levers} (noise injection and multiplicity).  Values are
+analytical, computed from the Zipf
 entropy, the mixture-entropy formula in Theorem~\ref{thm:noise-dilution},
 and the homophonic construction in Example~\ref{ex:homophonic}.}
 \label{tab:case-study}
@@ -1667,8 +1676,8 @@ $\sum_x K(x) \approx c \cdot m \cdot H_m$ slots flattening the tail
 The entropy ratio $e$ gives system designers a single number to
 optimize.  Given a resource budget (space $S$, bandwidth $B$), the
 designer solves: maximize $e$ subject to $\text{space} \leq S$ and
-$\text{bandwidth} \leq B$.  The two constructions analyzed here (noise
-injection, multiplicity) plus the inherited granularity dimension
+$\text{bandwidth} \leq B$.  The framework's three levers (noise
+injection, multiplicity, granularity), whose costs we analyze here,
 provide the degrees of freedom.  Noise costs bandwidth but not space;
 multiplicity costs space but not bandwidth; granularity trades
 confidentiality for functionality.
@@ -1817,11 +1826,13 @@ To make the marginal target itself operational, we connect $\delta$ to
 the entropy ratio $e = H/H^*$ (a normalized form of Shannon leakage
 borrowed from the QIF literature) via the Fannes--Audenaert continuity
 inequality, reducing marginal-leakage engineering to minimizing
-$\delta$.  Two constructions reduce $\delta$ with explicit costs:
-noise injection (bandwidth) and multiple representations with
-$K(x) \propto D(x)$ (space).  A third dimension, encoding granularity,
-is inherited from the cipher maps framework.  The three are
-expressible in terms of the cipher map parameters
+$\delta$.  The framework's three $\delta$-reduction mechanisms come
+with explicit costs that we characterize: noise injection (bandwidth),
+multiple representations with $K(x) \propto D(x)$ (space), and encoding
+granularity (the $O(|Y|^k)$ correlation-hiding trade-off).  The
+constructions are the framework's; the cost analysis, and the
+Fisher-information dilution of noise injection, are ours.  The three
+are expressible in terms of the cipher map parameters
 $(\eta, \varepsilon, \mu, \delta)$ and the entanglement parameter $p$.
 
 The key insight is that the cipher map's four properties already
