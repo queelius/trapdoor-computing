@@ -66,7 +66,8 @@ achieving negligible leakage in a security parameter, they bound
 observable leakage by measurable parameters $\delta$ (representation
 uniformity), $\varepsilon$ (noise-decode probability), and $\eta$
 (correctness), with the entropy ratio serving as the security measure
-(formal framework in companion work~\cite{towell2026maxconf}).  The
+(bounded here via the Fannes--Audenaert inequality, and developed as a
+confidentiality measure in companion work~\cite{towell2026maxconf}).  The
 construction reduces to a single design choice: an \emph{acceptance
 predicate} that partitions hash space among output values.  Acceptance
 predicates expose a Pareto frontier between expected codeword length
@@ -172,8 +173,9 @@ a continuous quantity (the \emph{entropy ratio} $e = H(Q)/n$ where $Q$
 is the cipher value distribution observed by the untrusted evaluator
 and $n$ is the cipher value space dimension), bounded below by the
 cipher map's representation-uniformity parameter $\delta$ via the
-Fannes--Audenaert continuity inequality (formal framework in companion
-work~\cite{towell2026maxconf}).  This puts
+Fannes--Audenaert continuity inequality
+(Proposition~\ref{prop:confidentiality}); the entropy ratio is developed
+as a confidentiality measure in companion work~\cite{towell2026maxconf}.  This puts
 cipher maps in a different design space from oblivious
 RAM~\cite{goldreich1996software} (hides access patterns at polylog
 overhead), fully homomorphic encryption~\cite{gentry2009fully} (preserves
@@ -369,7 +371,15 @@ the latent type $X$ under secret $s$, that is, the image of $\enc(\cdot,
 \cdot)$ in $\B^n$.  When the secret is clear from context, we drop the
 subscript and write $\cipher{X}$.  The same notation applies to latent
 functions: for $f : X \to Y$, the cipher map of $f$ under secret $s$ is
-written $\cipherS{f}{s} : \cipherS{X}{s} \to \cipherS{Y}{s}$.  Under the
+written $\cipherS{f}{s} : \cipherS{X}{s} \to \cipherS{Y}{s}$; this is
+exactly the total function $\fhat$ of Definition~\ref{def:cipher-map},
+so $\cipherS{f}{s} = \fhat$.  Applied to the function type itself,
+$\cipherS{X \to Y}{s}$ denotes the cipher space whose inhabitants are
+precisely the maps $\cipherS{X}{s} \to \cipherS{Y}{s}$, and the cipher
+map $\cipherS{f}{s}$ is one such inhabitant; thus $\cipher{\cdot}$
+acting on the morphism $f$ and on the object $X \to Y$ agree (the
+\emph{cipher exponential}, \cite[Prop.~4.3]{towell2026algebraic}).
+Under the
 random oracle model and the four properties developed in
 \S\ref{sec:properties}, $\cipherS{\cdot}{s}$ behaves as a functor from
 finite latent types to a category $\mathbf{Cipher}_s$ of cipher value
@@ -833,14 +843,14 @@ applicability range of the Fannes--Audenaert continuity inequality; for
 $\delta > 1/2$ the bound is trivial ($e \geq 0$).
 \end{proposition}
 
-\begin{proof}[Proof sketch]
+\begin{proof}
 Property~2 gives $\TV(Q, \mathrm{Uniform}) \leq \delta$ where $Q$ is the
 cipher value distribution induced by $\enc$ on the $\B^n$ ambient space.
 Applying the Fannes--Audenaert continuity inequality with reference
 distribution $\mathrm{Uniform}(\B^n)$ (entropy $n$) gives
 $H(Q) \geq n(1 - \delta) - h_2(\delta)$, and dividing by $n$ yields
-\eqref{eq:fannes-bridge}.  Full proof and discussion of tightness in
-\cite[Theorem~3.1, part~3]{towell2026maxconf}.  The bound applies
+\eqref{eq:fannes-bridge}.  The tightness of this bound is analyzed in
+\cite[Theorem~4.1, part~3]{towell2026maxconf}.  The bound applies
 specifically to the cipher value marginal; downstream bounds on what
 $U$ can learn about the latent function $f$ or the latent input $X$
 follow by data-processing arguments
@@ -1119,27 +1129,37 @@ bits per element when acceptance probabilities are Shannon-optimal
 ($\alpha(y) \propto p_y$).  They differ in construction time and
 implementation simplicity.
 
-\paragraph{Shannon-optimal allocation and frequency hiding.}
-Setting $\alpha(y) \propto \Pr[f(X)=y]$ simultaneously achieves two
-goals (\Cref{fig:acceptance-partition}).
+\paragraph{Shannon-optimal allocation and the leakage frontier.}
+Setting $\alpha(y) \propto \Pr[f(X)=y]$ achieves two goals at once
+(\Cref{fig:acceptance-partition}).
 First, it minimizes space: the per-element encoding cost
 $-\log_2 \alpha(y) \approx -\log_2 p_y$ is the Shannon information content
 of value $y$, and the average cost
 $\sum_y p_y (-\log_2 p_y) = H(Y)$ is the entropy of the output
-distribution.  Second, it hides value frequencies: noise queries (random
-hash values) hit acceptance set $A(y)$ with probability
-$\alpha(y) \propto p_y$---the same distribution as real queries.  An
-adversary observing output values cannot distinguish whether a result came
-from a real query or noise, because the output frequency profile is
-identical in both cases.
+distribution.  Second, it aligns noise with real traffic: noise queries
+(random hash values) hit acceptance set $A(y)$ with probability
+$\alpha(y) \propto p_y$---the same profile as real queries---so an
+adversary cannot use the output profile to tell whether a result came from
+a real query or from injected noise.  These two goals are the same
+allocation, not a coincidence: the length-optimal code is exactly the one
+whose acceptance profile matches the real output profile.
 
-These are not two independent optimizations that happen to coincide.
-Shannon-optimal coding IS frequency hiding: matching the acceptance
-distribution to the output distribution simultaneously minimizes space and
-maximizes indistinguishability.  Any deviation from $\alpha(y) \propto p_y$
-both wastes space (encoding rare values with fewer bits than their
-information content requires) and leaks information (the frequency profile
-of outputs differs between real and noise queries).
+This duality is between \emph{space} and \emph{real-versus-noise
+matching}, and it should not be mistaken for minimizing \emph{value-side}
+leakage.  The latter is the representation-uniformity parameter $\delta$
+of Property~2---the total-variation distance of the observed cipher value
+distribution from uniform---and driving it down is a \emph{separate}
+objective, achieved not by the length-optimal code but by the multiplicity
+lever ($K(x) > 1$, the homophonic mechanism of Property~2), which spreads
+each value over several codewords at the cost of extra length.  The
+length-optimal (Shannon) corner and the $\delta$-optimal corner coincide
+only when $p_y$ is dyadic; in general they are distinct points on a
+$(\mathrm{TV}, L)$ Pareto frontier (\S\ref{subsec:eval-codec-security}),
+on which spending modest length overhead off the Shannon corner buys up to
+a $42\times$ reduction in leakage.  A frequency-analysis
+adversary~\cite{naveed2015inference} therefore constrains the choice of
+operating point: the length-optimal code is not automatically the most
+confidential one.
 
 \subsection{Construction Algorithm}
 \label{subsec:construction-alg}

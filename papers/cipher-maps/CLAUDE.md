@@ -12,7 +12,7 @@ See the parent `CLAUDE.md` at `../../CLAUDE.md` for the conceptual framework, ke
 
 ## Thesis
 
-A cipher map is fully determined by a single design choice: the **acceptance predicate**. Shannon-optimal allocation of the acceptance predicate simultaneously (a) minimizes space to the information-theoretic bound `-log₂(ε) + H(Y)` bits/element, (b) maximizes output indistinguishability (noise and real outputs share the same frequency profile), and (c) enables predictable error composition `η_total ≤ 1 − Π(1 − η_i)`.
+A cipher map is a total, trapdoored function on bit strings, characterized by four measurable properties: **totality** (the untrusted machine sees only a total function and cannot tell real inputs from noise), **representation uniformity** (δ), **correctness** (η), and **composability** (`η_total ≤ 1 − Π(1 − η_i)`). Totality is the foundational privacy mechanism, and security is *measurable rather than negligible* (QIF). Within this abstraction, the batch construction's design freedom collapses to a single **acceptance predicate**, whose allocation traces a (TV, length) leakage/size frontier: the space-optimal (Shannon) corner reaches the bound `-log₂(ε) + H(Y)` bits/element, while a *distinct* TV-optimal corner minimizes leakage (the two are not one simultaneous optimum). The δ-to-leakage confidentiality bound is proved self-contained (Fannes-Audenaert continuity plus the tight homophonic bound `TV < (|X|−1)/N`); the unification of Bloom filters, frequency-hiding encryption, and encrypted search follows from the abstraction rather than being the headline.
 
 Full refined thesis and novelty claims live in `.papermill/state.md`.
 
