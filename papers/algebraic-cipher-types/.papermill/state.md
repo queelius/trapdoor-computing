@@ -9,16 +9,16 @@ authors:
     affiliation: "Southern Illinois University Edwardsville"
 
 metrics:
-  pages: 24
-  tex_lines: ~1830
-  sections: 9
-  figures: 1
-  citations: 21
+  pages: 20
+  tex_lines: ~1640
+  sections: 8
+  figures: 0
+  citations: 22
   last_built: 2026-06-03
 
 thesis:
-  claim: "Cipher types form an algebra: the standard type constructors (void, unit, product, sum, exponential) build complex cipher types from simpler ones, and each constructor induces a specific confidentiality cost absent in plaintext programming. Products leak correlations under component-wise encoding; sums force an impossibility (tag hiding and untrusted pattern matching cannot coexist); the cipher exponential is the cipher map abstraction itself, closing the algebra back on the trapdoor framework. A uniform information-theoretic bound holds across the algebra (the conditional entropy H(X | view) is at least H(X) - log_2 |orbit|), and a typed-composition discipline turns this bound into a design-time budget realized concretely as Python expression-tree decompositions with @cipher_node cut points."
-  novelty: "(1) An algebra of cipher types with a coherent confidentiality calculus: products, sums, and exponentials each carry a quantifiable confidentiality cost, surveyed uniformly through the encoding-granularity knob (joint vs. component-wise). The cipher exponential is the cipher map abstraction itself, closing the algebra back on the trapdoor framework. (2) Three constructor-specific results: product correlation trade-off (Prop 4.1), sum-type impossibility (Thm 4.2), exponential computation-pattern trade-off (Prop 4.5). (3) A construction-independent entropy-form confidentiality bound H(X | V) >= H(X) - log_2 |orbit| (Thm 5.3) that applies uniformly across the algebra, plus a typed-composition recurrence (Prop 5.5) that controls orbit growth at construction time. (4) An expression-tree realization in Python: a cipher program is a composition of cipher maps and plain code over opaque bit strings, and cut-point placement is the design knob the type discipline targets."
+  claim: "Cipher types form an algebra: the standard type constructors (void, unit, product, sum, exponential) build complex cipher types from simpler ones, and each constructor induces a specific confidentiality cost absent in plaintext programming. Products leak correlations under component-wise encoding; sums force an impossibility (tag hiding and untrusted pattern matching cannot coexist); the cipher exponential is the cipher map abstraction itself, closing the algebra back on the trapdoor framework. A uniform information-theoretic bound holds across the algebra (the conditional entropy H(X | view) is at least H(X) - log_2 |orbit|), and a typed-composition discipline turns this bound into a design-time budget. The algebra is instantiated in a cipher Boolean type, evaluated on 20 Newsgroups Boolean search, and shown to support partial filtering (return a superset of relevant documents, hiding which are relevant)."
+  novelty: "(1) An algebra of cipher types with a coherent confidentiality calculus: products, sums, and exponentials each carry a quantifiable confidentiality cost, surveyed uniformly through the encoding-granularity knob (joint vs. component-wise). The cipher exponential is the cipher map abstraction itself, closing the algebra back on the trapdoor framework. (2) Three constructor-specific results: product correlation trade-off (Prop 4.1), sum-type impossibility (Thm 4.2), exponential computation-pattern trade-off (Prop 4.5). (3) A construction-independent entropy-form confidentiality bound H(X | V) >= H(X) - log_2 |orbit| (Thm 5.3) that applies uniformly across the algebra, plus a typed-composition recurrence (Prop 5.5) that controls orbit growth at construction time. (4) Instantiation and evaluation: a cipher Boolean type with AND/OR/NOT, 20 Newsgroups Boolean search (with the AND-chain FPR-divergence finding), and partial filtering as a tunable precision-for-confidentiality trade. NOTE: the automatic expression-tree -> cipher-program rewriting (propagation, cut points, branching/control-flow obliviousness, @cipher_node compiler) was REMOVED 2026-06-03 and relocated to a companion paper (towell2026cipherprog); construction of single cipher maps belongs to the foundation paper (towell2026cipher Sec 6), which this paper cites rather than re-derives."
   refined: 2026-05-04
   previous_claim: "Every algebraic operation the untrusted machine can perform on cipher values enlarges their orbit closure and, by information-theoretic bound, reduces confidentiality. Each algebraic type constructor (product, sum, exponential) therefore induces a quantifiable confidentiality cost, culminating in a sum-type impossibility (tag hiding and untrusted pattern matching cannot coexist), and a typed cipher-program discipline, realized concretely via expression-tree cut points, turns those costs into a design-time budget."
   refinement_notes: "Restored the algebraic framing promised by the title. Across review rounds 2026-04-08 through 2026-04-30 the sum-type impossibility had been elevated to the headline ('culminating in a sum-type impossibility'), which underplayed the §4 algebra (void/unit/product/sum/exponential). The 2026-05-04 refinement makes the algebra primary, lifts the product trade-off (already a Proposition) to consistent prominence with sum, lifts the cipher-exponential observation from a paragraph to two Propositions (Prop 4.4 'cipher exponential is the cipher map abstraction', Prop 4.5 'exponential confidentiality trade-off'), and adds §4.5 'Summary: The Cipher-Type Algebra' with Table 1 consolidating the per-constructor costs. Sum-type impossibility remains a structurally distinguished result (categorical not quantitative), but is now one of three constructor-specific results within a uniform algebraic frame. Earlier history (2019-2022 notebook construction-from-simple-types thread) is now visible in the paper structure rather than buried."
@@ -134,11 +134,18 @@ review_history:
     type: content-expansion
     addresses: "Author observation: ciphering a subtree forces all semantic ancestors (and their siblings) to cipher; control flow is the sharp case; depth can force the if to leak."
     notes: "Expanded §6 with the upward-propagation story, a figure, and a new subsection on branching. (1) New remark rem:cipher-propagation in §6.1 (Expression-Tree Decomposition): replacing a subtree with a cipher map makes its output a cipher value, so every ancestor that semantically consumes it must be a cipher map, and (since a cipher map takes cipher inputs) sibling inputs must be cipher too; the ciphered region is upward-closed along data-flow edges (the combiner IS this region); only pure plumbing stays plaintext; in a single-rooted tree a single cut whose result reaches the output ciphers the whole tree. Control-flow case: branching on a cipher Boolean is untrusted dispatch on 1+1 (Thm 4.2), so if must become a cipher mux forcing both branches to be cipher values and evaluated -- which is why tracing computes all branches. (2) First figure in the paper (fig:cipher-tree, added \\usepackage{tikz}+fit): two-panel expression tree for if(x+1<y) then p else q -- panel (a) plaintext with a dashed cut box around the x+1 subtree, panel (b) the cut rolled into cipher map M1 with every node above double-circled (ciphered), showing the sibling y and both branches p,q pulled in. (3) New subsection §6.2 'Branching and the Limits of Oblivious Control' (sec:branching): cipher-if as ite : C(2)xC(R)xC(R)->C(R); Prop 'No oblivious short-circuit' (prop:no-short-circuit) -- short-circuit = dispatch = leak t (Thm 4.2); hiding t forbids skipping the untaken branch, paid at eval time (mux) or construction time (fuse); three regimes (bounded fixed-shape -> oblivious, 2^k leaves for k nested ifs; total-but-partial -> totality+noise makes wrong-branch eval safe, e.g. y/x at x=0; unbounded data-dependent -> public-bound O(N) masking or trajectory leak); the unification 'oblivious iff fixed data-independent computation graph', with unbounded control = the cipher TM (retroactively justifying why the expression tree, not the TM, is the realization); remark rem:mux-cost (ite costs O(|R|^2), the product trade-off inside control flow; fusing costs O(|X|); variant-typed branches defer dispatch to the next consumer). Cut-Point Structure (now §6.3) self-loop paragraph cross-links to sec:branching. Prop proof corrected before commit to admit the fuse route (earlier draft overstated 'must evaluate both at runtime'). Build clean: 24pp (was 21; +figure +subsection), 0 overfull, 0 undefined, all new labels resolve."
+  - date: 2026-06-03
+    type: scope-restructure
+    addresses: "Author decision: the expression-tree -> cipher-program rewriting is a distraction for this paper; this paper only CONSTRUCTS cipher maps of specific functions to analyze leakage/trade-offs, it does not evaluate whole-program realization. Construction machinery already belongs to the foundation paper."
+    notes: "Removed §6 'Realizing Cipher Programs' ENTIRELY (365 lines): the lead-in, Expression-Tree Decomposition (Def cipher-node, granularity bullets, rem:cipher-propagation, the tikz figure fig:cipher-tree, rem:shared-vars, the automatic-tracing paragraph), Branching and the Limits of Oblivious Control (prop:no-short-circuit, the three regimes, rem:mux-cost), and Cut-Point Structure (def:cut-point, the regex example). All saved to /tmp/sec6_migration.tex for the companion paper. Decision rationale: (a) single-cipher-map CONSTRUCTION is the foundation paper's contribution (towell2026cipher Sec 6 batch/PHF); this paper now cites it in §3 rather than re-deriving. (b) whole-program REALIZATION (propagation, cut points, branching/control-flow) is a separate problem -> companion paper towell2026cipherprog. (c) this paper's actual scope is cipher TYPES + their leakage/composition (algebra, sum-impossibility, orbit, typed chains) + a concrete instantiation (cipher Booleans, search) -- none of which needs the realization story. Edits: abstract last sentence reframed (drop expression-tree/@cipher_node; mention instantiation + partial filtering); intro contribution #3 changed from 'Expression-tree realization' to 'Instantiation and evaluation' (cipher Booleans, search, FPR divergence, partial filtering); §3 gained a construction-cite paragraph (build via foundation Sec 6, not re-derived; whole-program assembly -> companion); §8 open-questions dropped the two §6-dependent items (plain-ops-on-cipher-bytes, cut-point-optimization) and added a 'Realizing whole programs -> companion' item; conclusion's realization paragraph reframed to construction+companion-pointer; granularity experiment (Table 3/now in §6 Cipher Boolean Eval) reworded to drop annotation/tracing language, tied to product trade-off Prop 4.1. ADDED §6.4 'Partial Filtering' (sec:partial-filter): the bag-gated cipher-OR multiplexer (gate: C(Bool)^m -> fire/idle on OR), returning a superset of relevant docs while hiding which (1-in-m anonymity), orbit bound in operational form (1 bit/bag), precision ~1/m as a tunable confidentiality lever tied to Table 1; analytical, no fabricated numbers. rem:oblivious-elim (the type-level fused-eliminator remark) stays in §4 (referenced only from the §4 proof). Section count 9->8, pages 24->20, figure removed, citations 21->22 (added towell2026cipherprog). Build clean: 0 overfull, 0 undefined, no orphan refs to deleted §6 labels."
 
 related_papers:
   - path: ~/github/trapdoor-computing/papers/cipher-maps
     rel: foundation
-    label: "Cipher map abstraction, four properties, batch construction"
+    label: "Cipher map abstraction, four properties, batch construction (Sec 6). This paper CITES its construction rather than re-deriving it."
+  - path: ~/github/trapdoor-computing/papers/cipher-program-construction
+    rel: companion-spinoff
+    label: "Realizing whole programs as cipher-map compositions: cut points, propagation, control-flow obliviousness, @cipher_node automatic rewriting. SPUN OUT of this paper 2026-06-03 (was §6). Seeded from /tmp/sec6_migration.tex."
   - path: ~/github/bernoulli/papers/bernoulli_data_type
     rel: companion
     label: "Accuracy-side algebraic types (Kronecker factorization, error propagation)"
@@ -153,29 +160,29 @@ related_papers:
 ## Notes
 
 Paper started 2026-03-28 from the algebraic_cipher_types notebook (2019-2022).
-Restructured 2026-04-12 around one principle with three instances plus two
-realizations. Current structure:
+Restructured 2026-04-12 (algebra framing), then 2026-06-03 (removed the
+whole-program-realization §6 to a companion paper; this paper is now cipher
+types + their leakage/composition + a cipher-Boolean instantiation).
+Current structure (8 sections):
 
 1. Introduction
 2. Related Work
-3. Preliminaries (cipher maps recap)
+3. Preliminaries (cipher maps recap; construction cited from foundation Sec 6)
 4. Cipher Type Constructors (static: void/unit, product, sum, exponential)
 5. Orbit Closure and Information Leakage (dynamic: definition, monotonicity,
    confidentiality bound, examples, typed composition chains)
-6. Realizing Cipher Programs
-   6.1 Cipher Turing machines (brief: definition, space, head-movement
-       leakage, ORAM comparison)
-   6.2 Expression-tree decomposition (cipher-node annotation,
-       granularity control, @cipher_node tracing implementation)
-   6.3 Cut-point structure common to both realizations
-7. Cipher Boolean Algebra and Evaluation
-   7.1 Cipher Boolean type
-   7.2 Noise unreliability (proposition + remarks + practical allocation)
-   7.3 Experimental validation (Boolean search, FPR compounding,
-       encoding granularity)
-8. Discussion (relationships, encoding granularity principle, open
-   questions)
-9. Conclusion
+6. Cipher Boolean Algebra and Evaluation
+   6.1 Cipher Boolean type
+   6.2 Noise unreliability (proposition + remarks + practical allocation)
+   6.3 Experimental validation (Boolean search, FPR compounding, granularity)
+   6.4 Partial filtering (bag-gated multiplexer; precision-for-confidentiality)
+7. Discussion (relationships, open questions incl. companion pointer)
+8. Conclusion
+
+(Former §6 "Realizing Cipher Programs" -- cipher TM, expression-tree
+decomposition, cut points, branching/control-flow obliviousness, @cipher_node
+automatic rewriting -- was spun out to papers/cipher-program-construction on
+2026-06-03; seed at /tmp/sec6_migration.tex.)
 
 Theoretical results (by label): Prop:product-tradeoff, Thm:sum-impossibility,
 Thm:monotonicity, Thm:confidentiality-bound, Prop:typed-orbit,

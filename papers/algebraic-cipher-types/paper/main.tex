@@ -57,14 +57,13 @@ machine's view is at least $H(X) - \log_2 |\mathrm{orbit}|$, where
 the orbit is the set of cipher values reachable under the operations
 the untrusted machine holds.
 A typed-composition discipline turns this bound into a design-time
-budget: the type of a cipher program determines how deeply its
+budget: the depth of a cipher computation determines how deeply its
 orbit can grow.
-We realize cipher programs as Python expression-tree decompositions
-with cipher-map cut points (a \texttt{@cipher\_node} decorator
-marks the cipher subtrees; unmarked nodes run as plain code over
-opaque bit strings) and evaluate the cipher Boolean specialization
-on a 20~Newsgroups Boolean search task, where the cut-point
-discipline measurably bounds confidentiality loss.
+We instantiate the algebra in a cipher Boolean type and evaluate it on
+a 20~Newsgroups Boolean search task, and show how the same machinery
+supports partial filtering---returning a superset of the relevant
+documents while hiding which are actually relevant, trading precision
+for confidentiality by a tunable amount.
 \end{abstract}
 
 
@@ -129,16 +128,16 @@ The main contributions are:
   program bounds its orbit depth, and hence its worst-case
   confidentiality loss.
 
-\item \textbf{Expression-tree realization} (\Cref{sec:realizing}).
-  We realize the algebra at the program level: a cipher program is
-  a composition of cipher maps and plain operations over opaque bit
-  strings.
-  Cipher-node annotations on a program's expression tree mark which
-  subtrees become cipher maps; unmarked nodes run as plain code on
-  the cipher bytes.
-  The placement of annotations selects the cut points, and the type
-  of the cut-point cipher spaces determines the orbit budget per
-  \Cref{prop:typed-orbit}.
+\item \textbf{Instantiation and evaluation} (\Cref{sec:cipher-bool}).
+  We instantiate the algebra in a cipher Boolean type with
+  AND/OR/NOT and evaluate Boolean search on the 20~Newsgroups corpus,
+  measuring precision, recall, and how the false-positive rate compounds
+  through AND/OR chains (it tracks the Bernoulli prediction for OR but
+  diverges sharply for AND).
+  The same construction supports \emph{partial filtering}: returning a
+  superset of the relevant documents while hiding which are relevant,
+  a tunable precision-for-confidentiality trade governed by the orbit
+  bound.
 \end{enumerate}
 
 We deliberately avoid game-based or simulation-based cryptographic
@@ -302,6 +301,16 @@ A cipher map $\fhat : \cipher{X} \to \cipher{Y}$ is the cipher form of
 the latent function $f : X \to Y$ (extended totally over $\B^n$ per
 Property~1).
 \end{definition}
+
+We build cipher maps for chosen functions over a finite domain using the
+batch (perfect-hash) construction of~\cite[Sec.~6]{towell2026cipher},
+whose space ($-\log_2\varepsilon + \mu$ bits per element), correctness,
+and representation-uniformity parameters we take as given and do not
+re-derive.
+This paper constructs cipher maps only to analyze how their algebraic
+structure and composition leak; assembling many cipher maps into a
+general program is a separate problem, treated
+in~\cite{towell2026cipherprog}.
 
 
 %% ====================================================================
@@ -1156,359 +1165,6 @@ deeper levels.
 
 
 %% ====================================================================
-\section{Realizing Cipher Programs}
-\label{sec:realizing}
-%% ====================================================================
-
-The type-theoretic results of \Cref{sec:types,sec:orbit} bound what any
-cipher-program realization can achieve.
-We realize cipher programs as expression trees: a program is a DAG whose
-selected nodes are replaced by cipher maps and whose remaining
-operations run as plain code on the cipher bytes.
-This subsumes iterated constructions (a self-loop is one cut point applied
-repeatedly) and reduces to a Turing-machine-style realization in the
-degenerate case where the only cipher map is the transition step.
-We discuss only the expression-tree case here.
-
-
-%% --------------------------------------------------------------------
-\subsection{Expression-Tree Decomposition}
-\label{sec:cipher-programs}
-%% --------------------------------------------------------------------
-
-The type-theoretic trade-offs of \Cref{sec:products,sec:sums} have a
-direct operational realization: given a program represented as an
-expression tree, which subtrees should be replaced by cipher maps?
-
-\begin{definition}[Cipher node annotation]
-\label{def:cipher-node}
-Given a program $P$ represented as an expression tree, a
-\emph{cipher node annotation} marks a subset of nodes $\{n_1, \ldots,
-n_k\}$ in the tree.  Each marked node $n_i$, together with its entire
-subtree, is replaced by a cipher map: the subtree is evaluated at
-construction time (on the trusted machine) over a specified domain, and
-the resulting mapping is stored as a cipher map backed by a
-perfect hash function~\cite{fredman1984storing}.
-Unmarked nodes above the cipher nodes become a \emph{combiner}: itself
-a cipher map built over the hash-value outputs of the components.
-\end{definition}
-
-The placement of cipher node annotations controls the encoding
-granularity:
-
-\begin{itemize}
-\item \textbf{Annotation at the root}: the entire program is one cipher
-  map.  Maximum confidentiality (no intermediate values exposed), maximum
-  space ($O(|X|)$ where $X$ is the input domain of the full program).
-\item \textbf{Annotation at the leaves}: each leaf function is a
-  separate cipher map.  The combiner chains them.  Intermediate cipher
-  values are visible to the untrusted machine, leaking correlations
-  between components (as in the product-type trade-off of
-  \Cref{sec:products}).
-\item \textbf{Annotation at intermediate nodes}: a spectrum between the
-  two extremes.  Deeper annotations absorb more computation into cipher
-  maps (more confidential, more space); shallower annotations expose
-  more structure (less space, more leakage).
-\end{itemize}
-
-\begin{remark}[Ciphering propagates upward through the tree]
-\label{rem:cipher-propagation}
-Cipher nodes cannot be chosen freely leaf-by-leaf.
-Replacing a subtree with a cipher map makes its output a cipher value,
-and any ancestor that \emph{semantically consumes} that value must then
-be a cipher map too, since the untrusted machine cannot decode it.
-Moreover a cipher map takes cipher values as inputs, so once a node is
-ciphered its \emph{sibling} inputs must be cipher values as well.
-The two forces together make the ciphered region upward-closed along
-data-flow edges with the cut points as its lower frontier (the
-combiner of \Cref{def:cipher-node} is exactly this region); only pure
-plumbing---moving, pairing, or returning a cipher value untouched---may
-remain plaintext.
-Because every value in a single-rooted expression tree meets at the
-root, a single cut whose result reaches the output through semantic
-operations ciphers the entire tree (\Cref{fig:cipher-tree}).
-Control flow is the sharp case.
-In \texttt{if $e$ then $r_1$ else $r_2$} with $e$ ciphered, the test is
-a cipher Boolean, and branching on it on the untrusted machine is
-untrusted dispatch on the sum $\mathbf{1}+\mathbf{1}$, forbidden by
-\Cref{thm:sum-impossibility}: it would leak the test.
-The conditional must instead become a cipher multiplexer that
-obliviously selects between $r_1$ and $r_2$
-(\Cref{rem:oblivious-elim}), which forces \emph{both} branches to be
-cipher values and both to be evaluated---exactly why the tracing pass
-below computes every branch rather than the one the plaintext program
-would have taken.
-\end{remark}
-
-\begin{figure}[t]
-\centering
-\begin{tikzpicture}[
-  plain/.style={circle, draw, minimum size=6.5mm, inner sep=0pt, font=\small},
-  ciph/.style={circle, draw, double, double distance=0.6pt, fill=gray!18,
-               minimum size=6.5mm, inner sep=0pt, font=\small},
-  cmap/.style={rectangle, rounded corners=2pt, draw, fill=gray!30,
-               minimum height=6.5mm, inner sep=3pt, font=\small},
-  lk/.style={-, gray!55}]
-
-%% Panel (a): plaintext tree for  if ((x+1) < y) then p else q
-\node[font=\itshape\small] at (-3.4,0.7) {(a)};
-\node[plain] (if)  at (0,0)      {if};
-\node[plain] (lt)  at (-1.7,-1.2){$<$};
-\node[plain] (p)   at (0.2,-1.2) {$p$};
-\node[plain] (q)   at (1.7,-1.2) {$q$};
-\node[plain] (pl)  at (-2.7,-2.4){$+$};
-\node[plain] (y)   at (-0.9,-2.4){$y$};
-\node[plain] (x)   at (-3.4,-3.6){$x$};
-\node[plain] (one) at (-2.0,-3.6){$1$};
-\draw[lk] (if)--(lt); \draw[lk] (if)--(p); \draw[lk] (if)--(q);
-\draw[lk] (lt)--(pl); \draw[lk] (lt)--(y);
-\draw[lk] (pl)--(x);  \draw[lk] (pl)--(one);
-\node[draw, dashed, rounded corners=3pt, inner sep=4pt,
-      fit=(pl)(x)(one)] (cut) {};
-\node[font=\footnotesize] at (-2.7,-4.5) {cut $\to$ one cipher map};
-
-%% Panel (b): after the cut, percolated to the root
-\begin{scope}[yshift=-6.2cm]
-\node[font=\itshape\small] at (-3.4,0.7) {(b)};
-\node[ciph] (if2) at (0,0)      {if};
-\node[ciph] (lt2) at (-1.7,-1.2){$<$};
-\node[ciph] (p2)  at (0.2,-1.2) {$p$};
-\node[ciph] (q2)  at (1.7,-1.2) {$q$};
-\node[cmap] (m1)  at (-2.7,-2.4){$M_1$};
-\node[ciph] (y2)  at (-0.9,-2.4){$y$};
-\draw[lk] (if2)--(lt2); \draw[lk] (if2)--(p2); \draw[lk] (if2)--(q2);
-\draw[lk] (lt2)--(m1);  \draw[lk] (lt2)--(y2);
-\end{scope}
-\end{tikzpicture}
-\caption{Ciphering propagates up an expression tree, here for
-\texttt{if ($x+1 < y$) then $p$ else $q$}.
-(a)~The plaintext tree; cutting at $+$ rolls the subtree $x+1$ into a
-single cipher map.
-(b)~The cut subtree is now one opaque cipher map $M_1$ (rounded box);
-its cipher output forces $<$ to become a cipher comparison, which pulls
-in the sibling $y$; the cipher Boolean then forces \texttt{if} into a
-cipher multiplexer, which pulls in both branches $p$ and $q$.
-Double-circled shaded nodes are cipher nodes; the entire tree above the
-cut is ciphered.}
-\label{fig:cipher-tree}
-\end{figure}
-
-\begin{remark}[Shared variables and compositional leakage]
-\label{rem:shared-vars}
-When two cipher nodes $f$ and $g$ share an input variable $x$, the
-untrusted machine observes two cipher values $\enc_f(x, k_f)$ and
-$\enc_g(x, k_g)$ derived from the same latent $x$.
-Even if both encodings are individually $\delta$-close to uniform, the
-joint distribution of $(\enc_f(x), \enc_g(x))$ preserves the correlation
-(as in \cite[Prop.~8.1]{towell2026cipher}).
-The only mitigation is to merge $f$ and $g$ into a single cipher node
-(eliminating the shared intermediate) or to inject noise queries that
-dilute the correlation signal.
-\end{remark}
-
-\paragraph{Implementation via tracing.}
-A practical realization uses Python function decorators and runtime
-tracing.
-Functions marked with a \texttt{@cipher\_node} decorator are
-intercepted during a tracing pass over the input domain.
-The tracing records which cipher nodes are called, with what arguments,
-and what they return.
-From this trace, the system:
-\begin{enumerate}
-\item builds a cipher map for each traced cipher node,
-\item builds a combiner cipher map over the hash-output tuples of the
-  components,
-\item infers the input routing (which program arguments feed which
-  cipher node) from the traced call patterns.
-\end{enumerate}
-Short-circuit evaluation (e.g., Python's \texttt{x if cond else y})
-is handled by computing all component cipher maps for every input,
-even when the original program skips some branches.
-The combiner's domain includes hash tuples for both branches.
-The resulting composed cipher program evaluates entirely on the
-untrusted machine with no round trips to the trusted machine.
-
-
-%% --------------------------------------------------------------------
-\subsection{Branching and the Limits of Oblivious Control}
-\label{sec:branching}
-%% --------------------------------------------------------------------
-
-Control flow is where the realization meets its limits, and the
-boundary is exactly the sum-type impossibility of
-\Cref{sec:sums}.
-A conditional \texttt{if $e$ then $P$ else $Q$} over a cipher Boolean
-$e$ becomes a cipher multiplexer
-$\mathrm{ite} : \cipher{\mathbf{2}} \times \cipher{R} \times \cipher{R}
-\to \cipher{R}$, $\mathrm{ite}(t, a, b) = a$ if $t$ else $b$, where
-$\mathbf{2} = \mathbf{1}+\mathbf{1}$ is the Boolean type.
-The untrusted machine evaluates $\mathrm{ite}$ blindly and never learns
-$t$; the cost is hidden in its \emph{inputs}, since materializing both
-$\cipher{R}$ arguments means evaluating both branches.
-
-\begin{proposition}[No oblivious short-circuit]
-\label{prop:no-short-circuit}
-Evaluate \texttt{if $e$ then $P$ else $Q$} on the untrusted machine over
-a cipher Boolean $e = \enc(t,k)$, producing a cipher value of the result
-type.
-If the untrusted machine evaluates only the branch selected by $t$, then
-it has performed untrusted pattern matching on $\mathbf{1}+\mathbf{1}$
-and, by \Cref{thm:sum-impossibility}, leaks $t$ with advantage at least
-$1-\delta$.
-Hiding $t$ therefore forbids short-circuiting: the untaken branch's
-contribution cannot be skipped.
-It is paid instead either at evaluation time---evaluate both branches and
-combine them through $\mathrm{ite}$---or at construction time, by a fused
-eliminator over the joint domain (\Cref{rem:oblivious-elim}).
-\end{proposition}
-
-\begin{proof}
-Evaluating only the selected branch makes the untrusted machine's action
-(run $P$ versus run $Q$) a function $s(\enc(v,k))$ that equals $t$ on
-valid encodings; this is the selector of \Cref{thm:sum-impossibility},
-a tag distinguisher, so $t$ leaks.
-Hiding $t$ requires the untrusted machine's run-time behavior to be
-independent of $t$, so it cannot run one branch in place of the other.
-Two $t$-independent behaviors still compute the result: evaluate both
-branches and apply $\mathrm{ite}$ (which selects via a cipher map without
-exposing $t$), or evaluate a single fused cipher map for the whole
-conditional whose construction already ranged over both branches.
-In either case the untaken branch is evaluated---at run time or at
-construction time---never skipped.
-\end{proof}
-
-The plaintext efficiency of \texttt{if}---run only the taken branch---is
-therefore precisely what cannot be done obliviously.
-Three regimes follow, by how the branches scale.
-
-\emph{Bounded, fixed-shape branches.}
-When $P$ and $Q$ are straight-line (or themselves bounded conditionals),
-the untrusted machine performs a \emph{fixed}, data-independent set of
-operations: it evaluates every branch and muxes.
-Confidentiality is free; the cost is that $k$ nested conditionals
-evaluate all $2^k$ leaves.
-\Cref{fig:cipher-tree} is the single-conditional case.
-
-\emph{Total-but-partial branches.}
-Evaluating the untaken branch is safe even when it would be undefined in
-plaintext---\texttt{if $x \neq 0$ then $y/x$ else $0$} evaluates $y/x$ at
-$x=0$---because cipher maps are total: the spurious evaluation returns a
-noise value (\Cref{prop:noise-unreliability}) that the multiplexer
-discards.
-Totality (Property~1) is what makes both-branches evaluation correct.
-
-\emph{Unbounded, data-dependent control.}
-When the number of operations depends on a cipher value---a loop
-\texttt{while $c$ do $\ldots$} or a recursion whose depth is data
-dependent---the operation set can no longer be fixed.
-Two options remain: unroll to a \emph{public} bound $N$ and obliviously
-mask the iterations past the true count (cost $O(N)$ regardless of the
-data, tag hidden), or test the cipher condition each step to decide
-whether to continue, which is untrusted dispatch per step and leaks the
-trajectory (the trip count, a function of the data).
-There is no oblivious unrolling without a public bound.
-
-These regimes are one statement about \emph{shape}: the expression-tree
-realization is oblivious exactly because it compiles to a fixed,
-data-independent computation graph.
-Branching is the atomic data-dependent decision, handled obliviously
-only by evaluating both sides; unbounded data-dependent control cannot
-be flattened to a fixed graph, and there the trajectory must leak.
-That unbounded case is a cipher Turing machine, whose per-step
-$(\text{state}, \text{direction})$ leakage is the loop leak above; it is
-why this paper takes the fixed-graph expression tree, not the Turing
-machine, as the realization (cf.\ \Cref{sec:tm-vs-tree}).
-
-\begin{remark}[The multiplexer is not free]
-\label{rem:mux-cost}
-As a cipher map, $\mathrm{ite} : \cipher{\mathbf 2} \times \cipher{R}
-\times \cipher{R} \to \cipher{R}$ has domain $2|R|^2$, so oblivious
-selection over a result type $R$ costs $O(|R|^2)$ space---the
-product-encoding cost of \Cref{prop:product-tradeoff} resurfacing inside
-control flow.
-Fusing the whole conditional into one cipher map over the input domain
-$X$ costs $O(|X|)$ instead; which is cheaper is the granularity choice of
-\Cref{sec:cipher-programs}.
-And if $P$ and $Q$ return different variants, $\mathrm{ite}$'s output is
-a cipher sum, and the dispatch obligation of \Cref{thm:sum-impossibility}
-reappears at the next consumer rather than dissolving.
-\end{remark}
-
-
-%% --------------------------------------------------------------------
-\subsection{Cut-Point Structure}
-\label{sec:tm-vs-tree}
-%% --------------------------------------------------------------------
-
-\begin{definition}[Cut point]
-\label{def:cut-point}
-Given a plaintext computation $P$ represented as a directed acyclic
-graph with functions at nodes and data flow along edges, a \emph{cut
-point} is a node whose subgraph of ancestors is replaced, during
-construction, by a single cipher map.
-Edges entering the cut point carry plaintext on the trusted machine
-and cipher values on the untrusted machine; edges leaving the cut
-point carry cipher values throughout.
-A \emph{cut-point set} is a collection of cut points such that every
-input of $P$ reaches at least one of them; the cipher maps at the cut
-points together with the unmarked nodes above them (which evaluate as
-plain code on the cipher bytes) compute $P$ on the untrusted machine.
-\end{definition}
-
-\paragraph{What leaks above the cut points.}
-Exactly what remains plaintext above the cut points is the leakage
-profile: the collection of intermediate cipher values flowing between
-cipher nodes, plus whatever the unmarked plain operations reveal about
-those values (equality checks, branching, dictionary lookups).
-Multiple cut points sharing a latent input leak that input's
-correlation structure across their outputs, per the product-encoding
-trade-off (\Cref{prop:product-tradeoff}).
-
-\paragraph{What bounds the orbit.}
-A typed-chain decomposition (distinct cipher spaces between
-consecutive cut points) inherits the bound $\sum_i N_i$ of
-\Cref{prop:typed-orbit}; for a depth-$k$ tree with binary combinators
-starting from $m$ distinct latent inputs, the bound is
-$\sum_{i=0}^{k} m^{2^i}$.
-Decompositions that reuse a single cipher space across cut points
-(equivalently, that admit a self-loop in the cipher-map dependency
-graph) fall outside the typed-chain hypothesis and require a separate
-argument; for deterministic iterated computations of length $T$, a
-single-trajectory bound of $T+1$ orbit elements per starting cipher
-value is straightforward but the leakage profile is severe:
-every per-step plaintext signal needed to advance the loop (selectors,
-indices, halting time) is observable.
-This is the unbounded-control regime of \Cref{sec:branching}: a
-self-loop is exactly the data-dependent control that cannot be flattened
-to a fixed graph.
-
-\begin{example}[Regex matching as a typed cut-point chain]
-\label{ex:regex-cut-points}
-Consider matching a fixed regular expression $R$ of size $r$ against a
-string $x \in \Sigma^\ell$, with DFA state set $Q_R$ (in the worst
-case $|Q_R| = 2^{O(r)}$ via subset construction; for many regexes
-much smaller).
-The natural typed-chain decomposition places $\ell$ cut points
-$\hat{\tau}_0, \ldots, \hat{\tau}_{\ell-1}$ with $\hat{\tau}_i :
-\cipher{Q_R}_i \times \cipher{\Sigma} \to \cipher{Q_R}_{i+1}$, each
-of space $O(|Q_R| \cdot |\Sigma|)$, total
-$O(\ell \cdot |Q_R| \cdot |\Sigma|)$.
-The orbit is bounded by $1 + \ell$ from \Cref{prop:typed-orbit}
-(single state value at each level), and the leakage above the cut
-points is the $(\ell + 1)$-tuple of intermediate cipher state values
-$c_0, \ldots, c_\ell$.
-The same computation can be expressed as a self-loop on a single
-cipher space $\cipher{Q_R \times \Sigma}$ with a single transition
-cipher map of space $O(|Q_R|^2 \cdot |\Sigma|)$ (constant in $\ell$),
-but the leakage then includes a plaintext (next-state-selector,
-direction) pair per step, redacting only the tape contents.
-The choice between the typed chain and the self-loop is therefore not
-about space (the typed chain is asymptotically smaller per cut point
-once $\ell > |Q_R|$) but about \emph{which structure leaks}.
-\end{example}
-
-
-%% ====================================================================
 \section{Cipher Boolean Algebra and Evaluation}
 \label{sec:cipher-bool}
 %% ====================================================================
@@ -1740,14 +1396,15 @@ $\sim 10^{-3}$ at $k \geq 3$ is one of this paper's concrete
 contributions to the cipher-Boolean error model.
 
 \paragraph{Encoding granularity.}
-We built a 7-function loan approval pipeline at three granularity
-levels (\Cref{tab:granularity}).
-The root annotation uses a single PHF-backed cipher map over the
-full domain; intermediate and leaf annotations use seed-search-backed
-component cipher maps composed via tracing.
-Seed-search occasionally fails to find a valid hash assignment for
-a given component domain, which is why the intermediate row reports
-$n = 2$ successful seeds rather than $5$.
+The product-encoding trade-off of \Cref{sec:products} is measurable.
+We built a 7-function loan approval pipeline at three granularities
+(\Cref{tab:granularity}): as one coarse cipher map over the full domain,
+as $3$ grouped component maps, and as $7$ leaf maps, the finer two
+composed by hand over the components' cipher outputs.
+The coarse map uses the PHF backend; the component maps use a
+seed-search backend, which occasionally fails to find a valid hash
+assignment for a given component domain---which is why the intermediate
+row reports $n = 2$ successful seeds rather than $5$.
 
 \begin{table}[ht]
 \centering
@@ -1771,18 +1428,77 @@ As expected from the PHF construction, all three produce zero errors
 on the full domain (150 inputs); each cipher map is built over its
 declared input set, so on-domain inputs are exact lookups by
 construction.
-The root annotation is roughly $400\times$ faster (PHF lookup vs.\
+The coarse map is roughly $400\times$ faster to build (PHF lookup vs.\
 per-element seed search) and exposes zero intermediate cipher values.
-Counter-intuitively, the leaf and intermediate annotations use
-\emph{less} total space ($\approx 140$\,B vs.\ the root's $694$\,B):
-each component cipher map's domain is smaller than the product
-domain of the full program, and the seed-search backend stores one
-$n$-bit seed per element.
+Counter-intuitively, the finer constructions use \emph{less} total
+space ($\approx 140$\,B vs.\ the coarse map's $694$\,B): each component
+map's domain is smaller than the product domain of the whole function,
+and the seed-search backend stores one $n$-bit seed per element.
 The space-leakage trade-off is therefore not a uniform ``coarser is
-larger''; coarser annotation buys hidden intermediate values at the
-cost of construction time and a build that requires the full input
-domain up front, while leaf annotations build smaller cipher maps
-that compose dynamically but expose every intermediate hash flow.
+larger''; the coarse map buys hidden intermediate values at the cost of
+construction time and a build that requires the full input domain up
+front, while the fine-grained maps are smaller and compose dynamically
+but expose every intermediate cipher value (the correlation leakage of
+\Cref{prop:product-tradeoff}).
+
+
+%% --------------------------------------------------------------------
+\subsection{Partial Filtering}
+\label{sec:partial-filter}
+%% --------------------------------------------------------------------
+
+The Boolean search of \Cref{sec:evaluation} returns a per-document
+verdict, so an untrusted machine observing the results learns which
+documents match.
+Hand composition buys a more interesting object: a cipher map that
+returns a \emph{superset} of the relevant documents while hiding which
+of them are actually relevant, trading precision for confidentiality by
+a tunable amount.
+
+Partition the corpus into $B$ bags of $m$ documents.
+For a bag holding cipher document handles $d_1, \ldots, d_m$, let
+$b_1, \ldots, b_m \in \cipher{\mathrm{Bool}}$ be the cipher Boolean
+match results of a query against those documents
+(\Cref{sec:cipher-bool}).
+Construct a single \emph{gate} cipher map
+\[
+\widehat{\mathrm{gate}} : \cipher{\mathrm{Bool}}^{\,m} \to
+\cipher{\{\text{fire}, \text{idle}\}},
+\qquad
+\widehat{\mathrm{gate}}(b_1,\dots,b_m) =
+\begin{cases}
+\text{fire} & \text{if } \textstyle\bigvee_i b_i,\\
+\text{idle} & \text{otherwise,}
+\end{cases}
+\]
+realized over the input domain $(T\cup F)^m$ exactly as the cipher
+Boolean operations of \Cref{sec:cipher-bool} (an $m$-ary cipher OR; or a
+chain of binary ORs, which is cheaper than the $O(2^m)$ flat table).
+When the gate fires, the untrusted machine returns the bag's $m$ handles
+$d_1, \dots, d_m$; the trusted machine decodes them and applies the
+exact per-document filter privately.
+
+The untrusted machine therefore learns only \emph{which bags} contain a
+match---one bit per bag, the coarse relevance vector---never which
+document within a fired bag is the true match.
+The relevant document is hidden among the $m$ in its bag: a $1$-in-$m$
+anonymity set, with $m$ the tunable knob.
+This is the orbit bound of \Cref{thm:confidentiality-bound} in
+operational form: the adversary's per-bag observation ranges over a
+two-element set (fired or idle), so it gains at most one bit per bag
+about the latent relevance pattern, regardless of $m$.
+
+The cost is precision.
+If the $|R|$ relevant documents for a query fall in distinct bags,
+partial filtering returns up to $m|R|$ documents of which $|R|$ are
+relevant, so precision falls to $\approx 1/m$ while recall is preserved
+(every relevant document's bag fires).
+This is the same precision axis measured in \Cref{tab:boolean-search},
+now a deliberate, tunable lever rather than an artifact of the
+false-positive rate: larger bags hide the relevant document better and
+return more chaff, smaller bags do the reverse.
+Bags may be padded with decoy handles to raise $m$ without enlarging the
+real corpus, a separate mechanism we do not pursue here.
 
 
 %% ====================================================================
@@ -1853,16 +1569,6 @@ confidentiality and minimum functionality.
   algebra of~\cite{towell2026cipher}), tighter bounds may be possible
   by exploiting the structure of the construction.
 
-\item \emph{Plain operations on cipher bytes.}
-  The expression-tree realization conflates two roles for the
-  unmarked nodes above the cut points: a cipher-map combiner (built
-  at construction time over the product of cipher hash spaces) and
-  plain code that runs on the cipher bytes at evaluation time.
-  Characterizing what each plain operation leaks (equality checks
-  reveal collision structure; dictionary lookups reveal hash bucket
-  membership) and when the trade with construction-time cost is
-  preferable to a precomputed combiner cipher map is open.
-
 \item \emph{Partial sum-type hiding.}
   \Cref{thm:sum-impossibility} shows that full tag hiding and full
   untrusted pattern matching are mutually exclusive.
@@ -1872,13 +1578,12 @@ confidentiality and minimum functionality.
   against passive adversaries (who only observe cipher values) but
   available to active adversaries (who evaluate cipher maps).
 
-\item \emph{Cut-point placement as an optimization.}
-  \Cref{sec:tm-vs-tree} describes cut points as a design knob over the
-  computation DAG.
-  Formulating cut-point selection as a constrained optimization,
-  subject to the orbit bound of \Cref{prop:typed-orbit} and
-  construction-time space budgets, would turn the choice into a
-  solvable problem rather than a designer's judgement call.
+\item \emph{Realizing whole programs.}
+  Assembling cipher maps into a general program---placing cut points,
+  propagating ciphering through control flow, and discharging the
+  expose-versus-hide choice at each branch---is a substantial problem
+  in its own right, with its own confidentiality and cost trade-offs.
+  We take it up in a companion paper~\cite{towell2026cipherprog}.
 \end{enumerate}
 
 
@@ -1900,16 +1605,14 @@ A typed-composition discipline turns this bound into a design-time
 budget; these results apply to any cipher map construction, not
 just specific implementations.
 
-The algebra realizes at the program level as expression-tree
-decomposition.
-A cipher program is a composition of cipher maps and plain code over
-opaque bit strings: cipher-node annotations on a Python program
-select the cut points where cipher maps replace plaintext subtrees,
-while unmarked nodes run as plain code on the cipher bytes.
-The placement of annotations selects which intermediate structure
-the untrusted machine observes; the type discipline of the
-cut-point cipher spaces bounds the orbit per
-\Cref{prop:typed-orbit}.
+These results are about cipher \emph{types} and their composition,
+established by constructing cipher maps for specific functions and
+analyzing what they leak.
+Assembling many cipher maps into a general program---deciding where to
+place each one, propagating ciphering through control flow, and
+discharging the expose-versus-hide choice at every branch---is a
+distinct problem that we take up in a companion
+paper~\cite{towell2026cipherprog}.
 
 On the practical side, cipher Boolean types with AND/OR/NOT as cipher
 maps enable Boolean search queries evaluated entirely on the untrusted
@@ -1924,12 +1627,13 @@ over $10^4\times$ at $k = 5$, while OR chains stay within $10\%$ of
 theory at every depth.
 This points to a structural correction term for composed deterministic
 cipher maps as future work.
-The encoding granularity spectrum is measurable: root annotation
-(one cipher map for the entire program) is roughly $400\times$ faster
-than leaf annotation (one cipher map per function), exposes no
-intermediates, but consumes more space than the smaller component
-maps; the trade-off is not a single axis but a multi-dimensional
-choice over (build time, total space, intermediate exposure).
+The encoding granularity spectrum is measurable: constructing a
+function as one coarse cipher map is roughly $400\times$ faster to
+build than as several fine-grained component maps, exposes no
+intermediate cipher values, but consumes more space than the smaller
+component maps; the trade-off is not a single axis but a
+multi-dimensional choice over build time, total space, and intermediate
+exposure.
 
 %% ====================================================================
 \section*{Acknowledgments}
