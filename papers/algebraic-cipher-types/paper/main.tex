@@ -4,6 +4,8 @@
 \usepackage{mathtools}
 \usepackage[numbers,square]{natbib}
 \usepackage{booktabs}
+\usepackage{tikz}
+\usetikzlibrary{fit}
 \usepackage{hyperref}
 \hypersetup{hypertexnames=false}
 \usepackage{cleveref}
@@ -1209,6 +1211,88 @@ granularity:
   more structure (less space, more leakage).
 \end{itemize}
 
+\begin{remark}[Ciphering propagates upward through the tree]
+\label{rem:cipher-propagation}
+Cipher nodes cannot be chosen freely leaf-by-leaf.
+Replacing a subtree with a cipher map makes its output a cipher value,
+and any ancestor that \emph{semantically consumes} that value must then
+be a cipher map too, since the untrusted machine cannot decode it.
+Moreover a cipher map takes cipher values as inputs, so once a node is
+ciphered its \emph{sibling} inputs must be cipher values as well.
+The two forces together make the ciphered region upward-closed along
+data-flow edges with the cut points as its lower frontier (the
+combiner of \Cref{def:cipher-node} is exactly this region); only pure
+plumbing---moving, pairing, or returning a cipher value untouched---may
+remain plaintext.
+Because every value in a single-rooted expression tree meets at the
+root, a single cut whose result reaches the output through semantic
+operations ciphers the entire tree (\Cref{fig:cipher-tree}).
+Control flow is the sharp case.
+In \texttt{if $e$ then $r_1$ else $r_2$} with $e$ ciphered, the test is
+a cipher Boolean, and branching on it on the untrusted machine is
+untrusted dispatch on the sum $\mathbf{1}+\mathbf{1}$, forbidden by
+\Cref{thm:sum-impossibility}: it would leak the test.
+The conditional must instead become a cipher multiplexer that
+obliviously selects between $r_1$ and $r_2$
+(\Cref{rem:oblivious-elim}), which forces \emph{both} branches to be
+cipher values and both to be evaluated---exactly why the tracing pass
+below computes every branch rather than the one the plaintext program
+would have taken.
+\end{remark}
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[
+  plain/.style={circle, draw, minimum size=6.5mm, inner sep=0pt, font=\small},
+  ciph/.style={circle, draw, double, double distance=0.6pt, fill=gray!18,
+               minimum size=6.5mm, inner sep=0pt, font=\small},
+  cmap/.style={rectangle, rounded corners=2pt, draw, fill=gray!30,
+               minimum height=6.5mm, inner sep=3pt, font=\small},
+  lk/.style={-, gray!55}]
+
+%% Panel (a): plaintext tree for  if ((x+1) < y) then p else q
+\node[font=\itshape\small] at (-3.4,0.7) {(a)};
+\node[plain] (if)  at (0,0)      {if};
+\node[plain] (lt)  at (-1.7,-1.2){$<$};
+\node[plain] (p)   at (0.2,-1.2) {$p$};
+\node[plain] (q)   at (1.7,-1.2) {$q$};
+\node[plain] (pl)  at (-2.7,-2.4){$+$};
+\node[plain] (y)   at (-0.9,-2.4){$y$};
+\node[plain] (x)   at (-3.4,-3.6){$x$};
+\node[plain] (one) at (-2.0,-3.6){$1$};
+\draw[lk] (if)--(lt); \draw[lk] (if)--(p); \draw[lk] (if)--(q);
+\draw[lk] (lt)--(pl); \draw[lk] (lt)--(y);
+\draw[lk] (pl)--(x);  \draw[lk] (pl)--(one);
+\node[draw, dashed, rounded corners=3pt, inner sep=4pt,
+      fit=(pl)(x)(one)] (cut) {};
+\node[font=\footnotesize] at (-2.7,-4.5) {cut $\to$ one cipher map};
+
+%% Panel (b): after the cut, percolated to the root
+\begin{scope}[yshift=-6.2cm]
+\node[font=\itshape\small] at (-3.4,0.7) {(b)};
+\node[ciph] (if2) at (0,0)      {if};
+\node[ciph] (lt2) at (-1.7,-1.2){$<$};
+\node[ciph] (p2)  at (0.2,-1.2) {$p$};
+\node[ciph] (q2)  at (1.7,-1.2) {$q$};
+\node[cmap] (m1)  at (-2.7,-2.4){$M_1$};
+\node[ciph] (y2)  at (-0.9,-2.4){$y$};
+\draw[lk] (if2)--(lt2); \draw[lk] (if2)--(p2); \draw[lk] (if2)--(q2);
+\draw[lk] (lt2)--(m1);  \draw[lk] (lt2)--(y2);
+\end{scope}
+\end{tikzpicture}
+\caption{Ciphering propagates up an expression tree, here for
+\texttt{if ($x+1 < y$) then $p$ else $q$}.
+(a)~The plaintext tree; cutting at $+$ rolls the subtree $x+1$ into a
+single cipher map.
+(b)~The cut subtree is now one opaque cipher map $M_1$ (rounded box);
+its cipher output forces $<$ to become a cipher comparison, which pulls
+in the sibling $y$; the cipher Boolean then forces \texttt{if} into a
+cipher multiplexer, which pulls in both branches $p$ and $q$.
+Double-circled shaded nodes are cipher nodes; the entire tree above the
+cut is ciphered.}
+\label{fig:cipher-tree}
+\end{figure}
+
 \begin{remark}[Shared variables and compositional leakage]
 \label{rem:shared-vars}
 When two cipher nodes $f$ and $g$ share an input variable $x$, the
@@ -1243,6 +1327,112 @@ even when the original program skips some branches.
 The combiner's domain includes hash tuples for both branches.
 The resulting composed cipher program evaluates entirely on the
 untrusted machine with no round trips to the trusted machine.
+
+
+%% --------------------------------------------------------------------
+\subsection{Branching and the Limits of Oblivious Control}
+\label{sec:branching}
+%% --------------------------------------------------------------------
+
+Control flow is where the realization meets its limits, and the
+boundary is exactly the sum-type impossibility of
+\Cref{sec:sums}.
+A conditional \texttt{if $e$ then $P$ else $Q$} over a cipher Boolean
+$e$ becomes a cipher multiplexer
+$\mathrm{ite} : \cipher{\mathbf{2}} \times \cipher{R} \times \cipher{R}
+\to \cipher{R}$, $\mathrm{ite}(t, a, b) = a$ if $t$ else $b$, where
+$\mathbf{2} = \mathbf{1}+\mathbf{1}$ is the Boolean type.
+The untrusted machine evaluates $\mathrm{ite}$ blindly and never learns
+$t$; the cost is hidden in its \emph{inputs}, since materializing both
+$\cipher{R}$ arguments means evaluating both branches.
+
+\begin{proposition}[No oblivious short-circuit]
+\label{prop:no-short-circuit}
+Evaluate \texttt{if $e$ then $P$ else $Q$} on the untrusted machine over
+a cipher Boolean $e = \enc(t,k)$, producing a cipher value of the result
+type.
+If the untrusted machine evaluates only the branch selected by $t$, then
+it has performed untrusted pattern matching on $\mathbf{1}+\mathbf{1}$
+and, by \Cref{thm:sum-impossibility}, leaks $t$ with advantage at least
+$1-\delta$.
+Hiding $t$ therefore forbids short-circuiting: the untaken branch's
+contribution cannot be skipped.
+It is paid instead either at evaluation time---evaluate both branches and
+combine them through $\mathrm{ite}$---or at construction time, by a fused
+eliminator over the joint domain (\Cref{rem:oblivious-elim}).
+\end{proposition}
+
+\begin{proof}
+Evaluating only the selected branch makes the untrusted machine's action
+(run $P$ versus run $Q$) a function $s(\enc(v,k))$ that equals $t$ on
+valid encodings; this is the selector of \Cref{thm:sum-impossibility},
+a tag distinguisher, so $t$ leaks.
+Hiding $t$ requires the untrusted machine's run-time behavior to be
+independent of $t$, so it cannot run one branch in place of the other.
+Two $t$-independent behaviors still compute the result: evaluate both
+branches and apply $\mathrm{ite}$ (which selects via a cipher map without
+exposing $t$), or evaluate a single fused cipher map for the whole
+conditional whose construction already ranged over both branches.
+In either case the untaken branch is evaluated---at run time or at
+construction time---never skipped.
+\end{proof}
+
+The plaintext efficiency of \texttt{if}---run only the taken branch---is
+therefore precisely what cannot be done obliviously.
+Three regimes follow, by how the branches scale.
+
+\emph{Bounded, fixed-shape branches.}
+When $P$ and $Q$ are straight-line (or themselves bounded conditionals),
+the untrusted machine performs a \emph{fixed}, data-independent set of
+operations: it evaluates every branch and muxes.
+Confidentiality is free; the cost is that $k$ nested conditionals
+evaluate all $2^k$ leaves.
+\Cref{fig:cipher-tree} is the single-conditional case.
+
+\emph{Total-but-partial branches.}
+Evaluating the untaken branch is safe even when it would be undefined in
+plaintext---\texttt{if $x \neq 0$ then $y/x$ else $0$} evaluates $y/x$ at
+$x=0$---because cipher maps are total: the spurious evaluation returns a
+noise value (\Cref{prop:noise-unreliability}) that the multiplexer
+discards.
+Totality (Property~1) is what makes both-branches evaluation correct.
+
+\emph{Unbounded, data-dependent control.}
+When the number of operations depends on a cipher value---a loop
+\texttt{while $c$ do $\ldots$} or a recursion whose depth is data
+dependent---the operation set can no longer be fixed.
+Two options remain: unroll to a \emph{public} bound $N$ and obliviously
+mask the iterations past the true count (cost $O(N)$ regardless of the
+data, tag hidden), or test the cipher condition each step to decide
+whether to continue, which is untrusted dispatch per step and leaks the
+trajectory (the trip count, a function of the data).
+There is no oblivious unrolling without a public bound.
+
+These regimes are one statement about \emph{shape}: the expression-tree
+realization is oblivious exactly because it compiles to a fixed,
+data-independent computation graph.
+Branching is the atomic data-dependent decision, handled obliviously
+only by evaluating both sides; unbounded data-dependent control cannot
+be flattened to a fixed graph, and there the trajectory must leak.
+That unbounded case is a cipher Turing machine, whose per-step
+$(\text{state}, \text{direction})$ leakage is the loop leak above; it is
+why this paper takes the fixed-graph expression tree, not the Turing
+machine, as the realization (cf.\ \Cref{sec:tm-vs-tree}).
+
+\begin{remark}[The multiplexer is not free]
+\label{rem:mux-cost}
+As a cipher map, $\mathrm{ite} : \cipher{\mathbf 2} \times \cipher{R}
+\times \cipher{R} \to \cipher{R}$ has domain $2|R|^2$, so oblivious
+selection over a result type $R$ costs $O(|R|^2)$ space---the
+product-encoding cost of \Cref{prop:product-tradeoff} resurfacing inside
+control flow.
+Fusing the whole conditional into one cipher map over the input domain
+$X$ costs $O(|X|)$ instead; which is cheaper is the granularity choice of
+\Cref{sec:cipher-programs}.
+And if $P$ and $Q$ return different variants, $\mathrm{ite}$'s output is
+a cipher sum, and the dispatch obligation of \Cref{thm:sum-impossibility}
+reappears at the next consumer rather than dissolving.
+\end{remark}
 
 
 %% --------------------------------------------------------------------
@@ -1288,6 +1478,9 @@ single-trajectory bound of $T+1$ orbit elements per starting cipher
 value is straightforward but the leakage profile is severe:
 every per-step plaintext signal needed to advance the loop (selectors,
 indices, halting time) is observable.
+This is the unbounded-control regime of \Cref{sec:branching}: a
+self-loop is exactly the data-dependent control that cannot be flattened
+to a fixed graph.
 
 \begin{example}[Regex matching as a typed cut-point chain]
 \label{ex:regex-cut-points}

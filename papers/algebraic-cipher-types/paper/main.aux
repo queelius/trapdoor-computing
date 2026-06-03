@@ -148,69 +148,80 @@
 \newlabel{def:cipher-node}{{6.1}{13}{Cipher node annotation}{definition.69}{}}
 \newlabel{def:cipher-node@cref}{{[definition][1][6]6.1}{[1][13][]13}}
 \citation{towell2026cipher}
-\newlabel{rem:shared-vars}{{6.1}{14}{Shared variables and compositional leakage}{remark.70}{}}
-\newlabel{rem:shared-vars@cref}{{[remark][1][6]6.1}{[1][14][]14}}
-\@writefile{toc}{\contentsline {paragraph}{Implementation via tracing.}{14}{section*.71}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {6.2}Cut-Point Structure}{14}{subsection.75}\protected@file@percent }
-\newlabel{sec:tm-vs-tree}{{6.2}{14}{Cut-Point Structure}{subsection.75}{}}
-\newlabel{sec:tm-vs-tree@cref}{{[subsection][2][6]6.2}{[1][14][]14}}
-\newlabel{def:cut-point}{{6.2}{14}{Cut point}{definition.76}{}}
-\newlabel{def:cut-point@cref}{{[definition][2][6]6.2}{[1][14][]14}}
-\@writefile{toc}{\contentsline {paragraph}{What leaks above the cut points.}{14}{section*.77}\protected@file@percent }
+\newlabel{rem:cipher-propagation}{{6.1}{14}{Ciphering propagates upward through the tree}{remark.70}{}}
+\newlabel{rem:cipher-propagation@cref}{{[remark][1][6]6.1}{[1][14][]14}}
+\newlabel{rem:shared-vars}{{6.2}{14}{Shared variables and compositional leakage}{remark.72}{}}
+\newlabel{rem:shared-vars@cref}{{[remark][2][6]6.2}{[1][14][]14}}
+\@writefile{toc}{\contentsline {paragraph}{Implementation via tracing.}{14}{section*.73}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Ciphering propagates up an expression tree, here for \texttt  {if ($x+1 < y$) then $p$ else $q$}. (a)~The plaintext tree; cutting at $+$ rolls the subtree $x+1$ into a single cipher map. (b)~The cut subtree is now one opaque cipher map $M_1$ (rounded box); its cipher output forces $<$ to become a cipher comparison, which pulls in the sibling $y$; the cipher Boolean then forces \texttt  {if} into a cipher multiplexer, which pulls in both branches $p$ and $q$. Double-circled shaded nodes are cipher nodes; the entire tree above the cut is ciphered.}}{15}{figure.71}\protected@file@percent }
+\newlabel{fig:cipher-tree}{{1}{15}{Ciphering propagates up an expression tree, here for \texttt {if ($x+1 < y$) then $p$ else $q$}. (a)~The plaintext tree; cutting at $+$ rolls the subtree $x+1$ into a single cipher map. (b)~The cut subtree is now one opaque cipher map $M_1$ (rounded box); its cipher output forces $<$ to become a cipher comparison, which pulls in the sibling $y$; the cipher Boolean then forces \texttt {if} into a cipher multiplexer, which pulls in both branches $p$ and $q$. Double-circled shaded nodes are cipher nodes; the entire tree above the cut is ciphered}{figure.71}{}}
+\newlabel{fig:cipher-tree@cref}{{[figure][1][]1}{[1][14][]15}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.2}Branching and the Limits of Oblivious Control}{15}{subsection.77}\protected@file@percent }
+\newlabel{sec:branching}{{6.2}{15}{Branching and the Limits of Oblivious Control}{subsection.77}{}}
+\newlabel{sec:branching@cref}{{[subsection][2][6]6.2}{[1][14][]15}}
+\newlabel{prop:no-short-circuit}{{6.1}{15}{No oblivious short-circuit}{theorem.78}{}}
+\newlabel{prop:no-short-circuit@cref}{{[proposition][1][6]6.1}{[1][15][]15}}
+\newlabel{rem:mux-cost}{{6.3}{16}{The multiplexer is not free}{remark.79}{}}
+\newlabel{rem:mux-cost@cref}{{[remark][3][6]6.3}{[1][16][]16}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.3}Cut-Point Structure}{16}{subsection.80}\protected@file@percent }
+\newlabel{sec:tm-vs-tree}{{6.3}{16}{Cut-Point Structure}{subsection.80}{}}
+\newlabel{sec:tm-vs-tree@cref}{{[subsection][3][6]6.3}{[1][16][]16}}
+\newlabel{def:cut-point}{{6.2}{16}{Cut point}{definition.81}{}}
+\newlabel{def:cut-point@cref}{{[definition][2][6]6.2}{[1][16][]16}}
 \citation{shannon1948mathematical}
-\@writefile{toc}{\contentsline {paragraph}{What bounds the orbit.}{15}{section*.78}\protected@file@percent }
-\newlabel{ex:regex-cut-points}{{6.1}{15}{Regex matching as a typed cut-point chain}{example.79}{}}
-\newlabel{ex:regex-cut-points@cref}{{[example][1][6]6.1}{[1][15][]15}}
-\@writefile{toc}{\contentsline {section}{\numberline {7}Cipher Boolean Algebra and Evaluation}{15}{section.80}\protected@file@percent }
-\newlabel{sec:cipher-bool}{{7}{15}{Cipher Boolean Algebra and Evaluation}{section.80}{}}
-\newlabel{sec:cipher-bool@cref}{{[section][7][]7}{[1][15][]15}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {7.1}Cipher Boolean Type}{15}{subsection.81}\protected@file@percent }
-\newlabel{sec:cipher-bool-type}{{7.1}{15}{Cipher Boolean Type}{subsection.81}{}}
-\newlabel{sec:cipher-bool-type@cref}{{[subsection][1][7]7.1}{[1][15][]15}}
-\newlabel{def:cipher-bool}{{7.1}{15}{Cipher Boolean type}{definition.82}{}}
-\newlabel{def:cipher-bool@cref}{{[definition][1][7]7.1}{[1][15][]15}}
-\newlabel{rem:general-cipher-type}{{7.1}{15}{Generalization beyond Bool}{remark.83}{}}
-\newlabel{rem:general-cipher-type@cref}{{[remark][1][7]7.1}{[1][15][]15}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {7.2}Noise Unreliability}{15}{subsection.84}\protected@file@percent }
-\newlabel{sec:noise-unreliability}{{7.2}{15}{Noise Unreliability}{subsection.84}{}}
-\newlabel{sec:noise-unreliability@cref}{{[subsection][2][7]7.2}{[1][15][]15}}
+\@writefile{toc}{\contentsline {paragraph}{What leaks above the cut points.}{17}{section*.82}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{What bounds the orbit.}{17}{section*.83}\protected@file@percent }
+\newlabel{ex:regex-cut-points}{{6.1}{17}{Regex matching as a typed cut-point chain}{example.84}{}}
+\newlabel{ex:regex-cut-points@cref}{{[example][1][6]6.1}{[1][17][]17}}
+\@writefile{toc}{\contentsline {section}{\numberline {7}Cipher Boolean Algebra and Evaluation}{17}{section.85}\protected@file@percent }
+\newlabel{sec:cipher-bool}{{7}{17}{Cipher Boolean Algebra and Evaluation}{section.85}{}}
+\newlabel{sec:cipher-bool@cref}{{[section][7][]7}{[1][17][]17}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.1}Cipher Boolean Type}{17}{subsection.86}\protected@file@percent }
+\newlabel{sec:cipher-bool-type}{{7.1}{17}{Cipher Boolean Type}{subsection.86}{}}
+\newlabel{sec:cipher-bool-type@cref}{{[subsection][1][7]7.1}{[1][17][]17}}
+\newlabel{def:cipher-bool}{{7.1}{17}{Cipher Boolean type}{definition.87}{}}
+\newlabel{def:cipher-bool@cref}{{[definition][1][7]7.1}{[1][17][]17}}
+\newlabel{rem:general-cipher-type}{{7.1}{17}{Generalization beyond Bool}{remark.88}{}}
+\newlabel{rem:general-cipher-type@cref}{{[remark][1][7]7.1}{[1][17][]17}}
 \citation{lang1995newsweeder}
-\newlabel{prop:noise-unreliability}{{7.1}{16}{Noise unreliability}{theorem.85}{}}
-\newlabel{prop:noise-unreliability@cref}{{[proposition][1][7]7.1}{[1][15][]16}}
-\@writefile{toc}{\contentsline {paragraph}{Practical allocation.}{16}{section*.87}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Composition with set operations.}{16}{section*.88}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {7.3}Experimental Validation}{16}{subsection.89}\protected@file@percent }
-\newlabel{sec:evaluation}{{7.3}{16}{Experimental Validation}{subsection.89}{}}
-\newlabel{sec:evaluation@cref}{{[subsection][3][7]7.3}{[1][16][]16}}
-\@writefile{toc}{\contentsline {paragraph}{Boolean search at scale.}{16}{section*.90}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.2}Noise Unreliability}{18}{subsection.89}\protected@file@percent }
+\newlabel{sec:noise-unreliability}{{7.2}{18}{Noise Unreliability}{subsection.89}{}}
+\newlabel{sec:noise-unreliability@cref}{{[subsection][2][7]7.2}{[1][18][]18}}
+\newlabel{prop:noise-unreliability}{{7.1}{18}{Noise unreliability}{theorem.90}{}}
+\newlabel{prop:noise-unreliability@cref}{{[proposition][1][7]7.1}{[1][18][]18}}
+\@writefile{toc}{\contentsline {paragraph}{Practical allocation.}{18}{section*.92}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Composition with set operations.}{18}{section*.93}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.3}Experimental Validation}{18}{subsection.94}\protected@file@percent }
+\newlabel{sec:evaluation}{{7.3}{18}{Experimental Validation}{subsection.94}{}}
+\newlabel{sec:evaluation@cref}{{[subsection][3][7]7.3}{[1][18][]18}}
 \citation{towell2026bernoulli}
-\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Boolean encrypted search, 5{,}000 documents, $p_T = 0.05$, $n_\text  {seeds} = 5$. Plaintext baseline is 1.00/1.00 by construction.}}{17}{table.91}\protected@file@percent }
-\newlabel{tab:boolean-search}{{2}{17}{Boolean encrypted search, 5{,}000 documents, $p_T = 0.05$, $n_\text {seeds} = 5$. Plaintext baseline is 1.00/1.00 by construction}{table.91}{}}
-\newlabel{tab:boolean-search@cref}{{[table][2][]2}{[1][16][]17}}
-\@writefile{toc}{\contentsline {paragraph}{FPR compounding vs.\ Bernoulli model.}{17}{section*.92}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces FPR through Boolean chains, 200-document subset, $1{,}000$ trials per seed, $n_\text  {seeds} = 5$. Last column is empirical / theoretical ratio.}}{17}{table.93}\protected@file@percent }
-\newlabel{tab:fpr-compounding}{{3}{17}{FPR through Boolean chains, 200-document subset, $1{,}000$ trials per seed, $n_\text {seeds} = 5$. Last column is empirical / theoretical ratio}{table.93}{}}
-\newlabel{tab:fpr-compounding@cref}{{[table][3][]3}{[1][17][]17}}
+\@writefile{toc}{\contentsline {paragraph}{Boolean search at scale.}{19}{section*.95}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Boolean encrypted search, 5{,}000 documents, $p_T = 0.05$, $n_\text  {seeds} = 5$. Plaintext baseline is 1.00/1.00 by construction.}}{19}{table.96}\protected@file@percent }
+\newlabel{tab:boolean-search}{{2}{19}{Boolean encrypted search, 5{,}000 documents, $p_T = 0.05$, $n_\text {seeds} = 5$. Plaintext baseline is 1.00/1.00 by construction}{table.96}{}}
+\newlabel{tab:boolean-search@cref}{{[table][2][]2}{[1][19][]19}}
+\@writefile{toc}{\contentsline {paragraph}{FPR compounding vs.\ Bernoulli model.}{19}{section*.97}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Encoding granularity.}{19}{section*.99}\protected@file@percent }
 \citation{towell2026cipher}
 \citation{towell2026cipher}
 \citation{towell2026cipher}
 \citation{towell2026maxconf}
+\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces FPR through Boolean chains, 200-document subset, $1{,}000$ trials per seed, $n_\text  {seeds} = 5$. Last column is empirical / theoretical ratio.}}{20}{table.98}\protected@file@percent }
+\newlabel{tab:fpr-compounding}{{3}{20}{FPR through Boolean chains, 200-document subset, $1{,}000$ trials per seed, $n_\text {seeds} = 5$. Last column is empirical / theoretical ratio}{table.98}{}}
+\newlabel{tab:fpr-compounding@cref}{{[table][3][]3}{[1][19][]20}}
+\@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces Encoding granularity over the 150-input loan-approval domain, $n_\text  {seeds} = 5$ attempted (successful seed count shown for the seed-search levels).}}{20}{table.100}\protected@file@percent }
+\newlabel{tab:granularity}{{4}{20}{Encoding granularity over the 150-input loan-approval domain, $n_\text {seeds} = 5$ attempted (successful seed count shown for the seed-search levels)}{table.100}{}}
+\newlabel{tab:granularity@cref}{{[table][4][]4}{[1][20][]20}}
+\@writefile{toc}{\contentsline {section}{\numberline {8}Discussion}{20}{section.101}\protected@file@percent }
+\newlabel{sec:discussion}{{8}{20}{Discussion}{section.101}{}}
+\newlabel{sec:discussion@cref}{{[section][8][]8}{[1][20][]20}}
+\@writefile{toc}{\contentsline {paragraph}{Relationship to cipher maps.}{20}{section*.102}\protected@file@percent }
 \citation{towell2026bernoulli}
-\@writefile{toc}{\contentsline {paragraph}{Encoding granularity.}{18}{section*.94}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces Encoding granularity over the 150-input loan-approval domain, $n_\text  {seeds} = 5$ attempted (successful seed count shown for the seed-search levels).}}{18}{table.95}\protected@file@percent }
-\newlabel{tab:granularity}{{4}{18}{Encoding granularity over the 150-input loan-approval domain, $n_\text {seeds} = 5$ attempted (successful seed count shown for the seed-search levels)}{table.95}{}}
-\newlabel{tab:granularity@cref}{{[table][4][]4}{[1][18][]18}}
-\@writefile{toc}{\contentsline {section}{\numberline {8}Discussion}{18}{section.96}\protected@file@percent }
-\newlabel{sec:discussion}{{8}{18}{Discussion}{section.96}{}}
-\newlabel{sec:discussion@cref}{{[section][8][]8}{[1][18][]18}}
-\@writefile{toc}{\contentsline {paragraph}{Relationship to cipher maps.}{18}{section*.97}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Relationship to Bernoulli data types.}{18}{section*.98}\protected@file@percent }
 \citation{towell2026cipher}
 \citation{towell2026cipher}
 \citation{towell2026cipher}
-\@writefile{toc}{\contentsline {paragraph}{The encoding granularity principle.}{19}{section*.99}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Open questions.}{19}{section*.100}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {9}Conclusion}{19}{section.106}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Relationship to Bernoulli data types.}{21}{section*.103}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{The encoding granularity principle.}{21}{section*.104}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Open questions.}{21}{section*.105}\protected@file@percent }
 \citation{towell2026cipher}
 \bibstyle{plainnat}
 \bibdata{references}
@@ -218,6 +229,7 @@
 \bibcite{bloom1970space}{{2}{1970}{{Bloom}}{{}}}
 \bibcite{boneh2011functional}{{3}{2011}{{Boneh et~al.}}{{Boneh, Sahai, and Waters}}}
 \bibcite{cash2015leakage}{{4}{2015}{{Cash et~al.}}{{Cash, Grubbs, Perry, and Ristenpart}}}
+\@writefile{toc}{\contentsline {section}{\numberline {9}Conclusion}{22}{section.111}\protected@file@percent }
 \bibcite{curtmola2006searchable}{{5}{2006}{{Curtmola et~al.}}{{Curtmola, Garay, Kamara, and Ostrovsky}}}
 \bibcite{fredman1984storing}{{6}{1984}{{Fredman et~al.}}{{Fredman, Koml{\'o}s, and Szemer{\'e}di}}}
 \bibcite{gentry2009fully}{{7}{2009}{{Gentry}}{{}}}
@@ -235,4 +247,4 @@
 \bibcite{towell2026maxconf}{{19}{2026{}}{{Towell}}{{}}}
 \bibcite{turing1936computable}{{20}{1936}{{Turing}}{{}}}
 \bibcite{yao1982protocols}{{21}{1982}{{Yao}}{{}}}
-\gdef \@abspage@last{21}
+\gdef \@abspage@last{24}
