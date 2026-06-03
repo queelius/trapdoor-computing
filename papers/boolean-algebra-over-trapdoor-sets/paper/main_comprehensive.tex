@@ -550,7 +550,7 @@ The false positive rate emerges from encoding set sizes: $\fpr = |\ValidEnc{\mat
 \begin{itemize}
 \item \textbf{Bloom filter}: Multiple hash functions create overlapping valid encoding regions, yielding $\fpr = (1 - e^{-kn/m})^k$
 \item \textbf{HBTS trapdoor}: Single keyed hash with $\ValidEnc{\mathsf{true}} = \{H(k \| v)\}$, yielding $\fpr = 2^{-m}$ (collision probability)
-\item \textbf{Approximate maps}: Encoding sizes vary by output value, enabling the 1/p(y) principle for privacy
+\item \textbf{Approximate maps}: Encoding sizes vary by output value, enabling homophonic (frequency-proportional) allocation for privacy
 \end{itemize}
 
 \subsection{Privacy-Space Trade-off}
@@ -558,15 +558,15 @@ The false positive rate emerges from encoding set sizes: $\fpr = |\ValidEnc{\mat
 
 The same hash construction achieves fundamentally different goals by varying encoding sizes~\cite{bernoulli-types}:
 
-\textbf{Space-Optimal Encoding}: $|\ValidEnc{y}| \propto \text{freq}(y)$ (proportional to frequency). Minimizes expected encoding size but reveals frequency information. Used in compression and space-efficient data structures.
+\textbf{Space-Optimal Encoding}: $|\ValidEnc{y}| = 1$ (one encoding per value). Minimizes the total number of valid cipher values, but the single representation of each $y$ is then observed with that value's own frequency, revealing the frequency distribution. Used in compression and space-efficient data structures.
 
-\textbf{Privacy-Optimal Encoding}: $|\ValidEnc{y}| \propto 1/\text{freq}(y)$ (inverse frequency). Achieves uniform output distribution, hiding frequency patterns. This is the \emph{1/p(y) principle} from Bernoulli type theory~\cite{trapdoor-computing}---the key insight connecting approximation to privacy.
+\textbf{Privacy-Optimal Encoding}: $|\ValidEnc{y}| \propto \text{freq}(y)$ (proportional to frequency). Frequent values receive proportionally more encodings, so under the real query distribution each individual cipher value is equiprobable and the observed cipher-value distribution is flat, hiding frequency patterns. This is the classical Simmons homophonic prescription~\cite{simmons1979symmetric}, the key insight connecting approximation to privacy.
 
-\begin{theorem}[Uniformity from Inverse-Frequency]
+\begin{theorem}[Uniformity from Homophonic Allocation]
 \label{thm:inverse-freq}
-With encoding sizes $|\ValidEnc{y}| = c/\text{freq}(y)$ for constant $c$:
-$$P[\text{Output} = y] = \frac{|\ValidEnc{y}|}{2^m} = \text{constant}$$
-achieving uniform output distribution without explicit randomization.
+Let each output value $y$ occur with probability $\text{freq}(y)$ and be encoded by a uniform choice within $\ValidEnc{y}$. With encoding-set sizes $|\ValidEnc{y}| = c\,\text{freq}(y)$ for constant $c$, every cipher value $v \in \ValidEnc{y}$ is observed with probability
+$$P[\text{cipher value} = v] = \frac{\text{freq}(y)}{|\ValidEnc{y}|} = \frac{1}{N}, \qquad N := \sum_y |\ValidEnc{y}| = c,$$
+so the observed cipher-value distribution is uniform without explicit randomization. (The inverse allocation $|\ValidEnc{y}| \propto 1/\text{freq}(y)$ sharpens the distribution instead, the opposite of the privacy goal.)
 \end{theorem}
 
 HBTS uses uniform-sized encodings (a middle ground), providing practical privacy at constant space cost per element. Each element receives a fixed-size hash representation, offering computational privacy when the input domain has sufficient entropy.
