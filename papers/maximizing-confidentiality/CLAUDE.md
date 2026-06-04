@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-LaTeX research paper: "The Entropy Ratio: Quantitative Confidentiality for Trapdoor Computing" (Alexander Towell, 27 pages, 6 theorems, 4 tables, 5 figures). Theory paper grounded in the cipher map framework. The paper is organized around an explicit **two-scale frame**:
+LaTeX research paper: "The Entropy Ratio: Quantitative Confidentiality for Trapdoor Computing" (Alexander Towell, 28 pages, 6 theorems, 4 tables, 5 figures). Theory paper grounded in the cipher map framework. The paper is organized around an explicit **two-scale frame**:
 
 - **Marginal scale** (a single cipher map): the representation-uniformity parameter `delta` lower-bounds the entropy ratio via the Fannes-Audenaert continuity inequality, `e >= 1 - delta - h_2(delta)/n`. Two constructions reduce `delta` (noise injection, multiplicity with `K(x) ~ D(x)`).
 - **Compositional scale** (chains of cipher maps): when the untrusted machine observes multiple evaluations on a shared cipher value, the latent joint distribution is recoverable at parametric rate `O(|Y_1||Y_2|/xi^2)`, with mutual information preserved exactly. The matching minimax lower bound (Thm 5.2 via Assouad's lemma, NOT Le Cam, see Mathematical Landmines) makes this rate sharp. **The compositional leakage theorem (Thm 5.1, with Thm 5.2 as the lower bound) is the paper's headline contribution.** The Fannes bridge is supporting infrastructure.
@@ -15,7 +15,7 @@ This is **not** a USENIX submission, despite what `README.md` and other artifact
 
 ## Build
 
-`make` runs three pdflatex passes plus bibtex (clean build, 27 pages, **zero LaTeX warnings**; two minor sub-18pt overfull hboxes remain in math-dense paragraphs, cosmetic). `make quick` is single-pass nonstopmode for fast feedback. `make stats` reports section/theorem/citation counts and PDF page count. `make help` lists everything.
+`make` runs three pdflatex passes plus bibtex (clean build, 28 pages, **zero LaTeX warnings**; two minor sub-18pt overfull hboxes remain in math-dense paragraphs, cosmetic). `make quick` is single-pass nonstopmode for fast feedback. `make stats` reports section/theorem/citation counts and PDF page count. `make help` lists everything.
 
 The `git-release` target is interactive and not appropriate for a Claude session, leave it for the human.
 
@@ -77,7 +77,7 @@ Empirical results in §5.4 (finite-sample bias of `delta-hat`), §6.1 (Boolean s
 - §5.4 figure: `experiments/finite_sample.py`
 - §6.4 figure: `experiments/newsgroups_homophonic.py`
 - §6.5 figure (compression estimator): `experiments/compression_validation.py`
-- §6.6 figure (Monte Carlo rate validation): `experiments/compositional_rate.py` (S1: compositional joint-recovery rate, validates Thm 5.1/5.2 -- the headline theorems' only direct empirical anchor; S2: noise Fisher dilution, validates Thm 4.1). The S2 rho^2 is a deep-asymptotic limit (rho -> 0); the iid-from-mixture sampling model matters (each element real w.p. rho, NOT a fixed split) or the MC variance drops below the Cramer-Rao bound. Don't "fix" the fixed-split version back in.
+- §6.6 figure (Monte Carlo rate validation): `experiments/compositional_rate.py` (S1: compositional joint-recovery rate, Thm 5.1/5.2 upper; S2: noise Fisher dilution, Thm 4.1; S3: lower-bound bake-off, Thm 5.2 sharpness -- four estimators incl. an oracle shrink-to-uniform on the minimax-calibrated Assouad packing, none beats slope -1/2). The S2 rho^2 is a deep-asymptotic limit (rho -> 0); the iid-from-mixture sampling model matters (each element real w.p. rho, NOT a fixed split) or the MC variance drops below the Cramer-Rao bound. Don't "fix" the fixed-split version back in.
 - §6.7 figure (realized attack on the real construction): `experiments/realized_attack.py` (builds two trapdoor maps via the library, mounts the joint-recovery attack; H1 confirms the construction reproduces §6.6's rate, c=0.32 vs 0.31). eta is injected in the attack as random decode flips, NOT via build(eta_target=...), which is an upper bound the exact PHF build ignores (it builds eta=0).
 - Table 4 (case study): analytical, computed from the closed-form expressions in Theorems 4.1 and 4.2
 

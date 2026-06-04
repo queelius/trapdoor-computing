@@ -1648,7 +1648,8 @@ The compositional leakage theorem
 (Theorems~\ref{thm:comp-leakage}--\ref{thm:comp-leakage-lb}) and the
 noise-dilution Fisher bound (Theorem~\ref{thm:noise-dilution}) are the
 two results without a direct empirical anchor elsewhere in this
-section.  We validate both by Monte Carlo
+section.  We validate both by Monte Carlo, and separately probe the
+\emph{sharpness} of the lower bound
 (Fig.~\ref{fig:montecarlo}; $40$ seeds per cell).
 
 \paragraph{Compositional rate.}
@@ -1681,21 +1682,45 @@ inflation $\Omega((1 + R/N)^2)$ of Theorem~\ref{thm:noise-dilution}
 part~(3): an adversary estimating any parameter of $D$ from the mixed
 stream pays a factor $\rho^{-2}$ in samples.
 
+\paragraph{The lower bound is sharp: no estimator beats the rate.}
+Theorem~\ref{thm:comp-leakage-lb} asserts that the
+$\Theta(\sqrt{|Y_1||Y_2|/N})$ rate cannot be improved by \emph{any}
+estimator.  We test this directly on the Assouad packing the proof
+constructs: $m$ cells paired and perturbed by $\pm\varepsilon$,
+calibrated at the minimax-critical radius
+$\varepsilon = \sqrt{m/N}$ for each $N$.  Against this hardest family
+we run four estimators of increasing sophistication: plug-in,
+add-$1$ (Laplace), add-$\tfrac12$ (Krichevsky--Trofimov), and an
+\emph{oracle} shrink-toward-uniform that is handed the true $P$ and
+picks the variance-minimizing shrinkage (the strongest estimator an
+adversary who knows the family is near-uniform could deploy).  Every
+estimator's worst-case error decays at slope $-0.50$ in $N$; the best
+of the four, the oracle, decays at slope $-0.497$
+(Fig.~\ref{fig:montecarlo}, bottom right).  The oracle improves the
+\emph{constant} (to $0.73\times$ plug-in, by exploiting the
+near-uniform structure) but not the \emph{rate}: no estimator,
+including one that cheats, breaks below $\Theta(\sqrt{|Y_1||Y_2|/N})$.
+The lower bound is sharp.
+
 \begin{figure}[ht]
 \centering
 \includegraphics[width=\linewidth]{compositional_rate}
 \caption{Monte Carlo validation ($40$ seeds/cell).
-\textbf{Left}: joint-recovery error $\TV(\hat P, P)$ versus $N$,
+\textbf{Top left}: joint-recovery error $\TV(\hat P, P)$ versus $N$,
 log-log, one line per support size $m = |Y_1||Y_2|$; fitted slopes
 near $-1/2$.
-\textbf{Centre}: the same data collapses onto
+\textbf{Top right}: the same data collapses onto
 $\TV = 0.31\sqrt{m/N}$ ($R^2 = 0.997$), confirming the
 $\Theta(\sqrt{|Y_1||Y_2|/N})$ rate of
 Theorems~\ref{thm:comp-leakage}--\ref{thm:comp-leakage-lb}.
-\textbf{Right}: noise-injection Fisher reduction $I_M/I_D \propto
+\textbf{Bottom left}: noise-injection Fisher reduction $I_M/I_D \propto
 \rho^2$ (Theorem~\ref{thm:noise-dilution}); the analytic factor and the
 efficient MLE (Cram\'er--Rao) agree, with the small-$\rho$ slope
-approaching $+2$.}
+approaching $+2$.
+\textbf{Bottom right}: lower-bound sharpness
+(Theorem~\ref{thm:comp-leakage-lb}); four estimators on the
+minimax-calibrated Assouad packing, all decaying at slope $-1/2$, the
+oracle cheater included: none beats the rate.}
 \label{fig:montecarlo}
 \end{figure}
 
