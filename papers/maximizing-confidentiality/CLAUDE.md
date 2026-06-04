@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-LaTeX research paper: "The Entropy Ratio: Quantitative Confidentiality for Trapdoor Computing" (Alexander Towell, 28 pages, 6 theorems, 4 tables, 5 figures). Theory paper grounded in the cipher map framework. The paper is organized around an explicit **two-scale frame**:
+LaTeX research paper: "The Entropy Ratio: Quantitative Confidentiality for Trapdoor Computing" (Alexander Towell, 29 pages, 6 theorems, 4 tables, 5 figures). Theory paper grounded in the cipher map framework. The paper is organized around an explicit **two-scale frame**:
 
 - **Marginal scale** (a single cipher map): the representation-uniformity parameter `delta` lower-bounds the entropy ratio via the Fannes-Audenaert continuity inequality, `e >= 1 - delta - h_2(delta)/n`. Two constructions reduce `delta` (noise injection, multiplicity with `K(x) ~ D(x)`).
 - **Compositional scale** (chains of cipher maps): when the untrusted machine observes multiple evaluations on a shared cipher value, the latent joint distribution is recoverable at parametric rate `O(|Y_1||Y_2|/xi^2)`, with mutual information preserved exactly. The matching minimax lower bound (Thm 5.2 via Assouad's lemma, NOT Le Cam, see Mathematical Landmines) makes this rate sharp. **The compositional leakage theorem (Thm 5.1, with Thm 5.2 as the lower bound) is the paper's headline contribution.** The Fannes bridge is supporting infrastructure.
@@ -15,7 +15,7 @@ This is **not** a USENIX submission, despite what `README.md` and other artifact
 
 ## Build
 
-`make` runs three pdflatex passes plus bibtex (clean build, 28 pages, **zero LaTeX warnings**; two minor sub-18pt overfull hboxes remain in math-dense paragraphs, cosmetic). `make quick` is single-pass nonstopmode for fast feedback. `make stats` reports section/theorem/citation counts and PDF page count. `make help` lists everything.
+`make` runs three pdflatex passes plus bibtex (clean build, 29 pages, **zero LaTeX warnings**; one minor sub-18pt overfull hbox remains in a math-dense paragraph, cosmetic). `make quick` is single-pass nonstopmode for fast feedback. `make stats` reports section/theorem/citation counts and PDF page count. `make help` lists everything.
 
 The `git-release` target is interactive and not appropriate for a Claude session, leave it for the human.
 
@@ -34,7 +34,7 @@ The paper's own theorems and contributions:
 - Thm 4.1: Noise dilution (Fisher-info `rho^2` with explicit `C(D)` constant)
 - Thm 4.2: Multiplicity construction (`K(x) = ceil(c * D(x))`, classical homophonic)
 - Thm 5.1: Compositional leakage upper bound (mutual-information preservation, plug-in rate)
-- Thm 5.2: Compositional leakage lower bound (Assouad's lemma over a `2^{m/2}` hypercube packing, sharp `Theta(|Y_1||Y_2|/xi^2)`). NOT "Le Cam's two-point method": two hypotheses cannot produce a dimension-dependent rate. Pairwise TV of the packing is `(2*eps/m)*d_H`, not `(eps/m)*d_H` (factor-2 was a fixed slip).
+- Thm 5.2: Compositional leakage lower bound (Assouad's lemma over a `2^{m/2}` hypercube packing, sharp `Theta(|Y_1||Y_2|/xi^2)`; full self-contained proof via Assouad + Hellinger affinity + Tsybakov Thm 2.12, constant ~0.03). NOT "Le Cam's two-point method": two hypotheses cannot produce a dimension-dependent rate. Pairwise TV of the packing is `(2*eps/m)*d_H`, not `(eps/m)*d_H` (factor-2 was a fixed slip).
 - Prop 6.1: Compression-based entropy estimator
 
 Don't promote inherited results to "our contribution" or demote our results to "follows from cipher-maps."

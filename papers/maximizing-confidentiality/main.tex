@@ -907,8 +907,9 @@ equal mutual information.  Data-processing then gives equality because
 the push maps are surjective onto $Y_1, Y_2$ on the in-domain part.
 Part (3): the empirical distribution on a discrete support of size
 $|Y_1| \cdot |Y_2|$ converges in TV to the true distribution at rate
-$O(\sqrt{|Y_1|\cdot|Y_2|/N})$~\cite{cover2006elements}, so
-$N = O(|Y_1|\cdot|Y_2|/\xi^2)$ samples suffice for TV accuracy $\xi$.
+$O(\sqrt{|Y_1|\cdot|Y_2|/N})$~\cite{devroye1996nonparametric}, so
+$N = O(|Y_1|\cdot|Y_2|/\xi^2)$ samples suffice for TV accuracy $\xi$
+(this is the matching upper bound to Theorem~\ref{thm:comp-leakage-lb}).
 Part (4): when $I(f_1; f_2) > 0$, the joint input distribution to
 $\fhat_3$ is not uniform on $Y_1 \times Y_2$, so a predicate optimized
 for the product of marginals cannot achieve $\delta_3 = 0$; the
@@ -940,9 +941,10 @@ rate for compositional joint recovery is
 $\Theta(|Y_1| \cdot |Y_2| / \xi^2)$.
 \end{theorem}
 
-\begin{proof}[Proof sketch]
-This is the standard Assouad minimax bound for distribution estimation
-in TV, applied to the joint support $Y_1 \times Y_2$.\footnote{The
+\begin{proof}
+We apply Assouad's lemma, the hypercube generalization of the
+two-point method for dimension-dependent minimax lower
+bounds.\footnote{The
 two-point method (Le Cam) appears at both confidentiality scales of
 the cipher map framework, in opposite roles. At the \emph{marginal}
 scale it gives an \emph{upper} bound on a single-guess membership
@@ -952,25 +954,71 @@ cipher maps paper). Here, at the \emph{compositional} scale, we need a
 two-hypothesis argument cannot deliver; the hypercube packing below is
 Assouad's lemma.}  Let $m = |Y_1| \cdot |Y_2|$ and pair the cells of
 $Y_1 \times Y_2$ into $m/2$ disjoint pairs
-$\{(v_i^+, v_i^-)\}_{i=1}^{m/2}$.  For $s \in \{\pm 1\}^{m/2}$ and
-$\varepsilon$ a small constant times the target $\xi$, define
-$P^{(s)}$ by
+$\{(v_i^+, v_i^-)\}_{i=1}^{m/2}$.  For $s \in \{\pm 1\}^{m/2}$ and a
+parameter $0 < \varepsilon \leq 1$ fixed below, define $P^{(s)}$ by
 \[
 P^{(s)}(v_i^{\pm}) = \tfrac{1}{m}(1 \pm s_i \varepsilon),
 \]
-so each $P^{(s)}$ is a perturbation of uniform on $Y_1 \times Y_2$ with
-total mass~$1$.  Pairwise TV is
-$\TV(P^{(s)}, P^{(s')}) = (2\varepsilon/m)\,d_H(s, s')$ where $d_H$ is
-Hamming distance (each differing coordinate moves mass $\varepsilon/m$
-at $v_i^+$ and $\varepsilon/m$ at $v_i^-$, contributing $2\varepsilon/m$
-to TV).  Assouad's lemma applied to this $2^{m/2}$-packing, with KL
-divergence between adjacent hypotheses bounded by
-$O(\varepsilon^2/m)$ per coordinate (a standard consequence of the
-bounded-perturbation construction), gives the minimax rate
-$\Omega(\sqrt{m/N}) = \Omega(\sqrt{|Y_1| \cdot |Y_2| / N})$ in expected
-TV.  See Devroye, Gy{\"o}rfi, and
-Lugosi~\cite{devroye1996nonparametric} for the canonical treatment of
-the construction and constants.
+a perturbation of the uniform distribution on $Y_1 \times Y_2$ of total
+mass~$1$.  We invoke Assouad's
+lemma~\cite[Thm.~2.12]{tsybakov2009nonparametric}; its three
+hypotheses are verified below.
+
+\emph{(i) The loss decomposes over the hypercube.}  For any
+$s, s'$ only the pairs on which they differ contribute, and each such
+pair moves mass $\varepsilon/m$ at $v_i^+$ and $\varepsilon/m$ at
+$v_i^-$, so
+\[
+\TV\bigl(P^{(s)}, P^{(s')}\bigr)
+  = \frac{2\varepsilon}{m}\, d_H(s, s'),
+\]
+$d_H$ the Hamming distance: TV is exactly a Hamming-separated loss with
+per-coordinate separation $2\varepsilon/m$.
+
+\emph{(ii) Adjacent hypotheses are statistically close.}  If $s, s'$
+differ in one coordinate, only that pair's two cells differ, so the
+squared Hellinger distance is
+\[
+H^2\bigl(P^{(s)}, P^{(s')}\bigr)
+  = \frac{2}{m}\bigl(\sqrt{1+\varepsilon} - \sqrt{1-\varepsilon}\bigr)^2
+  = \frac{4}{m}\bigl(1 - \sqrt{1-\varepsilon^2}\bigr)
+  \leq \frac{4\varepsilon^2}{m},
+\]
+the last step using $\sqrt{1-\varepsilon^2} \geq 1 - \varepsilon^2$ for
+$\varepsilon \in [0,1]$.  By the product-measure affinity identity and
+Le Cam's inequality~\cite[\S2.4]{tsybakov2009nonparametric}, writing
+$x = \tfrac12 H^2 \leq 2\varepsilon^2/m$,
+\[
+1 - \TV\bigl((P^{(s)})^{\otimes N}, (P^{(s')})^{\otimes N}\bigr)
+  \geq \tfrac12\,(1 - x)^{2N}
+  \geq \tfrac12\, e^{-8 N \varepsilon^2 / m},
+\]
+where $(1-x)^{2N} \geq e^{-2Nx/(1-x)} \geq e^{-4Nx}$ holds once
+$x \leq \tfrac12$ (i.e. $\varepsilon^2 \leq m/4$).
+
+\emph{(iii) Assembling.}  Assouad's lemma with $d = m/2$ coordinates,
+separation $2\varepsilon/m$, and adjacent affinity at least
+$\tfrac12 e^{-8N\varepsilon^2/m}$ gives
+\[
+\inf_{\hat P}\ \sup_{s}\ \mathbb{E}\bigl[\TV(\hat P, P^{(s)})\bigr]
+  \geq \frac{m}{2}\cdot\frac{\varepsilon}{m}\cdot
+       \tfrac12\, e^{-8N\varepsilon^2/m}
+  = \frac{\varepsilon}{4}\, e^{-8N\varepsilon^2/m}.
+\]
+Taking $\varepsilon = \sqrt{m/(16N)}$ (admissible, $\le 1$, once
+$N \geq m/16$; below that the claimed rate exceeds $1$ and the bound is
+vacuous) sets the exponent to $-\tfrac12$ and yields
+\[
+\inf_{\hat P}\ \sup_{P}\ \mathbb{E}\bigl[\TV(\hat P, P)\bigr]
+  \geq \frac{e^{-1/2}}{16}\,\sqrt{\frac{m}{N}}
+  \geq 0.03\,\sqrt{\frac{|Y_1|\,|Y_2|}{N}}.
+\]
+Equating this with the target accuracy $\xi$ and solving for $N$ gives
+$N = \Omega(|Y_1||Y_2|/\xi^2)$, matching the plug-in upper rate of
+Theorem~\ref{thm:comp-leakage} up to the constant.  The achieved
+constant of the plug-in estimator ($\approx 0.31$, \S\ref{subsec:montecarlo})
+is larger than this lower-bound constant, as expected of a minimax
+argument that is sharp in rate but not in constant.
 \end{proof}
 
 \begin{remark}[Sampling regimes]
