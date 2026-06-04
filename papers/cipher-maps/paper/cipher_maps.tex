@@ -70,12 +70,12 @@ uniformity), $\varepsilon$ (noise-decode probability), and $\eta$
 confidentiality measure in companion work~\cite{towell2026maxconf}).  The
 construction reduces to a single design choice: an \emph{acceptance
 predicate} that partitions hash space among output values.  Acceptance
-predicates expose a Pareto frontier between expected codeword length
-$L$ and TV-leakage; the Shannon-optimal corner ($L = -\log_2
-\varepsilon + H(Y)$, matching the information-theoretic lower bound)
-and the TV-optimal corner are distinct under integer codeword
-constraints, with the gap reaching $42\times$ in TV at $17\%$ length
-overhead on heavy-tailed value distributions.  Composition is
+predicates trace a frontier between expected codeword length $L$ and
+TV-leakage: the length-optimal (Shannon) corner and the TV-optimal
+corner are distinct under integer codeword constraints, and on
+heavy-tailed distributions the homophonic multiplicity lever drives
+TV-leakage down by an order of magnitude (a $42\times$ reduction in our
+example) at a storage rather than a length cost.  Composition is
 predictable: the chain bound
 $\eta_{\mathrm{total}} \leq 1 - \prod(1 - \eta_i)$ holds for sequential
 composition, and a coincidence-oracle bound (accuracy $1 - \tfrac{1}{2}
@@ -149,8 +149,9 @@ leakage when the same latent function is published as $t$ cipher maps
 under independent seeds, and an empirical evaluation
 (\S\ref{subsec:eval-codec-security}) confirming the Le Cam bound is
 realized by the Bayes-optimal attacker across a sweep of acceptance
-predicates and exposing a $42\times$ TV reduction available off the
-single-instance Shannon-optimal corner.
+predicates and quantifying the homophonic multiplicity lever, which
+flattens the cipher value distribution by an order of magnitude
+($42\times$ in TV on heavy-tailed value distributions).
 
 \paragraph{Bernoulli error model.}
 The error framework underlying cipher maps is the Bernoulli
@@ -847,7 +848,8 @@ $\delta > 1/2$ the bound is trivial ($e \geq 0$).
 Property~2 gives $\TV(Q, \mathrm{Uniform}) \leq \delta$ where $Q$ is the
 cipher value distribution induced by $\enc$ on the $\B^n$ ambient space.
 Applying the Fannes--Audenaert continuity inequality with reference
-distribution $\mathrm{Uniform}(\B^n)$ (entropy $n$) gives
+distribution $\mathrm{Uniform}(\B^n)$ (entropy $n$), and using
+$\log_2(2^n - 1) \le n$, gives
 $H(Q) \geq n(1 - \delta) - h_2(\delta)$, and dividing by $n$ yields
 \eqref{eq:fannes-bridge}.  The tightness of this bound is analyzed in
 \cite[Theorem~4.1, part~3]{towell2026maxconf}.  The bound applies
@@ -994,9 +996,10 @@ bits.  For $|U| \gg n$, Stirling's approximation
 $\log_2 \binom{|U|}{n} = n \log_2(|U|/n) + n \log_2 e + O(\log n)$ gives
 $\log_2 \binom{|U|}{n} \approx n \log_2(|U|/n)$ bits to leading order in
 $|U|/n$, or $\log_2(|U|/n)$ bits per element.  We drop the $n \log_2 e
-\approx 1.44 n$ subleading term: it is independent of $|U|$ and adds at
-most a constant overhead per element, which the matching achievability
-construction (Theorem~\ref{thm:space-optimal}) matches asymptotically.  The noise-decode probability
+\approx 1.44 n$ term (a constant $\approx 1.44$ bits per element):
+dropping this positive term only weakens the lower bound, and the
+matching achievability construction (Theorem~\ref{thm:space-optimal})
+absorbs it asymptotically.  The noise-decode probability
 $\varepsilon$ is the fraction of bit strings in $\{0,1\}^n$ that decode to
 some valid output value: under any membership-faithful encoding, exactly
 the $n$ stored elements decode validly out of the $|U|$ universe inputs,
@@ -1155,8 +1158,11 @@ each value over several codewords at the cost of extra length.  The
 length-optimal (Shannon) corner and the $\delta$-optimal corner coincide
 only when $p_y$ is dyadic; in general they are distinct points on a
 $(\mathrm{TV}, L)$ Pareto frontier (\S\ref{subsec:eval-codec-security}),
-on which spending modest length overhead off the Shannon corner buys up to
-a $42\times$ reduction in leakage.  A frequency-analysis
+on which spending modest length overhead off the Shannon corner gives
+only a small ($\approx 2\times$) TV reduction; the order-of-magnitude
+reductions ($42\times$ on the same heavy-tailed example) come instead
+from the orthogonal multiplicity lever ($K(x) > 1$), which trades
+storage for a flatter $Q$.  A frequency-analysis
 adversary~\cite{naveed2015inference} therefore constrains the choice of
 operating point: the length-optimal code is not automatically the most
 confidential one.
@@ -1218,13 +1224,15 @@ possible: failures are not clustered at the end by a fixed ordering.
 
 \begin{theorem}[Information-theoretic space complexity]
 \label{thm:space-optimal}
-The batch construction has information-theoretic space complexity
+The batch construction encodes
 \begin{equation}
-(1-\eta)\bigl(-\log_2 \varepsilon + \mu\bigr) \text{ bits per element},
+(1-\eta)\bigl(-\log_2 \varepsilon + \mu\bigr) \text{ bits per element}
 \end{equation}
-where $\mu = H(Y)$ is the mean encoding length.  This is the information
-content of the $(1-\eta)n$ correctly encoded elements.  When $\eta = 0$,
-the bound matches the lower bound of Theorem~\ref{thm:lower-bound}.
+of information, where $\mu = H(Y)$ is the mean encoding length.  This is
+the information content of the $(1-\eta)n$ correctly encoded elements;
+physical storage is $-\log_2 \varepsilon + \mu$ per element regardless of
+$\eta$ (Remark~\ref{rem:physical-storage}).  When $\eta = 0$ the two
+coincide and match the lower bound of Theorem~\ref{thm:lower-bound}.
 \end{theorem}
 
 \begin{proof}
@@ -1282,8 +1290,10 @@ difficulty (fewer constraints to satisfy), not raw storage.
 \end{remark}
 
 \begin{corollary}[Asymptotic optimality]
-When $\eta = 0$, the batch construction achieves $-\log_2 \varepsilon + H(Y)$
-bits per element, matching the information-theoretic lower bound.
+When $\eta = 0$, the batch construction's storage is
+$-\log_2 \varepsilon + H(Y)$ bits per element
+(Remark~\ref{rem:physical-storage}), matching the information-theoretic
+lower bound of Theorem~\ref{thm:lower-bound}.
 \end{corollary}
 
 \subsection{Construction Time and Bucketing}
@@ -1303,7 +1313,9 @@ $F \leq \lfloor \eta m \rfloor$.
 \item Uniform $\alpha$:
     $p = \Pr[\mathrm{Bin}(m, 1-\alpha) \leq \lfloor \eta m \rfloor]$.
 \end{itemize}
-The expected number of seeds tried is $1/p$.
+The expected number of seeds tried is $1/p$ (fresh seeds $\ell$ make the
+trials i.i.d.\ with success probability $p$ under the random oracle
+model).
 \end{proposition}
 
 \begin{proof}
@@ -1342,13 +1354,15 @@ $h(x) \bmod k$) and find a separate seed $\ell_j$ for each bucket.
 
 \begin{proposition}[Bucketed construction time ($\eta = 0$)]
 \label{prop:bucketed}
-With $k$ buckets of expected size $m/k$ and $\eta = 0$, the expected total
-construction time is
+With $k$ buckets of expected size $m/k$ and $\eta = 0$, the construction
+time under the equal-load approximation is
 \begin{equation}
 T(k) = k \cdot \left(\frac{1}{\bar{\alpha}}\right)^{m/k},
 \end{equation}
 where $\bar{\alpha} = \bigl(\prod_i \alpha(y_i)\bigr)^{1/m}$ is the
-geometric mean acceptance probability.
+geometric mean acceptance probability.  Random bucket sizes make this a
+lower bound on the true expectation (Jensen); multinomial concentration
+makes it tight for $m/k$ large.
 \end{proposition}
 
 \begin{proof}
@@ -1459,9 +1473,10 @@ cipher map).
 \begin{proposition}[Entropy cipher map space]
 \label{prop:entropy-space}
 The space per element of an entropy cipher map for $f : X \to Y$ with
-output distribution $(p_y)_{y \in Y}$ equals
+output distribution $(p_y)_{y \in Y}$ is
 $-\log_2 \varepsilon + H(Y)$
-bits, where $H(Y) = -\sum_y p_y \log_2 p_y$.
+bits up to the one-bit prefix-coding gap, where
+$H(Y) = -\sum_y p_y \log_2 p_y$.
 \end{proposition}
 
 \begin{proof}
@@ -1469,8 +1484,10 @@ The term $-\log_2 \varepsilon$ is the per-element cost of distinguishing
 signal from noise: each stored element requires that its hash prefix match a
 valid codeword, which occurs with probability $\varepsilon$ for random
 inputs.  The term $H(Y)$ is the expected code length under
-Shannon-optimal prefix-free coding, which equals the entropy of the output
-distribution by Shannon's source coding theorem~\cite{shannon1948mathematical}.  These two components are
+Shannon-optimal prefix-free coding: by Shannon's source coding
+theorem~\cite{shannon1948mathematical} it satisfies $H(Y) \le L < H(Y)+1$,
+with equality when $(p_y)$ is dyadic (and approached for general $(p_y)$
+by block coding).  These two components are
 additive because the noise-rejection bits and the value-encoding bits occupy
 disjoint portions of the hash output.
 \end{proof}
@@ -1602,7 +1619,7 @@ $\eta_{g \circ f} = \eta_f + \eta_g - \eta_f \eta_g
 In practice, $\fhat$ produces a specific encoding of $f(x)$, not a
 uniformly random one.  If $\ghat$'s correctness depends on which encoding
 it receives, the errors may be positively correlated
-($\Pr[A \cap B] \leq \eta_f \eta_g$), making the bound
+($\Pr[A \cap B] \geq \eta_f \eta_g$), making the bound
 $\eta_f + \eta_g - \eta_f \eta_g$ conservative.
 For specific circuits, the case-by-case interval arithmetic from
 \S\ref{subsec:and-gate} gives tighter bounds.
@@ -1890,7 +1907,8 @@ random oracle model with independent per-instance seeds, the hash
 outputs $\fhat_i(c_i)$ are independent across $i$ and each uniform
 on~$\B^n$.  The per-instance decoded value distribution is therefore
 $\Pr[\dec_i(\fhat_i(c_i)) = y] = \alpha_i(y)$ for each $y \in Y$
-and $\Pr[\dec_i(\fhat_i(c_i)) = \bot] = 1 - \varepsilon_i$, with
+(so $\sum_{y} \alpha_i(y) = \varepsilon_i \le 1$) and
+$\Pr[\dec_i(\fhat_i(c_i)) = \bot] = 1 - \varepsilon_i$, with
 events independent across instances.  The attacker's predicate
 explicitly excludes the common-$\bot$ case (it requires the common
 value to lie in $Y$), so by independence,
@@ -1957,10 +1975,11 @@ Among acceptance partitions with fixed $\varepsilon$, the
 coincidence-oracle attacker's accuracy
 $1 - \tfrac{1}{2} \sum_y \alpha(y)^t$ is maximized (worst for the
 defender) by the uniform allocation $\alpha(y) = \varepsilon / |Y|$
-and minimized (best for the defender) by concentrating $\alpha$ on
-the heaviest values.  Concentrated, Huffman-style partitions are
-therefore preferred at every $t \geq 1$; there is no codec-choice
-regime change between $t = 1$ and $t \geq 2$.
+and minimized (best for the defender), by Schur-convexity of
+$\sum_y \alpha(y)^t$, by concentrating $\alpha$ on a single value
+(Huffman-style partitions approximate this extreme).  Concentrated
+partitions are therefore preferred at every $t \geq 1$; there is no
+codec-choice regime change between $t = 1$ and $t \geq 2$.
 \end{corollary}
 
 \paragraph{Numerical illustration.}
@@ -2035,8 +2054,11 @@ instance $i$, and assume the construction \emph{saturates} each
 acceptance region: every bit string in $A_i(y)$ is reachable as
 $\fhat_i(c)$ for some member cipher value $c$ encoding a value-$y$
 plaintext (this holds, e.g., for Huffman codespace classes where
-$K(x)$ equals the codespace class size $2^{n - \ell_{f(x)}}$).  Then
-under the random oracle model with independent seeds:
+$K(x)$ equals the codespace class size $2^{n - \ell_{f(x)}}$).  We take
+the $t$ instances to share a common acceptance geometry
+($A_i(y) = A(y)$, the homogeneous-codec setting); under heterogeneous
+regions the member-coincidence probability below becomes an upper bound.
+Then under the random oracle model with independent seeds:
 
 \textbf{Pattern-coincidence (private codec).}
 Conditional on $f(x) = y$,
@@ -2069,10 +2091,10 @@ A_i(y)$ for every $i$ (correctness, Property~3).  Under the random
 oracle model with independent seeds and the saturation assumption,
 the specific pattern $\fhat_i(c_i) \in A_i(y)$ chosen by instance
 $i$ is uniformly distributed on the $|A_i(y)|$ patterns and
-statistically independent across instances.  The probability that
-all $t$ patterns coincide is the probability that instances
-$2, 3, \ldots, t$ each match the pattern fixed by instance~$1$:
-$\prod_{i=2}^{t} 1/|A_i(y)|$.
+statistically independent across instances; by the common-geometry
+assumption the pattern fixed by instance~$1$ lies in every $A_i(y)$.
+The probability that all $t$ patterns coincide is the probability that
+instances $2, 3, \ldots, t$ each match it: $\prod_{i=2}^{t} 1/|A_i(y)|$.
 
 \emph{Pattern-coincidence, filler.}
 For a filler input, each $\fhat_i(c_i)$ is uniform on $\B^n$ under
@@ -2332,7 +2354,8 @@ without exercising the cipher map at all.  An empirical study of three
 key-universe configurations
 (\S\ref{subsec:eval-codec-security}) finds that a key-feature attacker
 saturates accuracy at $0.997$ for fully-structured~$S$, exceeding the
-value-only Le Cam bound of $0.572$ at the same operating point.  When
+value-only attacker's accuracy of $0.572$ (itself at the Le~Cam bound)
+at the same operating point.  When
 $S$ is randomly drawn from $X$, key features carry no signal and the
 Le Cam bound is tight.
 
@@ -2576,7 +2599,9 @@ randomization probability).
 \label{prop:deniability}
 Let $\fhat$ be a cipher map for $f : X \to \{0,1\}$ with symmetric
 error rate $\eta$ (i.e., $\Pr[y=1 \mid f(x)=0] = \Pr[y=0 \mid f(x)=1]
-= \eta$), and let $\pi = \Pr[f(x) = 1]$ be the prior.  If the
+= \eta$, a deliberately injected symmetric error distinct from the
+one-sided correctness parameter of Definition~\ref{def:correctness}),
+and let $\pi = \Pr[f(x) = 1]$ be the prior.  If the
 adversary observes the decoded output $y = 1$, then
 \begin{equation}
 \Pr[f(x) = 1 \mid y = 1]
@@ -2677,8 +2702,8 @@ $0.014$ (mean $0.006$).
 Codec & TV & Le Cam UB & Best attacker \\
 \midrule
 Huffman ($n = 5$)        & 0.096 & 0.548 & 0.542 \\
-Huffman ($n = 4$)        & 0.121 & 0.560 & 0.575 \\
-Dense ($n = 4$)          & 0.218 & 0.610 & 0.607 \\
+Huffman ($n = 4$)        & 0.121 & 0.561 & 0.575 \\
+Dense ($n = 4$)          & 0.218 & 0.609 & 0.607 \\
 Padded (default $= y_7$) & 0.560 & 0.780 & 0.778 \\
 AntiHuffman ($n = 5$)    & 0.616 & 0.808 & 0.811 \\
 \bottomrule
@@ -2709,12 +2734,17 @@ heavy-tail), we find:
     assignment differs from Huffman in $7$ of $14$ cases.  Huffman is
     TV-optimal only when $p_y$ is dyadic or near-dyadic.
 \item For heavy-tailed $p_y = (0.9, 0.0143, \ldots)$ at $n = 6$ bits,
-    Huffman has $\mathrm{TV} = 0.40$ while the TV-min assignment
-    achieves $\mathrm{TV} = 0.0094$, a $42\times$ leakage reduction at
-    only $17\%$ overhead in expected codeword length.  Mechanism:
-    Huffman saturates Kraft, dumping all surplus codespace onto the
-    heavy mode; TV-min leaves Kraft slack and pushes long codewords
-    onto the tail to better match $p_y$.
+    Huffman has $\mathrm{TV} = 0.40$.  Within single-codeword length
+    assignments the gain is modest: the TV-min assignment reaches only
+    $\mathrm{TV} = 0.20$ (a $1.9\times$ reduction) at $17\%$ overhead in
+    expected length, because the heavy mode's acceptance probability is
+    capped at $2^{-1}$, flooring its TV contribution.  Order-of-magnitude
+    flattening instead comes from the multiplicity lever of
+    Proposition~\ref{prop:homophonic} (assigning $K(y) \propto p_y$
+    codewords per value, $\alpha(y) = K(y)/2^n$): here
+    $K = (57, 1, \ldots, 1)$ gives $\mathrm{TV} = 0.009$, a $42\times$
+    reduction, at a storage cost (the cipher space holds
+    $N = \sum_y K(y)$ codewords) rather than a length cost.
 \end{itemize}
 
 This refines the Shannon-frequency duality of
@@ -2861,9 +2891,11 @@ realized in practice across a sweep of acceptance predicates and
 attacker classes;
 (ii) the Shannon-frequency duality refines under integer-codeword
 constraints into a $(\mathrm{TV}, L)$ Pareto frontier with a
-TV-optimal corner separate from the L-optimal Huffman corner, and
-spending modest $L$ overhead can buy a $42\times$ leakage reduction
-on heavy-tailed value distributions;
+TV-optimal corner separate from the L-optimal Huffman corner; spending
+modest $L$ overhead buys only a small ($\approx 2\times$) TV reduction,
+while the homophonic multiplicity lever buys an order-of-magnitude
+($42\times$) reduction at a storage cost on heavy-tailed value
+distributions;
 (iii) shared-$f$ multi-instance composition leaks catastrophically
 via the coincidence oracle, with a closed form
 (Theorem~\ref{thm:coincidence-oracle}) matching empirical accuracy to
