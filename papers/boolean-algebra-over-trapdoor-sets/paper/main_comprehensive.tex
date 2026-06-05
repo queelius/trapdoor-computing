@@ -36,6 +36,7 @@
 \newtheorem{lemma}[theorem]{Lemma}
 \newtheorem{definition}[theorem]{Definition}
 \newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{proposition}[theorem]{Proposition}
 \newtheorem{remark}[theorem]{Remark}
 
 % Unified notation (following Bernoulli types framework)
@@ -330,10 +331,35 @@ HBTS follows a layered architecture as shown in Figure~\ref{fig:architecture}:
 \section{Mathematical Foundations}
 \label{sec:theory}
 
-\subsection{Boolean Algebra Framework}
+\subsection{Trapdoor Sets and Their Algebra}
+\label{sec:trapdoor-set}
+
+Fix a value universe $X$ and a deterministic keyed one-way encoding $T_k : X \to \{0,1\}^n$, $T_k(v) = H(k \| v)$. The \emph{trapdoor set} of a finite $A \subseteq X$ is the literal set of its element encodings,
+$$\tau(A) := \{\, T_k(a) : a \in A \,\} \subseteq \{0,1\}^n.$$
+An untrusted party holding $\tau(A)$ and $\tau(B)$ computes union, intersection, difference, and symmetric difference as ordinary set operations on the byte strings, and answers membership by the equality test $T_k(x) \in \tau(A)$, returning a plaintext boolean. None of these operations uses the secret key, and none recovers a plaintext value.
+
+\begin{proposition}[Collision-bounded set algebra]
+\label{prop:collision-bounded}
+Condition on $T_k$ being injective on the values in question; the complementary event is a hash collision, of probability at most $\binom{|A|+|B|}{2} 2^{-n}$. Under injectivity, $\tau$ commutes with all four operations exactly,
+$$\tau(A) \odot \tau(B) = \tau(A \odot B), \qquad \odot \in \{\cup, \cap, \setminus, \triangle\},$$
+and $T_k(x) \in \tau(A) \iff x \in A$. Consequently membership has no false negatives and a false-positive rate at most $|A|\,2^{-n}$, and this collision bound is the \emph{only} error in the set operations: there is no structural approximation.
+\end{proposition}
+
+\begin{proof}
+$T_k$ is a function, so $a \in A \Rightarrow T_k(a) \in \tau(A)$; there are no false negatives. When $T_k$ is injective on $A \cup B$, the map $a \mapsto T_k(a)$ is a bijection onto $\tau(A \cup B)$ that carries each Boolean operation on subsets of $A \cup B$ to the corresponding operation on images, giving exact commutation. A membership false positive requires $T_k(x) = T_k(a)$ for some $a \in A$ with $x \notin A$; a union bound over $a \in A$ gives $|A|\,2^{-n}$. The injectivity failure probability is the birthday bound over the $\le |A| + |B|$ values involved.
+\end{proof}
+
+\begin{proposition}[Algebraic structure]
+\label{prop:gen-boolean}
+Over an unbounded universe $X$ (e.g.\ $X = \{0,1\}^*$), the finite trapdoor sets under $(\cup, \cap, \setminus, \triangle, \emptyset)$ form a \emph{generalized} Boolean algebra: a relatively complemented distributive lattice with least element $\emptyset$ but no greatest element---equivalently a Boolean ring without unit, with $\triangle$ as addition and $\cap$ as multiplication. They are \emph{not} a Boolean algebra, because complement is absent: $X \setminus A$ is infinite and has no finite trapdoor-set representation. Over a finite universe $X$ the greatest element $\tau(X)$ exists and complement becomes $\tau(X) \setminus \tau(A)$, recovering a bounded Boolean algebra---at the cost of materializing $\tau(X)$, the encoding of the entire universe, which is practical only for small $X$.
+\end{proposition}
+
+The literal representation stores $|A|$ encodings and keeps every operation collision-bounded. When space is the binding constraint, a trapdoor set can be compressed to a fixed-width bit vector, at the cost of a \emph{structural} approximation the literal form avoids. We develop that compact representation next; it is the object of the homomorphism and the complement-non-preservation result that follow.
+
+\subsection{A Compact Representation: Bit-Vector Encoding}
 \label{sec:boolean-algebra}
 
-HBTS is grounded in a homomorphism between two Boolean algebras: the \emph{set algebra} $A := (\mathcal{P}(\{0,1\}^*), \cup, \cap, \neg, \emptyset, \{0,1\}^*)$ over arbitrary bit strings, and the \emph{bit vector algebra} $B := (\{0,1\}^m, \lor, \land, \neg, 0^m, 1^m)$ of $m$-bit vectors with bitwise operations.
+The compact representation maps a trapdoor set to a single $m$-bit vector by OR-ing its element hashes. It is a homomorphism between two Boolean algebras: the \emph{set algebra} $A := (\mathcal{P}(\{0,1\}^*), \cup, \cap, \neg, \emptyset, \{0,1\}^*)$ over arbitrary bit strings, and the \emph{bit vector algebra} $B := (\{0,1\}^m, \lor, \land, \neg, 0^m, 1^m)$ of $m$-bit vectors with bitwise operations. Unlike the literal set, this map has a syntactic top $1^m$ and a syntactic complement (bitwise $\neg$); we will see that the latter does not correspond to set complement (Theorem~\ref{thm:complement}), so the compact form only appears to be a Boolean algebra.
 
 % FIXED (BA-2): Added caveat that intersection mapping (\cap -> \land) is only
 % a superset: F(A) & F(B) \supseteq F(A \cap B), with extra 1-bits possible
