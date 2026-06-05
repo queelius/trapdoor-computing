@@ -30,12 +30,28 @@
 \newcommand{\enc}{\mathrm{enc}}
 \newcommand{\dec}{\mathrm{dec}}
 \newcommand{\TV}{d_{\mathrm{TV}}}
+\newcommand{\TVsamp}{d_{\mathrm{TV},\,\mathrm{samp}}} % sampling-noise TV floor
 \newcommand{\B}{\{0,1\}}
 \newcommand{\GF}{\mathrm{GF}(2)}
 \newcommand{\spn}{\mathrm{span}}
 \newcommand{\class}{\mathrm{class}}
 \DeclareMathOperator{\Uniform}{Uniform}
 \DeclareMathOperator{\rank}{rank}
+
+% Additional notation for this paper
+\newcommand{\W}{W}                          % stored-pattern span
+\newcommand{\Rz}{\mathcal{R}(z)}            % row space of the solution matrix
+\newcommand{\proj}{\pi}                     % class-naming quotient projection
+\newcommand{\Quot}{Q}                       % class quotient GF(2)^M / C
+\newcommand{\supp}{\mathrm{supp}}           % stored value support
+\newcommand{\Adv}{\mathsf{Adv}}             % distinguishing advantage
+\newcommand{\al}{\alpha}                    % codespace share alpha(v)
+\newcommand{\bz}{\mathbf{z}}                % solution matrix
+\newcommand{\ay}{a_y}                       % band-indicator vector for key y
+\newcommand{\cx}{c(x)}                      % stored canonical codeword of x
+\newcommand{\lawreal}{\mu_{\mathrm{real}}}  % real non-member output law
+\newcommand{\lawM}{\mu_{M1}}                % idealized (M1) non-member law
+\newcommand{\inter}{\cap}
 
 \title{Codec-Controlled Retrieval:\\
 Structural Frequency-Hiding from the Non-Member Channel of XOR Retrieval}
@@ -47,82 +63,1277 @@ Structural Frequency-Hiding from the Non-Member Channel of XOR Retrieval}
 \maketitle
 
 \begin{abstract}
-% TODO (papermill:draft): abstract. Working claim:
-% Homogeneous ribbon (XOR) retrieval is a free distribution-transforming
-% decoder. The value returned for a non-member key is uniform on the GF(2)
-% span W of the stored codewords, so a public codec fixes the off-set output
-% distribution, and that distribution is independent of how often each value
-% was stored. Codec control holds exactly when W spans the codec's class
-% quotient (a sharp rank threshold, the headline result). This yields a
-% structural frequency-hiding property native to a static data structure,
-% complementing the random-oracle construction of the cipher-maps companion
-% and the online mechanisms of frequency-smoothing databases.
-\emph{Abstract to be drafted (see source/construction-note.md for the full
-technical development).}
+A retrieval data structure (Bloomier, ribbon, XOR, binary-fuse) returns a value
+for \emph{every} key, with no membership gate. For keys it was built on it returns
+the stored value in near-optimal space; for every other key it returns, in the
+words of the literature, an arbitrary value, junk, a don't-care. We show that
+junk is a designable object. For homogeneous ribbon (XOR) retrieval, where a query
+is the $\GF$-linear form $\mathrm{lookup}(y)=\ay^{\mathsf T}\bz$, the value returned
+for a non-member key lies in the $\GF$ span $\W$ of the stored codewords, and under
+an idealized uniform-on-$\W$ model it follows a law fixed by a public value codec
+rather than by the private data. That law is provably independent of how often each
+value was stored: the span depends only on \emph{which} values are present, never on
+their multiplicities. The control is governed by a sharp threshold. Full codec
+control holds if and only if the stored codewords are transversal to the codec's
+class partition, equivalently $\rank \proj|_{\W} = \log_2 K$, a step function of an
+integer rank with no graded regime; below it whole codec classes receive exactly
+zero probability. We cash this out as a structural frequency-hiding property: in a
+distinguishing game (FreqDist) an adversary with non-member oracle access has
+advantage exactly zero in the idealized model and at most $2(\delta_0+\delta_1)$ in
+the real construction, where $\delta$ is a small, scale-independent,
+redundancy-governed deviation we measure to be at or below the query-sampling floor
+($0.00334$ at $10^5$ queries) up to $10^7$ keys. We are honest about the perimeter:
+a second, multi-instance attack (a coincidence oracle with accuracy
+$1-\tfrac12\sum_v \al(v)^t$) pulls the codec the opposite way, so there is no single
+optimal codec, only a public tunable frontier. The construction is a header-only
+C++23 implementation, and every theorem has a passing empirical check at scale. The
+result is the concrete $\GF$-linear instantiation of a frequency-hiding property
+that online encrypted-database defenses pay for per query.
 \end{abstract}
 
 % =====================================================================
-% This is a BOOTSTRAP SKELETON. The full technical substance (theorems
-% T1 to T5, the FreqDist security model, experiments E1 to E4, and the
-% related-work ledger) is developed in source/construction-note.md, the
-% snapshot of the maph note that is this paper's source of record. The
-% section stubs below mirror that note; papermill drafting fills them.
-% Source of record: maph/docs/codec_controlled_retrieval.md @ commit a79d9c0.
+% Source of record: source/construction-note.md (the proven, reviewed
+% maph note). This draft RESHAPES that content into PoPETs venue prose;
+% all theorem statements, bounds, and numbers are transcribed faithfully.
 % =====================================================================
 
 \section{Introduction}
 \label{sec:intro}
-% TODO: motivation (retrieval structures treat non-member output as junk;
-% we characterize and control it), the contribution tiers (A baseline law,
-% B survives the move to linear retrieval, C the sharp span threshold),
-% and positioning against cipher-maps / Honey Encryption / PANCAKE-FSE-NKW.
 
-\section{Preliminaries and notation}
+Outsourced and encrypted key-value lookup has a persistent weakness: it leaks how
+often each value occurs. Deterministic and property-preserving encryption, used to
+make an encrypted store searchable, is the cautionary baseline. Equal ciphertexts
+mean equal plaintexts, so the histogram of stored ciphertexts is the histogram of
+plaintexts up to relabeling, and an adversary with auxiliary frequency knowledge
+recovers the mapping. This is the inference attack of Naveed, Kamara, and Wright on
+property-preserving encrypted databases~\cite{naveed2015inference}. The defenses
+that answer it, frequency-smoothing encryption~\cite{lacharite2018fse} and
+PANCAKE~\cite{grubbs2020pancake}, hide frequency by acting \emph{online}: they pad,
+re-encode, or inject fake accesses at query or insert time, paying bandwidth or
+maintenance per operation.
+
+This paper studies a surface those defenses overlook. A \emph{retrieval} structure,
+the static-function family that includes Bloomier filters~\cite{chazelle2004bloomier},
+ribbon and BuRR retrieval~\cite{dillinger2021ribbon,dillinger2022burr}, and
+binary-fuse filters~\cite{graf2022binaryfuse,graf2020xor}, returns a value for every
+key, member or not, with no membership test. For a key in the built set it returns
+the stored value in space close to the information-theoretic minimum. For a key not
+in the set it returns something the literature is unanimous in calling
+\emph{arbitrary}: a don't-care, the price of a construction that only needs to be
+correct on the member set. Nobody characterizes what that arbitrary value
+\emph{is}. As recently as 2025, the state of the art in static
+retrieval~\cite{hu2025retrieval} leaves the off-set output distribution
+uncharacterized.
+
+We fill exactly that silence, and find it was hiding a designable, provable object.
+Our vehicle is homogeneous ribbon retrieval, in which a query is a $\GF$-linear
+functional of a fixed solution matrix: $\mathrm{lookup}(y) = \ay^{\mathsf T}\bz$,
+where $\bz$ stacks the solved solution rows and $\ay$ is the per-key coefficient
+vector. (We stress at the outset that $\ay$ is a \emph{dense} band of roughly
+$64$ bits, not a sparse $3$-wise XOR; the linear-algebra view, not the
+sparse-hypergraph view, is what drives our results.) Because a query is linear, its
+reachable outputs live in a subspace, and that single fact organizes everything that
+follows.
+
+\paragraph{Contributions.}
+We state the contribution in three honestly-separated tiers, leading with what is
+new and crediting what is not.
+\begin{itemize}
+  \item \textbf{(A, baseline, cited not claimed.)} That a value codec's codespace
+  allocation can shape a non-member output distribution is \emph{known}. It is the
+  author's own result for a random-oracle singular-hash-map
+  construction~\cite{towell_bernoulli_maps}, and it is the
+  distribution-transforming-encoder idea behind Honey
+  Encryption~\cite{juels2014honey,cheng2019pmte}. We use it as established
+  background and do not headline it.
+  \item \textbf{(B, novel.)} The same codec-output law \emph{survives} the move to a
+  $\GF$-linear retrieval structure, where the non-member output is an XOR of solution
+  rows confined to a stored subspace, not a fresh uniform hash. Uniformity is no
+  longer assumed; it becomes a statement about a row space, and it can fail. We prove
+  the output support is exactly the stored span (\cref{thm:support}), give the
+  idealized law (\cref{thm:idealized}), and prove it is independent of storage
+  frequency (\cref{thm:freqindep}).
+  \item \textbf{(C, headline.)} Control holds or fails by a \emph{sharp threshold}.
+  The non-member law equals the codec's codespace shares if and only if the stored
+  codewords are transversal to the codec's class partition, $\rank \proj|_{\W} =
+  \log_2 K$, a step function of an integer rank with no graded regime
+  (\cref{thm:threshold}). Below it, whole codec classes receive exactly zero
+  probability. This threshold appears nowhere we are aware of, internal or external.
+\end{itemize}
+On the security side, we formalize a distinguishing game (FreqDist) in which the
+idealized adversary advantage is \emph{exactly zero} (\cref{thm:freqdist-ideal}) and
+the real advantage is at most $2(\delta(p_0)+\delta(p_1))$
+(\cref{thm:freqdist-real}), where $\delta$ is the small, scale-independent deviation
+of the real construction from the idealization, measured to be at or below the
+query-sampling floor up to ten million keys. We implement the construction
+(header-only C++23) and validate every theorem empirically at scale. Finally, we are
+honest about the perimeter: a structurally different multi-instance attack, a
+coincidence oracle, is defeated by the \emph{opposite} codec choice, so there is no
+single optimal codec, only a public tunable lever between two security objectives.
+
+\paragraph{Threat model, in one breath.}
+The adversary has oracle access to a single deployed instance and queries it on keys
+of its choice, observing returned values. It restricts attention to \emph{non-member}
+keys (member keys trivially return their stored value), and its goal is to recover
+the storage-frequency distribution of values in the member set. We defend exactly
+this channel against exactly this attack; access-pattern, volume, and size leakage
+are out of scope, and the static structure offers no online guarantee. The honest
+statement is narrow and strong.
+
+\paragraph{Positioning.}
+This is the construction-and-experiments companion to the cipher-maps
+framework~\cite{towell2026ciphermaps}, whose abstraction has random-oracle and
+RecSplit backends but no linear-retrieval backend. We supply the $\GF$-linear backend
+and prove its structural frequency-hiding property. The opposite-pull between our two
+attacks is, concretely, the linear-retrieval instance of the cipher-maps
+$(\TV, \text{length})$ Pareto frontier.
+
+\section{Background and the linear-retrieval view}
 \label{sec:prelim}
-% TODO: codecs and codespace shares alpha(v); ribbon/XOR retrieval as a
-% GF(2)-linear map lookup(y) = a_y^T z; the stored-codeword span
-% W = span{c(x)}; the idealized model M1.
 
-\section{The non-member output is uniform on the stored span (T1, T2)}
+We give the $\GF$ lens and the notation the theorems need. Throughout, arithmetic on
+$M$-bit patterns is over the field $\GF$: vector addition is bitwise XOR, scalar
+multiplication is bitwise AND, and an $M$-bit pattern is an element of the vector
+space $\GF^M$. We write $a^{\mathsf T}\bz$ for the $\GF$ matrix-vector product (an
+XOR of selected rows of $\bz$), $v \in \W$ for membership, $A \subseteq B$ for
+inclusion, $A \inter B$ for intersection, and $|A|$ for cardinality.
+
+\subsection{Codecs, classes, and codespace shares}
+
+A value codec is a pair of maps $\enc : V \to \GF^M$ and $\dec : \GF^M \to V$ over an
+$M$-bit pattern space, with $\dec(\enc(v)) = v$ for every logical value $v$. The
+codec partitions $\GF^M$ into \emph{decode classes}
+\[
+  \class(v) = \{\, p \in \GF^M : \dec(p) = v \,\},
+\]
+one per value, and assigns each value a canonical pattern $\enc(v)$ in its class. The
+\emph{codespace share} of $v$ is the fraction of patterns that decode to it,
+\[
+  \al(v) = \frac{|\class(v)|}{2^M}.
+\]
+A \emph{balanced} codec gives every one of its $K$ values a codeword of equal length
+$\log_2 K$, so every class has the same size and $\al(v) = 1/K$. A \emph{skewed} codec
+(a genuine Huffman code, say) gives shorter codewords to favored values, so classes
+have unequal sizes and $\al$ is concentrated. We use \texttt{prefix\_codec}, whose
+canonical patterns are \emph{left-aligned}: $\enc(v)$ places $v$'s codeword in the top
+codeword bits and zeros the low bits. This left-alignment is a structural feature we
+exploit later.
+
+\subsection{Ribbon retrieval as a linear form}
+
+A homogeneous ribbon retrieval structure over a key set $S$ stores a solution vector
+of $m$ entries, each an $M$-bit pattern; stack them as the rows of an $m \times M$
+matrix $\bz$ over $\GF$. For a key $y$ the structure computes a band specification
+$(\mathrm{start}, \mathrm{coeffs})$, where $\mathrm{coeffs}$ is a $64$-bit odd word
+and $\mathrm{start}$ is a legal band offset, and returns the XOR of the solution rows
+selected by the set bits of $\mathrm{coeffs}$ placed at offset $\mathrm{start}$.
+Collecting those selected positions into a band-indicator vector $\ay \in \B^m$ (bit
+$\mathrm{start}+j$ of $\ay$ equals bit $j$ of $\mathrm{coeffs}$, and $0$ elsewhere),
+\begin{equation}
+  \mathrm{lookup}(y) = \ay^{\mathsf T}\bz.
+  \label{eq:linear}
+\end{equation}
+This is the central structural fact: \emph{lookup is a $\GF$-linear function of the
+fixed solution matrix $\bz$}, with the per-key coefficient vector $\ay$. The vector
+$\ay$ is a dense band of up to $64$ set bits (about $32$ on average, since a
+pseudorandom odd word has about half its bits set), all confined to a single
+$64$-slot window. It is emphatically \emph{not} a $3$-wise XOR. We use only linearity
+in this section.
+
+The builder solves the banded $\GF$ system so that, for every member $x \in S$,
+\begin{equation}
+  \ay[x]^{\mathsf T}\bz \;=\; \cx, \qquad \cx = \enc(v(x)),
+  \label{eq:member}
+\end{equation}
+where $\cx$ is the stored canonical codeword of $x$'s value (the right-hand side for
+$x$'s row); ``solvable instance'' means forward elimination plus back-substitution
+produced a $\bz$ satisfying every such equation, which the builder verifies before
+returning. Ribbon retrieval realizes this in space near $r|S|$ bits for an $r$-bit
+value, riding on a practical, well-studied substrate~\cite{dillinger2022burr};
+nothing in our analysis disturbs that space bound.
+
+\subsection{The stored span and the idealized model}
+
+Define the \emph{stored-pattern span}
+\begin{equation}
+  \W \;=\; \spn_{\GF}\{\, \cx : x \in S \,\},
+  \label{eq:Wdef}
+\end{equation}
+the $\GF$ subspace of $\GF^M$ generated by the stored canonical codeword patterns. We
+also write
+\[
+  \Rz = \{\, a^{\mathsf T}\bz : a \in \B^m \,\} = \spn_{\GF}\{\text{rows of }\bz\}
+\]
+for the row space of $\bz$, the set of all $\GF$ combinations of its rows. By
+\eqref{eq:linear} every query output is an element of $\Rz$, so the reachable outputs
+are confined to a subspace fixed by what was stored. The whole paper is the
+consequence of that confinement.
+
+Two of our results characterize the \emph{real} construction (the output support
+$\W$, and the deviation $\delta$); two characterize an \emph{idealized} model, which
+we name and flag up front.
+\begin{definition}[Idealized model M1]
+\label{def:M1}
+For a non-member query $y$, model the pre-decoding output as a uniform draw from the
+stored span:
+\[
+  \text{M1:}\qquad \ay^{\mathsf T}\bz \;\sim\; \Uniform(\W),
+  \quad\text{i.e.}\quad
+  \Pr[\ay^{\mathsf T}\bz = w] = 1/|\W| \text{ for every } w \in \W.
+\]
+\end{definition}
+M1 is an \emph{idealization}, not a derived fact: it posits flatness across the
+proven support $\W$. The real band $\ay$ is the deterministic image of a fingerprint
+of $y$, its $64$-bit word is pinned odd, and a single band cannot reach two rows more
+than $63$ apart, so the real band induces only a \emph{near}-uniform law on $\W$.
+We adopt M1 as the maximally-mixing reference, study its consequence in
+\cref{sec:t1t2,sec:t3,sec:t4}, and quantify the gap to the real construction
+separately in \cref{sec:t5}. Keeping that division explicit is what lets us be precise
+about which claims are theorems and which are measurements.
+
+\section{The non-member output is uniform on the stored span}
 \label{sec:t1t2}
-% TODO: from source-note T1/T2. R(z) = W; under M1, P(out=v) = |class(v) cap W|/|W|.
 
-\section{Frequency independence (T3)}
+This section establishes the support of the non-member output (a proven fact about
+the real construction) and the idealized law on that support. Throughout we fix one
+solvable ribbon instance over $S$ with a value codec, and read the builder's behavior
+as stated in \cref{sec:prelim}. We separate the two results: \cref{thm:support}
+(support) is unconditional; \cref{thm:idealized} (law) is conditional on M1.
+
+\subsection{The output support is exactly the stored span}
+
+\begin{theorem}[Output support]
+\label{thm:support}
+The row space of the solved solution matrix satisfies $\Rz = \W$. Consequently every
+query output (member or non-member) lies in $\W$, and the reachable non-member outputs
+span $\W$.
+\end{theorem}
+
+\begin{proof}[Proof sketch]
+We prove the two inclusions; the full induction is in \cref{app:proofs}.
+\emph{($\W \subseteq \Rz$.)} Each generator $\cx$ of $\W$ is a member output:
+$\cx = \ay[x]^{\mathsf T}\bz$ by \eqref{eq:member}, hence a row-space element by
+\eqref{eq:linear}. A subspace generated by elements of $\Rz$ lies in $\Rz$, so
+$\W \subseteq \Rz$.
+\emph{($\Rz \subseteq \W$.)} We show every row of $\bz$ lies in $\W$, by reading how
+back-substitution fills $\bz$. The builder value-initializes every slot to the zero
+pattern and assigns only pivot columns, so (P1) free slots are zero (and $0 \in \W$).
+For pivot slots, the right-hand side carried through forward elimination is always an
+XOR of the stored values $\cx$ and of earlier such right-hand sides, hence an element
+of $\W$; back-substitution then sets each pivot slot to such an element XORed with
+already-assigned downstream slots, which by induction on decreasing column index are
+themselves in $\W$. Out-of-range references contribute $0 \in \W$. Hence (P2) every
+pivot slot lies in $\W$. By (P1) and (P2) every row of $\bz$ is in $\W$, so a query
+output $a^{\mathsf T}\bz$, an XOR of rows, is in $\W$; thus $\Rz \subseteq \W$.
+Combining, $\Rz = \W$. Every output therefore lies in $\W$, and since each generator
+$\cx$ is realized by its own member key $x$, the reachable non-member outputs span
+$\W$.
+\end{proof}
+
+\Cref{thm:support} is the proven invariant: the row space, quantified over
+\emph{all} coefficient vectors $a \in \B^m$ (not only the realizable band-indicators
+$\ay$), equals $\W$. We claim only what is true about the reachable set: it is
+contained in $\W$ and spans $\W$, but it need not equal $\W$ as a raw set, since a
+non-generator element of $\W$ (an XOR of two or more $\cx$) need not be the output of
+any single band-indicator.
+
+\begin{remark}[Genericity, stated explicitly]
+\label{rem:genericity}
+\Cref{thm:support} uses exactly two facts about the solved instance: free slots are
+zero, and every occupied slot is a $\GF$ combination of the stored right-hand sides.
+Both are guaranteed by the builder as written: no step injects a pattern outside $\W$
+(no random fill of free slots, no fingerprint salt added to a value). A future builder
+variant that filled free slots with nonzero patterns, or added a non-$\W$ constant to
+a right-hand side, would break this; the property is one of \emph{this} builder, not
+of ribbon retrieval in the abstract. A computational check (tag \texttt{[span]})
+confirms the inclusion: across $30{,}000$ distinct non-member queries every output's
+re-encoded canonical pattern landed in $\W$, with zero violations.
+\end{remark}
+
+\subsection{The idealized law on the stored span}
+
+\begin{theorem}[Idealized non-member law]
+\label{thm:idealized}
+Under the idealized model M1 (\cref{def:M1}), the non-member output law is
+\begin{equation}
+  \Pr[\mathrm{out}(y) = v] \;=\; \frac{|\class(v) \inter \W|}{|\W|}.
+  \label{eq:idealized}
+\end{equation}
+\end{theorem}
+
+\begin{proof}
+The codec composition decodes the pre-decoding output, so
+$\mathrm{out}(y) = \dec(\ay^{\mathsf T}\bz)$, and therefore
+\[
+  \Pr[\mathrm{out}(y) = v] = \Pr[\ay^{\mathsf T}\bz \in \class(v)].
+\]
+Under M1 the pre-decoding output is uniform on $\W$, so the probability of landing in
+any subset of $\GF^M$ equals the fraction of $\W$ that the subset contains:
+\[
+  \Pr[\ay^{\mathsf T}\bz \in \class(v)]
+  = \Pr[\ay^{\mathsf T}\bz \in \class(v) \inter \W]
+  = \frac{|\class(v) \inter \W|}{|\W|}.
+\]
+The intersection with $\W$ is automatic, since $\ay^{\mathsf T}\bz \in \W$ always by
+\cref{thm:support}. A value whose entire class misses $\W$ receives probability zero,
+regardless of how the codec weights it; this geometric fact is the seed of the
+threshold in \cref{sec:t4}.
+\end{proof}
+
+\Cref{thm:idealized} is exactly the conditional statement ``given the uniform-on-$\W$
+action of M1, the codec-controlled formula holds''. It says nothing about how close
+the real construction comes to M1; the real band is only near-uniform on $\W$, and
+quantifying that residual is the separate subject of \cref{sec:t5}.
+
+\begin{remark}[Why we adopt M1 on the image, not on the band support]
+One might hope to derive M1 from the more primitive assumption that $\ay$ is uniform
+on its band support $A$. The standard tool (image of a uniform vector under a linear
+map: $L(U)$ is uniform on $L(A)$ when fibers are equal-sized) requires $A$ to be a
+subspace surjecting onto $\W$. It does not apply here: $A$ excludes the zero vector,
+pins the low bit of the band word to $1$, and confines all set bits to a single
+window, so $A$ is not a subspace and the equal-fiber hypothesis is generically false.
+Surjectivity $L(A) = \W$ alone does not give uniformity. We therefore adopt uniformity
+on the image $\W$ directly. (For the linear map itself, $\mathrm{im}\, L = \Rz = \W$
+over the \emph{full} domain $\B^m$, which is \cref{thm:support}; we do not conflate
+that with the stronger and false claim that the band support alone surjects with equal
+fibers.)
+\end{remark}
+
+\section{Frequency independence}
 \label{sec:t3}
-% TODO: W depends only on the value support, not multiplicities.
 
-\section{The sharp codec-control threshold (T4)}
+We now isolate exactly what the non-member law depends on. Storing a key-value map
+fixes two separate things: the value \emph{support} (the set of distinct values that
+occur) and the \emph{multiplicities} (how many keys carry each value). The next result
+says the non-member law is a function of the support and the codec only; the
+multiplicities never enter. This is the security lemma the frequency-analysis result
+of \cref{sec:security} rests on.
+
+Fix the codec. A key-value assignment over $S$ induces, for each value $v$ in the
+support, a stored canonical pattern $\cx = \enc(v(x))$ that depends only on $v(x)$,
+not on $x$: two keys mapped to the same value store the same pattern. Write the
+multiplicities $m_v = |\{x \in S : v(x) = v\}|$ and the underlying \emph{set} of
+distinct stored patterns
+\[
+  \supp = \{\, \cx : x \in S \,\} = \{\, \enc(v) : v \in \text{support} \,\}.
+\]
+The set $\supp$ has one element per distinct value, regardless of how many keys
+realize it; it is fixed by the value support alone.
+
+\begin{theorem}[Frequency independence]
+\label{thm:freqindep}
+Fix a codec. Let two key-value assignments have the same value support but arbitrary,
+possibly very different, multiplicities $m_v$ and $m_v'$. Then they induce the same
+stored span $\W$, and therefore the same idealized non-member law
+$\Pr[\mathrm{out} = v] = |\class(v) \inter \W| / |\W|$.
+\end{theorem}
+
+\begin{proof}
+By \eqref{eq:Wdef}, $\W = \spn_{\GF}\{\cx : x \in S\} = \spn_{\GF}(\supp)$. The span of
+a multiset of vectors equals the span of its underlying set: a repeated generator adds
+nothing to the set of $\GF$ combinations, since using it twice cancels
+($g \oplus g = 0$) and using it once is already available from a single copy. Hence
+$\W = \spn_{\GF}(\supp)$ depends on $\supp$ only, and $\supp$ is fixed by the value
+support independently of the $m_v$. So $\W$ is invariant under any change of the $m_v$
+that preserves the support. By \cref{thm:idealized} the idealized law is a function of
+$\W$ and the codec's decode classes only, both independent of the $m_v$; therefore the
+idealized non-member law is independent of the storage frequencies.
+\end{proof}
+
+In the real construction the two laws are not exactly equal: each build solves a
+different banded system and so has its own near-uniform (rather than exactly uniform)
+law on the shared $\W$. The two real laws therefore differ only by the per-build
+deviation from $\Uniform(\W)$ characterized in \cref{sec:t5}, a quantity bounded there
+and independent of the storage frequencies; no frequency-dependent term appears in
+either the idealized law or that error budget.
+
+\paragraph{Consequence for security.}
+An adversary who probes the structure with non-member keys is sampling from the law of
+\eqref{eq:idealized} (up to the \cref{sec:t5} deviation). Because the multiplicities
+$m_v$ never enter that law, no amount of non-member probing reveals them: two databases
+with identical support but opposite frequency profiles (one almost entirely a single
+value, the other balanced) present statistically indistinguishable non-member outputs.
+The channel leaks the support and the codec, both public design choices, and nothing
+about how often each value is stored. This is what lets the FreqDist game of
+\cref{sec:security} argue that classical frequency analysis has no purchase here.
+
+\paragraph{Computational confirmation.}
+The contrastive check (tag \texttt{[contrastive]}) builds two structures with the same
+codec (prefix lengths $A{:}1$, $B{:}2$, $C{:}2$) and the same support $\{A,B,C\}$ but
+storage frequencies $99\% / 0.5\% / 0.5\%$ and $50\% / 25\% / 25\%$, a raw frequency
+gap up to $0.49$. Over $30{,}000$ distinct keys the two non-member distributions agree
+per value to within $0.0035$ ($A$), $0.0044$ ($B$), $0.0009$ ($C$), far below the
+$0.49$ gap that would appear if storage frequency leaked, and both sit within $0.03$ of
+the codec shares $0.50 / 0.25 / 0.25$ predicted by \cref{thm:idealized}. The residual
+is the per-build deviation of \cref{sec:t5}, not a frequency-dependent term.
+
+\section{The sharp codec-control threshold}
 \label{sec:t4}
-% TODO: the headline. Full control iff rank(pi|_W) = log2 K (transversality);
-% sharp transition; the gf2_rank(stored) bridge.
 
-\section{Real-incidence deviation (T5)}
+\Cref{thm:idealized} gives the idealized law $|\class(v) \inter \W| / |\W|$;
+\cref{thm:freqindep} shows it depends only on the support and the codec. This section
+answers the next question precisely: for which supports does that law equal the
+codec's own codespace shares, $\Pr[\mathrm{out} = v] = \al(v)$ for \emph{every} $v$
+(``full codec control''), and what happens at the boundary? The answer is a single
+sharp threshold, stated as transversality of $\W$ to the codec's class partition, with
+\emph{no} intermediate regime. This is the headline result.
+
+\subsection{A balanced linear codec and its class partition}
+
+We work with a balanced linear codec: all $K = 2^{\log_2 K}$ values have codewords of
+equal length $\log_2 K$, so $\al(v) = 1/K$ for every $v$. ``Linear'' is a property of
+the class partition, made precise as follows. Let the \emph{homophone subspace} be the
+set of patterns whose top $\log_2 K$ codeword bits are zero,
+\[
+  C = \{\, p \in \GF^M : \text{the top } \log_2 K \text{ bits of } p \text{ are } 0 \,\},
+\]
+a $\GF$ subspace of dimension $M - \log_2 K$ with $|C| = 2^{M - \log_2 K}$. The key
+structural fact is that the codec's classes are exactly the cosets of $C$: two
+patterns decode equally iff they share their top $\log_2 K$ bits, iff they differ by an
+element of $C$. So each class is a coset $t + C$ of size $|C|$, and
+$\al(v) = |C|/2^M = 2^{-\log_2 K} = 1/K$. Form the value quotient
+\[
+  \Quot = \GF^M / C,
+\]
+a $\GF$ space of dimension $\log_2 K$ whose $K$ points are the $K$ classes, and let
+$\proj : \GF^M \to \Quot$ be the quotient map (projection onto the top $\log_2 K$
+codeword bits). Then $\proj(p)$ names the class of $p$, and $\proj$ is $\GF$-linear and
+surjective with kernel $C$. For \texttt{prefix\_codec} the canonical patterns are
+left-aligned, so they lie in a transversal of $C$ and $\proj$ is injective on the set
+of canonical patterns; we use this at the end.
+
+\subsection{The subspace-meets-coset lemma}
+
+\begin{lemma}[Subspace meets coset]
+\label{lem:subspace-coset}
+Let $\W$ be a $\GF$ subspace of $\GF^M$ and $t + C$ any coset of $C$. Then
+$\W \inter (t + C)$ is either empty or a coset of $\W \inter C$; in particular its size
+is either $0$ or $|\W \inter C|$, a constant independent of $t$.
+\end{lemma}
+
+\begin{proof}
+If the intersection is empty there is nothing to prove. Otherwise pick
+$w_0 \in \W \inter (t + C)$; we claim $\W \inter (t + C) = w_0 + (\W \inter C)$. For
+the forward inclusion, take $w \in \W \inter (t + C)$. Both $w, w_0 \in \W$, so
+$w \oplus w_0 \in \W$; both lie in $t + C$, so $w \oplus w_0 \in
+(t+C) \oplus (t+C) = C$. Hence $w \oplus w_0 \in \W \inter C$ and
+$w = w_0 \oplus (w \oplus w_0) \in w_0 + (\W \inter C)$. For the reverse, any
+$w_0 \oplus u$ with $u \in \W \inter C$ lies in $\W$ (both terms in $\W$) and in
+$t + C$ ($w_0 \in t+C$, $u \in C$). Thus the intersection is the coset
+$w_0 + (\W \inter C)$, of size $|\W \inter C|$.
+\end{proof}
+
+The lemma is the crux: a subspace meets every class it touches in the \emph{same}
+number of points, so the per-class mass is two-valued, a fixed positive constant on hit
+classes and zero on missed classes. There is no room for a class to be partially filled
+at an intermediate density.
+
+\subsection{The mass on each class is $0$ or $1/K'$}
+
+Apply \cref{lem:subspace-coset} with the classes $\class(v) = t_v + C$. The per-class
+idealized mass is $q(v) = |\class(v) \inter \W| / |\W|$, which is $0$ if $\W$ misses
+$\class(v)$ and $|\W \inter C| / |\W|$ (the same value on every hit class) otherwise. A
+class is hit iff some $w \in \W$ has $\proj(w) = \proj(t_v)$, that is, iff the class,
+as a point of $\Quot$, lies in $\proj(\W)$. So the number of hit classes is
+\[
+  K' := |\proj(\W)| = 2^{\rank \proj|_{\W}},
+\]
+a subspace of $\Quot$, hence a power of two. Restricting $\proj$ to $\W$, the map
+$\proj|_{\W} : \W \to \Quot$ has image $\proj(\W)$ and kernel $\W \inter C$, so the
+first isomorphism theorem (equivalently rank-nullity over $\GF$) gives the counting
+identity $|\W| = |\proj(\W)| \cdot |\W \inter C| = K' \cdot |\W \inter C|$. The constant
+hit-class mass is therefore
+\[
+  \frac{|\W \inter C|}{|\W|} = \frac{1}{|\proj(\W)|} = \frac{1}{K'}.
+\]
+The entire idealized law is the step function
+\[
+  q(v) =
+  \begin{cases}
+    1/K' & \text{if class } v \text{ is hit } (\proj(t_v) \in \proj(\W)), \\
+    0 & \text{if class } v \text{ is missed},
+  \end{cases}
+\]
+with exactly $K'$ classes hit, summing to $K' \cdot (1/K') = 1$.
+
+\subsection{Full control iff transversality, and sharpness}
+
+\begin{theorem}[Sharp codec-control threshold]
+\label{thm:threshold}
+For a balanced linear codec, full codec control ($q(v) = \al(v) = 1/K$ for every $v$)
+holds if and only if $\W$ is transversal to the class partition, that is
+\[
+  \proj(\W) = \Quot \quad\Longleftrightarrow\quad \rank \proj|_{\W} = \log_2 K.
+\]
+The transition is sharp: when $\proj(\W)$ is a proper subspace of $\Quot$ ($K' < K$,
+i.e.\ $\rank \proj|_{\W} < \log_2 K$), the $K'$ hit classes are each over-weighted to
+$1/K' > 1/K$ by the exact factor $K/K' > 1$, and the $K - K'$ missed classes are
+exactly zero. There is no intermediate regime: the mass vector is a step function of
+the integer $\rank \proj|_{\W}$, flipping to the flat $1/K$ profile precisely at
+$\rank \proj|_{\W} = \log_2 K$.
+\end{theorem}
+
+\begin{proof}
+Full control requires $q(v) = 1/K$ for every $v$, hence (from the step function) every
+class hit \emph{and} the common hit-class mass equal to $1/K$, i.e.\ $1/K' = 1/K$, i.e.\
+$K' = K$. Both hold iff $\proj(\W) = \Quot$, equivalently $\rank \proj|_{\W} = \log_2 K$
+(this is the transversality condition: $\W$ meets every coset of $C$). For sharpness,
+$K' = 2^{\rank \proj|_{\W}}$ is a power of two; raising $K'$ to the next attainable
+value is the only way the mass vector can change, and it jumps discontinuously. Below
+threshold the hit classes carry $1/K' > 1/K$ exactly and the missed classes carry $0$
+exactly, with no value strictly between $0$ and $1/K$ and no gradual drift toward
+$\al$.
+\end{proof}
+
+\subsection{The engineering bridge and a worked instance}
+
+For \texttt{prefix\_codec} the threshold becomes a concrete, checkable condition. The
+canonical patterns are left-aligned, so they lie in the transversal
+$T = \{p : \text{low } M - \log_2 K \text{ bits zero}\}$, itself a subspace with
+$T \inter C = \{0\}$ (an element of $T$ has its low bits zero, an element of $C$ has its
+top bits zero, and only $0$ satisfies both). Since the stored patterns lie in $T$ and
+$T$ is a subspace, $\W \subseteq T$, hence $\W \inter C \subseteq T \inter C = \{0\}$,
+so $\W \inter C = \{0\}$. With trivial kernel, $\proj$ is injective on all of $\W$, so
+$|\proj(\W)| = |\W|$ and
+\begin{equation}
+  \rank \proj|_{\W} = \dim \W = \mathrm{gf2\_rank}(\text{stored canonical patterns}).
+  \label{eq:bridge}
+\end{equation}
+The transversality threshold $\rank \proj|_{\W} = \log_2 K$ therefore reads as the
+engineering rule
+\[
+  \mathrm{gf2\_rank}(\text{stored canonical patterns}) = \log_2 K:
+\]
+store at least $\log_2 K$ linearly independent canonical patterns (enough distinct
+values that the stored codewords span the full codeword space). Below that rank,
+control is lost in the sharp way above; at or above it (the rank saturates at $\log_2 K$,
+since $\proj(\W)$ is a subspace of the $\log_2 K$-dimensional $\Quot$), control is full.
+
+\begin{example}[The length-2 codec on $M = 4$, $K = 4$]
+\label{ex:m4}
+The canonical patterns are $A = 0000$, $B = 0100$, $C = 1000$, $D = 1100$, each class of
+size $4$, $\al = 1/4$, with $\log_2 K = 2$.
+\begin{itemize}
+  \item Store $\{A, B\}$: patterns $\{0000, 0100\}$, $\mathrm{gf2\_rank} = 1 < 2$. Then
+  $\W = \{0000, 0100\}$, $K' = 2$, and the predicted mass over $[A,B,C,D]$ is
+  $[\tfrac12, \tfrac12, 0, 0]$: the two hit classes over-weighted to $1/K' = 1/2$, the
+  rest exactly zero.
+  \item Store $\{A, B, C\}$: patterns $\{0000, 0100, 1000\}$, $\mathrm{gf2\_rank} = 2 =
+  \log_2 K$. Now $D = 1100 = 0100 \oplus 1000$ lies in $\W$ \emph{though it was never
+  stored}, so $\W = \{0000, 0100, 1000, 1100\}$, $\proj(\W) = \Quot$, $K' = 4$, and the
+  predicted mass is $[\tfrac14, \tfrac14, \tfrac14, \tfrac14] = \al$. This is full
+  control, and it confirms that what matters is membership of a class in $\proj(\W)$, not
+  whether that class's value was stored.
+\end{itemize}
+The \texttt{[threshold]} check asserts these two vectors exactly (tolerance $10^{-9}$,
+the masses being dyadic rationals over the enumerated $|\W|$), with $\mathrm{gf2\_rank}$
+pinned at $1$ and $2$ respectively, tying the flip to the rank crossing $\log_2 K$. (The
+hit-class mass is $1/K' = |\W \inter C|/|\W|$ in general; it coincides with $1/|\W|$ here
+only because left-alignment forces $\W \inter C = \{0\}$, so $|\W \inter C| = 1$.)
+\end{example}
+
+\begin{remark}[The general skewed codec is open]
+\label{rem:skewed}
+The coset-counting argument uses one feature of the balanced case essentially: a
+\emph{single} homophone subspace $C$ describes the whole partition, so
+\cref{lem:subspace-coset} applies uniformly. A skewed codec (variable codeword lengths)
+has classes of unequal sizes $2^{M - \ell_v}$ that are cosets of \emph{different}
+subspaces $C_v$, so there is no common $C$ and the two-valued conclusion fails: different
+classes can in principle carry different positive densities. Full control still has a
+clean abstract statement, $|\class(v) \inter \W|/|\W| = \al(v)$ for every $v$ ($\W$ in
+general position with respect to the unequal partition), but characterizing which
+supports achieve it, and whether the skewed transition is still sharp or genuinely
+graded, is \emph{not} settled by the balanced argument, and we do not claim it. We state
+the balanced threshold as the proven, sharp result and explicitly defer the skewed case
+as open.
+\end{remark}
+
+\section{From the idealized model to the real construction}
 \label{sec:t5}
-% TODO: the empirical characterization; delta at the sampling floor,
-% scale-independent, redundancy-governed.
+
+\Cref{thm:idealized} is an idealization (M1): the real band is only near-uniform on
+$\W$, for three reasons recorded in \cref{def:M1}. We close that gap here, honestly.
+Writing $\lawreal$ for the actual non-member output law of a solved build and $\lawM$
+for the $\Uniform(\W)$-induced law, the object of interest is
+\[
+  \delta \;:=\; \TV(\lawreal, \lawM).
+\]
+Above the span threshold (\cref{thm:threshold}) the M1 law coincides with the codec's
+codespace shares $\al$, so $\delta$ is the total-variation distance between the real
+non-member law and $\al$. We treat this as a \emph{characterization} result: we attempt
+a clean closed-form bound, find it resists, and deliver an empirical characterization
+together with an honestly-labeled big-$O$ statement. We do \emph{not} prove a
+closed-form bound on $\delta$.
+
+\paragraph{Small and scale-independent.}
+The scale experiment (E3, \cref{sec:experiments}) fixes one above-threshold
+configuration, the balanced $M = 8$, $K = 8$ codec storing all eight values (stored
+patterns span a rank-$3 = \log_2 8$ subspace at every $N$), and sweeps the stored-key
+count $N$ across four orders of magnitude, measuring $\delta$ as mean
+TV-to-codespace over build seeds with $n_q = 10^5$ non-member queries per build. The
+deviation is \emph{small} (order $0.003$ in TV, two orders of magnitude below the
+$0.1$ scale that would signal a breakdown) and \emph{scale-independent} (flat in $N$
+from $10^4$ to $10^7$, if anything drifting weakly downward, with all confidence
+intervals overlapping). The ribbon's $\epsilon$ auto-scaling, which widens the band as
+$N$ grows to keep large systems solvable, does not degrade codec control: near-uniformity
+on $\W$ holds at ten million keys as at ten thousand.
+
+\paragraph{The deviation is at or below the sampling floor.}
+The crux of an honest characterization is to decide whether the measured $\sim 0.003$ is
+the \emph{systematic} deviation of the true law from M1 or merely the query
+sampling-noise floor. Each build estimates the non-member law from $n_q$ finite queries
+over $K$ classes; even if the true law were exactly uniform-on-$\W$ ($\delta = 0$), the
+empirical frequencies would fluctuate, producing a strictly positive observed
+TV-to-truth purely from sampling. Quantify that floor. Under M1 above threshold each
+class has probability $1/K$, the observed share is a $\mathrm{Binomial}(n_q, p_v)/n_q$
+count, and the expected sampling TV is
+\[
+  \mathbb{E}[\TVsamp] = \tfrac12 \sum_v \mathbb{E}|\hat p_v - p_v|.
+\]
+The summand is a \emph{mean absolute deviation} (not a standard error); for an
+approximately normal $\hat p_v$ it is the factor $\sqrt{2/\pi} \approx 0.80$ smaller than
+the standard error $\sqrt{p_v(1 - p_v)/n_q}$. Evaluating for the E3 settings ($K = 8$
+equal classes, $p_v = 1/8$, $n_q = 10^5$) via de Moivre's exact binomial MAD identity
+(the normal form agrees to four decimals),
+\[
+  \mathbb{E}[\TVsamp] = 0.00334.
+\]
+(A reader who instead sums per-class standard errors gets the cruder upper proxy
+$0.00418$, exactly the $1/0.80 = 1.25$ factor larger; we use the correct MAD-based
+$0.00334$.) The measured E3 mean TV is $0.0028$ to $0.0035$, and the floor $0.00334$ lies
+\emph{inside} all four confidence intervals, with the $N = 10^6$ point essentially on it
+and the $N = 10^7$ mean ($0.00284$) below it. The measured deviation therefore
+\emph{straddles} the floor rather than exceeding it. Modeling the systematic part $D$ as
+adding in quadrature with the sampling noise $S$ (heuristic, since TV is an
+$L^1$/mean-absolute quantity, not $L^2$), the most over-floor point implies
+$D \le 0.0011$ and the at-or-below points imply $D$ indistinguishable from zero. The
+strongest honest statement: at $n_q = 10^5$ the systematic deviation of the real band
+from $\Uniform(\W)$ is at or below the $\sim 0.0033$ sampling floor, below measurement
+resolution for support comfortably above threshold.
+
+\paragraph{The one visible effect is redundancy, not scale.}
+The genuine, visible deviation is governed not by $N$ but by storage
+\emph{redundancy}: how far above the span threshold $\W$ sits, i.e.\ how many independent
+stored keys back each codec class. The frequency-independence experiment (E2,
+\cref{sec:experiments}) fixes the skewed length-$\{1,2,2\}$ codec on support
+$\{V_0, V_1, V_2\}$, all profiles at rank $2 = \log_2 K$, and reports a per-build
+same-profile cross-seed baseline (build one profile twice, TV the two non-member laws),
+isolating per-build variance plus sampling noise. The three rich profiles (uniform
+$33/33/33$, mid $50/25/25$, skew\_b $90/5/5$) sit at the floor ($\sim 0.003$); the thin
+skew\_a profile ($99/0.5/0.5$) is elevated to $\sim 0.019$. The cause is thin support:
+at $99/0.5/0.5$ the minority values are each stored only about $25$ times, so although
+$\W$ reaches rank $2$, it does so with almost no redundancy, sitting at the threshold
+edge, and the solved band on that barely-spanning $\W$ is meaningfully less uniform per
+build. So $\delta$ is a function of the per-class storage redundancy and is essentially
+independent of $N$ for fixed redundancy. The scale-independence of E3 and the
+redundancy-dependence of E2 are the same statement from two directions: growing $N$ at
+fixed support richness does not move $\delta$, but thinning a class toward the threshold
+does.
+
+\begin{remark}[The elevation does not undermine frequency independence]
+\label{rem:elevation}
+Even in the thin-support elevated regime, the elevated deviation does \emph{not} encode
+storage frequency. The cross-profile advantage of E2 tracks the per-build baseline of
+the noisier profile, not the frequency gap: the three pairs that include skew\_a all land
+at the same $\sim 0.014$ magnitude despite very different frequency gaps, of the same
+order as skew\_a's own $\sim 0.019$ baseline, while a real $33$-vs-$90$ gap between two
+\emph{rich} profiles sits at the $\sim 0.0036$ floor. The elevation is symmetric
+per-build noise of the thin profile, not a frequency-difference signal: it loosens the
+constant in the FreqDist bound (\cref{sec:security}) without introducing any term that
+grows with the frequency gap.
+\end{remark}
+
+\begin{remark}[Honestly labeled deliverable]
+\label{rem:t5-bound}
+We state the empirical characterization, not a theorem. \textbf{Observation.} For
+support comfortably above threshold (each class backed by many independent keys),
+$\delta = O(\text{sampling floor})$ and is indistinguishable from zero at the measured
+query budget, scale-independently in $N$ up to $10^7$. As $\W$ approaches the threshold
+(a class backed by a handful of keys), $\delta$ grows mildly, to $\sim 0.017$ at the
+edge (minority classes stored $\sim 25$ times), governed by the per-class store count,
+not by $N$ or by the storage frequencies. \textbf{Conjecture (qualitative, not proven).}
+The visible part of $\delta$ is controlled by the redundancy beyond the threshold
+dimension, equivalently by the minimum per-class store count $m_{\min}$; $\delta$ sits at
+the floor once $m_{\min}$ is large and degrades only as $m_{\min}$ falls toward the
+minimum needed to span. A structural proof, presumably bounding the non-uniformity of a
+banded $\GF$ solution on $\W$ in terms of the number of independent equations pinning
+$\W$, is left open. This is deliberately weaker than \cref{thm:support,thm:idealized,%
+thm:freqindep,thm:threshold}, which are proven; \cref{sec:t5} is where the real
+construction meets the idealization, and the honest deliverable is the measurement plus
+the big-$O$.
+\end{remark}
 
 \section{Security: frequency-analysis resistance}
 \label{sec:security}
-% TODO: the FreqDist game; idealized advantage zero; real bound
-% Adv <= 2(delta(p0)+delta(p1)); independence not comparative; scope.
+
+We now cash out the theory as a security property. \Cref{thm:freqindep} established the
+lemma it rests on (the non-member law depends on the support and the codec only, never
+the multiplicities); \cref{sec:t5} established the deviation budget the real construction
+spends. This section states the game, proves the idealized advantage is exactly zero,
+bounds the real advantage by the \cref{sec:t5} budget, and is careful about the
+perimeter.
+
+\subsection{Threat model and the FreqDist game}
+
+The adversary has \emph{oracle} access to a single deployed instance: it queries chosen
+keys and observes returned values, adaptively. The restriction that makes for a clean
+statement is that it queries only \emph{non-member} keys (member keys return their stored
+canonical value by construction; the interesting channel is what the structure says about
+keys it was not built on). Its goal is to learn the storage-frequency distribution among
+the member set, the multiplicities $m_v$. This is the classical frequency-analysis
+surface: a deterministic substitution cipher, or deterministic encryption used as an
+encrypted-search index, leaks plaintext frequency directly, the attack of Naveed, Kamara,
+and Wright~\cite{naveed2015inference} that PANCAKE~\cite{grubbs2020pancake} neutralizes
+by smoothing the access distribution. Our point is that the non-member channel here leaks
+frequency \emph{structurally not at all}: not because frequencies are smoothed or padded,
+but because they never enter the law the channel samples from (\cref{thm:freqindep}).
+
+\begin{definition}[The FreqDist game]
+\label{def:freqdist}
+Fix a value support $\supp$ and a codec, both \emph{public}.
+\begin{enumerate}
+  \item The adversary $\mathcal{A}$ chooses two storage-frequency distributions $p_0$
+  and $p_1$ over the \emph{same} support $\supp$, with arbitrary, possibly very
+  different, multiplicities (e.g.\ $p_0$ piles almost all mass on one value, $p_1$ is
+  balanced; only the set of distinct values must agree, which fixes a common $\W$ by
+  \cref{thm:freqindep}).
+  \item The challenger samples $b \leftarrow \{0,1\}$, builds the structure from a key
+  set realizing $p_b$, and gives $\mathcal{A}$ oracle access.
+  \item $\mathcal{A}$ issues non-member queries, observes the decoded outputs, and outputs
+  a guess $b'$.
+\end{enumerate}
+The advantage is $\Adv(\mathcal{A}) = |2\Pr[b' = b] - 1|$, the standard distinguishing
+advantage. The game is meaningful above the span threshold (\cref{thm:threshold}); we
+assume $\rank \proj|_{\W} = \log_2 K$, the natural deployment regime in which both
+profiles induce full codec control over the common $\W$.
+\end{definition}
+
+\subsection{Idealized advantage is exactly zero}
+
+\begin{theorem}[FreqDist, idealized]
+\label{thm:freqdist-ideal}
+Under the idealized model M1 the FreqDist advantage is exactly zero:
+$\Adv(\mathcal{A}) = 0$ for every adversary, computationally unbounded and adaptive
+included.
+\end{theorem}
+
+\begin{proof}
+By \cref{thm:freqindep}, $\W$ is a function of $\supp$ alone and invariant under any
+change of the multiplicities preserving the support; $p_0$ and $p_1$ share $\supp$, hence
+induce the same $\W$. By \cref{thm:idealized} the idealized non-member law under either
+profile is $|\class(v) \inter \W|/|\W|$, a function of $\W$ and the codec's classes only,
+with no multiplicity term. Both inputs are identical for $p_0$ and $p_1$, so the
+non-member law under $p_0$ equals that under $p_1$: the two oracles are the \emph{same}
+distribution. No function of identically distributed observations can distinguish their
+source, so $\Pr[b' = b] = 1/2$ for every $\mathcal{A}$ regardless of the number or
+adaptivity of queries, and $\Adv(\mathcal{A}) = 0$.
+\end{proof}
+
+The advantage is zero not because distinguishing is hard but because there is nothing to
+distinguish: the two oracles are one and the same law.
+
+\subsection{Real advantage at most twice the summed deviation}
+
+In the real construction the two oracles are not exactly equal: each profile's build
+solves its own banded system, inducing its own near-uniform law on the shared $\W$. Write
+$\lawreal(p_b)$ for the real non-member law under $p_b$ and recall
+$\delta(p_b) = \TV(\lawreal(p_b), \lawM)$, the per-build deviation from the shared M1 law
+(the same object for both, being frequency-independent by \cref{thm:freqindep}).
+
+\begin{theorem}[FreqDist, real]
+\label{thm:freqdist-real}
+$\Adv(\mathcal{A}) \le 2\big(\delta(p_0) + \delta(p_1)\big)$ for every adversary.
+\end{theorem}
+
+\begin{proof}
+The standard fact that distinguishing advantage is bounded by total variation gives,
+for any adversary observing samples from one of the two laws,
+$\Adv(\mathcal{A}) \le 2\,\TV(\lawreal(p_0), \lawreal(p_1))$. (The factor $2$ is the
+convention of
+$\Adv = |2\Pr[b'=b]-1|$; with $\Adv = |\Pr[b'=b]-\tfrac12|$ the bound reads $\le \TV$, and
+the optimal single-sample distinguisher achieves exactly the TV.) Routing through the
+common M1 law and using the triangle inequality for TV,
+\[
+  \TV(\lawreal(p_0), \lawreal(p_1))
+  \le \TV(\lawreal(p_0), \lawM) + \TV(\lawM, \lawreal(p_1))
+  = \delta(p_0) + \delta(p_1),
+\]
+so $\Adv(\mathcal{A}) \le 2(\delta(p_0) + \delta(p_1))$.
+\end{proof}
+
+Plugging in the \cref{sec:t5} numbers: with both profiles rich,
+$\delta(p_0) \approx \delta(p_1) \approx 0.003$, so $\Adv \le 2(0.003 + 0.003) = 0.012$;
+with one profile at the threshold edge (the skew\_a regime), $\delta \approx 0.017$ on the
+thin side and $\approx 0.003$ on the rich side, so
+$\Adv \le 2(0.017 + 0.003) = 0.04$. E2 (\cref{sec:experiments}) confirms not just the
+bound but its \emph{shape}: the measured cross-profile advantage sits at the per-build
+floor and does not grow with the frequency gap between $p_0$ and $p_1$, exactly as
+$2(\delta(p_0)+\delta(p_1))$ predicts and the idealized $\Adv = 0$ demands.
+
+\subsection{An independence result, not a comparative one}
+
+The claim is an \emph{independence} statement: the non-member channel is independent of
+storage frequency. The idealized form is the cleanest possible such statement (the two
+oracles are the identical distribution, $\Adv = 0$); the real form weakens it only to a
+small constant set by per-build deviation, with no frequency-gap term. It is \emph{not} a
+comparative claim of the form ``codec $X$ leaks $c$ times less frequency than codec $Y$'',
+and deliberately not phrased that way. A comparative, directional reading is exactly what
+admitted the sign error in the multi-instance coincidence-oracle analysis
+(\cref{sec:reconciliation}), where ``minimizes the coincidence sum'' was misread as
+``defends better'' when the defender direction is the reverse. An indistinguishability
+statement carries no direction to invert: $\Adv = 0$ means the channel reveals nothing
+about frequency, full stop, and the real bound caps the residual symmetrically in
+$\delta(p_0)$ and $\delta(p_1)$ with no sign attached to which profile is more
+concentrated. What the channel \emph{does} carry is only the public codec shares
+$(\al(v))$ and the support, both public design choices; never the private $m_v$.
+
+\subsection{Scope and boundary}
+
+This section defends exactly one channel against exactly one attack.
+\begin{itemize}
+  \item \textbf{Covered.} The value-frequency channel of non-member outputs: an adversary
+  with non-member oracle access cannot learn the storage-frequency distribution of values
+  in $S$. Idealized advantage zero (M1, from \cref{thm:idealized,thm:freqindep}); real
+  advantage at most $2(\delta(p_0)+\delta(p_1))$, a small constant governed by storage
+  redundancy and independent of the frequency gap (\cref{sec:t5}, E2).
+  \item \textbf{Not covered.} Nothing about access-pattern leakage (which keys are
+  queried, and correlations across queries), volume or size leakage, or the multi-instance
+  coincidence oracle. That oracle is a \emph{different} game (correlating $t$ redeployments
+  to predict membership from output coincidence, not frequency from one instance); it is
+  defeated by \emph{concentration} of $\al$, the opposite codec choice, and is treated in
+  \cref{sec:reconciliation}.
+  \item \textbf{Standing assumption.} Above-threshold support
+  (\cref{thm:threshold}) throughout, so both profiles realize full codec control and the
+  common-$\W$ argument applies.
+\end{itemize}
+We do not claim a general confidentiality result. The honest statement is narrow and
+strong: on its one channel, against its one attack, in its deployment regime, frequency
+analysis has no purchase, structurally, by \cref{thm:freqindep}, with a quantified
+real-world residual from \cref{sec:t5}.
 
 \section{The two attacks pull opposite ways}
 \label{sec:reconciliation}
-% TODO: frequency analysis defeated by independence (flat); coincidence
-% oracle defeated by concentration (Huffman); no single optimal codec.
 
-\section{Experiments}
+The security story so far has one attack in it, single-instance frequency analysis,
+defeated by frequency independence. There is a second, structurally different attack on
+the \emph{same} construction, the multi-instance coincidence oracle, and the codec choice
+that defeats one is the worst against the other. We state both, correct a sign error that
+has circulated in companion writeups, and frame the resulting tension as a clean finding:
+there is no single most-confidential codec.
+
+\paragraph{Attack 1 (single instance): frequency analysis, defeated by flat codecs.}
+The adversary sees one deployed instance and wants the $m_v$, as in classical frequency
+analysis against a substitution cipher. \Cref{thm:freqindep} is the answer: the
+non-member law is a function of the support and the codec only, so any above-threshold
+codec defeats single-instance frequency analysis outright (the contrastive test confirms
+output gaps $\sim 0.004$ between $99/0.5/0.5$ and $50/25/25$ storage). What residual the
+channel \emph{does} leak is the public codec shares $\al$ plus the support. If one worries
+that even this leaks value \emph{importance} (a Huffman codec's short codeword announces
+``this value is frequent''), the way to minimize what $\al$ reveals is to \emph{flatten}
+it: a uniform $\al = 1/K$ carries no per-value ordering. So within attack 1 the pressure
+on the codec is toward \emph{flat} shares.
+
+\paragraph{Attack 2 (multi-instance): the coincidence oracle, defeated by concentrated
+codecs.} The adversary sees $t$ instances that share the same $(S, f)$ and differ only in
+per-instance non-member randomness (a shared-function redeployment). The coincidence
+oracle predicts ``$k \in S$'' iff all $t$ observed outputs are equal. For a member, all
+$t$ canonical encodings equal $f(k)$, so coincidence always holds; for a non-member, the
+$t$ outputs are i.i.d.\ draws from $\al$ and coincide with probability $\sum_v \al(v)^t$.
+At a balanced prior the attacker accuracy is
+\begin{equation}
+  \mathrm{acc}(t) = 1 - \tfrac12 \sum_v \al(v)^t.
+  \label{eq:acc}
+\end{equation}
+Write $S(t) = \sum_v \al(v)^t$. The defender wants $\mathrm{acc}(t)$ \emph{small}, hence
+$S(t)$ \emph{large}. For fixed $\sum_v \al(v) = 1$ and $t \ge 2$, $S(t)$ is maximized by a
+\emph{concentrated} (Huffman-like) distribution ($S(t) \to 1$ as mass piles onto a few
+values) and minimized by the \emph{uniform} distribution ($S(t) = K^{1-t}$, small).
+Therefore concentrated $\al$ gives $\mathrm{acc}(t)$ near $1/2$, the best defense, and
+uniform $\al$ gives $\mathrm{acc}(t)$ near $1$, the worst. Within attack 2 the pressure is
+toward \emph{concentrated} shares, the exact opposite of attack 1.
+
+\begin{remark}[Correcting a sign error]
+\label{rem:sign}
+An earlier reading claimed the uniform codec is the \emph{better} multi-instance defense,
+on the grounds that it minimizes $S(t)$ and minimizing the coincidence sum looks
+protective. That reverses the defender direction: $\mathrm{acc}(t) = 1 - S(t)/2$, so a
+\emph{smaller} $S(t)$ means \emph{higher} attacker accuracy, a worse defense. The ``uniform
+defends best'' claim is the direction-reversed reading and is wrong; concentrated codecs
+defend best. The corrected E4 result (\cref{sec:experiments}) confirms this direction
+independently by Monte Carlo.
+\end{remark}
+
+\paragraph{The synthesis.}
+The two attacks pull the codec in opposite directions: attack 1 is best served by flat
+$\al$ (it already loses to independence, and flat shares minimize importance leakage);
+attack 2 is best served by concentrated $\al$ (it minimizes \eqref{eq:acc} by maximizing
+$S(t)$, and a Huffman codec is separately space-optimal). \textbf{There is no single
+most-confidential codec.} Which corner you want depends on the threat model: at $t = 1$
+(no redeployment) the single-instance pressure dominates and flat is preferable; at large
+$t$ (heavy redeployment) the coincidence oracle dominates and Huffman is preferable. This
+is exactly the linear-retrieval instance of the cipher-maps $(\TV, \text{length})$ Pareto
+frontier~\cite{towell2026ciphermaps}: leakage (TV of the output law from a
+frequency-revealing target, minimized at the flat corner) versus cost (expected codeword
+length, minimized at the Huffman corner), now with a security reading on the cost axis,
+the Huffman corner being coincidence-optimal as well as space-optimal. The opposite pull is
+not a flaw but the expected shape of a Pareto problem: codec-controlled retrieval exposes a
+single, public, tunable lever ($\al$) trading single-instance importance leakage against
+multi-instance coincidence resistance (and space).
+
+\section{Evaluation}
 \label{sec:experiments}
-% TODO: E1 span threshold, E2 FreqDist independence, E3 scale, E4 corrected
-% coincidence oracle. Data in source/results/.
+
+We make the theory concrete and reproducible. Each experiment is generated by an artifact
+in the implementation (a header-only C++23 benchmark binary or a Python analysis script);
+the numbers below are read directly from the committed result files. Nothing here
+introduces a new claim: E1 is the empirical face of the threshold (\cref{thm:threshold}),
+E2 of frequency independence (\cref{thm:freqindep}) and the redundancy effect
+(\cref{sec:t5}), E3 of the scale-independence and sampling-floor analysis (\cref{sec:t5}),
+and E4 of the reconciliation direction (\cref{sec:reconciliation}). The construction is
+implemented in the \texttt{maph} research playground; build and analysis scripts are
+provided for reproduction.
+
+\subsection{E1: the span threshold is sharp}
+
+The benchmark fixes a balanced codec, sweeps the number of distinct stored values (hence
+the $\GF$ rank of the stored canonical patterns), and reports the mean TV of the
+non-member law to the codec shares $\al$, averaged over build seeds. \Cref{thm:threshold}
+predicts a step: above the threshold $\rank \proj|_{\W} = \log_2 K$ the law equals $\al$
+(TV near $0$); one rank below, the law cannot reach $\al$ and TV is large.
+\Cref{tab:e1} shows the two flanking ranks.
+
+\begin{table}[t]
+  \centering
+  \caption{E1: the non-member-to-codespace TV across the span threshold. The transition
+  is a cliff, not a ramp. Sub-threshold confidence intervals are \emph{degenerate}
+  (deterministic in rank), so the transition is not merely sharp but deterministic; only
+  at and above threshold does the residual acquire width (the \cref{sec:t5} near-uniformity
+  gap over finite queries).}
+  \label{tab:e1}
+  \begin{tabular}{lcc}
+    \toprule
+    config & rank just below $\log_2 K$ & rank $= \log_2 K$ \\
+           & (rank, mean TV) & (rank, mean TV) \\
+    \midrule
+    \texttt{balanced\_M4\_K4} & $1$, \quad $0.500$ & $2$, \quad $0.00277$ \\
+    \texttt{balanced\_M8\_K8} & $2$, \quad $0.500$ & $3$, \quad $0.00505$ \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+TV drops from $0.5$ to $\sim 0.003$ (the \cref{sec:t5} floor) as the rank crosses
+$\log_2 K$, with no intermediate value, exactly the step function of \cref{thm:threshold}.
+Below threshold the per-config TV is deterministic in the rank (the step-function masses
+are fixed dyadic rationals on the enumerated $\W$), so the sub-threshold confidence
+intervals are degenerate: for instance \texttt{balanced\_M8\_K8} reads $0.875, 0.750,
+0.500$ at ranks $0, 1, 2$ with zero-width intervals, while at threshold (rank $3$) the
+interval acquires width $[0.00455, 0.00556]$. A skewed config in the same data shows the
+analogous drop to $0.00238$ at rank $2$, with a non-degenerate sub-threshold value
+($0.251$ at rank $1$) because the unequal class sizes make the below-threshold mass a
+non-trivial average rather than a single dyadic constant.
+
+\subsection{E2: FreqDist indistinguishability and the redundancy effect}
+
+The benchmark fixes the skewed length-$\{1,2,2\}$ codec (codespace shares
+$0.5/0.25/0.25$) on support $\{V_0, V_1, V_2\}$, all profiles above threshold (rank
+$2 = \log_2 K$), and reports a same-profile cross-seed \emph{baseline} (build one profile
+twice, TV the two non-member laws, isolating per-build variance plus sampling noise) and
+the cross-profile \emph{advantage} (TV between two different storage profiles).
+\Cref{tab:e2} gives both. \Cref{thm:freqindep} predicts the cross-profile advantage does
+not track the frequency gap; \cref{sec:t5} predicts the one profile at the threshold edge
+(skew\_a) carries an elevated per-build deviation.
+
+\begin{table}[t]
+  \centering
+  \caption{E2: same-profile baseline and cross-profile advantage. The advantage tracks the
+  noisier (thinner) profile, not the frequency gap: every pair including the thin skew\_a
+  lands at $\sim 0.014$ regardless of the gap, while a real $33$-vs-$90$ gap between two
+  rich profiles sits at the $\sim 0.0036$ floor.}
+  \label{tab:e2}
+  \begin{tabular}{lcc}
+    \toprule
+    profile / pair & same-profile baseline & cross-profile advantage \\
+    \midrule
+    uniform $(33/33/33)$ & $0.00292$ & --- \\
+    mid $(50/25/25)$     & $0.00360$ & --- \\
+    skew\_b $(90/5/5)$   & $0.00381$ & --- \\
+    skew\_a $(99/0.5/0.5)$ & $0.01897$ & --- \\
+    \midrule
+    uniform vs mid       & --- & $0.00324$ \\
+    uniform vs skew\_b   & --- & $0.00364$ \\
+    mid vs skew\_b       & --- & $0.00402$ \\
+    uniform vs skew\_a   & --- & $0.01336$ \\
+    mid vs skew\_a       & --- & $0.01433$ \\
+    skew\_b vs skew\_a   & --- & $0.01458$ \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+The three rich profiles sit at the $\sim 0.003$ floor in both columns. The cross-profile
+advantage tracks the noisier profile of the pair: the three pairs including skew\_a all
+land at $\sim 0.014$, of the same order as skew\_a's own $\sim 0.019$ baseline, despite
+storage-frequency gaps differing enormously; the genuinely large gap between two rich
+profiles (uniform-vs-skew\_b) sits at the floor. So the elevation is a per-build property
+of thin support (skew\_a stores its minority values only $\sim 25$ times each, leaving $\W$
+at the threshold edge), a \cref{sec:t5} effect, not a frequency-leakage signal. This jointly
+confirms the independence (advantage does not grow with the frequency gap) and the
+redundancy characterization (advantage set by the per-class store count of the thinner
+build), realizing the real bound $\Adv \le 2(\delta(p_0)+\delta(p_1))$ of
+\cref{thm:freqdist-real}.
+
+\subsection{E3: the deviation is small and scale-independent}
+
+The benchmark fixes one above-threshold configuration (balanced $M = 8$, $K = 8$, all
+eight values stored, rank $3 = \log_2 8$ at every $N$) and sweeps $N$ across four orders of
+magnitude, reporting mean TV-to-codespace over build seeds with $10^5$ non-member queries
+per build. \Cref{tab:e3} gives the result.
+
+\begin{table}[t]
+  \centering
+  \caption{E3: mean TV-to-codespace versus stored-key count $N$. The deviation is flat in
+  $N$ from $10^4$ to $10^7$ (overlapping intervals), and straddles the analytic
+  query-sampling floor $0.00334$ (inside every interval, below it at $N = 10^7$). The
+  ribbon's $\epsilon$ auto-scaling at $10^7$ keys does not degrade control.}
+  \label{tab:e3}
+  \begin{tabular}{lccc}
+    \toprule
+    $N$ & reps & mean TV & $95\%$ CI \\
+    \midrule
+    $10^4$ & $10$ & $0.00352$ & $[0.00313, 0.00392]$ \\
+    $10^5$ & $10$ & $0.00311$ & $[0.00262, 0.00359]$ \\
+    $10^6$ & $5$  & $0.00352$ & $[0.00272, 0.00432]$ \\
+    $10^7$ & $3$  & $0.00284$ & $[0.00230, 0.00339]$ \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+The deviation is order $0.003$ in TV (two orders of magnitude below a $0.1$ breakdown
+scale) and flat in $N$ with overlapping intervals. The analytic sampling floor for these
+settings ($K = 8$, $p_v = 1/8$, $n_q = 10^5$) is $0.00334$ (exact binomial MAD, matching
+the normal approximation), and the measured values straddle it: it lies inside all four
+intervals, the $N = 10^6$ mean sits on it, and the $N = 10^7$ mean ($0.00284$) falls
+below. The systematic deviation is therefore at or below measurement resolution at this
+query budget, consistent with \cref{sec:t5}.
+
+\subsection{E4: the coincidence-oracle direction}
+
+The script computes, for $K = 8$ values and $t = 1, \dots, 8$ redeployments, the attacker
+accuracy $\mathrm{acc}(t) = 1 - \tfrac12 \sum_v \al(v)^t$ of \eqref{eq:acc} in closed form
+and confirms it by Monte Carlo ($10^5$ member $+ 10^5$ non-member trials per rep, $10$
+reps), across codecs of increasing concentration. Higher accuracy means worse defense; the
+corrected direction is that concentration \emph{helps}. \Cref{tab:e4} gives the slice at
+$t = 4$.
+
+\begin{table}[t]
+  \centering
+  \caption{E4: coincidence-oracle attacker accuracy at $t = 4$, by codec concentration.
+  Accuracy falls monotonically as the codec concentrates: uniform is the unique worst
+  defense, the most-concentrated codec the best. Monte Carlo matches the closed form in
+  every cell (within a $95\%$ interval), validating $\mathrm{acc}(t) = 1 - S(t)/2$.}
+  \label{tab:e4}
+  \begin{tabular}{lccc}
+    \toprule
+    codec (max share) & $\mathrm{acc}$ closed & $\mathrm{acc}$ MC & MC matches? \\
+    \midrule
+    uniform $(0.125)$              & $0.99902$ & $0.99903$ & yes \\
+    intermediate\_zipf $(\sim 0.34)$ & $0.98240$ & $0.98255$ & yes \\
+    huffman $(0.50)$              & $0.96667$ & $0.96671$ & yes \\
+    intermediate\_padded $(0.90)$ & $0.67195$ & $0.67185$ & yes \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+Attacker accuracy falls monotonically as the codec concentrates: uniform (every share
+$0.125$) is the unique worst defense at $\sim 0.999$; the dyadic Huffman codec (top share
+$0.50$) improves it to $\sim 0.967$; the most-concentrated codec (one value holding $0.90$
+of the codespace) is the best defense at $\sim 0.672$. The Monte Carlo matches the closed
+form in every cell. This is the direction \cref{sec:reconciliation} states: a smaller
+coincidence sum $S(t)$ means higher attacker accuracy, so the uniform codec (which
+minimizes $S(t)$) is the worst, not the best, multi-instance defense. E4 is thus the
+quantitative backing for the opposite-pull finding: the codec that is harmless against
+single-instance frequency analysis (uniform, where the advantage is zero regardless) is the
+worst against the multi-instance coincidence oracle, and the concentrated codec reverses
+both rankings.
 
 \section{Related work and novelty}
 \label{sec:related}
-% TODO: the three-tier ledger and the must-differentiate list from the note.
 
-\section{Conclusion}
+We position the contribution honestly, including against the author's own prior work, so
+the genuinely new content is not confused with results that already exist. We organize the
+positioning as a three-tier ledger.
+
+\paragraph{Tier A: not novel here (reused baseline).}
+The abstract law that a codec's codespace allocation controls the non-member output
+distribution, $\Pr[\mathrm{out} = v] \propto |\class(v)|/2^M$, is \emph{not} a contribution
+of this paper. It already appears in two places, cited as established baseline. First, the
+author's singular-hash-map work~\cite{towell_bernoulli_maps} derives exactly this formula
+for a \emph{random-oracle} construction, where the non-member output is a fresh hash of the
+query and its distribution over codec classes is immediate. Second, the idea of designing an
+encoder so its output follows a target distribution regardless of message frequencies is the
+distribution-transforming-encoder idea of Honey Encryption~\cite{juels2014honey}, refined by
+probability-model-transforming encoders~\cite{cheng2019pmte}. We credit both and do not claim
+the abstract law as new.
+
+\paragraph{Tier B: novel (the law survives the move to a linear retrieval structure).}
+The novel content of \cref{thm:support,thm:idealized,thm:freqindep} is that the \emph{same}
+codec-output law survives the move from a random-oracle construction to a $\GF$-linear
+retrieval structure. There the non-member output is not a fresh hash but $a^{\mathsf T}\bz$,
+an XOR of selected rows of the solved matrix, a deterministic linear function of the fixed
+stored data. A priori there is no reason such a structure's off-target output should follow
+the codec shares at all: the output is constrained to the stored span $\W$, fixed by what was
+stored, and the per-key coefficient is a structured band, not a uniform draw.
+\Cref{thm:support} proves the support is exactly $\W$; \cref{thm:idealized} (under M1) and
+\cref{thm:threshold} (the threshold) characterize when the law on $\W$ equals the codec
+shares; \cref{thm:freqindep} proves the law depends only on the support. The retrieval and
+static-function literature that ribbon retrieval descends from, Bloomier
+filters~\cite{chazelle2004bloomier}, ribbon and BuRR~\cite{dillinger2021ribbon,dillinger2022burr},
+and binary-fuse filters~\cite{graf2022binaryfuse,graf2020xor}, treats the non-member output as
+arbitrary, uncharacterized junk: it is the price of a construction that need only be correct on
+the member set, and its distribution is never studied. As of 2025 the state of the art in
+static retrieval~\cite{hu2025retrieval} leaves it uncharacterized. Characterizing that
+distribution, and showing it is the codec's own codespace law gated by the span threshold, is
+the new content.
+
+\paragraph{Tier C: headline novelty (the sharp span threshold).}
+The headline is the sharp threshold of \cref{thm:threshold}: the non-member law equals the
+codec shares exactly when the stored patterns span the full codeword space
+($\rank \proj|_{\W} = \log_2 K$), and the transition is a step in the integer rank, stated as
+transversality of $\W$ to the codec's class partition. This appears nowhere we are aware of,
+internal or external: absent from the random-oracle treatments (Tier A, where there is no span
+to be transversal to), and absent from the retrieval literature (Tier B, which does not study
+the non-member law at all). The subspace-meets-coset lemma (\cref{lem:subspace-coset}) and the
+resulting $K' = |\proj(\W)|$ step function are the technical core, and the cliff in E1 is its
+measured face.
+
+\paragraph{Differentiation from adjacent work.}
+Four adjacencies deserve an explicit boundary. \textbf{(1) The author's
+singular-hash-map}~\cite{towell_bernoulli_maps} contains the identical formula but for a
+random-oracle construction; the transfer to a linear structure, and the discovery that the
+transfer is gated by a provable span threshold, is the new content. \textbf{(2) The author's
+cipher-maps paper}~\cite{towell2026ciphermaps} shares the frequency-hiding goal, but its
+backends are random-oracle and RecSplit with no linear-retrieval backend, and its concern is the
+query-marginal distribution (which keys are asked), not the non-member output channel of a
+linear structure; this paper supplies the linear backend it lacks and proves the structural
+property for it. \textbf{(3) Honey-Encryption DTE}~\cite{juels2014honey,cheng2019pmte}
+\emph{assumes} a uniform seed delivered by a cipher and builds on that assumption; we do not
+assume uniformity, but \emph{prove} near-uniformity on the stored span from the linear structure
+itself (M1 as idealization, \cref{sec:t5} as the measured gap), gated by the threshold.
+\textbf{(4) Frequency-smoothing databases}: PANCAKE~\cite{grubbs2020pancake},
+FSE~\cite{lacharite2018fse}, and the NKW inference attack~\cite{naveed2015inference} that
+motivates them share the goal but operate at a different layer, online mechanisms that smooth the
+access or encoding distribution at query or insert time (fake accesses, padding). Our property is
+static and structural: the non-member law of a built linear structure is frequency-independent by
+construction (\cref{thm:freqindep}), with no online smoothing, no fake traffic, no padding.
+
+\paragraph{External filter-privacy and volume-hiding formalisms.}
+Two recent external formalisms are the nearest cousins. Filic, Paterson, Unnikrishnan, and
+Virdia~\cite{filic2022adversarial} give an adversarial-correctness-and-privacy model for
+probabilistic data structures, the closest external filter-confidentiality formalism; it covers
+membership PDS, not the retrieval \emph{value}-distribution, so the object we characterize (the
+non-member output law of a retrieval structure) is outside its scope. Patel, Persiano, Yeo, and
+Yung~\cite{patel2019volumehiding} give volume-hiding structured encryption, the closest
+structural cousin in spirit: shape an observable (there, volume) to a public target via a
+structural, hashed construction rather than online padding. Our work shapes a different observable
+(the non-member value distribution) to a public target (the codec shares) via a different
+structural mechanism (the $\GF$ span), and contributes the sharp threshold governing when the
+shaping takes hold, which has no analogue in the volume-hiding setting.
+
+\section{Discussion, limitations, and conclusion}
 \label{sec:conclusion}
-% TODO.
+
+We set out to fill a unanimous silence in the retrieval literature, that the value returned for
+a non-member key is ``arbitrary'', and found the silence was hiding a designable object. For
+homogeneous ribbon retrieval the non-member output lives in the $\GF$ span of the stored
+codewords (\cref{thm:support}); under an idealized uniform-on-span model it follows a law fixed
+by a public codec (\cref{thm:idealized}); that law is provably independent of how often each
+value was stored (\cref{thm:freqindep}); and codec control of it holds or fails by a sharp
+$\GF$-rank threshold with no graded regime (\cref{thm:threshold}). The real construction realizes
+the idealization to within the query-sampling floor for rich support, scale-independently to ten
+million keys (\cref{sec:t5}). Read as security, this is structural frequency-hiding: a
+distinguishing adversary with non-member oracle access has advantage exactly zero in the
+idealized model (\cref{thm:freqdist-ideal}) and at most $2(\delta(p_0)+\delta(p_1))$ in the real
+one (\cref{thm:freqdist-real}), a property of the static bytes with zero per-query cost, where
+PANCAKE and FSE pay bandwidth or re-encoding online.
+
+\paragraph{Limitations.}
+Three boundaries are explicit. The threshold theorem (\cref{thm:threshold}) is proven for the
+\emph{balanced} linear codec; the skewed (variable-length) case lacks a single homophone subspace,
+its abstract full-control condition is stated but whether its transition stays sharp or becomes
+genuinely graded is open (\cref{rem:skewed}). The deviation $\delta$ (\cref{sec:t5}) is
+\emph{characterized}, not bounded in closed form: we deliver the measurement and a labeled
+big-$O$, and conjecture but do not prove that $\delta$ is governed by the minimum per-class store
+count (\cref{rem:t5-bound}). And the security treatment defends exactly one channel against
+exactly one attack: the non-member value-frequency channel against single-instance frequency
+analysis, plus the reconciliation of the opposite-pulling multi-instance coincidence oracle;
+access-pattern, volume, and size leakage are not addressed, and the structure is static.
+
+\paragraph{Future work.}
+The skewed-codec threshold is the most pressing open problem: a characterization of which supports
+put $\W$ in general position with respect to an unequal class partition, and whether the resulting
+transition is sharp. A structural closed-form bound on $\delta$ in terms of storage redundancy
+would upgrade \cref{sec:t5} from a measurement to a theorem. A white-box or randomized-encoding
+angle (filling free slots with a designed pattern rather than zero, which \cref{rem:genericity}
+flags as the place the support could be enlarged on purpose) may let the construction realize
+output laws beyond the stored span. More broadly, this is the construction-and-experiments
+companion to the cipher-maps program~\cite{towell2026ciphermaps}: it supplies the $\GF$-linear
+retrieval backend that abstraction lacks, and the opposite-pull between the two attacks is the
+linear-retrieval instance of its $(\TV, \text{length})$ frontier.
+
+\paragraph{Takeaway.}
+The values an XOR retrieval structure returns for non-member keys are not arbitrary junk: they are
+uniform over the $\GF$ span of the stored codewords, so a public codec, not the private data,
+determines that distribution, exactly when the stored values span the codec's class quotient,
+which hands a static data structure the frequency-hiding property that online encrypted-database
+defenses pay for per query.
+
+\appendix
+
+\section{Full proof of the output support}
+\label{app:proofs}
+
+We give in full the induction sketched in \cref{thm:support}, that every row of the solved
+solution matrix $\bz$ lies in the stored span $\W$, so $\Rz \subseteq \W$. Combined with
+$\W \subseteq \Rz$ (each generator $\cx = \ay[x]^{\mathsf T}\bz$ is a row-space element), this
+gives $\Rz = \W$.
+
+Read the back-substitution block of the builder, which value-initializes the solution to the zero
+pattern, skips free columns, and assigns each pivot column the carried right-hand side XORed with
+already-solved downstream slots:
+\begin{verbatim}
+  solution.assign(num_rows, 0);              // (i)   all slots 0
+  for (col = num_rows; col-- > 0; ) {
+      if (pivot_coeffs[col] == 0) continue;  // (ii)  skip free slots
+      val = pivot_value[col];                // (iii) RHS for this pivot
+      ... val ^= solution[ref] ...           // (iv)  XOR solved downstream
+      solution[col] = val;                   // (v)   assign pivot slot
+  }
+\end{verbatim}
+
+\paragraph{(P1) Free slots are zero.}
+A column is a pivot column iff $\texttt{pivot\_coeffs[col]} \ne 0$ after forward elimination. Line
+(i) value-initializes every entry to the zero pattern, and only pivot columns are ever assigned
+(line (v) runs only when (ii) does not skip). Hence every non-pivot (free) column holds the zero
+pattern, and $0 \in \W$ trivially (the empty XOR of generators).
+
+\paragraph{(P2) Every pivot slot lies in $\W$.}
+During forward elimination the carried right-hand side $\texttt{pivot\_value[col]}$ is built only
+from the stored values by the update $v \mathrel{\oplus}= \texttt{pivot\_value[col]}$, starting from
+$v = \cx$ for the incoming row of some $x \in S$. By induction each $\texttt{pivot\_value[col]}$ is
+an XOR of a subset of the $\{\cx\}$ and of earlier $\texttt{pivot\_value}$ entries (themselves XORs
+of the $\{\cx\}$), hence an element of $\W$. Back-substitution then sets $\texttt{solution[col]}$ to
+$\texttt{pivot\_value[col]}$ XORed with already-assigned downstream entries
+$\texttt{solution[ref]}$. We induct on \emph{decreasing} column index: the loop runs from the
+largest column down, and each referenced $\texttt{ref} = \texttt{col} + \mathrm{offset} + \mathrm{bit}
+> \texttt{col}$ was assigned in an earlier iteration, hence (by the inductive hypothesis) already
+lies in $\W$. Out-of-range references ($\texttt{ref} \ge \texttt{num\_rows}$) are dropped and
+contribute $0 \in \W$. So each $\texttt{solution[col]}$ is an XOR of elements of $\W$, hence in $\W$.
+
+By (P1) and (P2) every row of $\bz$ is in $\W$. A query output $a^{\mathsf T}\bz$ is an XOR of rows
+of $\bz$, hence an XOR of elements of $\W$, hence in $\W$, for every coefficient vector
+$a \in \B^m$. Therefore $\Rz \subseteq \W$, and with $\W \subseteq \Rz$ we conclude $\Rz = \W$. The
+full quantification over all $a \in \B^m$ (not only the realizable band-indicators $\ay$) is what
+makes the equality hold; the reachable set of single-band outputs is contained in $\W$ and spans it,
+but need not equal it as a raw set. \qed
 
 \bibliographystyle{plainnat}
 \bibliography{refs}

@@ -11,11 +11,12 @@ all: pdf
 pdf: $(STEM).pdf
 html: $(HTMLDIR)/index.html
 
-$(STEM).pdf: $(TEX)
+$(STEM).pdf: $(TEX) refs.bib
 	pdflatex -interaction=nonstopmode $(TEX)
 	@if grep -q '\\bibliography' $(TEX) || grep -q '\\addbibresource' $(TEX); then \
 		bibtex $(STEM) 2>/dev/null || true; \
 	fi
+	pdflatex -interaction=nonstopmode $(TEX)
 	pdflatex -interaction=nonstopmode $(TEX)
 	pdflatex -interaction=nonstopmode $(TEX)
 

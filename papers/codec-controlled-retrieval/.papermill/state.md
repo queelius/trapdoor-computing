@@ -1,7 +1,7 @@
 ---
 title: "Codec-Controlled Retrieval: Structural Frequency-Hiding from the Non-Member Channel of XOR Retrieval"
 bibkey: "towell2026codec"
-stage: outline
+stage: draft-complete
 format: latex
 main_file: "paper/codec_retrieval.tex"
 bib_file: "paper/refs.bib"
@@ -19,7 +19,8 @@ thesis:
     2. (B, NOVEL) The same law SURVIVES the move to a GF(2)-LINEAR ribbon/XOR retrieval structure, where the output is an XOR of solution rows (not a fresh hash). The entire retrieval literature (Bloomier chazelle2004bloomier; ribbon/BuRR dillinger2022burr; binary-fuse graf2022binaryfuse) treats non-member output as arbitrary junk and never characterizes its distribution.
     3. (C, HEADLINE NOVEL) The sharp GF(2)-span threshold (T4): full codec control holds iff W is transversal to the codec class partition (rank pi|_W = log2 K), a step function of the integer rank. Found nowhere internal or external.
     Security contribution: the FreqDist game, with idealized advantage proven exactly zero (from frequency independence T3) and a real bound Adv <= 2(delta(p0)+delta(p1)). Framed as INDEPENDENCE (indistinguishability), not a comparative leakage claim, which is what makes it immune to the direction error that inverted the coincidence-oracle reading.
-  refined: "v1 (bootstrap, 2026-06-05). Thesis extracted from the completed maph construction note (source of record maph/docs/codec_controlled_retrieval.md @ a79d9c0). The technical substance (T1-T5, FreqDist security, experiments E1-E4) is already proven, computationally verified, and adversarially reviewed in SP2; this paper reshapes it into PoPETs venue form. Headline is the GF(2)-span threshold T4; the abstract codec-output law is cited as baseline (bernoulli_maps, Honey Encryption). PENDING: papermill:thesis sharpening, papermill:outline, then drafting the sections from the source note."
+  one_sentence: "The values an XOR (ribbon) retrieval structure returns for non-member keys are not arbitrary junk: they are uniform over the GF(2) span of the stored codewords, so a public codec (not the private data) determines that distribution, exactly when the stored values span the codec's class quotient, which hands a static data structure the frequency-hiding property that online encrypted-database defenses pay for per query."
+  refined: "v2 (thesis crystallized, 2026-06-05; see .papermill/thesis-refined-2026-06-05.md). The novelty framing is now 'we turn a uniformly-acknowledged non-member-output-is-arbitrary into a characterized, codec-designable distribution governed by a sharp GF(2)-span threshold, and read off a structural zero-per-query-cost frequency-hiding property as the consequence.' v1 (bootstrap, 2026-06-05): thesis extracted from the completed maph construction note (source of record maph/docs/codec_controlled_retrieval.md @ a79d9c0). The technical substance (T1-T5, FreqDist security, experiments E1-E4) is already proven, computationally verified, and adversarially reviewed in SP2; this paper reshapes it into PoPETs venue form. Headline is the GF(2)-span threshold T4; the abstract codec-output law is cited as baseline (bernoulli_maps, Honey Encryption). PENDING: papermill:thesis sharpening, papermill:outline, then drafting the sections from the source note."
 
 prior_art:
   last_survey: "2026-06-03 (SP3 scouts: targeted novelty check + broad field map; ledger in the note)"
@@ -86,3 +87,36 @@ it into PoPETs venue form. The source of record for the technical content is
 See the YAML frontmatter for the thesis, the three-tier novelty ledger, the
 prior-art and must-differentiate list, the four completed experiments, the venue
 plan, and the next actions.
+
+## Draft record (2026-06-05): full body drafted, compiles to 22 pages
+
+`paper/codec_retrieval.tex` is now a complete LaTeX draft realizing the
+outline-2026-06-05 structure. It was produced by reshaping `source/construction-note.md`
+into PoPETs venue prose (single-orchestrator pass; the technical substance was already
+proven and reviewed, so no claims were generated or re-derived). All theorem statements,
+bounds, and the E1-E4 numbers were transcribed faithfully and verified against the
+`source/results/` CSVs.
+
+- Stage moved drafting -> draft-complete.
+- Structure: 1 Intro, 2 Background/linear-retrieval view, 3 T1/T2 (support + idealized
+  law), 4 T3 (frequency independence), 5 T4 (sharp threshold, HEADLINE), 6 T5
+  (idealized-to-real), 7 Security/FreqDist, 8 two-attacks reconciliation, 9 Evaluation
+  (E1-E4 tables), 10 Related work (three-tier ledger + 4 must-differentiate + 3 gap
+  cites), 11 Discussion/limitations/conclusion, Appendix A (full R(z)=W induction).
+  Theorems labeled: thm:support, thm:idealized, thm:freqindep, lem:subspace-coset,
+  thm:threshold, thm:freqdist-ideal, thm:freqdist-real.
+- Framing honored: abstract leads with B/C, cites A (bernoulli_maps + Honey DTE) as
+  baseline; T1 kept as the M1 idealization; security framed as independence not
+  comparative; coincidence-oracle direction corrected (concentrated/Huffman defends
+  best); T5 labeled a characterization not a closed-form bound.
+- Build: `cd paper && make` -> 22 pages, zero undefined refs/cites, zero overfull boxes,
+  no hard errors. Minimal in-directory repairs: escaped an underscore in a refs.bib note
+  field; added a 4th pdflatex pass + refs.bib prereq to the Makefile; added a \TVsamp
+  preamble macro (since \TV already carries a subscript).
+- All 15 cite keys used are in refs.bib (incl. the 3 gap cites filic2022adversarial,
+  patel2019volumehiding, hu2025retrieval). dietzfelbinger2008succinct and
+  dietzfelbinger2019gauss are present but currently uncited (available if wanted).
+- Construction record: `.papermill/drafts/2026-06-05/writing-plan.md`.
+- NEXT: papermill:format-validator pass (venue formatting / PoPETs class if switching
+  off article); optional move of remaining T1-T4 proofs into the appendix if a page
+  budget is imposed; optional citation of the two uncited dietzfelbinger entries.
