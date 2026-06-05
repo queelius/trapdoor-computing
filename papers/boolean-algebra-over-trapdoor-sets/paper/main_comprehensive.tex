@@ -80,7 +80,7 @@ We study the \emph{trapdoor set}: a set whose elements are deterministic one-way
 
 The core insight is that many applications can tolerate controlled error rates in exchange for efficiency and privacy. Cryptographic hash functions serve as one-way transformations: sensitive data is mapped into a hash domain where equality testing is preserved probabilistically while original values remain computationally hidden. All subsequent operations work exclusively on hash values, never requiring access to plaintext.
 
-Two parameters place the construction on its trade-offs. The \emph{representation} parameter trades space for accuracy: a literal set of element trapdoors makes every operation collision-bounded in $O(k)$ space, while a compact fixed-width encoding (the image of a single-hash Bloom filter) saves space but renders intersection structurally approximate and complement non-preservable. The \emph{homophony} parameter $K(x)$---the number of encodings per value---fixes confidentiality: $K = 1$ (deterministic) opens the equality channel that makes the untrusted-side algebra possible, while $K > 1$ closes it, recovering the opaque, trusted-decode regime of the cipher-map framework that this construction instantiates as its online case. We are careful about the algebraic structure this yields: with union, intersection, difference, and symmetric difference but no representable complement, the finite trapdoor sets form a \emph{generalized} Boolean algebra (a Boolean ring without unit), not a Boolean algebra. Error-propagation rules for composed operations follow Bernoulli type theory~\cite{bernoulli-types}.
+Two parameters place the construction on its trade-offs. The \emph{representation} parameter trades space for accuracy: a literal set of element trapdoors makes every operation collision-bounded in $O(k)$ space, while a compact fixed-width encoding (the image of a single-hash Bloom filter) saves space but renders intersection structurally approximate and complement non-preservable. The \emph{homophony} parameter $K(x)$---the number of encodings per value---fixes confidentiality: $K = 1$ (deterministic) opens the equality channel that makes the untrusted-side algebra possible, while $K > 1$ closes it, recovering the opaque, trusted-decode regime of the cipher-map framework~\cite{cipher-maps} that this construction instantiates as its online case. We are careful about the algebraic structure this yields: with union, intersection, difference, and symmetric difference but no representable complement, the finite trapdoor sets form a \emph{generalized} Boolean algebra (a Boolean ring without unit), not a Boolean algebra. Error-propagation rules for composed operations follow Bernoulli type theory~\cite{bernoulli-types}.
 
 \subsection{Motivating Example}
 
@@ -277,7 +277,7 @@ Because encoding is deterministic, encodings can be compared for equality, and t
 
 \begin{remark}[What leaks: the equality channel]
 \label{rem:concession}
-The trapdoor never reveals a plaintext value, but a party holding the encoded set learns the \emph{equality pattern} among encodings: which elements coincide, and whether a queried encoding is present. This is the leakage profile of deterministic and searchable symmetric encryption, and it is a different axis from decoding---equality leaks without any preimage being broken. It is the price of letting the untrusted side run the algebra itself, and it is exactly what the homophony parameter $K$ controls: $K = 1$ opens this channel, while $K > 1$ closes it at the cost of moving evaluation behind a trusted decoder.
+The trapdoor never reveals a plaintext value, but a party holding the encoded set learns the \emph{equality pattern} among encodings: which elements coincide, and whether a queried encoding is present. This is the leakage profile of deterministic and searchable symmetric encryption~\cite{curtmola2006searchable}, and it is a different axis from decoding---equality leaks without any preimage being broken. It is the price of letting the untrusted side run the algebra itself, and it is exactly what the homophony parameter $K$ controls: $K = 1$ opens this channel, while $K > 1$ closes it at the cost of moving evaluation behind a trusted decoder.
 \end{remark}
 
 \subsubsection{Hash Values as Bernoulli Set Carriers}
@@ -422,7 +422,7 @@ In the random oracle model, $H(k \| x)$ is uniformly distributed over $\{0,1\}^n
 
 \begin{remark}[Confidentiality is governed by the equality channel, not preimage hardness]
 \label{rem:qif}
-Theorem~\ref{thm:privacy} prevents recovering $x$ from $T_k(x)$, but says nothing about what the encodings leak \emph{collectively}. Under deterministic encoding ($K = 1$), an adversary observing the encoded set and a stream of queries learns the partition of values by equality and their frequencies---the leakage profile of deterministic and searchable symmetric encryption. The appropriate confidentiality measure is therefore quantitative information flow: the entropy of the observed encoding distribution relative to the prior, degraded precisely by the equality channel and improved by homophony ($K > 1$). Preimage hardness bounds non-recovery; it is not a confidentiality bound.
+Theorem~\ref{thm:privacy} prevents recovering $x$ from $T_k(x)$, but says nothing about what the encodings leak \emph{collectively}. Under deterministic encoding ($K = 1$), an adversary observing the encoded set and a stream of queries learns the partition of values by equality and their frequencies---the leakage profile of deterministic and searchable symmetric encryption~\cite{curtmola2006searchable}. The appropriate confidentiality measure is therefore quantitative information flow: the entropy of the observed encoding distribution relative to the prior, degraded precisely by the equality channel and improved by homophony ($K > 1$). Preimage hardness bounds non-recovery; it is not a confidentiality bound.
 \end{remark}
 
 \subsection{Approximate Algebraic Properties}
@@ -616,16 +616,13 @@ The algorithm achieves relative error $1.04/\sqrt{m}$ using $O(m \log \log n)$ b
 \section{Implementation}
 \label{sec:implementation}
 
-We implemented the trapdoor set as a Python library (\texttt{cts}, approximately 200 lines of code) using only the standard library. The implementation provides four core modules:
-
+We provide a reference implementation as the \texttt{TrapdoorSet} type in the \texttt{trapdoor-maps} library~\cite{trapdoor-computing}, which backs the framework's empirical claims. A trapdoor set stores the element encodings $T_k(v) = H(k \| v)$ (keyed via HMAC-SHA256 over a per-set seed) and exposes:
 \begin{itemize}
-\item \texttt{HashValue}: Fixed-size byte arrays with bitwise Boolean operations (AND, OR, XOR, NOT), providing the carrier for Bernoulli set operations.
-\item \texttt{BernoulliBoolean}: Boolean values carrying explicit error rates $(\alpha, \beta)$, with confusion matrix computation, Bayesian posterior updates, and mutual information calculation.
-\item \texttt{Trapdoor}/\texttt{TrapdoorFactory}: One-way transformation $T_k(v) = H(k \| v)$ using HMAC-SHA256, with key fingerprinting for compatibility checking across sets.
-\item \texttt{BooleanSet}: Full Boolean algebra over sets of trapdoors, supporting union (\texttt{|}), intersection (\texttt{\&}), symmetric difference (\texttt{\^{}}), and set difference (\texttt{-}), with automatic error rate propagation and cardinality bound tracking through operations.
+\item the literal-set operations of Section~\ref{sec:trapdoor-set}: union, intersection, difference, and symmetric difference on the encodings, and membership by encoding equality returning a plaintext boolean;
+\item a seed-derived compatibility tag, so that operations between sets encoded under different seeds are rejected rather than silently producing nonsense;
+\item the collision-bounded false-positive rate $|S|\,2^{-8b}$ for $b$-byte encodings, with no false negatives.
 \end{itemize}
-
-The library requires Python 3.10+ and has no external dependencies. All operations return \texttt{BernoulliBoolean} results with explicit error rates, and set operations propagate error bounds using the composition rules from Section~\ref{sec:design}. Implementation details including code listings are provided in Appendix~A.
+Deterministic ($K = 1$) encoding is exactly what makes the untrusted-side equality test possible; the same library realizes the opaque ($K > 1$) regime separately, behind a trusted decoder. The implementation carries unit, property-based, and integration tests, including an end-to-end private-set-intersection example in which an untrusted party returns an opaque intersection that the holder of the seed then decodes.
 
 \section{Evaluation}
 \label{sec:evaluation}
@@ -764,7 +761,7 @@ Recent advances include mechanism design via differential privacy~\cite{mcsherry
 \section{Conclusion}
 \label{sec:conclusion}
 
-We presented the trapdoor set, a value type for privacy-preserving set operations over deterministic one-way encodings. It supports a collision-bounded generalized Boolean algebra over opaque elements, computed by an untrusted party that never decodes; its cost is bounded by standard hashing and set operations, and its confidentiality is governed by the equality channel, tunable through the homophony parameter that connects it to the cipher-map framework.
+We presented the trapdoor set, a value type for privacy-preserving set operations over deterministic one-way encodings. It supports a collision-bounded generalized Boolean algebra over opaque elements, computed by an untrusted party that never decodes; its cost is bounded by standard hashing and set operations, and its confidentiality is governed by the equality channel, tunable through the homophony parameter that connects it to the cipher-map framework~\cite{cipher-maps}.
 
 Our contributions include:
 \begin{itemize}
