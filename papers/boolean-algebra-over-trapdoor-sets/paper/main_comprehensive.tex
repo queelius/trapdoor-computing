@@ -252,10 +252,10 @@ For $t$-fold composition of independent Bernoulli Booleans each with FPR $\fpr$:
 Dually, for FNR $\fnr$: $t$-fold AND accumulates as $\fnr_{\text{total}} = 1 - (1-\fnr)^t$, and $t$-fold OR reduces as $\fnr_{\text{total}} = \fnr^t$.
 \end{corollary}
 
-\subsection{Layered Privacy: Trapdoor Representation, Bernoulli Results}
+\subsection{Privacy: Non-Recovery and the Equality Channel}
 \label{sec:layered-privacy}
 
-HBTS exhibits a layered privacy model combining two distinct mechanisms: \emph{trapdoor representation} through one-way hash transformations, and \emph{Bernoulli query results} that are plaintext but approximate.
+The construction's privacy has two distinct mechanisms: \emph{trapdoor representation} through one-way encodings, by which nothing is recovered, and an \emph{equality channel} that deterministic encoding opens, by which structural relations among elements become observable.
 
 \subsubsection{Trapdoor Representation Layer}
 
@@ -266,13 +266,13 @@ The hash transformation $T_k(v) = H(k \| v)$ creates a \emph{trapdoor representa
 \item \textbf{Representation uniformity}: Hash values appear uniformly random, hiding structural properties of inputs
 \end{itemize}
 
-\subsubsection{Bernoulli Query Layer}
+\subsubsection{The Equality Channel}
 
-Operations on hash values return \emph{Bernoulli Booleans}---plaintext approximate results with explicit error rates:
+Because encoding is deterministic, encodings can be compared for equality, and this is what the untrusted side exploits:
 \begin{itemize}
-\item \textbf{Membership queries}: $x \in S$ returns an observable true/false with rates $(\fpr, 0)$ where $\fpr = 2^{-n}$
-\item \textbf{Set operations}: Union and intersection return sets with composed error rates per Theorems 1--3
-\item \textbf{Results are not hidden}: An observer sees query outcomes as plaintext booleans
+\item \textbf{Membership}: $x \in S$ is decided by encoding equality, returning a plaintext boolean with false-positive rate at most $|S|\,2^{-n}$ and no false negatives;
+\item \textbf{Set operations}: union, intersection, difference, and symmetric difference are computed directly on encodings, exact up to the same collision bound;
+\item \textbf{What an observer sees}: the equality relations among encodings---which coincide, which queries hit---but no plaintext value.
 \end{itemize}
 
 \begin{remark}[What leaks: the equality channel]
@@ -291,7 +291,7 @@ This asymmetry ($\fpr > 0$, $\fnr = 0$) propagates through composed operations v
 
 \subsection{Architecture}
 
-HBTS follows a layered architecture as shown in Figure~\ref{fig:architecture}:
+The construction follows a layered architecture as shown in Figure~\ref{fig:architecture}:
 
 \begin{figure}[h]
 \centering
@@ -313,7 +313,7 @@ HBTS follows a layered architecture as shown in Figure~\ref{fig:architecture}:
 (SHA-256, BLAKE2b, etc.) \\
 \hline
 \end{tabular}
-\caption{HBTS layered architecture}
+\caption{Layered architecture}
 \label{fig:architecture}
 \end{figure}
 
@@ -442,10 +442,10 @@ For hash-transformed sets $H(A)$ and $H(B)$ (represented as OR of per-element ha
 \end{itemize}
 \end{definition}
 
-\subsection{Size-Dependent False Positive Analysis}
+\subsection{Size-Dependent False Positives in the Compact Representation}
 \label{sec:fpr-analysis}
 
-The simple bound $\fpr = 2^{-n}$ assumes single-element queries. For sets of size $k$, the FPR depends on set density. We derive precise bounds from the bit-string representation.
+For the literal trapdoor set, membership false positives are governed solely by the collision bound of Proposition~\ref{prop:collision-bounded}, independent of layout. The compact bit-vector representation is different: because elements share a fixed-width vector, its false-positive rate depends on how densely the set fills it, which we now derive.
 
 \begin{theorem}[Membership False Positive Rate]
 \label{thm:membership-fpr}
