@@ -168,7 +168,7 @@ We explicitly exclude:
 
 \subsection{Core Abstractions}
 
-HBTS is built around three core abstractions that compose to enable complex privacy-preserving operations:
+The trapdoor set is built around three core abstractions that compose to enable complex privacy-preserving operations:
 
 \subsubsection{Hash-Trapdoor Values}
 
@@ -180,23 +180,12 @@ All operations in HBTS return approximate values carrying both the computed resu
 
 \subsubsection{Set Operations}
 
-HBTS provides two primary set implementations with different algebraic properties:
-
-\textbf{Boolean Sets} support full Boolean algebra:
+The trapdoor set supports the operations of a generalized Boolean algebra over its opaque elements:
 \begin{itemize}
-\item Union: $A \cup B$ with error propagation
-\item Intersection: $A \cap B$ with error composition
-\item Complement: $\neg A$ with error inversion
-\item Membership: $x \in A$ with hash collision probability
+\item Union $A \cup B$, intersection $A \cap B$, difference $A \setminus B$, and symmetric difference $A \triangle B$, computed as set operations on the element encodings;
+\item Membership $x \in A$ by encoding equality, with false-positive rate bounded by the hash-collision probability and no false negatives.
 \end{itemize}
-
-\textbf{Symmetric Difference Sets} form a group under XOR:
-\begin{itemize}
-\item XOR: $A \oplus B$ for disjoint unions
-\item Identity: Empty set
-\item Inverse: Every set is its own inverse
-\item Efficient for aggregation operations
-\end{itemize}
+There is no complement operation: the complement of a finite set is not finitely representable (Proposition~\ref{prop:gen-boolean}). Symmetric difference makes the finite trapdoor sets a Boolean ring without unit---$\triangle$ is addition and $\cap$ is multiplication---which is convenient for aggregation. The compact bit-vector representation (Section~\ref{sec:boolean-algebra}) offers a syntactic complement via bitwise $\neg$, but it does not preserve set complement.
 
 \subsection{Error Propagation}
 
@@ -286,9 +275,9 @@ Operations on hash values return \emph{Bernoulli Booleans}---plaintext approxima
 \item \textbf{Results are not hidden}: An observer sees query outcomes as plaintext booleans
 \end{itemize}
 
-\begin{remark}[The Concession]
+\begin{remark}[What leaks: the equality channel]
 \label{rem:concession}
-While the trapdoor hides the underlying data, \emph{query results are observable}. A fully access-pattern-hiding system would conceal even the pattern of true/false results (as in oblivious RAM~\cite{oset}). HBTS trades this stronger property for practical efficiency---suitable when query results are already shared (e.g., private set intersection reveals intersection members) or when the pattern of results is not sensitive.
+The trapdoor never reveals a plaintext value, but a party holding the encoded set learns the \emph{equality pattern} among encodings: which elements coincide, and whether a queried encoding is present. This is the leakage profile of deterministic and searchable symmetric encryption, and it is a different axis from decoding---equality leaks without any preimage being broken. It is the price of letting the untrusted side run the algebra itself, and it is exactly what the homophony parameter $K$ controls: $K = 1$ opens this channel, while $K > 1$ closes it at the cost of moving evaluation behind a trusted decoder.
 \end{remark}
 
 \subsubsection{Hash Values as Bernoulli Set Carriers}
@@ -420,9 +409,9 @@ which tends to 0 exponentially as $s \to \infty$ (since $\log_2 \alpha(s) \to 0$
 
 \subsection{Security Analysis}
 
-The privacy guarantee of HBTS is hash preimage resistance under the random oracle model.
+We separate two guarantees: \emph{non-recovery} of plaintext values, and \emph{confidentiality} against an adversary who observes the encodings and the equality relations among them. Preimage resistance provides the first; it does not provide the second.
 
-\begin{theorem}[Privacy Preservation]
+\begin{theorem}[Non-Recovery]
 \label{thm:privacy}
 Let $H: \{0,1\}^* \rightarrow \{0,1\}^n$ be modeled as a random oracle. Under the random oracle model, recovering $x$ from $H(k \| x)$ requires expected $O(2^n)$ hash evaluations when $k$ is secret and uniformly random. No efficient algorithm can determine the input $x$ from the hash output with non-negligible probability.
 \end{theorem}
@@ -430,6 +419,11 @@ Let $H: \{0,1\}^* \rightarrow \{0,1\}^n$ be modeled as a random oracle. Under th
 \begin{proof}
 In the random oracle model, $H(k \| x)$ is uniformly distributed over $\{0,1\}^n$ and independent of $x$ from the adversary's perspective (since $k$ is unknown). Each hash evaluation tests one candidate input, and the probability of matching the target output is $2^{-n}$ per evaluation. After $q$ queries, the success probability is at most $q \cdot 2^{-n}$, which is negligible for $q$ polynomial in $n$.
 \end{proof}
+
+\begin{remark}[Confidentiality is governed by the equality channel, not preimage hardness]
+\label{rem:qif}
+Theorem~\ref{thm:privacy} prevents recovering $x$ from $T_k(x)$, but says nothing about what the encodings leak \emph{collectively}. Under deterministic encoding ($K = 1$), an adversary observing the encoded set and a stream of queries learns the partition of values by equality and their frequencies---the leakage profile of deterministic and searchable symmetric encryption. The appropriate confidentiality measure is therefore quantitative information flow: the entropy of the observed encoding distribution relative to the prior, degraded precisely by the equality channel and improved by homophony ($K > 1$). Preimage hardness bounds non-recovery; it is not a confidentiality bound.
+\end{remark}
 
 \subsection{Approximate Algebraic Properties}
 
