@@ -18,8 +18,9 @@ history (`.papermill/`) only.
 ## The paper's subject and planned framing
 
 The object is the **trapdoor set**: a set of opaque, deterministic (K=1)
-trapdoors with an exact Boolean algebra (union/intersection/difference exact,
-FNR = 0) whose membership test returns a plaintext `bool` by byte-equality.
+trapdoors with a collision-bounded generalized Boolean algebra
+(union/intersection/difference exact up to hash collision, FNR = 0, no complement)
+whose membership test returns a plaintext `bool` by byte-equality.
 
 The spine of the (planned) reframe:
 
@@ -28,13 +29,13 @@ The spine of the (planned) reframe:
   predicate** among ciphertexts: the deterministic-encryption / searchable-
   symmetric-encryption (SSE) leakage profile, a different axis from decoding.
 - **K(x) is the opacity/exactness dial.** `K=1` opens the equality channel and
-  gives the exact untrusted-side algebra (this paper's object); `K>1`
+  gives the collision-bounded untrusted-side algebra (this paper's object); `K>1`
   (homophonic) closes it and yields the opaque set-indicator (`element -> Bool`
   trapdoor map, as in `trapdoor-maps` `examples/document-search/`). This makes
   the paper a statement about `K` and connects it to the representation-
   uniformity (delta) machinery in the rest of the ecosystem.
 - **The trade-off is the contribution:** opening the equality channel buys an
-  exact algebra; the opaque cipher-Bool partition instead pays correctness error
+  collision-bounded algebra; the opaque cipher-Bool partition instead pays correctness error
   eta for opacity.
 
 **Status:** the committed PDF still uses the older HBTS / "privacy-preserving

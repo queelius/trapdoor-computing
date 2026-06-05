@@ -11,11 +11,11 @@ repository-code: "https://github.com/queelius/boolean-algebra-over-trapdoor-sets
 abstract: >-
   A framework for privacy-preserving set operations built from cryptographic
   trapdoors. A trapdoor set holds opaque, deterministic element trapdoors and
-  supports an exact Boolean algebra (union and intersection exact, no false
+  supports a collision-bounded generalized Boolean algebra (union and intersection
   negatives) while answering membership as a plaintext boolean by byte-equality.
   It never recovers plaintext; what it exposes is the equality predicate among
   ciphertexts (the deterministic-encryption / searchable-encryption leakage
-  profile), trading that leak for an exact algebra.
+  profile), trading that leak for set operations whose only error is a hash collision.
 keywords:
   - cryptographic hash functions
   - trapdoor data structures
@@ -36,7 +36,7 @@ preferred-citation:
   year: 2025
   abstract: >-
     A framework for privacy-preserving set operations built from cryptographic
-    trapdoors. The trapdoor set supports an exact Boolean algebra over opaque
-    element trapdoors while answering membership as a plaintext boolean by
+    trapdoors. The trapdoor set supports a collision-bounded generalized Boolean
+    algebra over opaque element trapdoors while answering membership as a plaintext boolean by
     byte-equality, exposing the equality predicate among ciphertexts rather than
     any plaintext value.
