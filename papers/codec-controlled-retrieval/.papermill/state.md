@@ -1,0 +1,88 @@
+---
+title: "Codec-Controlled Retrieval: Structural Frequency-Hiding from the Non-Member Channel of XOR Retrieval"
+bibkey: "towell2026codec"
+stage: outline
+format: latex
+main_file: "paper/codec_retrieval.tex"
+bib_file: "paper/refs.bib"
+build: "cd paper && make"
+authors:
+  - name: "Alexander Towell"
+    email: "lex@metafunctor.com"
+    orcid: "0000-0001-6443-9897"
+
+thesis:
+  claim: "Homogeneous ribbon (XOR) retrieval is a free distribution-transforming decoder: the value returned for a NON-MEMBER key is uniform on the GF(2) span W of the stored codeword patterns, so a public codec fixes the off-set output distribution, and that distribution is INDEPENDENT of how often each value was stored. Codec control holds EXACTLY when W spans the codec's class quotient, a sharp GF(2)-rank threshold (rank pi|_W = log2 K), with no intermediate regime. This yields STRUCTURAL frequency-hiding native to a static data structure: an adversary with oracle access who queries non-members cannot recover storage frequencies (idealized FreqDist advantage exactly zero; real advantage bounded by twice the small, scale-independent, redundancy-governed deviation delta). It is the concrete GF(2)-LINEAR instantiation that the cipher-maps abstraction (random-oracle and RecSplit backends only) does not have."
+  novelty: |
+    Three-tier novelty ledger (positioned to avoid self-collision):
+    1. (A, NOT novel here, cited as baseline) The abstract law "codec codespace allocation controls the non-member output distribution", P(out=v) ~ |class(v)|/2^M, already appears in the author's bernoulli_maps singular-hash-map work (for a RANDOM-ORACLE construction) and is the distribution-transforming-encoder idea of Honey Encryption (juels2014honey; cheng2019pmte). Do NOT headline.
+    2. (B, NOVEL) The same law SURVIVES the move to a GF(2)-LINEAR ribbon/XOR retrieval structure, where the output is an XOR of solution rows (not a fresh hash). The entire retrieval literature (Bloomier chazelle2004bloomier; ribbon/BuRR dillinger2022burr; binary-fuse graf2022binaryfuse) treats non-member output as arbitrary junk and never characterizes its distribution.
+    3. (C, HEADLINE NOVEL) The sharp GF(2)-span threshold (T4): full codec control holds iff W is transversal to the codec class partition (rank pi|_W = log2 K), a step function of the integer rank. Found nowhere internal or external.
+    Security contribution: the FreqDist game, with idealized advantage proven exactly zero (from frequency independence T3) and a real bound Adv <= 2(delta(p0)+delta(p1)). Framed as INDEPENDENCE (indistinguishability), not a comparative leakage claim, which is what makes it immune to the direction error that inverted the coincidence-oracle reading.
+  refined: "v1 (bootstrap, 2026-06-05). Thesis extracted from the completed maph construction note (source of record maph/docs/codec_controlled_retrieval.md @ a79d9c0). The technical substance (T1-T5, FreqDist security, experiments E1-E4) is already proven, computationally verified, and adversarially reviewed in SP2; this paper reshapes it into PoPETs venue form. Headline is the GF(2)-span threshold T4; the abstract codec-output law is cited as baseline (bernoulli_maps, Honey Encryption). PENDING: papermill:thesis sharpening, papermill:outline, then drafting the sections from the source note."
+
+prior_art:
+  last_survey: "2026-06-03 (SP3 scouts: targeted novelty check + broad field map; ledger in the note)"
+  key_references:
+    - "towell_bernoulli_maps: the abstract codec-output formula (singular hash map, RANDOM-ORACLE construction). MUST-DIFFERENTIATE: same formula, different construction."
+    - "towell2026ciphermaps: the abstraction this instantiates (random-oracle + RecSplit backends, NO linear backend). MUST-DIFFERENTIATE and cite as home framing. Cites this paper as towell2026codec."
+    - "juels2014honey: Honey Encryption distribution-transforming encoder. MUST-DIFFERENTIATE: assumes a uniform seed from a cipher; we PROVE near-uniformity from the linear structure, gated by the span threshold."
+    - "cheng2019pmte: Probability Model Transforming Encoders (DTE follow-up)."
+    - "dillinger2021ribbon, dillinger2022burr: ribbon retrieval substrate (treats non-member output as junk)."
+    - "dietzfelbinger2019gauss: GF(2) Gaussian elimination (the linear-algebra foundation)."
+    - "graf2020xor, graf2022binaryfuse: XOR / binary-fuse filters (uniform-random fill of unused slots, the nearest engineering cousin)."
+    - "chazelle2004bloomier: Bloomier filter (origin of arbitrary non-member value)."
+    - "dietzfelbinger2008succinct: retrieval/AMQ space lower bound."
+    - "grubbs2020pancake: PANCAKE frequency smoothing. MUST-DIFFERENTIATE: online access-pattern defense vs our static structural property."
+    - "lacharite2018fse: frequency-smoothing encryption (homophonic). MUST-DIFFERENTIATE: cipher layer vs data-structure layer."
+    - "naveed2015inference: NKW frequency-analysis attack (the threat the property defends against)."
+  gaps:
+    - "Filic-Paterson CCS 2022 (adversarial correctness/privacy for AMQ-PDS): the closest EXTERNAL filter-confidentiality formalism; covers membership PDS, not the retrieval value-distribution. Read before claiming first-to-characterize. NOT yet in refs.bib."
+    - "Patel-Persiano-Yeo-Yung 2019 volume-hiding STE: closest information-theoretic cousin (shape an observable to a public target via a structural construction). NOT yet in refs.bib."
+    - "Static Retrieval Revisited (Hu-Kuszmaul FOCS 2025) and Learned Static Function Data Structures (2025): confirm the off-S distribution is still uncharacterized in 2025 SOTA. Strengthens novelty. NOT yet in refs.bib."
+
+experiments:
+  - name: "E1: span-threshold cliff (T4)"
+    location: "source/results/codec_span/; maph benchmarks/bench_codec_span.cpp"
+    status: "complete, replicated with CIs, reviewed"
+    note: "TV-to-codespace drops from ~0.5 below rank log2 K to ~0.003 at it. balanced_M4_K4: 0.500 (rank 1) -> 0.00277 (rank 2). balanced_M8_K8: 0.500 (rank 2) -> 0.00505 (rank 3). Sub-threshold CIs degenerate (deterministic in rank). A cliff, not a ramp."
+  - name: "E2: FreqDist independence + redundancy (T3/T5)"
+    location: "source/results/freq_independence/; maph benchmarks/bench_freq_independence.cpp"
+    status: "complete, replicated with CIs + noise-floor baseline, reviewed"
+    note: "Cross-profile advantage tracks the noisier build's per-build floor, not the frequency gap. Rich profiles ~0.003; thin-support skew_a (99/0.5/0.5) baseline ~0.019; all three skew_a cross pairs ~0.014 despite different frequency gaps (so it is per-build T5 noise, not frequency leakage)."
+  - name: "E3: scale-independence (T5)"
+    location: "source/results/scale/; maph benchmarks/bench_codec_span.cpp --mode=scale"
+    status: "complete, to N=10M, reviewed"
+    note: "Mean TV flat across N: 0.00352 (1e4), 0.00311 (1e5), 0.00352 (1e6), 0.00284 (1e7), CIs overlap. Analytic sampling floor (K=8, n_q=1e5) is 0.00334; measured straddles it, so systematic deviation is at or below resolution. Epsilon auto-scaling at 10M does not degrade control."
+  - name: "E4: corrected coincidence oracle"
+    location: "source/results/coincidence_oracle/; maph analysis/coincidence_oracle.py"
+    status: "complete, Monte Carlo matches closed form for all cells, reviewed"
+    note: "acc(t) = 1 - (1/2) sum_v alpha(v)^t. At t=4: uniform 0.99902 (worst defense), huffman 0.96667, intermediate_padded 0.67195 (best). Concentration wins; the inverted 'uniform defends best' reading is corrected. The cipher-maps companion (cor:t-geometry) already states the same correct direction."
+
+venue:
+  target: "PoPETs 2027"
+  rationale: "Companion to cipher-maps (also PoPETs 2027). PoPETs accepts non-standard privacy models and information-theoretic leakage arguments, and this paper has the implementation-plus-measurement strength cipher-maps lacks. Position as the construction/systems companion to the cipher-maps theory paper."
+  candidates:
+    - "PoPETs (Privacy Enhancing Technologies Symposium), primary"
+    - "CANS 2026 / ESORICS (realistic security home for a new construction with a confidentiality property)"
+    - "SEA / ESA (data-structures venue, if pitched as a retrieval-structure result with security as motivation)"
+    - "IEEE Transactions on Information Theory (long-term, if recast around the space-accuracy duality)"
+
+next_actions:
+  - "papermill:thesis (sharpen the central claim and the one-sentence novelty)"
+  - "papermill:outline (section-by-section plan; the skeleton in paper/codec_retrieval.tex already mirrors the note)"
+  - "Add the three gap citations to refs.bib (Filic-Paterson, Patel et al., Hu-Kuszmaul)"
+  - "papermill:draft (multi-agent draft from source/construction-note.md)"
+---
+
+# Papermill state: Codec-Controlled Retrieval (towell2026codec)
+
+This paper is the construction-and-experiments companion to cipher-maps. Its
+technical substance is COMPLETE and reviewed (SP2 in the maph repo); SP3 reshapes
+it into PoPETs venue form. The source of record for the technical content is
+`maph/docs/codec_controlled_retrieval.md` (commit `a79d9c0`), snapshotted at
+`source/construction-note.md`. Experiment data is under `source/results/`.
+
+See the YAML frontmatter for the thesis, the three-tier novelty ledger, the
+prior-art and must-differentiate list, the four completed experiments, the venue
+plan, and the next actions.

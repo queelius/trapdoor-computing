@@ -1,0 +1,13 @@
+# E2: FreqDist indistinguishability (frequency independence)
+
+This experiment tests the headline security claim (T3 plus the FreqDist game): for `encoded_retrieval<ribbon_retrieval<M>, prefix_codec<V,M>>` above the span threshold, the non-member output distribution depends only on the value support and the codec, not on storage frequencies. The setup uses the codec the A3 contrastive test validated (`prefix_codec<V,4>`, lengths {V0:1, V1:2, V2:2}, default V3, codespace shares 0.5 / 0.25 / 0.25) over the fixed support {V0, V1, V2}; all four storage-frequency profiles (uniform 33/33/33, skew_a 99/0.5/0.5, mid 50/25/25, skew_b 90/5/5) reach GF(2) rank 2 = log2(K) for the support, so codec control holds. The adversary advantage between two profiles is `Adv = TV(dist(p0 build), dist(p1 build))`, measured over 20 paired replications (each build of a pair uses a different seed) with 5000 keys and 50000 non-member queries per build. The noise-floor baseline is the same-profile cross-seed Adv: building one profile with two different seeds and TV-ing their non-member distributions, which captures irreducible sampling plus per-build (T5) variance. The result confirms frequency independence: cross-profile Adv does NOT track the frequency gap between profiles. Pairs not involving skew_a (uniform/mid, uniform/skew_b, mid/skew_b) give cross-Adv 0.0032 to 0.0040, statistically identical to their same-profile baselines (0.0029 to 0.0038). Pairs involving skew_a give cross-Adv 0.0134 to 0.0146, which matches skew_a's own intrinsically elevated baseline (0.0190) and its CIs overlap; the elevation is explained entirely by skew_a's thin V1/V2 storage (only about 25 keys each at 0.5%), which keeps the GF(2) span at the threshold edge with little redundancy and so inflates the per-build T5 noise of that profile, NOT by any frequency-difference signal. Tellingly, uniform-vs-skew_a, mid-vs-skew_a, and skew_b-vs-skew_a are all the same magnitude despite very different frequency gaps, and uniform-vs-skew_b (a real 33-vs-90 gap) sits exactly at the noise floor. Every cross-profile Adv is therefore at or below the same-profile baseline floor of the noisier profile in the pair, never growing with the frequency gap, consistent with T3/FreqDist.
+
+Reproduce:
+
+```
+cmake --build build -j
+./build/benchmarks/bench_freq_independence > results.csv
+# overrides: --reps=N --keys=N --queries=N
+```
+
+Runs are deterministic given the seeds. A tighter run (`--reps=40 --queries=100000`) sharpens the same picture: non-skew_a cross pairs collapse to their ~0.0025 baselines and the skew_a baseline barely moves (0.0168), confirming its elevation is per-build T5 variance rather than sampling noise.

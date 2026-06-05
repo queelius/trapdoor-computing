@@ -1,0 +1,130 @@
+\documentclass[11pt]{article}
+
+% Essential packages (matched to the cipher-maps companion preamble)
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{mathtools}
+\usepackage[numbers,square]{natbib}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\hypersetup{hypertexnames=false}
+\usepackage{cleveref}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+
+% Theorem environments
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]
+
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{proposition}[theorem]{Proposition}
+
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}[section]
+\newtheorem{example}{Example}[section]
+
+% Notation (aligned with the cipher-maps companion where shared)
+\newcommand{\enc}{\mathrm{enc}}
+\newcommand{\dec}{\mathrm{dec}}
+\newcommand{\TV}{d_{\mathrm{TV}}}
+\newcommand{\B}{\{0,1\}}
+\newcommand{\GF}{\mathrm{GF}(2)}
+\newcommand{\spn}{\mathrm{span}}
+\newcommand{\class}{\mathrm{class}}
+\DeclareMathOperator{\Uniform}{Uniform}
+\DeclareMathOperator{\rank}{rank}
+
+\title{Codec-Controlled Retrieval:\\
+Structural Frequency-Hiding from the Non-Member Channel of XOR Retrieval}
+\author{Alexander Towell\\\texttt{lex@metafunctor.com}}
+\date{June 2026}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+% TODO (papermill:draft): abstract. Working claim:
+% Homogeneous ribbon (XOR) retrieval is a free distribution-transforming
+% decoder. The value returned for a non-member key is uniform on the GF(2)
+% span W of the stored codewords, so a public codec fixes the off-set output
+% distribution, and that distribution is independent of how often each value
+% was stored. Codec control holds exactly when W spans the codec's class
+% quotient (a sharp rank threshold, the headline result). This yields a
+% structural frequency-hiding property native to a static data structure,
+% complementing the random-oracle construction of the cipher-maps companion
+% and the online mechanisms of frequency-smoothing databases.
+\emph{Abstract to be drafted (see source/construction-note.md for the full
+technical development).}
+\end{abstract}
+
+% =====================================================================
+% This is a BOOTSTRAP SKELETON. The full technical substance (theorems
+% T1 to T5, the FreqDist security model, experiments E1 to E4, and the
+% related-work ledger) is developed in source/construction-note.md, the
+% snapshot of the maph note that is this paper's source of record. The
+% section stubs below mirror that note; papermill drafting fills them.
+% Source of record: maph/docs/codec_controlled_retrieval.md @ commit a79d9c0.
+% =====================================================================
+
+\section{Introduction}
+\label{sec:intro}
+% TODO: motivation (retrieval structures treat non-member output as junk;
+% we characterize and control it), the contribution tiers (A baseline law,
+% B survives the move to linear retrieval, C the sharp span threshold),
+% and positioning against cipher-maps / Honey Encryption / PANCAKE-FSE-NKW.
+
+\section{Preliminaries and notation}
+\label{sec:prelim}
+% TODO: codecs and codespace shares alpha(v); ribbon/XOR retrieval as a
+% GF(2)-linear map lookup(y) = a_y^T z; the stored-codeword span
+% W = span{c(x)}; the idealized model M1.
+
+\section{The non-member output is uniform on the stored span (T1, T2)}
+\label{sec:t1t2}
+% TODO: from source-note T1/T2. R(z) = W; under M1, P(out=v) = |class(v) cap W|/|W|.
+
+\section{Frequency independence (T3)}
+\label{sec:t3}
+% TODO: W depends only on the value support, not multiplicities.
+
+\section{The sharp codec-control threshold (T4)}
+\label{sec:t4}
+% TODO: the headline. Full control iff rank(pi|_W) = log2 K (transversality);
+% sharp transition; the gf2_rank(stored) bridge.
+
+\section{Real-incidence deviation (T5)}
+\label{sec:t5}
+% TODO: the empirical characterization; delta at the sampling floor,
+% scale-independent, redundancy-governed.
+
+\section{Security: frequency-analysis resistance}
+\label{sec:security}
+% TODO: the FreqDist game; idealized advantage zero; real bound
+% Adv <= 2(delta(p0)+delta(p1)); independence not comparative; scope.
+
+\section{The two attacks pull opposite ways}
+\label{sec:reconciliation}
+% TODO: frequency analysis defeated by independence (flat); coincidence
+% oracle defeated by concentration (Huffman); no single optimal codec.
+
+\section{Experiments}
+\label{sec:experiments}
+% TODO: E1 span threshold, E2 FreqDist independence, E3 scale, E4 corrected
+% coincidence oracle. Data in source/results/.
+
+\section{Related work and novelty}
+\label{sec:related}
+% TODO: the three-tier ledger and the must-differentiate list from the note.
+
+\section{Conclusion}
+\label{sec:conclusion}
+% TODO.
+
+\bibliographystyle{plainnat}
+\bibliography{refs}
+
+\end{document}

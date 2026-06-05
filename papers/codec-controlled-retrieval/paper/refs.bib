@@ -1,0 +1,110 @@
+% bijou shared bibliography. Seed entries from the codec-controlled-retrieval
+% literature ledger (spec 2026-06-04, section 1.2). Verify all fields before use
+% in a submission.
+
+@inproceedings{dillinger2021ribbon,
+  author    = {Dillinger, Peter C. and Walzer, Stefan},
+  title     = {Ribbon filter: practically smaller than Bloom and Xor},
+  year      = {2021},
+  eprint    = {2103.02515},
+  archivePrefix = {arXiv},
+  note      = {Substrate for ribbon retrieval}
+}
+
+@inproceedings{dillinger2022burr,
+  author    = {Dillinger, Peter C. and H{\"u}bschle-Schneider, Lorenz and Sanders, Peter and Walzer, Stefan},
+  title     = {Fast Succinct Retrieval and Approximate Membership using Ribbon},
+  booktitle = {Symposium on Experimental Algorithms (SEA)},
+  year      = {2022},
+  eprint    = {2109.01892},
+  archivePrefix = {arXiv}
+}
+
+@inproceedings{dietzfelbinger2008succinct,
+  author    = {Dietzfelbinger, Martin and Pagh, Rasmus},
+  title     = {Succinct Data Structures for Retrieval and Approximate Membership},
+  booktitle = {ICALP},
+  year      = {2008}
+}
+
+@inproceedings{dietzfelbinger2019gauss,
+  author    = {Dietzfelbinger, Martin and Walzer, Stefan},
+  title     = {Efficient Gauss Elimination for Near-Quadratic Matrices with One Short Random Block per Row},
+  booktitle = {STACS},
+  year      = {2019},
+  eprint    = {1907.04750},
+  archivePrefix = {arXiv}
+}
+
+@article{graf2020xor,
+  author  = {Graf, Thomas Mueller and Lemire, Daniel},
+  title   = {Xor Filters: Faster and Smaller Than Bloom and Cuckoo Filters},
+  journal = {ACM Journal of Experimental Algorithmics},
+  year    = {2020}
+}
+
+@article{graf2022binaryfuse,
+  author  = {Graf, Thomas Mueller and Lemire, Daniel},
+  title   = {Binary Fuse Filters: Fast and Smaller Than Xor Filters},
+  journal = {ACM Journal of Experimental Algorithmics},
+  year    = {2022},
+  eprint  = {2201.01174},
+  archivePrefix = {arXiv}
+}
+
+@inproceedings{chazelle2004bloomier,
+  author    = {Chazelle, Bernard and Kilian, Joe and Rubinfeld, Ronitt and Tal, Ayellet},
+  title     = {The Bloomier Filter: An Efficient Data Structure for Static Support Lookup Tables},
+  booktitle = {SODA},
+  year      = {2004}
+}
+
+@inproceedings{juels2014honey,
+  author    = {Juels, Ari and Ristenpart, Thomas},
+  title     = {Honey Encryption: Security Beyond the Brute-Force Bound},
+  booktitle = {EUROCRYPT},
+  year      = {2014},
+  note      = {Distribution-transforming encoder (DTE)}
+}
+
+@inproceedings{cheng2019pmte,
+  author    = {Cheng, Haibo and Li, Zhixiong and Wang, Ping and Zhao, Chao},
+  title     = {Probability Model Transforming Encoders Against Encoding Attacks},
+  booktitle = {USENIX Security},
+  year      = {2019}
+}
+
+@inproceedings{grubbs2020pancake,
+  author    = {Grubbs, Paul and Khandelwal, Anurag and Lacharit{\'e}, Marie-Sarah and Brown, Lloyd and Li, Lucy and Agarwal, Rachit and Ristenpart, Thomas},
+  title     = {PANCAKE: Frequency Smoothing for Encrypted Data Stores},
+  booktitle = {USENIX Security},
+  year      = {2020}
+}
+
+@inproceedings{lacharite2018fse,
+  author    = {Lacharit{\'e}, Marie-Sarah and Paterson, Kenneth G.},
+  title     = {Frequency-smoothing encryption: preventing snapshot attacks on deterministically encrypted data},
+  booktitle = {IACR Transactions on Symmetric Cryptology (ToSC/FSE)},
+  year      = {2018}
+}
+
+@inproceedings{naveed2015inference,
+  author    = {Naveed, Muhammad and Kamara, Seny and Wright, Charles V.},
+  title     = {Inference Attacks on Property-Preserving Encrypted Databases},
+  booktitle = {CCS},
+  year      = {2015}
+}
+
+% In-house prior theory (must cite; differentiate the construction from these):
+
+@unpublished{towell_bernoulli_maps,
+  author = {Towell, Alexander},
+  title  = {The Algebra of the Random Approximate Map Model (Bernoulli maps; singular hash map)},
+  note   = {bernoulli/papers/bernoulli_maps. Contains the abstract codec-output formula.}
+}
+
+@unpublished{towell2026ciphermaps,
+  author = {Towell, Alexander},
+  title  = {Cipher Maps: Total Functions as Trapdoor Approximations},
+  note   = {trapdoor-computing/papers/cipher-maps. In revision, PoPETs 2027. Cites towell2026codec.}
+}
