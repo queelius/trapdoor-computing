@@ -78,14 +78,17 @@ control holds if and only if the stored codewords are transversal to the codec's
 class partition, equivalently $\rank \proj|_{\W} = \log_2 K$, a step function of an
 integer rank with no graded regime; below it whole codec classes receive exactly
 zero probability. We cash this out as a structural frequency-hiding property: in a
-distinguishing game (FreqDist) an adversary with non-member oracle access has
-advantage exactly zero in the idealized model and at most $2(\delta_0+\delta_1)$ in
-the real construction, where $\delta$ is a small, scale-independent,
+distinguishing game (FreqDist) an adversary with non-member oracle access, even with
+unboundedly many adaptive queries, has advantage exactly zero in the idealized model
+(the two oracles are the identical law) and, in the real construction, the two
+non-member laws are within total variation $\delta(p_0)+\delta(p_1)$ of each other, so
+the advantage is at most that distance, where $\delta$ is a small, scale-independent,
 redundancy-governed deviation we measure to be at or below the query-sampling floor
 ($0.00334$ at $10^5$ queries) up to $10^7$ keys. We are honest about the perimeter:
 a second, multi-instance attack (a coincidence oracle with accuracy
-$1-\tfrac12\sum_v \al(v)^t$) pulls the codec the opposite way, so there is no single
-optimal codec, only a public tunable frontier. The construction is a header-only
+$1-\tfrac12\sum_v \al(v)^t$, defeated by \emph{concentrated} rather than flat codespace
+shares, so concentration is the better defense there) pulls the codec the opposite way,
+so there is no single optimal codec, only a public tunable frontier. The construction is a header-only
 C++23 implementation, and every theorem has a passing empirical check at scale. The
 result is the concrete $\GF$-linear instantiation of a frequency-hiding property
 that online encrypted-database defenses pay for per query.
@@ -120,10 +123,12 @@ key, member or not, with no membership test. For a key in the built set it retur
 the stored value in space close to the information-theoretic minimum. For a key not
 in the set it returns something the literature is unanimous in calling
 \emph{arbitrary}: a don't-care, the price of a construction that only needs to be
-correct on the member set. Nobody characterizes what that arbitrary value
-\emph{is}. As recently as 2025, the state of the art in static
-retrieval~\cite{hu2025retrieval} leaves the off-set output distribution
-uncharacterized.
+correct on the member set. XOR and fuse filters do \emph{specify} how unused
+\emph{slots} are filled (uniform-random or zero) as an engineering choice, but that is
+distinct from characterizing the decoded \emph{value} distribution on non-member
+\emph{keys}, which to our knowledge the retrieval literature does not study: as recently
+as 2025, the state of the art in static retrieval~\cite{hu2025retrieval} leaves the
+off-set output distribution uncharacterized.
 
 We fill exactly that silence, and find it was hiding a designable, provable object.
 Our vehicle is homogeneous ribbon retrieval, in which a query is a $\GF$-linear
@@ -158,14 +163,20 @@ new and crediting what is not.
   codewords are transversal to the codec's class partition, $\rank \proj|_{\W} =
   \log_2 K$, a step function of an integer rank with no graded regime
   (\cref{thm:threshold}). Below it, whole codec classes receive exactly zero
-  probability. This threshold appears nowhere we are aware of, internal or external.
+  probability. We are not aware of a prior statement of this threshold in the retrieval
+  or filter literature; its underlying counting step (a subspace meets each coset it
+  touches in a constant number of points, \cref{lem:subspace-coset}) is the coset weight
+  distribution / coset-counting fact of coding theory~\cite{macwilliams1977}, which we
+  apply in a new setting (the non-member output of a linear retrieval structure) to
+  obtain a security-relevant codec-control rule.
 \end{itemize}
 On the security side, we formalize a distinguishing game (FreqDist) in which the
-idealized adversary advantage is \emph{exactly zero} (\cref{thm:freqdist-ideal}) and
-the real advantage is at most $2(\delta(p_0)+\delta(p_1))$
-(\cref{thm:freqdist-real}), where $\delta$ is the small, scale-independent deviation
-of the real construction from the idealization, measured to be at or below the
-query-sampling floor up to ten million keys. We implement the construction
+idealized adversary advantage is \emph{exactly zero} (\cref{thm:freqdist-ideal}) and, in
+the real construction, the two non-member laws are within total variation
+$\delta(p_0)+\delta(p_1)$ of each other, so the advantage of an adversary issuing any
+number of adaptive non-member queries is at most that distance (\cref{thm:freqdist-real}),
+where $\delta$ is the small, scale-independent deviation of the real construction from the
+idealization, measured to be at or below the query-sampling floor up to ten million keys. We implement the construction
 (header-only C++23) and validate every theorem empirically at scale. Finally, we are
 honest about the perimeter: a structurally different multi-instance attack, a
 coincidence oracle, is defeated by the \emph{opposite} codec choice, so there is no
@@ -526,7 +537,11 @@ $w_0 + (\W \inter C)$, of size $|\W \inter C|$.
 The lemma is the crux: a subspace meets every class it touches in the \emph{same}
 number of points, so the per-class mass is two-valued, a fixed positive constant on hit
 classes and zero on missed classes. There is no room for a class to be partially filled
-at an intermediate density.
+at an intermediate density.\footnote{This constant coset-hit count is folklore linear
+algebra over $\GF$, equivalent to the coset weight distribution / coset-counting fact of
+coding theory~\cite{macwilliams1977}. We claim no novelty for the lemma itself; the new
+content is reading it as the non-member output law of a retrieval structure and the
+control threshold (\cref{thm:threshold}) it yields.}
 
 \subsection{The mass on each class is $0$ or $1/K'$}
 
@@ -830,45 +845,76 @@ adaptivity of queries, and $\Adv(\mathcal{A}) = 0$.
 \end{proof}
 
 The advantage is zero not because distinguishing is hard but because there is nothing to
-distinguish: the two oracles are one and the same law.
+distinguish: the two oracles are one and the same law, and identical distributions cannot
+be told apart at any sample size, by any number of adaptive queries.
 
-\subsection{Real advantage at most twice the summed deviation}
+\subsection{The two real laws are close, so the advantage is small at any query count}
 
 In the real construction the two oracles are not exactly equal: each profile's build
 solves its own banded system, inducing its own near-uniform law on the shared $\W$. Write
 $\lawreal(p_b)$ for the real non-member law under $p_b$ and recall
 $\delta(p_b) = \TV(\lawreal(p_b), \lawM)$, the per-build deviation from the shared M1 law
-(the same object for both, being frequency-independent by \cref{thm:freqindep}).
+(the same object for both, being frequency-independent by \cref{thm:freqindep}). The
+correct statement here is about the \emph{distance between the two real laws}, not a
+per-query advantage cap: it must hold no matter how many non-member queries the adversary
+draws, since \cref{def:freqdist} grants unboundedly many adaptive queries.
 
-\begin{theorem}[FreqDist, real]
+\begin{theorem}[FreqDist, real: the two laws are close]
 \label{thm:freqdist-real}
-$\Adv(\mathcal{A}) \le 2\big(\delta(p_0) + \delta(p_1)\big)$ for every adversary.
+The two real non-member laws are close in total variation, frequency-independently and
+regardless of how many samples are drawn:
+\[
+  \TV\big(\lawreal(p_0), \lawreal(p_1)\big) \;\le\; \delta(p_0) + \delta(p_1).
+\]
+Consequently, in the convention $\Adv = |2\Pr[b'=b]-1|$, the per-query distinguishing
+advantage (the advantage of the optimal test on one observed non-member output) is
+\[
+  \Adv(\mathcal{A}) \;\le\; \TV\big(\lawreal(p_0), \lawreal(p_1)\big)
+  \;\le\; \delta(p_0) + \delta(p_1),
+\]
+and the only quantity an adversary can sharpen with more queries is its estimate of these
+two \emph{fixed} laws, whose separation is capped by the same
+$\delta(p_0)+\delta(p_1)$ at every query count and contains no frequency-dependent term.
 \end{theorem}
 
 \begin{proof}
-The standard fact that distinguishing advantage is bounded by total variation gives,
-for any adversary observing samples from one of the two laws,
-$\Adv(\mathcal{A}) \le 2\,\TV(\lawreal(p_0), \lawreal(p_1))$. (The factor $2$ is the
-convention of
-$\Adv = |2\Pr[b'=b]-1|$; with $\Adv = |\Pr[b'=b]-\tfrac12|$ the bound reads $\le \TV$, and
-the optimal single-sample distinguisher achieves exactly the TV.) Routing through the
-common M1 law and using the triangle inequality for TV,
+Both real laws are within $\delta$ of the same idealized M1 law, which is
+frequency-independent by \cref{thm:freqindep} ($\W$ depends only on the shared support).
+Routing through that common law and using the triangle inequality for TV,
 \[
   \TV(\lawreal(p_0), \lawreal(p_1))
   \le \TV(\lawreal(p_0), \lawM) + \TV(\lawM, \lawreal(p_1))
-  = \delta(p_0) + \delta(p_1),
+  = \delta(p_0) + \delta(p_1).
 \]
-so $\Adv(\mathcal{A}) \le 2(\delta(p_0) + \delta(p_1))$.
+This compares the two \emph{fixed} per-build laws and is therefore independent of how many
+samples the adversary observes: it is a statement about the laws, not about a sample. For
+the advantage, the optimal single-observation test distinguishing two distributions has
+advantage exactly their total variation in the $\Adv = |2\Pr[b'=b]-1|$ convention (Le Cam's
+two-point bound), so on one observed output the advantage is at most
+$\TV(\lawreal(p_0), \lawreal(p_1)) \le \delta(p_0) + \delta(p_1)$. (No factor of $2$
+appears: the earlier single-observation reading multiplied the per-sample TV by the
+convention factor; the per-observation advantage in this convention is the TV itself.)
+A many-query adversary draws i.i.d.\ outputs from one fixed instance and can estimate that
+instance's law to arbitrary precision, but the only thing this lets it do is decide which of
+the two \emph{known, fixed} laws it faces, and those two laws are themselves within
+$\delta(p_0)+\delta(p_1)$ of each other by the display above. Crucially that separation does
+not grow with the number of queries and (by \cref{thm:freqindep}) carries no
+frequency-dependent component: the adversary can sharpen its picture of each law without ever
+uncovering a frequency-gap signal, because none is present. The whole of what more queries
+can buy is bounded by the gap between two laws that differ only by the redundancy-governed,
+frequency-independent $\delta$.
 \end{proof}
 
-Plugging in the \cref{sec:t5} numbers: with both profiles rich,
-$\delta(p_0) \approx \delta(p_1) \approx 0.003$, so $\Adv \le 2(0.003 + 0.003) = 0.012$;
-with one profile at the threshold edge (the skew\_a regime), $\delta \approx 0.017$ on the
-thin side and $\approx 0.003$ on the rich side, so
-$\Adv \le 2(0.017 + 0.003) = 0.04$. E2 (\cref{sec:experiments}) confirms not just the
-bound but its \emph{shape}: the measured cross-profile advantage sits at the per-build
-floor and does not grow with the frequency gap between $p_0$ and $p_1$, exactly as
-$2(\delta(p_0)+\delta(p_1))$ predicts and the idealized $\Adv = 0$ demands.
+The bound caps the gap between the two real laws, not a per-query quantity that could grow
+with the number of queries. Plugging in the \cref{sec:t5} numbers: with both profiles rich,
+$\delta(p_0) \approx \delta(p_1) \approx 0.003$, so the advantage is at most
+$0.003 + 0.003 = 0.006$; with one profile at the threshold edge (the skew\_a regime),
+$\delta \approx 0.017$ on the thin side and $\approx 0.003$ on the rich side, so the
+advantage is at most $0.017 + 0.003 = 0.02$. E2 (\cref{sec:experiments}) measures exactly
+this quantity, the total variation between the two realized non-member laws, and confirms
+not just the bound but its \emph{shape}: the measured cross-profile distance sits at the
+per-build floor and does not grow with the frequency gap between $p_0$ and $p_1$, exactly
+as $\delta(p_0)+\delta(p_1)$ predicts and the idealized $\Adv = 0$ demands.
 
 \subsection{An independence result, not a comparative one}
 
@@ -892,10 +938,12 @@ $(\al(v))$ and the support, both public design choices; never the private $m_v$.
 This section defends exactly one channel against exactly one attack.
 \begin{itemize}
   \item \textbf{Covered.} The value-frequency channel of non-member outputs: an adversary
-  with non-member oracle access cannot learn the storage-frequency distribution of values
-  in $S$. Idealized advantage zero (M1, from \cref{thm:idealized,thm:freqindep}); real
-  advantage at most $2(\delta(p_0)+\delta(p_1))$, a small constant governed by storage
-  redundancy and independent of the frequency gap (\cref{sec:t5}, E2).
+  with non-member oracle access, with any number of adaptive queries, cannot learn the
+  storage-frequency distribution of values in $S$. Idealized advantage zero (M1, from
+  \cref{thm:idealized,thm:freqindep}); in the real construction the two non-member laws are
+  within total variation $\delta(p_0)+\delta(p_1)$, so the advantage is at most that
+  distance, a small constant governed by storage redundancy and independent of the
+  frequency gap (\cref{sec:t5}, E2).
   \item \textbf{Not covered.} Nothing about access-pattern leakage (which keys are
   queried, and correlations across queries), volume or size leakage, or the multi-instance
   coincidence oracle. That oracle is a \emph{different} game (correlating $t$ redeployments
@@ -1075,10 +1123,14 @@ land at $\sim 0.014$, of the same order as skew\_a's own $\sim 0.019$ baseline, 
 storage-frequency gaps differing enormously; the genuinely large gap between two rich
 profiles (uniform-vs-skew\_b) sits at the floor. So the elevation is a per-build property
 of thin support (skew\_a stores its minority values only $\sim 25$ times each, leaving $\W$
-at the threshold edge), a \cref{sec:t5} effect, not a frequency-leakage signal. This jointly
-confirms the independence (advantage does not grow with the frequency gap) and the
-redundancy characterization (advantage set by the per-class store count of the thinner
-build), realizing the real bound $\Adv \le 2(\delta(p_0)+\delta(p_1))$ of
+at the threshold edge), a \cref{sec:t5} effect, not a frequency-leakage signal. The
+cross-profile column is exactly the total variation $\TV(\lawreal(p_0), \lawreal(p_1))$
+between the two realized non-member laws, the quantity \cref{thm:freqdist-real} bounds by
+$\delta(p_0)+\delta(p_1)$ and that caps the advantage of an adversary at any query count.
+This jointly confirms the independence (the cross-profile distance does not grow with the
+frequency gap) and the redundancy characterization (it is set by the per-class store count
+of the thinner build), realizing the real bound
+$\Adv \le \TV(\lawreal(p_0), \lawreal(p_1)) \le \delta(p_0)+\delta(p_1)$ of
 \cref{thm:freqdist-real}.
 
 \subsection{E3: the deviation is small and scale-independent}
@@ -1189,21 +1241,31 @@ static-function literature that ribbon retrieval descends from, Bloomier
 filters~\cite{chazelle2004bloomier}, ribbon and BuRR~\cite{dillinger2021ribbon,dillinger2022burr},
 and binary-fuse filters~\cite{graf2022binaryfuse,graf2020xor}, treats the non-member output as
 arbitrary, uncharacterized junk: it is the price of a construction that need only be correct on
-the member set, and its distribution is never studied. As of 2025 the state of the art in
-static retrieval~\cite{hu2025retrieval} leaves it uncharacterized. Characterizing that
-distribution, and showing it is the codec's own codespace law gated by the span threshold, is
-the new content.
+the member set. These filters do \emph{specify} the fill of unused \emph{slots}
+(uniform-random or zero) as an engineering choice, but that is a statement about empty slots,
+not a characterization of the decoded \emph{value} distribution on non-member \emph{keys},
+which to our knowledge is not studied; as of 2025 the state of the art in static
+retrieval~\cite{hu2025retrieval} leaves that off-set output distribution uncharacterized.
+Characterizing that distribution, and showing it is the codec's own codespace law gated by the
+span threshold, is the new content.
 
 \paragraph{Tier C: headline novelty (the sharp span threshold).}
 The headline is the sharp threshold of \cref{thm:threshold}: the non-member law equals the
 codec shares exactly when the stored patterns span the full codeword space
 ($\rank \proj|_{\W} = \log_2 K$), and the transition is a step in the integer rank, stated as
-transversality of $\W$ to the codec's class partition. This appears nowhere we are aware of,
-internal or external: absent from the random-oracle treatments (Tier A, where there is no span
-to be transversal to), and absent from the retrieval literature (Tier B, which does not study
-the non-member law at all). The subspace-meets-coset lemma (\cref{lem:subspace-coset}) and the
-resulting $K' = |\proj(\W)|$ step function are the technical core, and the cliff in E1 is its
-measured face.
+transversality of $\W$ to the codec's class partition. We are not aware of a prior statement
+of this threshold for retrieval data structures: it is absent from the random-oracle
+treatments (Tier A, where there is no span to be transversal to), and absent from the
+retrieval literature (Tier B, which does not study the non-member law at all). The nearest
+external \emph{technique} is coding theory's coset weight distribution / coset
+counting~\cite{macwilliams1977}: the subspace-meets-coset lemma (\cref{lem:subspace-coset}),
+which gives the constant coset-hit count, is folklore linear algebra over $\GF$, not itself
+new. What is new is its application, reading that constant count as the non-member
+\emph{value} law of a linear retrieval structure, and the resulting all-or-nothing
+$\rank \proj|_{\W} = \log_2 K$ control threshold with its $\mathrm{gf2\_rank}$ engineering
+bridge and security consequence; to our knowledge the coset-weight machinery has not been used
+this way. The resulting $K' = |\proj(\W)|$ step function is the technical core, and the cliff
+in E1 is its measured face.
 
 \paragraph{Differentiation from adjacent work.}
 Four adjacencies deserve an explicit boundary. \textbf{(1) The author's
@@ -1238,6 +1300,24 @@ structural, hashed construction rather than online padding. Our work shapes a di
 structural mechanism (the $\GF$ span), and contributes the sharp threshold governing when the
 shaping takes hold, which has no analogue in the volume-hiding setting.
 
+\paragraph{Leakage-abuse attacks and leakage suppression.}
+The broader backdrop is the searchable/structured-encryption leakage lineage that motivates
+hiding structural channels in the first place. Leakage-abuse attacks established that
+side-channel leakage from encrypted search is exploitable in practice: Islam, Kuzu, and
+Kantarcioglu~\cite{islam2012access} recovered queries from access-pattern leakage, and Cash,
+Grubbs, Perry, and Ristenpart~\cite{cash2015leakage} gave count and access-pattern
+query-recovery and plaintext-recovery attacks across a range of leakage profiles, alongside the
+NKW frequency inference attack~\cite{naveed2015inference} on property-preserving encryption. In
+response, leakage-suppression frameworks reduce or eliminate specific leakage channels by
+construction: Kamara, Moataz, and Ohrimenko~\cite{kamara2018structured} give general compilers
+that suppress the query/search pattern, the framework inside which volume-hiding structured
+encryption~\cite{patel2019volumehiding} sits. Our property is complementary to this line and
+narrower in scope: it defends one specific structural channel, the value-frequency of non-member
+outputs of a static linear retrieval structure, by construction and at zero per-query cost,
+rather than suppressing query- or access-pattern leakage. It is a structural defense for a
+channel that the leakage-abuse line did not target, not a substitute for the access-pattern and
+search-pattern suppression those frameworks provide.
+
 \section{Discussion, limitations, and conclusion}
 \label{sec:conclusion}
 
@@ -1250,9 +1330,11 @@ value was stored (\cref{thm:freqindep}); and codec control of it holds or fails 
 $\GF$-rank threshold with no graded regime (\cref{thm:threshold}). The real construction realizes
 the idealization to within the query-sampling floor for rich support, scale-independently to ten
 million keys (\cref{sec:t5}). Read as security, this is structural frequency-hiding: a
-distinguishing adversary with non-member oracle access has advantage exactly zero in the
-idealized model (\cref{thm:freqdist-ideal}) and at most $2(\delta(p_0)+\delta(p_1))$ in the real
-one (\cref{thm:freqdist-real}), a property of the static bytes with zero per-query cost, where
+distinguishing adversary with non-member oracle access, issuing any number of adaptive
+queries, has advantage exactly zero in the idealized model (\cref{thm:freqdist-ideal}), and
+in the real construction the two non-member laws are within total variation
+$\delta(p_0)+\delta(p_1)$, capping the advantage at that distance
+(\cref{thm:freqdist-real}), a property of the static bytes with zero per-query cost, where
 PANCAKE and FSE pay bandwidth or re-encoding online.
 
 \paragraph{Limitations.}

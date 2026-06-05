@@ -2,13 +2,13 @@
 % literature ledger (spec 2026-06-04, section 1.2). Verify all fields before use
 % in a submission.
 
-@inproceedings{dillinger2021ribbon,
+@misc{dillinger2021ribbon,
   author    = {Dillinger, Peter C. and Walzer, Stefan},
   title     = {Ribbon filter: practically smaller than Bloom and Xor},
   year      = {2021},
   eprint    = {2103.02515},
   archivePrefix = {arXiv},
-  note      = {Substrate for ribbon retrieval}
+  howpublished = {arXiv:2103.02515}
 }
 
 @inproceedings{dillinger2022burr,
@@ -63,8 +63,7 @@
   author    = {Juels, Ari and Ristenpart, Thomas},
   title     = {Honey Encryption: Security Beyond the Brute-Force Bound},
   booktitle = {EUROCRYPT},
-  year      = {2014},
-  note      = {Distribution-transforming encoder (DTE)}
+  year      = {2014}
 }
 
 @inproceedings{cheng2019pmte,
@@ -100,13 +99,15 @@
 @unpublished{towell_bernoulli_maps,
   author = {Towell, Alexander},
   title  = {The Algebra of the Random Approximate Map Model (Bernoulli maps; singular hash map)},
-  note   = {bernoulli/papers/bernoulli\_maps. Contains the abstract codec-output formula.}
+  year   = {2026},
+  note   = {Manuscript}
 }
 
 @unpublished{towell2026ciphermaps,
   author = {Towell, Alexander},
   title  = {Cipher Maps: Total Functions as Trapdoor Approximations},
-  note   = {trapdoor-computing/papers/cipher-maps. In revision, PoPETs 2027. Cites towell2026codec.}
+  year   = {2026},
+  note   = {Manuscript, in revision}
 }
 
 % Gap citations added for the related-work section (SP3 outline):
@@ -115,22 +116,59 @@
   author    = {Filic, Mia and Paterson, Kenneth G. and Unnikrishnan, Anupama and Virdia, Fernando},
   title     = {Adversarial Correctness and Privacy for Probabilistic Data Structures},
   booktitle = {ACM SIGSAC Conference on Computer and Communications Security (CCS)},
-  year      = {2022},
-  note      = {Closest external filter-confidentiality formalism; membership PDS, not retrieval value distribution}
+  year      = {2022}
 }
 
 @inproceedings{patel2019volumehiding,
   author    = {Patel, Sarvar and Persiano, Giuseppe and Yeo, Kevin and Yung, Moti},
   title     = {Mitigating Leakage in Secure Cloud-Hosted Data Structures: Volume-Hiding for Multi-Maps via Hashing},
   booktitle = {ACM SIGSAC Conference on Computer and Communications Security (CCS)},
-  year      = {2019},
-  note      = {Closest structural cousin: shape an observable (volume) to a public target via a hashed construction}
+  year      = {2019}
 }
 
 @inproceedings{hu2025retrieval,
-  author    = {Hu, William and Kuszmaul, William},
+  author    = {Hu, Yang and Kuszmaul, William and Liang, Jingxun and Yu, Huacheng and Zhang, Junkai and Zhou, Renfei},
   title     = {Static Retrieval Revisited: To Optimality and Beyond},
   booktitle = {IEEE Symposium on Foundations of Computer Science (FOCS)},
   year      = {2025},
-  note      = {2025 SOTA retrieval; off-set output still uncharacterized, strengthens the novelty claim}
+  eprint    = {2510.18237},
+  archivePrefix = {arXiv}
+}
+
+% Coding-theory reference for the coset weight distribution / coset-counting
+% folklore behind the subspace-meets-coset lemma:
+
+@book{macwilliams1977,
+  author    = {MacWilliams, F. J. and Sloane, N. J. A.},
+  title     = {The Theory of Error-Correcting Codes},
+  publisher = {North-Holland},
+  year      = {1977}
+}
+
+% Encrypted-search leakage-abuse and leakage-suppression lineage (PoPETs context):
+
+@inproceedings{cash2015leakage,
+  author    = {Cash, David and Grubbs, Paul and Perry, Jason and Ristenpart, Thomas},
+  title     = {Leakage-Abuse Attacks Against Searchable Encryption},
+  booktitle = {ACM SIGSAC Conference on Computer and Communications Security (CCS)},
+  pages     = {668--679},
+  year      = {2015}
+}
+
+@inproceedings{islam2012access,
+  author    = {Islam, Mohammad Saiful and Kuzu, Mehmet and Kantarcioglu, Murat},
+  title     = {Access Pattern Disclosure on Searchable Encryption: Ramification, Attack and Mitigation},
+  booktitle = {Network and Distributed System Security Symposium (NDSS)},
+  year      = {2012}
+}
+
+@inproceedings{kamara2018structured,
+  author    = {Kamara, Seny and Moataz, Tarik and Ohrimenko, Olya},
+  title     = {Structured Encryption and Leakage Suppression},
+  booktitle = {Advances in Cryptology -- CRYPTO},
+  series    = {Lecture Notes in Computer Science},
+  volume    = {10991},
+  pages     = {339--370},
+  publisher = {Springer},
+  year      = {2018}
 }
