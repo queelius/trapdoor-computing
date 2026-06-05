@@ -120,7 +120,8 @@ the static-function family that includes Bloomier filters~\cite{chazelle2004bloo
 ribbon and BuRR retrieval~\cite{dillinger2021ribbon,dillinger2022burr}, and
 binary-fuse filters~\cite{graf2022binaryfuse,graf2020xor}, returns a value for every
 key, member or not, with no membership test. For a key in the built set it returns
-the stored value in space close to the information-theoretic minimum. For a key not
+the stored value in space close to the information-theoretic
+minimum~\cite{dietzfelbinger2008succinct}. For a key not
 in the set it returns something the literature is unanimous in calling
 \emph{arbitrary}: a don't-care, the price of a construction that only needs to be
 correct on the member set. XOR and fuse filters do \emph{specify} how unused
@@ -251,7 +252,9 @@ pseudorandom odd word has about half its bits set), all confined to a single
 $64$-slot window. It is emphatically \emph{not} a $3$-wise XOR. We use only linearity
 in this section.
 
-The builder solves the banded $\GF$ system so that, for every member $x \in S$,
+The builder solves the banded $\GF$ system, by forward elimination plus
+back-substitution over the short random band of each row~\cite{dietzfelbinger2019gauss},
+so that, for every member $x \in S$,
 \begin{equation}
   \ay[x]^{\mathsf T}\bz \;=\; \cx, \qquad \cx = \enc(v(x)),
   \label{eq:member}
@@ -543,7 +546,7 @@ coding theory~\cite{macwilliams1977}. We claim no novelty for the lemma itself; 
 content is reading it as the non-member output law of a retrieval structure and the
 control threshold (\cref{thm:threshold}) it yields.}
 
-\subsection{The mass on each class is $0$ or $1/K'$}
+\subsection{\texorpdfstring{The mass on each class is $0$ or $1/K'$}{The mass on each class is 0 or 1/K'}}
 
 Apply \cref{lem:subspace-coset} with the classes $\class(v) = t_v + C$. The per-class
 idealized mass is $q(v) = |\class(v) \inter \W| / |\W|$, which is $0$ if $\W$ misses
