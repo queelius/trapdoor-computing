@@ -425,23 +425,6 @@ In the random oracle model, $H(k \| x)$ is uniformly distributed over $\{0,1\}^n
 Theorem~\ref{thm:privacy} prevents recovering $x$ from $T_k(x)$, but says nothing about what the encodings leak \emph{collectively}. Under deterministic encoding ($K = 1$), an adversary observing the encoded set and a stream of queries learns the partition of values by equality and their frequencies---the leakage profile of deterministic and searchable symmetric encryption~\cite{curtmola2006searchable}. The appropriate confidentiality measure is therefore quantitative information flow: the entropy of the observed encoding distribution relative to the prior, degraded precisely by the equality channel and improved by homophony ($K > 1$). Preimage hardness bounds non-recovery; it is not a confidentiality bound.
 \end{remark}
 
-\subsection{Approximate Algebraic Properties}
-
-the trapdoor set exhibits approximate algebraic properties with explicit error bounds:
-
-% FIXED: Intersection claim was stated as approximate equality, but bitwise AND
-% actually satisfies F(A) & F(B) \supseteq F(A \cap B) -- the AND can have extra
-% 1-bits from cross-element hash collisions (element in A\setminus B colliding
-% with element in B\setminus A). This means intersection has a false positive rate.
-\begin{definition}[Approximate Set Operations]
-For hash-transformed sets $H(A)$ and $H(B)$ (represented as OR of per-element hash values), operations preserve set relationships as follows:
-\begin{itemize}
-\item Union: $H(A) \lor H(B) = H(A \cup B)$ (exact by definition of bitwise OR)
-\item Intersection: $H(A) \land H(B) \supseteq H(A \cap B)$, i.e., the bitwise AND is a superset of the true intersection encoding. Equality holds when there are no cross-element hash collisions between $A \setminus B$ and $B \setminus A$. Each extra 1-bit arises with probability at most $|A \setminus B| \cdot |B \setminus A| / 2^n$ per bit position, yielding a per-element false positive rate bounded by $(1 - (1-2^{-n})^{|A \setminus B| \cdot |B \setminus A|})$.
-\item Symmetric difference: $H(A) \oplus H(B) = H(A \triangle B)$ (exact for disjoint sets)
-\end{itemize}
-\end{definition}
-
 \subsection{Size-Dependent False Positives in the Compact Representation}
 \label{sec:fpr-analysis}
 
@@ -449,21 +432,21 @@ For the literal trapdoor set, membership false positives are governed solely by 
 
 \begin{theorem}[Membership False Positive Rate]
 \label{thm:membership-fpr}
-For a set $S$ of size $k$ represented as $n$-bit strings, the false positive rate for membership queries is:
-$$\varepsilon_{\in}(k,n) = \left(1 - 2^{-(k+1)}\right)^n$$
-For small $k$, this approximates to $\varepsilon_{\in} \approx e^{-n \cdot 2^{-(k+1)}}$.
+For a set $S$ of size $k$ represented as an $m$-bit vector, the false positive rate for membership queries is:
+$$\varepsilon_{\in}(k,m) = \left(1 - 2^{-(k+1)}\right)^m$$
+For large $k$, this approximates to $\varepsilon_{\in} \approx e^{-m \cdot 2^{-(k+1)}}$.
 \end{theorem}
 
 \begin{proof}
 After $k$ insertions, each bit position is set to 1 with probability $1 - 2^{-k}$. For a random element $x \notin S$ to test positive, every bit position where $h(x)$ is 1 must also be 1 in $F(S)$. Since $h(x)$ has each bit set with probability $\frac{1}{2}$, the probability that bit $j$ does not refute membership is:
 $$\Pr[\neg(h(x)_j = 1 \land F(S)_j = 0)] = 1 - \frac{1}{2} \cdot 2^{-k} = 1 - 2^{-(k+1)}$$
-The result follows from independence across $n$ bit positions.
+The result follows from independence across $m$ bit positions.
 \end{proof}
 
 \begin{theorem}[Subset False Positive Rate]
 \label{thm:subset-fpr}
 For sets $S_1, S_2$ of sizes $k_1, k_2$, the false positive rate for the subset test $S_1 \subseteq S_2$ is:
-$$\varepsilon_{\subseteq}(k_1, k_2, n) = \left(1 - (1 - 2^{-k_1}) \cdot 2^{-k_2}\right)^n$$
+$$\varepsilon_{\subseteq}(k_1, k_2, m) = \left(1 - (1 - 2^{-k_1}) \cdot 2^{-k_2}\right)^m$$
 \end{theorem}
 
 \begin{proof}
@@ -472,27 +455,27 @@ For $S_1 \subseteq S_2$ to test positive falsely, every bit set in $F(S_1)$ must
 
 \begin{theorem}[Space Complexity]
 \label{thm:space-complexity}
-To maintain a fixed false positive rate $\varepsilon$ for membership queries on a set of size $k$, the hash size must satisfy:
-$$n = \mathcal{O}(2^k)$$
+To maintain a fixed false positive rate $\varepsilon$ for membership queries on a set of size $k$, the vector width must satisfy:
+$$m = \mathcal{O}(2^k)$$
 This exponential growth limits the single-level scheme to small sets (typically $k \leq 20$).
 \end{theorem}
 
 \begin{proof}
-From Theorem~\ref{thm:membership-fpr}, we have $\varepsilon = (1 - 2^{-(k+1)})^n$. Solving for $n$:
-$$n = \frac{\log \varepsilon}{\log(1 - 2^{-(k+1)})} \approx \frac{\log \varepsilon}{-2^{-(k+1)}} = -\log(\varepsilon) \cdot 2^{k+1}$$
-Thus $n = \mathcal{O}(2^k)$ for fixed $\varepsilon$.
+From Theorem~\ref{thm:membership-fpr}, we have $\varepsilon = (1 - 2^{-(k+1)})^m$. Solving for $m$:
+$$m = \frac{\log \varepsilon}{\log(1 - 2^{-(k+1)})} \approx \frac{\log \varepsilon}{-2^{-(k+1)}} = -\log(\varepsilon) \cdot 2^{k+1}$$
+Thus $m = \mathcal{O}(2^k)$ for fixed $\varepsilon$.
 \end{proof}
 
 % IMPROVED: Connected space complexity to information-theoretic bound
 \begin{remark}[Information-Theoretic Consistency]
 \label{rem:info-theoretic-bound}
-This exponential growth in $k$ is consistent with the information-theoretic lower bound of $-\log_2(\varepsilon)$ bits per element from the Bernoulli entropy analysis. For the trapdoor Boolean algebra (online construction), the space budget $n$ is fixed at construction time, forcing $\varepsilon$ to degrade as $k$ grows. Equivalently, each inserted element consumes $\mathcal{O}(1)$ bits of the fixed-size representation, leaving fewer bits to distinguish non-members, which is why $\varepsilon$ increases monotonically with the set size $k$ for fixed $n$.
+This exponential growth in $k$ is consistent with the information-theoretic lower bound of $-\log_2(\varepsilon)$ bits per element from the Bernoulli entropy analysis. For the trapdoor Boolean algebra (online construction), the space budget $m$ is fixed at construction time, forcing $\varepsilon$ to degrade as $k$ grows. Equivalently, each inserted element consumes $\mathcal{O}(1)$ bits of the fixed-size representation, leaving fewer bits to distinguish non-members, which is why $\varepsilon$ increases monotonically with the set size $k$ for fixed $m$.
 \end{remark}
 
 \begin{figure}[t]
 \centering
 \includegraphics[width=\columnwidth]{combined_fpr_vs_size.png}
-\caption{False positive rate vs. hash size for different set sizes $k$. Left: small sets ($k=4$--$10$) require bytes to achieve 5\% FPR. Right: larger sets ($k=12$--$16$) require kilobytes, demonstrating the $\mathcal{O}(2^k)$ space complexity.}
+\caption{False positive rate vs.\ bit-vector width for different set sizes $k$. Left: small sets ($k=4$--$10$) require bytes to achieve 5\% FPR. Right: larger sets ($k=12$--$16$) require kilobytes, demonstrating the $\mathcal{O}(2^k)$ space complexity.}
 \label{fig:fpr-space}
 \end{figure}
 
@@ -502,11 +485,11 @@ The homomorphism $F$ does not preserve complement: $F(\neg_A x) \neq \neg_B F(x)
 \end{theorem}
 
 \begin{proof}
-For any finite set $x$, the complement $\neg_A x = X^* \setminus x$ contains infinitely many elements from the free semigroup $X^*$. Since the hash function $h: X^* \to \{0,1\}^n$ uniformly distributes over $2^n$ possible outputs, by the pigeonhole principle, $F(\neg_A x)$ will have all bit positions set to 1 as elements from $\neg_A x$ are added:
-$$F(\neg_A x) = 0^n \,|\, h(y_1) \,|\, h(y_2) \,|\, \cdots = 1^n$$
+For any finite set $x$, the complement $\neg_A x = X^* \setminus x$ contains infinitely many elements from the free semigroup $X^*$. Since the hash function $h: X^* \to \{0,1\}^m$ uniformly distributes over $2^m$ possible outputs, by the pigeonhole principle, $F(\neg_A x)$ will have all bit positions set to 1 as elements from $\neg_A x$ are added:
+$$F(\neg_A x) = 0^m \,|\, h(y_1) \,|\, h(y_2) \,|\, \cdots = 1^m$$
 for any enumeration $\{y_1, y_2, \ldots\} \subseteq \neg_A x$.
 
-However, $\neg_B F(x) = \mathord{\sim}(h(x_1) \,|\, \cdots \,|\, h(x_k))$ for finite $x = \{x_1, \ldots, x_k\}$. Since $F(x)$ is a finite OR of $k$ hash values, some bit positions will remain 0 in $F(x)$, making those positions 1 in $\neg_B F(x)$ but also making some positions 0. Thus $\neg_B F(x) \neq 1^n = F(\neg_A x)$.
+However, $\neg_B F(x) = \mathord{\sim}(h(x_1) \,|\, \cdots \,|\, h(x_k))$ for finite $x = \{x_1, \ldots, x_k\}$. Since $F(x)$ is a finite OR of $k$ hash values, some bit positions will remain 0 in $F(x)$, making those positions 1 in $\neg_B F(x)$ but also making some positions 0. Thus $\neg_B F(x) \neq 1^m = F(\neg_A x)$.
 \end{proof}
 
 % IMPROVED: Strengthened complement non-preservation with structural argument
@@ -531,7 +514,7 @@ Given hash output size $q$ bits, partition into:
 \item First $w$ bits: bin index (selecting one of $2^w$ bins)
 \item Remaining $q-w$ bits: element representation within bin
 \end{itemize}
-Total space: $n = 2^w(q-w)$ bits. Expected elements per bin: $k/2^w$.
+Total space: $2^w(q-w)$ bits. Expected elements per bin: $k/2^w$.
 \end{definition}
 
 \begin{theorem}[Two-Level FPR]
