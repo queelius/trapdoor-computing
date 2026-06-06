@@ -91,7 +91,7 @@ Using the trapdoor set, each hospital can:
 \item Transform patient identifiers using a shared cryptographic hash function
 \item Perform set intersection directly on hash values
 \item Obtain results with explicit error bounds (e.g., hash collision rate $< 2^{-256}$)
-\item Complete the entire operation in milliseconds rather than minutes
+\item Complete the operation non-interactively, at the cost of hashing and set operations, avoiding the homomorphic-evaluation or multi-round overhead of FHE or MPC
 \end{enumerate}
 
 \subsection{Contributions}
@@ -115,11 +115,11 @@ This paper makes the following contributions:
 
 \subsection{Cryptographic Hash Functions}
 
-A cryptographic hash function $H: \{0,1\}^* \rightarrow \{0,1\}^n$ maps arbitrary-length inputs to fixed-size outputs satisfying the standard properties: preimage resistance ($O(2^n)$ to invert), second preimage resistance ($O(2^n)$ to find a collision for a given input), and collision resistance ($O(2^{n/2})$ to find any collision). the trapdoor set exploits these properties to create one-way transformations that preserve equality testing probabilistically while preventing recovery of original values.
+A cryptographic hash function $H: \{0,1\}^* \rightarrow \{0,1\}^n$ maps arbitrary-length inputs to fixed-size outputs satisfying the standard properties: preimage resistance ($O(2^n)$ to invert), second preimage resistance ($O(2^n)$ to find a collision for a given input), and collision resistance ($O(2^{n/2})$ to find any collision). The trapdoor set exploits these properties to create one-way transformations that preserve equality testing probabilistically while preventing recovery of original values.
 
 \subsection{Approximate Data Structures}
 
-Approximate data structures trade perfect accuracy for improved space or time complexity. The canonical example is the Bloom filter~\cite{bloom1970space}, which supports membership queries with false positives but no false negatives. the trapdoor set builds upon these well-established techniques, adding cryptographic privacy through hash transformations while maintaining explicit error bounds.
+Approximate data structures trade perfect accuracy for improved space or time complexity. The canonical example is the Bloom filter~\cite{bloom1970space}, which supports membership queries with false positives but no false negatives. The trapdoor set builds upon these well-established techniques, adding cryptographic privacy through hash transformations while maintaining explicit error bounds.
 
 \begin{definition}[Bernoulli Boolean]
 \label{def:bernoulli-boolean}
@@ -128,7 +128,7 @@ A \emph{Bernoulli Boolean} $\Bernoulli{\Bool}$ is an observed boolean $\obs{b}$ 
 \item $\fpr = \mathbb{P}[\obs{b} = \mathsf{true} \mid b = \mathsf{false}]$ (false positive rate)
 \item $\fnr = \mathbb{P}[\obs{b} = \mathsf{false} \mid b = \mathsf{true}]$ (false negative rate)
 \end{itemize}
-We distinguish \emph{second-order} Bernoulli Booleans where $\fpr \neq \fnr$ (asymmetric errors, as in Bloom filters and hash-based membership) from \emph{first-order} where $\fpr = \fnr$ (symmetric errors). the trapdoor set produces second-order Bernoulli Booleans with $\fpr = 2^{-n}$ (hash collision) and $\fnr = 0$ (no false negatives).
+We distinguish \emph{second-order} Bernoulli Booleans where $\fpr \neq \fnr$ (asymmetric errors, as in Bloom filters and hash-based membership) from \emph{first-order} where $\fpr = \fnr$ (symmetric errors). The trapdoor set's membership test is a second-order Bernoulli Boolean with single-comparison $\fpr = 2^{-n}$ (hash collision) and $\fnr = 0$; against a set of size $|S|$ the membership false-positive rate is $|S|\,2^{-n}$ by a union bound.
 \end{definition}
 
 \begin{definition}[Confusion Matrix]
@@ -141,7 +141,7 @@ where $\ConfMat_{ij} = \mathbb{P}[\obs{b} = j \mid b = i]$ gives the probability
 \item \textbf{Rank-1 matrix} ($\fpr + \fnr = 1$): complete information loss, optimal privacy
 \item \textbf{Rank-2 matrix} ($\fpr + \fnr < 1$): information preserved, privacy/utility trade-off
 \end{itemize}
-For the trapdoor set with $\fpr = 2^{-n}$ and $\fnr = 0$, the confusion matrix is nearly identity---high utility but query results are observable (the ``concession'' discussed in Section~\ref{sec:layered-privacy}).
+For a single comparison with $\fpr = 2^{-n}$ and $\fnr = 0$, the confusion matrix is nearly identity---high utility, but query results are observable through the equality channel (Section~\ref{sec:layered-privacy}).
 \end{definition}
 
 Throughout, we distinguish \emph{latent} values ($b, S, f$) from \emph{observed} approximations ($\obs{b}, \obs{S}, \obs{f}$) carrying explicit error rates.
@@ -172,7 +172,7 @@ The trapdoor set is built around three core abstractions that compose to enable 
 
 \subsubsection{Hash-Trapdoor Values}
 
-A hash-trapdoor value is a one-way transformation of sensitive data: equality testing is preserved probabilistically (FPR equals hash collision probability, e.g., $2^{-256}$ for SHA-256) while original values cannot be recovered. Note that this bounds \emph{collision errors}, not privacy---privacy depends on input entropy and resistance to dictionary attacks. Implementation details are in Appendix A.
+A hash-trapdoor value is a one-way transformation of sensitive data: equality testing is preserved probabilistically (FPR equals hash collision probability, e.g., $2^{-256}$ for SHA-256) while original values cannot be recovered. Note that this bounds \emph{collision errors}, not privacy---privacy depends on input entropy and resistance to dictionary attacks.
 
 \subsubsection{Approximate Values}
 
@@ -539,7 +539,7 @@ The membership FPR for the two-level scheme with $k$ elements is:
 $$\varepsilon(k,w,q) = \left(1 - 2^{-(k/2^w + 1)}\right)^{q-w}$$
 \end{theorem}
 
-This achieves practical FPR for large sets: with $w = 8$, $q = 256$, and $k = 1000$, we have approximately 4 elements per bin and FPR $\approx 2^{-248}$, using only 63.5 KB total storage.
+This achieves practical FPR for large sets: with $w = 8$, $q = 256$, and $k = 1000$, we have approximately 4 elements per bin and FPR $\approx 2^{-12}$, using about 7.8 KB total storage.
 
 \begin{figure}[t]
 \centering
@@ -587,11 +587,11 @@ $$P[\text{cipher value} = v] = \frac{\text{freq}(y)}{|\ValidEnc{y}|} = \frac{1}{
 so the observed cipher-value distribution is uniform without explicit randomization. (The inverse allocation $|\ValidEnc{y}| \propto 1/\text{freq}(y)$ sharpens the distribution instead, the opposite of the privacy goal.)
 \end{theorem}
 
-the trapdoor set uses uniform-sized encodings (a middle ground), providing practical privacy at constant space cost per element. Each element receives a fixed-size hash representation, offering computational privacy when the input domain has sufficient entropy.
+The trapdoor set uses uniform-sized encodings (a middle ground), providing practical privacy at constant space cost per element. Each element receives a fixed-size hash representation, offering computational privacy when the input domain has sufficient entropy.
 
 \subsection{Cardinality Estimation}
 
-the trapdoor set incorporates the well-established HyperLogLog algorithm~\cite{flajolet2007hyperloglog} for cardinality estimation on hash-transformed sets. We apply HyperLogLog without modification, relying on its proven accuracy guarantees:
+The trapdoor set incorporates the well-established HyperLogLog algorithm~\cite{flajolet2007hyperloglog} for cardinality estimation on hash-transformed sets. We apply HyperLogLog without modification, relying on its proven accuracy guarantees:
 
 \begin{algorithm}
 \caption{Cardinality Estimation}
@@ -739,24 +739,24 @@ while Brakerski's FHE without modulus switching~\cite{brakerski2012fully} simpli
 
 \subsection{Secure Multi-Party Computation}
 
-MPC protocols enable joint computation without revealing inputs. Classical protocols~\cite{yao1982protocols, goldreich1987play} laid theoretical foundations, while modern frameworks have made MPC practical. MP-SPDZ~\cite{keller2020mp} provides a comprehensive toolkit supporting multiple protocols, while ABY3~\cite{mohassel2018aby3} achieves efficient three-party computation. Recent advances in silent OT~\cite{boyle2022cheaper} and function secret sharing~\cite{boyle2021function} have reduced communication complexity. However, MPC still requires multiple rounds of interaction and coordination between parties. the trapdoor set operates non-interactively using only hash transformations, trading exact computation for practical single-party performance.
+MPC protocols enable joint computation without revealing inputs. Classical protocols~\cite{yao1982protocols, goldreich1987play} laid theoretical foundations, while modern frameworks have made MPC practical. MP-SPDZ~\cite{keller2020mp} provides a comprehensive toolkit supporting multiple protocols, while ABY3~\cite{mohassel2018aby3} achieves efficient three-party computation. Recent advances in function secret sharing~\cite{boyle2021function} have reduced communication complexity. However, MPC still requires multiple rounds of interaction and coordination between parties. The trapdoor set operates non-interactively using only hash transformations, trading exact computation for practical single-party performance.
 
 \subsection{Private Set Intersection}
 
 PSI protocols have evolved significantly since early work~\cite{meadows1986more, freedman2004efficient}. Modern protocols achieve remarkable efficiency: OPRF-based PSI~\cite{raghuraman2022blazing} handles billion-element sets, while circuit-PSI~\cite{chandran2022circuit} enables arbitrary computations on intersection results. % FIXED (BA-1): chen2022blazing was a duplicate of raghuraman2022blazing with fabricated
 % authors. Replaced with Chen et al. 2017 (actual unbalanced PSI work using HE).
-Unbalanced PSI~\cite{chen2017unbalanced} optimizes for asymmetric set sizes common in practice. Recent work on PSI from pseudorandom correlation generators~\cite{schoppmann2023psi} achieves optimal communication. the trapdoor set provides a simpler alternative where approximate results are acceptable, requiring only hash computation without cryptographic protocols.
+Unbalanced PSI~\cite{chen2017unbalanced} optimizes for asymmetric set sizes common in practice. The trapdoor set provides a simpler alternative where approximate results are acceptable, requiring only hash computation without cryptographic protocols.
 
 \subsection{Approximate Data Structures}
 
 Probabilistic data structures trade accuracy for efficiency. Bloom filters~\cite{bloom1970space} pioneered this approach for membership testing. Cuckoo filters~\cite{fan2014cuckoo} improve on Bloom filters by supporting deletions. % FIXED (BA-1): ting2020count had fabricated arXiv ID (2005.14165 = GPT-3 paper).
 % Replaced with Ting's actual cardinality estimation work (KDD 2014).
-Count-Min sketches~\cite{cormode2005improved} and streamed cardinality estimation~\cite{ting2014streamed} enable frequency and cardinality estimation. Recent work includes learned Bloom filters~\cite{kraska2018case} using machine learning to optimize performance, and XOR filters~\cite{graf2020xor} achieving near-optimal space efficiency. the trapdoor set builds upon these foundations, adding cryptographic privacy through hash transformations while maintaining the efficiency benefits of approximate operations.
+Count-Min sketches~\cite{cormode2005improved} and streamed cardinality estimation~\cite{ting2014streamed} enable frequency and cardinality estimation. Recent work includes learned Bloom filters~\cite{kraska2018case} using machine learning to optimize performance, and XOR filters~\cite{graf2020xor} achieving near-optimal space efficiency. The trapdoor set builds upon these foundations, adding cryptographic privacy through hash transformations while maintaining the efficiency benefits of approximate operations.
 
 \subsection{Differential Privacy}
 
 Differential privacy (DP)~\cite{dwork2006calibrating} provides statistical privacy guarantees through calibrated noise addition. The field has matured significantly with deployment at major tech companies~\cite{erlingsson2014rappor, apple2017differential}. % FIXED (BA-1): McSherry year corrected from 2021 to 2007; Bonawitz year corrected from 2021 to 2017.
-Recent advances include mechanism design via differential privacy~\cite{mcsherry2007exponential}, concentrated DP~\cite{bun2016concentrated} for tighter privacy accounting, and shuffle DP~\cite{erlingsson2019amplification} amplifying privacy through anonymization. Practical secure aggregation~\cite{bonawitz2017practical} enables federated learning at scale. the trapdoor set provides complementary cryptographic privacy that can be composed with DP techniques, offering defense-in-depth for sensitive applications.
+Recent advances include mechanism design via differential privacy~\cite{mcsherry2007exponential}, concentrated DP~\cite{bun2016concentrated} for tighter privacy accounting, and shuffle DP~\cite{erlingsson2019amplification} amplifying privacy through anonymization. Practical secure aggregation~\cite{bonawitz2017practical} enables federated learning at scale. The trapdoor set provides complementary cryptographic privacy that can be composed with DP techniques, offering defense-in-depth for sensitive applications.
 
 \section{Conclusion}
 \label{sec:conclusion}
@@ -768,7 +768,7 @@ Our contributions include:
 \item A systematic framework for error propagation through composed set operations on hash-transformed data
 \item Integration of established probabilistic algorithms (Bloom filters, HyperLogLog) with cryptographic privacy guarantees
 \item A reference Python implementation with operations reducible to standard hash computations
-\item Validation through real-world applications in private set intersection, secure aggregation, and federated learning
+\item A worked private-set-intersection example exercised by the reference test suite
 \end{itemize}
 
 Future directions include:
