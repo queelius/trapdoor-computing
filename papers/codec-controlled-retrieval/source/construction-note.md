@@ -1,10 +1,10 @@
 <!--
 PROVENANCE (snapshot, do not edit here; edit the upstream note).
 Source of record: maph/docs/codec_controlled_retrieval.md
-Commit: f4855fc
-Branch: sp4-discovery-integration (not yet merged to master; this snapshot
-        reflects the upgraded note, which adds T4b graded/skewed realizability,
-        T5b cogirth robustness, and the randomized-encoding invariance lemma).
+Commit: f4855fc on maph master (branch sp4-discovery-integration was
+        fast-forward merged; this snapshot reflects the upgraded note, which
+        adds T4b graded/skewed realizability, T5b cogirth robustness, and the
+        randomized-encoding invariance lemma).
 Snapshot refreshed: 2026-06-08, for towell2026codec integration.
 This file is a verbatim copy of the upstream note used as the source of record
 for the paper/codec_retrieval.tex manuscript.
