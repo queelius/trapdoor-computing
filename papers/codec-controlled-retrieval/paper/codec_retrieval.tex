@@ -83,7 +83,8 @@ target is provably unreachable, and full-span control reproduces the codec's des
 Kraft distribution. The robustness of control is a second code invariant: the matroid
 cogirth $d^\ast$ of the stored column system is the exact adversarial erasure budget
 before control collapses, at least $\tfrac{K}{2}\,m_{\min}$ under full support, so rank
-governs control while cogirth governs its robustness. We cash this out as a structural
+governs control while cogirth governs its robustness; for a skewed codec both become
+per-rung families along the codec's length flag. We cash this out as a structural
 frequency-hiding property: in a
 distinguishing game (FreqDist) an adversary with non-member oracle access, even with
 unboundedly many adaptive queries, has advantage exactly zero in the idealized model
@@ -191,7 +192,11 @@ new and crediting what is not.
   the codec shares) at exactly $d^\ast$ well-chosen deletions, with $d^\ast \ge
   \tfrac{K}{2}\,m_{\min}$ under full support (\cref{thm:cogirth}). This turns the
   redundancy effect we previously only measured into a theorem, with the clean reading
-  that \emph{rank} governs control and \emph{cogirth} governs its robustness.
+  that \emph{rank} governs control and \emph{cogirth} governs its robustness. For a skewed
+  codec this single budget becomes a per-rung \emph{family} of cogirths along the
+  within-class flag: the whole-law budget is the thinnest hit rung, the degradation is a
+  gradual rung-by-rung cascade, and the balanced case is the single-rung collapse
+  (\cref{thm:cogirth-graded}).
 \end{itemize}
 On the security side, we formalize a distinguishing game (FreqDist) in which the
 idealized adversary advantage is \emph{exactly zero} (\cref{thm:freqdist-ideal}) and, in
@@ -764,7 +769,8 @@ the realizability of the designed target versus the unreachability of uniform.
 So the skewed regime trades the balanced ``flat or nothing'' dichotomy for a controllable
 ladder whose extreme point is the designed Kraft distribution itself. What remains open
 is finer: a complete characterization of the realizable set (the ladder is necessary, not
-sufficient), and the skewed analogue of the robustness theorem below.
+sufficient). The skewed analogue of the robustness theorem below is
+\cref{thm:cogirth-graded}, a per-rung family of cogirths along this same flag.
 
 \subsection{Randomized encoding: invariance with white-box divergence}
 \label{sec:randenc}
@@ -960,7 +966,8 @@ control, collapses, and find the answer is a second code invariant. Where the th
 ties control to the \emph{rank} of the stored system, this ties the robustness of control
 to its \emph{minimum distance / cogirth}: the two standard invariants of a linear code,
 playing their textbook roles. We state and prove this for the balanced codec (matching
-\cref{thm:threshold}'s scope); the skewed/graded extension is a flagged follow-on.
+\cref{thm:threshold}'s scope); the skewed/graded extension is \cref{thm:cogirth-graded}
+below, where the single cogirth becomes a per-rung family along the within-class flag.
 
 Fix the balanced codec, $K = 2^k$ classes, $\Quot = \GF^k$, and $\proj$ onto the top $k$
 codeword bits. Define the \emph{stored column system} over $\Quot$ with one column per
@@ -1060,6 +1067,106 @@ $M = 8$, $K = 8$ structure computes $d^\ast$ via \eqref{eq:cogirth}, performs th
 adversarial and the $d^\ast - 1$ erasures, and measures control intact below $d^\ast$, the
 broken step at $0.50000$ exactly at $d^\ast$, and the bound with the binding-profile
 equality $d^\ast = \tfrac{K}{2}m_{\min}$.
+
+\subsection{The skewed codec has a per-rung family of cogirths}
+\label{sec:t5c}
+
+\Cref{thm:cogirth} acts through a \emph{single} projection $\proj$ onto the top $k$ codeword
+bits, which carries all of control (\cref{thm:threshold}) and all of robustness. A skewed
+codec has no single projection: by \cref{thm:graded} its classes are cosets of the
+\emph{different} within-class subspaces $C_{\ell_v}$ along the flag of \cref{sec:t4b}. Both
+control and its erasure budget then become \emph{per-rung} quantities indexed by that flag,
+and \cref{thm:cogirth} is the length-uniform collapse.
+
+For a value $v$ of length $\ell_v$, let $\proj_v : \GF^M \to \GF^M / C_{\ell_v}$ be the
+quotient by its within-class subspace; $\proj_v$ keeps the top $\ell_v$ bits, with
+$\ker \proj_v = C_{\ell_v}$. Applying rank--nullity to $\proj_v$ restricted to $\W$ (whose
+kernel is $\W \inter C_{\ell_v}$, so $\rank \proj_v(\W) = \dim \W - \dim(\W \inter
+C_{\ell_v})$) rewrites the graded mass \eqref{eq:graded} as
+\begin{equation}
+  q(v) \;=\; h_v \cdot 2^{-\rank \proj_v(\W)},
+  \qquad
+  h_v = [\, \proj_v(\enc(v)) \in \proj_v(\W) \,].
+  \label{eq:bridge-rung}
+\end{equation}
+So $q(v)$ depends on $\W$ \emph{only} through $\proj_v(\W)$: the per-rung analogue of the
+``control is a function of $\proj(\W)$'' reading of \cref{thm:threshold}. The
+$\proj_v$-projected stored column multiset (the $\proj_v$-image of each stored key's
+canonical pattern, with multiplicity) spans $\proj_v(\W)$; erasing keys deletes projected
+columns, so $\proj_v(\W)$ can only shrink, and shrinks as a set iff its rank drops.
+
+\begin{theorem}[Graded control: a per-rung cogirth family]
+\label{thm:cogirth-graded}
+Fix a skewed codec, stored values with multiplicity, and $\W$.
+\begin{enumerate}
+  \item \emph{(Per-rung budget.)} For a \emph{hit} rung ($h_v = 1$) let $d^\ast_v$ be the
+  matroid cogirth of the $\proj_v$-projected column multiset (\eqref{eq:cogirth} read on the
+  image $\proj_v(\W)$). Then $d^\ast_v$ is the exact minimum number of stored-key erasures
+  that changes $q(v)$: fewer leave it invariant; at $d^\ast_v$ it doubles (if $v$ stays hit)
+  or collapses to $0$ (if the rank drop also drops $h_v$).
+  \item \emph{(Missed rungs.)} For a \emph{missed} rung ($h_v = 0$), $q(v) = 0$ under every
+  erasure and $d^\ast_v = \infty$; a missed class never becomes hit.
+  \item \emph{(Whole-law budget.)} The realized law $q$ first changes at
+  $d^\ast_{\mathrm{grad}} = \min_{v \text{ hit}} d^\ast_v$; below it every erasure leaves the
+  entire law invariant.
+  \item \emph{(Gradual cascade.)} The law has more than one change point in general: only
+  the first is $d^\ast_{\mathrm{grad}}$; later breaks occur at the cogirths of the
+  progressively \emph{reduced} systems and need not be the original $\{d^\ast_v\}$. At each
+  stage $q$ is the \cref{thm:graded} law on the current $\W$, so mass is conserved and the
+  freed mass redistributes onto surviving hit rungs of longer, equal, or shorter codeword
+  length. The degradation is gradual and multi-threshold, not the single $\TV = 1/2$ step of
+  \cref{thm:cogirth}.
+  \item \emph{(Collapse.)} For a length-uniform codec all $\ell_v$ coincide, so there is one
+  subspace $C_k$, one projection, and a single common cogirth $d^\ast_v = d^\ast$ (equal to
+  $\tfrac{K}{2}m$ under full support and uniform multiplicity). \Cref{thm:cogirth} is exactly
+  this single-rung case.
+\end{enumerate}
+\end{theorem}
+
+\begin{proof}[Proof sketch]
+By \eqref{eq:bridge-rung} $q(v)$ is a function of $\proj_v(\W)$ alone, so it changes iff
+$\proj_v(\W)$ does, i.e.\ iff a cocircuit of the projected matroid is erased; the smallest
+has size $d^\ast_v$, and deleting it drops the rank by exactly one (the column count in a
+proper flat is maximized on a hyperplane), giving (1); a point missed by $\proj_v$ stays
+missed as $\W$ shrinks, giving (2). For (3), below $d^\ast_{\mathrm{grad}}$ every hit rung is
+under its own budget (invariant by (1)) and missed rungs stay $0$ (by (2)), so the whole law
+is fixed; at $d^\ast_{\mathrm{grad}}$ the thinnest hit rung breaks. (4) iterates (1)--(3) on
+the reduced span after each break; (5) is the case of a single flag rung, where
+\eqref{eq:cogirth} recovers $\tfrac{K}{2}m$. Full proofs and the matroid details are in the
+construction note; a \texttt{[cogirth][graded]} check gates every step.
+\end{proof}
+
+\begin{example}[The graded cogirth cascade]
+\label{ex:cogirth-graded}
+Take the skew $\{1,2,3,3\}$ codec of \cref{ex:graded} with every value stored $m = 3$ times
+($12$ keys), so $q = (\tfrac12,\tfrac14,\tfrac18,\tfrac18)$. The per-rung cogirths are
+\[
+  d^\ast_A = 9, \qquad d^\ast_B = d^\ast_C = d^\ast_D = 3, \qquad d^\ast_{\mathrm{grad}} = 3.
+\]
+The coarse short-codeword rung $A$ is the \emph{most} robust ($9$ of the $12$ projected
+columns carry its single top bit, so all $9$ must go to flip it); the three thin length-$3$
+rungs break first. Erasing in the worst order ($B$, then $C$, then $D$, then $A$) walks the
+cascade
+\[
+  (\tfrac12,\tfrac14,\tfrac18,\tfrac18)
+  \xrightarrow{\;3\;} (\tfrac12, 0, \tfrac14, \tfrac14)
+  \xrightarrow{\;6\;} (\tfrac12, 0, 0, \tfrac12)
+  \xrightarrow{\;9\;} (1, 0, 0, 0),
+\]
+three distinct thresholds with mass conserved; the change point $6$ is \emph{not} a per-rung
+cogirth (those are $9,3,3,3$), since after the first break the later thresholds are read off
+the reduced systems. Contrast the single step of \cref{thm:cogirth}. The
+\texttt{[cogirth][graded]} check ($83$ assertions) verifies \eqref{eq:bridge-rung} against
+enumeration, the family $(9,3,3,3)$ against the \emph{exhaustive} first-change over all
+$2^{12}$ erasure subsets, the missed-rung $\infty$, the cascade, and the collapse on the
+balanced $\{2,2,2,2\}$ codec.
+\end{example}
+
+So the skewed codec turns the single robustness number $d^\ast$ into a flag-indexed family
+$\{d^\ast_v\}$ with whole-law budget $\min_v d^\ast_v$, and \cref{thm:cogirth} is its
+single-rung collapse. With \cref{thm:graded} this completes the per-rung picture: along the
+codec's length flag, \emph{rank} governs control rung by rung (\eqref{eq:bridge-rung}) and
+\emph{cogirth} governs robustness rung by rung (\cref{thm:cogirth-graded}).
 
 \section{Security: frequency-analysis resistance}
 \label{sec:security}
@@ -1652,11 +1759,12 @@ than by re-solving): they explain, rather than contradict, the static design.
 \paragraph{Limitations.}
 The boundaries are explicit. The sharp threshold (\cref{thm:threshold}) and the cogirth
 robustness theorem (\cref{thm:cogirth}) are proven for the \emph{balanced} linear codec; the
-skewed (variable-length) case is resolved as the \emph{graded} regime (\cref{thm:graded}), but
-two finer skewed questions remain open: a complete characterization of the realizable mass
-set (the non-increasing ladder is necessary, not sufficient), and the skewed analogues of the
-cogirth budget and of the randomized-encoding invariance (\cref{thm:randenc}, proven for
-balanced and only computationally verified for skewed). The \emph{magnitude} of the deviation
+skewed (variable-length) case is resolved as the \emph{graded} regime (\cref{thm:graded}),
+with the skewed cogirth analogue now the per-rung family of \cref{thm:cogirth-graded}; two
+finer skewed questions remain open: a complete characterization of the realizable mass set
+(the non-increasing ladder is necessary, not sufficient), and the skewed analogue of the
+randomized-encoding invariance (\cref{thm:randenc}, proven for balanced and only
+computationally verified for skewed). The \emph{magnitude} of the deviation
 $\delta$ (\cref{sec:t5}) is \emph{characterized}, not bounded in closed form: we deliver the
 measurement and a labeled big-$O$, while the binary control criterion it governs is now the
 theorem \cref{thm:cogirth}; a closed-form bound on the within-regime $\delta$ magnitude in
@@ -1667,11 +1775,12 @@ multi-instance coincidence oracle; access-pattern, volume, and size leakage are 
 and the structure is static (the dynamic-insertion obstruction above explains why).
 
 \paragraph{Future work.}
-Three resolved items leave sharper successors. The skewed codec is now \emph{graded}
-(\cref{thm:graded}); what remains is a complete characterization of its realizable mass set
-(the ladder is necessary, not sufficient) and the skewed analogues of the cogirth budget
-(\cref{thm:cogirth}) and of the randomized-encoding invariance (\cref{thm:randenc}), each of
-which we prove for the balanced codec and verify computationally in the skewed case. For the
+The resolved items leave sharper successors. The skewed codec is now \emph{graded}
+(\cref{thm:graded}) and its cogirth budget is the per-rung family of
+\cref{thm:cogirth-graded}; what remains is a complete characterization of its realizable mass
+set (the ladder is necessary, not sufficient) and the skewed analogue of the
+randomized-encoding invariance (\cref{thm:randenc}), which we prove for the balanced codec and
+verify computationally in the skewed case. For the
 deviation $\delta$, the binary control criterion is now a theorem via the cogirth, but a
 structural closed-form bound on the within-regime $\delta$ \emph{magnitude} in terms of storage
 redundancy would upgrade the remaining \cref{sec:t5} characterization to a theorem. More

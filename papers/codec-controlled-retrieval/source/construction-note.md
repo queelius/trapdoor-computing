@@ -1,10 +1,10 @@
 <!--
 PROVENANCE (snapshot, do not edit here; edit the upstream note).
 Source of record: maph/docs/codec_controlled_retrieval.md
-Commit: f4855fc on maph master (branch sp4-discovery-integration was
-        fast-forward merged; this snapshot reflects the upgraded note, which
-        adds T4b graded/skewed realizability, T5b cogirth robustness, and the
-        randomized-encoding invariance lemma).
+Commit: db8f602 on maph master. This snapshot reflects the upgraded note,
+        which adds T4b graded/skewed realizability, T5b cogirth robustness,
+        the randomized-encoding invariance lemma, and T5c (the per-rung
+        cogirth family for graded control; T5b is its single-rung collapse).
 Snapshot refreshed: 2026-06-08, for towell2026codec integration.
 This file is a verbatim copy of the upstream note used as the source of record
 for the paper/codec_retrieval.tex manuscript.
@@ -27,7 +27,9 @@ flag, and the realizable set is a non-increasing ladder in code length), T5
 band departs from the T1 idealization) together with T5b (the robustness of codec
 control under key erasure: the matroid cogirth of the stored column system is the
 exact adversarial erasure budget, lower-bounded by per-class redundancy, which
-converts T5's open m_min conjecture into a theorem). The security model (the FreqDist game
+converts T5's open m_min conjecture into a theorem) and T5c (its graded extension:
+the skewed codec turns the single cogirth into a per-rung FAMILY along the
+within-class flag, with T5b the single-rung collapse). The security model (the FreqDist game
 and its formal statement) is the dedicated section "Security: frequency-analysis
 resistance (the FreqDist game)" after T5.
 
@@ -1163,6 +1165,10 @@ game)"); T5 supplies the deviation budget it consumes.
   adversarial erasure budget before control collapses, and d* >= (K/2) * m_min, so
   control survives at least (K/2) * m_min erasures. This converts the open m_min
   conjecture above into a theorem.
+- T5c (PROVEN, the graded extension after T5b): for a SKEWED codec the single
+  cogirth becomes a per-rung FAMILY {d*_rung(v)} along the within-class flag, with
+  whole-law budget d*_graded = min over hit rungs and a GRADUAL rung-by-rung
+  cascade. T5b is exactly its single-rung (length-uniform) collapse.
 
 ### T5b: cogirth governs robustness of codec control
 
@@ -1178,8 +1184,10 @@ roles here: rank governs control, cogirth governs robustness of control.
 SCOPE. This subsection is stated and proved for the BALANCED codec, matching T4's
 proven scope (a single homophone subspace C, so the value quotient Q = GF(2)^k is a
 genuine vector space and pi projects onto the top k = log2 K codeword bits). The
-skewed / graded case (T4b, the within-class flag) is a natural extension and is
-flagged as follow-on below, not proved here.
+skewed / graded case (T4b, the within-class flag) is the GRADED extension, now
+proved in the T5c subsection below: the single cogirth d* becomes a per-rung FAMILY
+of cogirths indexed by the codec's length-flag, and this balanced T5b is exactly its
+single-rung collapse.
 
 #### The stored column system over Q, with multiplicities
 
@@ -1358,6 +1366,202 @@ the closed form across k = 2, 3, 4, the exact broken step, the targeted-vs-rando
 erasure curve (random first-break far above d*), and the m_min bound over random
 profiles. The existing E2 redundancy data (the skew_a profile) is the empirical
 anchor this theorem now explains.
+
+### T5c: graded control has a per-rung FAMILY of cogirths
+
+T5b governs the BALANCED codec, where one class-naming projection pi onto the top
+k codeword bits carries all of control (T4) and all of robustness (the single
+cogirth d*). A SKEWED codec has no single projection: by T4b its classes are cosets
+of DIFFERENT within-class subspaces along the nested flag
+
+    {0} = C_M  subset  C_{M-1}  subset  ...  subset  C_1,     dim C_l = M - l,
+
+where C_l = span of the bottom (M - l) standard basis vectors (the within-class
+directions of a length-l codeword). T5c is the robustness theorem for that regime:
+control and its erasure budget both become PER-RUNG quantities indexed by the flag,
+and T5b is the length-uniform collapse of the family.
+
+#### The per-rung projection and the bridge identity
+
+For a value v of length l_v, let pi_v be the quotient map
+
+    pi_v : GF(2)^M  ->  GF(2)^M / C_{l_v},
+
+i.e. pi_v keeps the top l_v bits (two patterns agree mod C_{l_v} iff their top l_v
+bits agree). Its kernel is exactly the within-class subspace, ker pi_v = C_{l_v}.
+
+LEMMA (per-rung bridge identity). For the stored-pattern span W,
+
+    q(v) = h_v * 2^( - rank pi_v(W) ),      h_v = [ pi_v(aligned(v)) in pi_v(W) ].   (T5c.0)
+
+So q(v) depends on W ONLY through pi_v(W): the per-rung analogue of T4's "control is
+a function of pi(W)".
+
+Proof. Apply rank-nullity to the linear map pi_v restricted to W. The kernel of
+pi_v|_W is W cap ker pi_v = W cap C_{l_v}, so
+
+    rank pi_v(W) = dim W - dim(W cap C_{l_v}).
+
+Substituting into the T4b flag formula q(v) = h_v * 2^(dim(W cap C_{l_v}) - dim W)
+gives (T5c.0). The hit indicator is likewise a function of pi_v(W): aligned(v) in
+W + C_{l_v} iff pi_v(aligned(v)) in pi_v(W). QED.
+
+(T5c.0) is the T4b formula re-expressed so the only W-dependence is the image
+pi_v(W). That is what lets robustness decompose rung by rung: changing q(v) means
+changing pi_v(W), nothing else.
+
+#### The per-rung cogirth, and the hit / missed dichotomy
+
+The pi_v-PROJECTED stored column multiset has one column pi_v(canonical(value(x)))
+per stored key x, with multiplicity. Its span is pi_v(W). Because erasing keys can
+only DELETE projected columns, pi_v(W) can only shrink, and a finite-dimensional
+span shrinks as a set iff its rank drops. So:
+
+  - HIT rung (h_v = 1, q(v) > 0). Define
+
+        d*_rung(v) = the matroid COGIRTH of the pi_v-projected column multiset
+                   = (total cols) - max over functionals a nontrivial on the
+                     projected columns of #{ projected cols c : <c, a> = 0 }.       (T5c.1)
+
+    A functional a is nontrivial on the columns iff some column lies outside ker(a)
+    (this excludes a perpendicular to pi_v(W)); (T5c.1) is then the minimum number of
+    columns whose deletion drops rank pi_v(W).
+
+  - MISSED rung (h_v = 0, q(v) = 0). Erasure shrinks W, hence pi_v(W), so
+    pi_v(aligned(v)) -- already outside pi_v(W) -- stays outside: h_v stays 0 and
+    q(v) is pinned at 0 under EVERY erasure. d*_rung(v) = infinity.
+
+#### The theorem
+
+THEOREM (T5c). Fix a skewed codec, stored values with multiplicity, and W.
+
+  (1) (Per-rung exact threshold.) For a HIT rung v, d*_rung(v) of (T5c.1) is the
+      EXACT minimum number of stored-key erasures that changes q(v): every erasure
+      of fewer than d*_rung(v) keys leaves q(v) invariant, and some erasure of
+      exactly d*_rung(v) keys changes it (q(v) DOUBLES if v stays hit, or COLLAPSES
+      to 0 if the rank drop also drops h_v to 0).
+  (2) (Missed rungs.) For a MISSED rung, q(v) = 0 under every erasure;
+      d*_rung(v) = infinity. A missed class never becomes hit.
+  (3) (Graded budget.) The realized law q as a WHOLE first changes at
+
+          d*_graded = min over HIT rungs v of d*_rung(v).
+
+      Below it every erasure leaves the ENTIRE law q invariant; at it the thinnest
+      hit rung breaks. This is the exact, tight whole-law erasure budget.
+  (4) (Cascade.) The law has more than one change point in general. The first is
+      d*_graded (part 3); continued erasure breaks the remaining hit rungs one at a
+      time, each at the cogirth of the correspondingly REDUCED projected system (an
+      adaptive process on the shrinking W). The successive change points are in
+      general NOT the original per-rung cogirths {d*_rung(v)}: only the first equals
+      min over hit rungs of d*_rung(v). At every stage q is the T4b law on the
+      current W, so mass is conserved and the freed mass redistributes by the flag
+      formula onto surviving hit rungs (which may be LONGER, EQUAL, OR SHORTER in
+      codeword length). The degradation is therefore GRADUAL and multi-threshold,
+      not the single sharp TV = 0.5 step of T5b.
+  (5) (T5b collapse.) For a length-uniform (balanced) codec all l_v are equal, so
+      there is one within-class subspace C_k, one projection, one projected column
+      system, and a SINGLE common cogirth d*_rung(v) = d* shared by every rung
+      (equal to the T5b value (K/2) m in the full-support uniform-multiplicity case).
+      The family collapses to the single T5b threshold and the cascade to the single
+      T5b step. T5b is exactly the single-rung case of T5c.
+
+Proof.
+
+(1) By the bridge identity (T5c.0), q(v) is a function of pi_v(W) alone, so q(v)
+changes iff pi_v(W) changes. Since erasure only deletes projected columns, pi_v(W)
+can only shrink, and shrinks as a set iff rank pi_v(W) drops. By the cogirth
+definition (T5c.1), no deletion of fewer than d*_rung(v) columns drops that rank (the
+smallest cocircuit of the projected matroid has size d*_rung(v)), so q(v) is
+invariant below the threshold; and deleting a minimum cocircuit of size d*_rung(v)
+drops the rank by EXACTLY one (the maximum column count in a proper flat is attained
+on a hyperplane, since any lower-rank flat extends to a hyperplane holding at least
+as many columns; that maximizing hyperplane is itself a flat, so the survivors span
+it and the rank drops by exactly one), so q(v) changes. At that drop, if pi_v(aligned(v))
+remains in the smaller image then h_v stays 1 and q(v) = 2^(-rank) doubles; if it
+leaves the image then h_v flips to 0 and q(v) collapses to 0. (A flip of h_v without
+a rank drop is impossible: equal rank with pi_v(W') subset pi_v(W) forces equality of
+the images.) So d*_rung(v) is the exact, tight per-rung budget.
+
+(2) Erasure replaces W by a subspace W' subset W, hence pi_v(W') subset pi_v(W). If
+pi_v(aligned(v)) is not in pi_v(W) it is not in the smaller pi_v(W'), so h_v stays 0
+and q(v) stays 0 for every erasure; no finite erasure changes it, d*_rung(v) =
+infinity.
+
+(3) For any erasure set E with |E| < d*_graded: every hit rung v has |E| < d*_graded
+<= d*_rung(v), so by (1) q(v) is unchanged, and by (2) every missed rung stays 0;
+hence the whole vector q is unchanged. At |E| = d*_graded the minimizing rung v* has
+a cocircuit of that size, and erasing it changes q(v*) by (1), so q changes. Thus
+d*_graded is the exact first-change budget for the law.
+
+(4) The first change is at d*_graded by (3). After a rung breaks, the stored span is
+a proper subspace W' of W (the broken rung's cocircuit of columns is deleted), and
+(1)-(3) applied to W' put the next change at the cogirth of the REDUCED projected
+system; iterating yields the cascade. The successive change points need NOT be the
+original {d*_rung(v)}: in the witness below they are 3, 6, 9, yet the per-rung
+cogirths are 9, 3, 3, 3, and 6 is not among them, because after the first break the
+remaining thresholds are read off the reduced systems and not the original W. What is
+exact is that the FIRST change is min over hit rungs of d*_rung(v) (part 3) and that
+there is MORE THAN ONE change point whenever distinct cumulative thresholds occur
+(the witness has three), so the cascade is strictly gradual. At every stage q is the
+T4b law on the current W, so mass is conserved and the freed mass redistributes by
+the flag formula onto the surviving hit rungs.
+
+(5) When every l_v = k there is one within-class subspace C_k and one projection
+pi = pi_v for all v, so all rungs share the projected column system over Q = GF(2)^k
+and its single cogirth. By the T5b computation that cogirth is (K/2) m for the full
+support uniform-multiplicity profile. Equal thresholds collapse (4) to one change
+point, where the surviving image pi(W) is a hyperplane of Q and the realized law is
+the T4 broken step with TV = 0.5; this is precisely T5b. QED.
+
+#### The witness, and the framing
+
+The graded witness. Skew {1, 2, 3, 3} on M = 4 (canonical codewords A = 0000,
+B = 1000, C = 1100, D = 1110), uniform multiplicity m = 3 (12 stored keys). The
+baseline law is the T4b graded law q = (1/2, 1/4, 1/8, 1/8). The per-rung cogirths
+are
+
+    d*_rung(A) = 9,   d*_rung(B) = d*_rung(C) = d*_rung(D) = 3,
+
+so d*_graded = 3. The coarse short-codeword rung A is the MOST robust: 9 of the 12
+projected columns carry its single top bit, so all 9 must be erased to flip it. The
+three thin length-3 rungs are the LEAST robust and break first. Erasing in the worst
+order (B, then C, then D, then A) walks the cascade
+
+    q : (1/2, 1/4, 1/8, 1/8)
+      -> (1/2,   0, 1/4, 1/4)   at 3 erasures   (B breaks, mass to C, D)
+      -> (1/2,   0,   0, 1/2)   at 6 erasures   (C breaks, mass to D)
+      -> (  1,   0,   0,   0)   at 9 erasures   (D breaks, mass to A),
+
+three distinct thresholds, mass conserved, gradual. Compare T5b's single step.
+
+The framing. T4 / T4b give the control side and T5b / T5c the robustness side of one
+picture, and the skew makes both PER-RUNG:
+
+    RANK governs CONTROL.       Balanced (T4): control iff rank pi|_W = log2 K.
+                               Graded (T4b, T5c.0): q(v) = h_v 2^(-rank pi_v(W)),
+                               one rank per rung along the flag.
+    COGIRTH governs ROBUSTNESS. Balanced (T5b): one cogirth d* = (K/2) m_min bound.
+                               Graded (T5c): a FAMILY {d*_rung(v)}, whole-law budget
+                               d*_graded = min over hit rungs, gradual cascade.
+
+The leakage-as-dual-code template (Massey 1993; Gluesing-Luerssen 2014) and the
+erasure-correction = matroid-cogirth = dual-distance fact are textbook and not
+claimed as new. What T5c contributes is that the SKEWED codec makes the dual-distance
+budget a flag-indexed family rather than a single number, with the balanced T5b as
+its single-rung collapse, transported through the proven per-rung bridge identity
+(T5c.0).
+
+COMPUTATIONAL CONFIRMATION. The facts above are gated in
+`tests/v3/test_cogirth_graded.cpp` (tag `[cogirth][graded]`, 83 assertions): the
+bridge identity against enumeration on six W; the witness family (9, 3, 3, 3) and
+d*_graded = 3; the per-rung cogirth against the EXHAUSTIVE first-change over all
+2^12 erasure subsets (closed form == exact threshold for every rung); the missed-rung
+infinity (q pinned at 0 over all 2^4 subsets when C, D are unstored); the gradual
+cascade at 3, 6, 9 with mass conserved; and the T5b collapse on the balanced
+{2,2,2,2} codec (all rungs share d* = (K/2) m, cross-checked against the exhaustive
+threshold). The probe scratch (Python reimplementation cross-checked against the C++
+codec, 500 identity / 1537 per-rung / 496 graded-threshold random checks, 0 failures)
+reproduces the same closed forms.
 
 ## Security: frequency-analysis resistance (the FreqDist game)
 
