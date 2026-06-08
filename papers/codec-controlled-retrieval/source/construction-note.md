@@ -1,3 +1,15 @@
+<!--
+PROVENANCE (snapshot, do not edit here; edit the upstream note).
+Source of record: maph/docs/codec_controlled_retrieval.md
+Commit: f4855fc
+Branch: sp4-discovery-integration (not yet merged to master; this snapshot
+        reflects the upgraded note, which adds T4b graded/skewed realizability,
+        T5b cogirth robustness, and the randomized-encoding invariance lemma).
+Snapshot refreshed: 2026-06-08, for towell2026codec integration.
+This file is a verbatim copy of the upstream note used as the source of record
+for the paper/codec_retrieval.tex manuscript.
+-->
+
 # Codec-controlled retrieval: a theorem-grade note
 
 This note is the theorem-grade companion to `docs/CODESPACE_NONMEMBERS.md`.
@@ -8,9 +20,14 @@ become the mathematical substance of the towell2026codec paper. The
 results are organized as a sequence of theorems T1 through T5; this file
 establishes T1 and T2 (the idealized uniformity result on the stored-pattern
 span), T3 (frequency independence), T4 (the sharp codec-control threshold,
-stated as transversality of W to the codec's class partition), and T5 (the
-real-incidence deviation, characterizing how far the real near-uniform ribbon
-band departs from the T1 idealization). The security model (the FreqDist game
+stated as transversality of W to the codec's class partition) together with T4b
+(its skewed / variable-length resolution: the mass is graded over the within-class
+flag, and the realizable set is a non-increasing ladder in code length), T5
+(the real-incidence deviation, characterizing how far the real near-uniform ribbon
+band departs from the T1 idealization) together with T5b (the robustness of codec
+control under key erasure: the matroid cogirth of the stored column system is the
+exact adversarial erasure budget, lower-bounded by per-class redundancy, which
+converts T5's open m_min conjecture into a theorem). The security model (the FreqDist game
 and its formal statement) is the dedicated section "Security: frequency-analysis
 resistance (the FreqDist game)" after T5.
 
@@ -186,7 +203,16 @@ There is no step in the builder that injects a pattern outside W into z
 Should a future builder variant fill free slots with nonzero patterns, or
 add a non-W constant to the right-hand sides, this step would fail and the
 reachable set could exceed W; the property is therefore a property of this
-builder, not of ribbon retrieval in the abstract. The computational check
+builder, not of ribbon retrieval in the abstract. One builder variant does
+NOT break it: storing an independently drawn (per stored key, per occurrence)
+uniform within-class representative c'(x) = encode_random(v(x)) in place of the
+canonical codeword (the randomized-encoding lemma after T4b, resolving Q#5). That
+variant changes the stored right-hand sides per key independently, hence the span W
+and the solution z, but the per-key independent draws only add directions inside the
+within-class subspace: it leaves pi(W), and so the entire non-member law, exactly
+invariant (proven for balanced, computationally verified for skewed). It is the
+benign case (off-set-invisible, white-box-divergent), not the span-breaking
+one warned against here. The computational check
 in `tests/v3/test_prefix_codec.cpp` (tag `[span]`) verifies the inclusion
 direction consistent with this corrected statement: across 30000 distinct
 non-member queries every output's re-encoded canonical pattern landed in W
@@ -624,31 +650,124 @@ K' = |W| / 1 = |W|. For an arbitrary W (not contained in the "low bits zero" tra
 the correct per-hit-class mass is |W intersect C| / |W| = 1 / K', which need not equal 1 / |W|. The same M = 4 patterns are the worked example in docs/CODESPACE_NONMEMBERS.md and the
 [span] test's balanced length-2 codec.
 
-### Remark: the general (skewed / variable-length) codec
+### T4b: the skewed (variable-length) codec is graded, and the realizable set
 
 The clean coset-counting argument above uses one feature of the balanced case essentially: a SINGLE
 homophone subspace C describes the whole partition, so every class is a coset of the same subspace and
-the subspace-meets-coset lemma applies uniformly. For a SKEWED codec (variable codeword lengths, as in
-a genuine Huffman code) the classes have UNEQUAL sizes 2^(M - l_v) and are cosets of DIFFERENT
-subspaces (the within-class directions of value v are the low M - l_v bits, a subspace C_v whose
-dimension depends on l_v). There is no common C, so the lemma does not apply uniformly and the mass
-need not be two-valued: different classes can carry different positive densities. Concretely, the
-single-subspace lemma's two-valued conclusion (mass is 0 or the same constant 1/K' on every hit
-class) no longer applies, because that conclusion depends on ALL classes being cosets of the SAME C.
-Whether a genuinely graded regime (distinct positive masses on distinct hit classes) is achievable
-for some specific skewed codec and some W is not established here and we do not claim it.
+the two-valued conclusion (mass 0 on missed classes, the same 1/K' on every hit class) follows. For a
+SKEWED codec (variable codeword lengths, as in a genuine Huffman code) the classes have UNEQUAL sizes
+2^(M - l_v) and are cosets of DIFFERENT subspaces, so that conclusion can FAIL. This subsection settles
+what happens instead: the per-class mass is GRADED (it can take distinct positive values on distinct
+hit classes), and every realizable mass vector satisfies a necessary structural constraint, a
+non-increasing ladder in code length (the flag/ladder form is necessary; it is not a complete
+characterization of the realizable set, as the uniform vector shows). This resolves the case T4 left
+open for the balanced argument.
 
-The full-control condition still has a clean abstract statement: control holds iff for every value v,
+The within-class flag. Fix the prefix codec with member values v of canonical left-aligned codewords
+aligned(v) of length l_v. The patterns in class(v) are exactly those whose top l_v bits equal
+aligned(v)'s codeword bits, so
 
-    |class(v) intersect W| / |W| = alpha(v),
+    class(v) = aligned(v) + C_{l_v},
 
-i.e. W meets each class in proportion to that class's size. This is a "W is in general position with
-respect to the (unequal) class partition" condition. But characterizing WHICH supports W achieve it,
-and describing the failure modes (is the skewed transition still sharp, or genuinely graded?), is not
-settled by the balanced argument and we do NOT claim it here. We state the balanced threshold as the
-proven, sharp result and explicitly DEFER a full characterization of the skewed case as open. (This
-matches the risk note in the research plan: the skewed generalization is the part of T4 most likely to
-hide subtlety, and we decline to overclaim it.)
+a coset of the WITHIN-CLASS subspace
+
+    C_l = span of the bottom (M - l) standard basis vectors  (the low M - l bits),
+
+with dim C_l = M - l and |class(v)| = 2^(M - l_v). The crucial new structural input is that the C_l
+are NESTED: a longer codeword fixes more top bits, hence frees fewer low bits, so
+
+    {0} = C_M  subset  C_{M-1}  subset  ...  subset  C_1 = (low M - 1 bits),
+
+a complete flag in GF(2)^M. (In the balanced case all l_v are equal, every C_l is the single subspace
+C, and the flag collapses to one rung: that is exactly why the balanced argument was two-valued.)
+
+The realizability formula. The subspace-meets-coset lemma of the previous subsection used only that a
+class is a coset of SOME subspace; it applies to each class(v) = aligned(v) + C_{l_v} with its own
+C_{l_v}. Therefore W intersect class(v) is empty or a coset of W intersect C_{l_v}, and the idealized
+non-member mass is
+
+    q(v) := |class(v) intersect W| / |W| = h_v * 2^( dim(W intersect C_{l_v}) - dim W ),
+
+where the HIT INDICATOR
+
+    h_v = [ aligned(v) in W + C_{l_v} ]
+
+is 1 exactly when the coset meets W (the same "coset meets W iff its offset lies in W + C" condition as
+before). Two facts about this formula:
+
+  - (Ladder.) Because the C_l form a flag, dim(W intersect C_l) is monotone NON-INCREASING in l (a
+    larger subspace can only intersect W in a larger-or-equal subspace). Hence among HIT classes a
+    shorter codeword carries at least the mass of any longer one: the realizable masses satisfy a
+    NON-INCREASING LADDER condition in code length. This is a necessary structural constraint on the
+    realizable set, not a complete characterization; a vector satisfying the ladder condition need not
+    be realizable (as the uniform vector illustrates). Individual realizable masses live on the
+    geometric grid {0} union {2^(-j)} and are ordered by code length.
+  - (Full-span punchline.) When W is the FULL space GF(2)^M, every class is hit (h_v = 1) and
+    dim(W intersect C_{l_v}) = dim C_{l_v} = M - l_v, so q(v) = 2^(M - l_v) / 2^M = 2^(-l_v): the mass
+    is EXACTLY the codec's designed Kraft / codespace-share law alpha(v). Full control of the
+    non-member output therefore reproduces the codec's designed frequency distribution, which the
+    balanced two-valued regime provably cannot (it can only ever produce a flat 1/K' on the hit
+    classes).
+
+The graded witness. Take the skew {1, 2, 3, 3} codec on M = 4 with values A, B, C, D of lengths
+1, 2, 3, 3 (Kraft = 1/2 + 1/4 + 1/8 + 1/8 = 1, tight). The canonical left-aligned codewords are
+
+    A = 0000 (len 1),  B = 1000 (len 2),  C = 1100 (len 3),  D = 1110 (len 3).
+
+Let W = span of all four stored codewords. Reducing {0000, 1000, 1100, 1110} over GF(2) gives the basis
+{1000, 0100, 0010}, so dim W = 3 and |W| = 8, with
+
+    W = { 0000, 0010, 0100, 0110, 1000, 1010, 1100, 1110 }.
+
+Decoding the eight elements of W and counting per value gives
+
+    q = ( q(A), q(B), q(C), q(D) ) = ( 1/2, 1/4, 1/8, 1/8 ).
+
+Three distinct positive masses occur (1/2, 1/4, 1/8), so this is genuinely GRADED: a single subspace
+meets distinct hit classes in distinct positive proportions, which the balanced single-homophone-
+subspace lemma forbids (it would force one common 1/K' on all hit classes). This is the explicit
+witness that settles the open case. (Here W happens to be the full stored-codeword span and, for this
+Kraft-tight codec, q coincides with the designed shares 2^(-l_v); a balanced codec on the same M = 4
+was re-confirmed to stay SHARP, with a single positive mass on its hit classes.)
+
+The impossibility corollary. The ladder condition is a genuine OBSTRUCTION, but the impossibility of
+uniform requires a separate dimension argument (the ladder condition alone is necessary, not sufficient:
+uniform is itself a non-increasing ladder yet is unreachable, so its impossibility is not explained by
+the ladder criterion alone). The correct argument is as follows.
+
+The codec classes partition GF(2)^M and the codec is Kraft-tight, so any realizable q is a
+probability vector: sum_v q(v) = 1. The shortest-codeword class A (length 1) is always hit (its
+within-class subspace C_1 has dim M - 1, so the coset condition is easily satisfied), and q(A) =
+2^(d_1 - dim W) where d_1 = dim(W intersect C_1) <= min(dim W, M - 1). Suppose for contradiction q is
+uniform, q(v) = 1/4 for all four classes. Then q(A) = 1/4, so d_1 = dim W - 2. For q to be uniform
+the non-increasing ladder forces dim(W intersect C_l) = dim W - 2 for every length l present; in
+particular dim(W intersect C_1) = dim W - 2. But then dim(W + C_1) = dim W + (M - 1) - (dim W - 2) =
+M + 1 > M, which is impossible in GF(2)^M. Hence d_1 is not dim W - 2, and the only values consistent
+with the formula are d_1 = dim W (giving q(A) = 1, degenerate: W subset C_1) or d_1 = dim W - 1
+(giving q(A) = 1/2). Neither gives q(A) = 1/4, so q can never be flat at 1/4.
+
+Therefore a UNIFORM target over this skewed codec is unreachable by any W. The closest reachable q to
+uniform (1/4, 1/4, 1/4, 1/4) has total-variation distance exactly 1/4 > 0: the nearest realizable
+vector is (1/2, 1/4, 1/4, 0) (and the witness (1/2, 1/4, 1/8, 1/8) also attains TV = 1/4 from
+uniform). The q(A) = 1/2 contribution alone gives L1 distance 1/2 to uniform's 1/4, a gap of 1/4, so
+total-variation distance is at least 1/4. This bound holds over ALL subspaces W of GF(2)^M, not only
+the member-codeword spans. More generally any target that fails the non-increasing-ladder NECESSARY
+condition is unreachable for the same reason (the ladder criterion handles those cases directly); the
+dimension argument handles targets that pass the ladder condition but are still unreachable.
+
+By contrast the codec's DESIGNED 2^(-l) law IS reachable: it is achieved by W = GF(2)^M as shown
+directly in the full-span punchline above (q(v) = 2^(-l_v) for all v), which is the novel constructive
+content here. So the skewed regime trades the balanced "flat or nothing" dichotomy for a controllable
+ladder whose extreme point is the designed Kraft distribution itself.
+
+Computational confirmation. The witness, the flag formula, the non-increasing ladder, the full-span
+punchline, and the uniform-unreachable corollary are checked exactly (dyadic rationals over |W|) in
+`tests/v3/test_skewed_realizability.cpp` (tag `[skewed][realizability]`), which enumerates W with
+`gf2_span`, computes q(v) by decoding through the real `maph::prefix_codec`, and compares against the
+formula computed via `gf2_rank` (using dim(W intersect C) = dim W + dim C - dim(W + C)). The companion
+`analysis/skewed_realizability.py` enumerates EVERY GF(2) subspace for M = 4 and M = 6 (subspace counts
+matched against the Galois numbers 67 and 2825), confirms graded-exists, balanced-stays-sharp, the
+formula for all W, and the realizability of the designed target versus the unreachability of uniform.
 
 ### Summary of T4
 
@@ -661,9 +780,125 @@ hide subtlety, and we decline to overclaim it.)
 - The threshold is SHARP. Below it (rank pi|_W < log2 K) the K' hit classes are each over-weighted by
   the factor K/K' > 1 and the K - K' missed classes are exactly zero; there is no intermediate regime.
   The transition is a step in the integer rank pi|_W.
-- The skewed (variable-length) codec lacks a single homophone subspace; the abstract full-control
-  condition is "W meets each class in proportion to its size," and a complete characterization
-  (including whether sharpness survives) is deferred as open.
+- The skewed (variable-length) codec lacks a single homophone subspace, so the balanced two-valued
+  dichotomy fails. T4b resolves this case: the classes are cosets of the nested within-class flag
+  C_M subset ... subset C_1, the mass is q(v) = h_v * 2^(dim(W intersect C_{l_v}) - dim W), and because
+  the flag is nested every realizable mass vector satisfies a NON-INCREASING LADDER condition in code
+  length (this is a necessary constraint, not a complete characterization: the uniform vector satisfies
+  the ladder condition yet is unreachable, as the dimension argument in T4b shows). The skewed regime is
+  therefore GRADED, not sharp (explicit witness: the skew {1,2,3,3} codec on M = 4 with W =
+  the stored-codeword span gives q = (1/2, 1/4, 1/8, 1/8), three distinct positive masses). Full-span
+  control gives q(v) = 2^(-l_v), the codec's designed Kraft law (achieved by W = GF(2)^M); a uniform
+  target is unreachable by the dimension argument (closest TV = 1/4 for that codec).
+
+### Randomized encoding: invariance plus white-box divergence (resolves Q#5)
+
+The genericity note for T2 (Step 3) was explicit that the builder injects no pattern outside W: it stores
+the CANONICAL codeword c(x) = aligned(x) of each value, the unique class representative whose within-class
+bits are zero. The codec already exposes the alternative: encode_random(v, rng) returns a UNIFORM RANDOM
+representative of class(v), setting the bottom M - l_v bits at random instead of zero. Wiring encode_random
+into the builder (in place of the canonical encode) was the one open item earlier drafts deferred, recorded
+here as Q#5. We now settle it as a lemma.
+
+The within-class directions are exactly the kernel of the value quotient. By construction class(v) =
+aligned(v) + C_{l_v}, and the within-class subspace C_{l_v} = ker(pi) restricted to that class is spanned by
+the bottom M - l_v standard basis vectors: it is the same nested flag C_M subset ... subset C_1 that T4b
+uses. A within-class draw replaces aligned(v) by aligned(v) XOR c with c in C_{l_v}; equivalently it adds a
+vector lying in ker(pi). So pi(aligned(v) XOR c) = pi(aligned(v)) for every draw: the value quotient does not
+see the within-class bits at all.
+
+LEMMA (randomized-encoding invariance plus divergence). Fix the key set S and the stored values v(x).
+Replace each stored canonical codeword c(x) = aligned(x) by an INDEPENDENTLY drawn (per stored key,
+per occurrence) uniform within-class representative c'(x) = encode_random(v(x)) = aligned(x) XOR c_x
+with c_x in C_{l_{v(x)}} drawn uniformly and independently for each x. Let W = span{ c(x) } and
+W' = span{ c'(x) } be the two stored-pattern spans. Then:
+
+  (i)  pi(W') = pi(W) EXACTLY (the projection of the stored span onto the value quotient Q is invariant),
+       and hence the ENTIRE non-member output law is invariant: q'(v) = |class(v) intersect W'| / |W'|
+       equals q(v) = |class(v) intersect W| / |W| for every value v. For the BALANCED codec (single
+       homophone subspace C = ker(pi)), this is PROVEN by the linear-algebra argument below. For SKEWED
+       codecs (per-value subspaces C_{l_v} forming a nested flag), invariance is COMPUTATIONALLY VERIFIED
+       (0/1300 mismatches including the M=4 skew {1,2,3,3} witness and M=6 codecs; see Computational
+       confirmation below); a flag-level algebraic proof is a natural follow-on, deferred as an open item.
+
+  (ii) The ribbon solution matrix z' (the white-box snapshot) DIVERGES from z per build: it solves a
+       different right-hand side (c'(x) instead of c(x), and a fresh independent per-key draw each build),
+       so z' != z in general even at a fixed ribbon seed.
+
+PROOF.
+(i) BALANCED CODEC (single homophone subspace C = ker(pi), same for all values).
+    Each generator c'(x) = c(x) XOR c_x differs from c(x) by c_x in C = ker(pi), so pi(c'(x)) = pi(c(x)).
+    The projection pi is GF(2)-linear, so it carries spans to spans: pi(W') = span{ pi(c'(x)) } =
+    span{ pi(c(x)) } = pi(W). For the balanced codec the mass formula simplifies to
+    q(v) = h_v * 2^(-dim pi(W)) = h_v / |pi(W)|, which depends on W ONLY through pi(W) and is INDEPENDENT
+    of dim W itself. The hit indicator h_v = [pi(aligned(v)) in pi(W)] also depends only on pi(W). Each
+    within-class draw adds a vector in C = ker(pi), so pi(W') = pi(W) as shown, and hence every
+    q'(v) = q(v). The absolute span SIZE may differ (|W'| can exceed |W|: the per-key independent draws can
+    add directions inside ker(pi), which is precisely what can enlarge W, consistent with the observed
+    |W|: 8 -> 16 on the skew witness). In the balanced case, those added directions lie in C = ker(pi) and
+    cancel in the normalized mass, so each class mass is pinned.
+    SKEWED CODEC (per-value subspaces C_{l_v} forming a nested flag, no single ker(pi)).
+    The single-pi argument above does not apply directly: the within-class subspaces differ per value, and
+    the absolute intersection dimension dim(W intersect C_{l_v}) is not individually conserved under
+    per-class moves (it can shift, as the {1,2,3,3} witness shows with dim W moving 3 -> 4). Only the
+    DIFFERENCE dim(W intersect C_{l_v}) - dim W is conserved, which suffices to pin q(v). A complete
+    flag-level algebraic proof (showing both the hit indicator h_v and the difference
+    dim(W intersect C_{l_{v'}}) - dim W are preserved under per-class moves, using the flag nesting
+    C_{l_{v(x)}} subset C_{l_{v'}} iff l_{v(x)} >= l_{v'}) is a natural extension, deferred as a follow-on
+    analogous to the cogirth-of-graded extension. Invariance for the skewed case is COMPUTATIONALLY
+    VERIFIED: see Computational confirmation below.
+(ii) The ribbon build solves a_x^T z = c'(x) for all x in S (versus a_x^T z = c(x) for the canonical build);
+    a different right-hand side yields a different solved z by back-substitution, and a fresh within-class
+    draw per build re-randomizes it again. There is no contradiction with (i): (i) is a statement about
+    pi(W), an invariant of the stored VALUES modulo the within-class bits, while (ii) is a statement about
+    the solved SNAPSHOT z, which depends on those very bits. QED.
+
+Two consequences.
+
+  (C1) Off-set statistical invisibility. By (i) the entire non-member value-frequency channel q(.) is
+       UNCHANGED by within-class randomization: there is no off-set distribution gap to detect, and an
+       attacker who can only sample non-member outputs sees identically distributed streams from a canonical
+       and a randomized build. For the balanced codec this is PROVEN (algebraic argument above); for skewed
+       codecs it is COMPUTATIONALLY VERIFIED. In both cases the result is exact, not asymptotic.
+
+  (C2) White-box snapshot entropy at zero per-query cost. By (ii) two builds of the SAME data (same S, same
+       values) produce DIFFERENT solution matrices z. Within-class randomization therefore INCREASES the
+       entropy of the white-box snapshot (the serialized solution): an adversary who reads the static
+       structure off disk cannot distinguish two randomized builds of the same data from two builds of
+       DIFFERENT data any better than the off-set law already allows, and the canonical zero-bit pattern (a
+       fixed, low-entropy choice) is replaced by a uniform within-class one. This is a snapshot / white-box
+       confidentiality property, obtained at zero per-query cost (the query path is unchanged; the lookup is
+       still a single a^T z).
+
+Primitive, and what is new here. The primitive is textbook WIRETAP COSET CODING (Wyner 1975,
+`wyner1975wiretap`; Ozarow and Wyner 1984, `ozarowwyner1984wiretap`; and the secrecy coset-code line that
+followed). In that setting a message is a COSET of a fixed subspace and the encoder transmits a UNIFORM
+in-coset representative, so the syndrome (the message) is fixed while the within-coset choice is randomized
+to confuse a wiretapper. Here a codec class class(v) = aligned(v) + C_{l_v} is exactly a coset of the
+within-class subspace C_{l_v}, and encode_random picks a uniform in-coset representative: this IS
+coset-coding randomization, transplanted to the RIGHT-HAND SIDE of a STATIC GF(2) retrieval structure. The
+randomization primitive is not new. The NEW content is the invariance-plus-divergence STATEMENT for this
+static structure: that within-coset randomization of the stored right-hand sides leaves the non-member output
+law of the SOLVED structure exactly invariant (i) while diverging the solved snapshot (ii), i.e. it is
+off-set-invisible and white-box-divergent simultaneously. Wiretap coset coding studies a TRANSMITTED coset
+representative against an eavesdropper on a noisy channel; we study a STORED coset representative against an
+adversary reading the static solved structure, and the conserved quantity is the projected span pi(W) that
+governs the codec-controlled law, not a channel capacity.
+
+Computational confirmation. The Catch2 test tagged [randomized] (tests/v3/test_randomized_encoding.cpp)
+gates all three claims at fixed rng seeds. (1) EXACT invariance: over 1300 random within-class re-encodings
+across four codecs (the M = 4 skew {1,2,3,3} and three M = 6 codecs), every per-class mass q(v) is
+bit-identical between the canonical and randomized stored sets, asserted by integer cross-multiplication
+hit_c * |W'| == hit_r * |W| so the comparison is exact rather than floating-point, while |W| itself is
+observed to change (it grows from 8 to 16 on the skew witness), confirming the masses are pinned even as the
+span size moves. (2) EMPIRICAL invariance: a canonical encoded_retrieval and a randomized ribbon build on the
+same 2000 keys/values (M = 8 prefix codec) agree on the non-member decoded distribution over 30000 queries to
+TV = 0.0039, well inside sampling noise, with member lookups correct in both. (3) WHITE-BOX divergence: 1988
+of 2196 serialized solution bytes differ between the canonical and randomized builds (about 90 percent),
+while the decoded non-member law is the same. The standalone discovery probe corroborates at larger query
+budgets: the empirical non-member TV(canonical, randomized) is 7e-3 over 2M queries, equal in order to the
+TV between two same-data different-ribbon-seed CANONICAL builds (pure sampling noise, shrinking like
+1/sqrt(Q)), and the white-box byte divergence 195/300 matches a plain reseed's 213/300.
 
 ## T5: the real-incidence deviation
 
@@ -846,19 +1081,37 @@ characterize it empirically (E3, E2) and state:
   classes stored ~25 times), and is governed by the per-class store count
   (redundancy), not by N or by the storage frequencies.
 
-  CONJECTURE (qualitative, NOT proven). The visible part of delta is controlled by
-  the redundancy of the stored system beyond the threshold dimension, equivalently
-  by the minimum per-class store count m_min: delta is at the sampling floor once
-  m_min is large and degrades only as m_min falls toward the minimum needed to
-  span. We offer this as the pattern the data exhibit (E2's monotone baseline in
-  decreasing minority-store count; E3's flatness at fixed large redundancy), not
-  as a theorem. A structural proof, presumably bounding the non-uniformity of a
-  banded GF(2) solution on a subspace W in terms of the number of independent
-  equations pinning W, is left open.
+  THEOREM (T5b, the redundancy dependence, proven below). The qualitative pattern
+  the data exhibit, that codec control is governed by the per-class store
+  redundancy m_min, is now a theorem rather than a conjecture. The subsection "T5b:
+  cogirth governs robustness of codec control" (after the T5 summary) defines the
+  matroid cogirth d* of the stored column system over the value quotient Q and
+  proves that d* is the exact, tight, adversarial erasure budget: control (rank
+  pi|_W = log2 K, the M1 regime) survives every deletion of fewer than d* stored
+  keys and steps to the T4 broken regime (TV = 0.5) at exactly d* well-chosen
+  deletions. It further proves the lower bound d* >= (K/2) * m_min, so control is
+  guaranteed to survive at least (K/2) * m_min erasures, a function of m_min. This
+  is what makes T5's previously-only-empirical redundancy observation exact: the
+  RANK that T4 makes the control criterion persists until the cogirth is exhausted,
+  and the cogirth is lower-bounded by per-class redundancy.
 
-This is deliberately weaker than the T1 through T4 results, which ARE proven. T5
-is the place where the real construction meets the idealization, and the honest
-deliverable is the measurement plus the big-O, not a bound we did not derive.
+  (What remains a measurement, not a theorem.) T5b governs the BINARY control
+  criterion (rank = log2 K, equivalently delta = 0 under the M1 idealization) and
+  its erasure budget. It does NOT supply a closed-form bound on the MAGNITUDE of
+  the real-incidence delta inside the intact regime: the finer profile of delta as
+  m_min falls toward the threshold edge (the elevation from ~0.003 at rich support
+  to the edge values) is still the empirical T5 characterization above, and a
+  closed-form bound on the non-uniformity of the banded GF(2) solution as a
+  function of the number of independent equations pinning W remains open. T5b
+  proves WHEN control holds under erasure and HOW MUCH redundancy guarantees it;
+  the residual within-regime delta magnitude stays a measurement-budget question.
+
+The empirical T5 magnitude characterization is deliberately weaker than the T1
+through T4 results, which ARE proven; the robustness statement T5b that now
+accompanies it IS proven. T5 is the place where the real construction meets the
+idealization, and the honest deliverable is the measurement plus the big-O for the
+delta magnitude, together with the proven cogirth budget T5b for the control
+criterion itself.
 
 ### The security hook (brief; formalized in the security section below)
 
@@ -905,6 +1158,206 @@ game)"); T5 supplies the deviation budget it consumes.
 - Security hook: Adv <= 2 (delta(p0) + delta(p1)) bounds the residual FreqDist
   advantage by ~0.012 (both sides rich) to ~0.04 (one side at threshold edge),
   frequency-gap-independent; this is formalized in the security section below.
+- T5b (next subsection, PROVEN): the redundancy dependence T5 only observed is a
+  theorem. The matroid cogirth d* of the stored column system is the exact
+  adversarial erasure budget before control collapses, and d* >= (K/2) * m_min, so
+  control survives at least (K/2) * m_min erasures. This converts the open m_min
+  conjecture above into a theorem.
+
+### T5b: cogirth governs robustness of codec control
+
+T4 answers WHEN codec control holds: iff the stored canonical patterns reach rank
+log2 K over the value quotient Q = GF(2)^M / C (transversality, rank pi|_W =
+log2 K). T5b answers the dual ROBUSTNESS question: how many stored keys may an
+adversary erase before that rank, and with it codec control, collapses. The answer
+is a SECOND code invariant. Where T4 ties control to the RANK of the stored system,
+T5b ties the robustness of control to its MINIMUM DISTANCE / COGIRTH. These are the
+two standard invariants of a linear code, and they play exactly their textbook
+roles here: rank governs control, cogirth governs robustness of control.
+
+SCOPE. This subsection is stated and proved for the BALANCED codec, matching T4's
+proven scope (a single homophone subspace C, so the value quotient Q = GF(2)^k is a
+genuine vector space and pi projects onto the top k = log2 K codeword bits). The
+skewed / graded case (T4b, the within-class flag) is a natural extension and is
+flagged as follow-on below, not proved here.
+
+#### The stored column system over Q, with multiplicities
+
+Fix the balanced codec, K = 2^k classes, value quotient Q = GF(2)^k, and the
+class-naming projection pi onto the top k codeword bits. For the left-aligned
+balanced prefix codec, pi(canonical(v)) is exactly v's k-bit value pattern (the top
+k bits of its canonical codeword), an element g_v of Q. Define the STORED COLUMN
+SYSTEM over Q as one column per stored KEY:
+
+    for each stored key x, the column g_x = pi(canonical(value(x))) in Q,
+
+taken WITH MULTIPLICITY: a value v stored m_v times contributes m_v identical
+columns g_v. Stacking these columns gives a k-by-n matrix G over Q (n = number of
+stored keys). By T4 (its canonical-pattern picture, where pi is injective on W so
+rank pi|_W equals the GF(2) rank of the stored patterns), codec control holds iff
+the columns of G span Q, i.e.
+
+    rank G = k.
+
+The multiplicities do not change the rank (repeating a column never raises rank),
+but they are essential to the robustness count below, and the invariant MUST be
+defined over the stored MULTISET. Over DISTINCT patterns the analogous count is
+trivially 1, since a class backed by a single key dies on a single erasure, and the
+result would collapse to a restatement of T4. With multiplicities the count is a
+genuinely new number.
+
+#### The invariant: cogirth d*, and its closed form
+
+Define
+
+    d* = the matroid COGIRTH of the column system G
+       = the minimum number of columns (counting multiplicity) whose deletion
+         drops the column rank below k.
+
+Closed form. The surviving columns drop below full rank k iff they all lie in some
+hyperplane H of Q (a dim k-1 subspace). The adversary, to force this, must delete
+every column lying OUTSIDE H; minimizing the deletion count over the choice of H,
+
+    d* = (total columns) - max over hyperplanes H of Q of (columns lying in H).        (T5b.1)
+
+A hyperplane of Q = GF(2)^k is the kernel of a nonzero dual vector a, and a column
+g lies in ker(a) iff the GF(2) pairing <g, a> = 0 (XOR-parity zero). There are
+2^k - 1 hyperplanes, so (T5b.1) is a finite minimum, evaluated directly in the
+companion test and analysis script.
+
+Two evaluated instances pin the number and show it is new:
+
+  - FULL K-value support, uniform multiplicity m. Every hyperplane of Q contains
+    exactly K/2 of the K value-patterns (every hyperplane of GF(2)^k contains
+    exactly 2^(k-1) = K/2 of the 2^k points, including 0, which lies in every
+    subspace), each with multiplicity m, so the heaviest hyperplane captures
+    (K/2) m columns out of K m total, and
+
+        d* = K m - (K/2) m = (K/2) m.
+
+    For M = 8, K = 8 (k = 3), m = 10 (n = 80 keys): d* = 80 - 40 = 40.
+  - BASIS support (k independent values, m each). The columns are k disjoint stacks
+    of standard basis vectors e_0, ..., e_{k-1}. A dual vector with a single set bit
+    has a kernel missing exactly one basis vector, so the heaviest hyperplane omits
+    one stack of m, and d* = m. Every value is essential here, and d* is the
+    per-value essential cogirth, the minimum stack size.
+
+Both are distinct from log2 K and from the distinct-pattern triviality 1: at K = 8,
+m = 10 the grid gives d* = 40, the basis gives d* = 10. The cogirth is the new
+quantity T5b contributes.
+
+#### The theorem (transport through the sharp T4 step)
+
+THEOREM (T5b). For the balanced codec with stored column system G of rank k over Q:
+
+  (1) d* is the EXACT, TIGHT adversarial erasure budget. Deleting fewer than d*
+      stored keys leaves rank G = k for EVERY deletion (codec control intact, the
+      M1 regime); and there is a set of d* well-chosen deletions whose removal
+      drops the rank to k-1, stepping control into the T4 BROKEN regime, where
+      the realized non-member law is the T4 step law and its TV-to-codespace is
+      EXACTLY 0.5.
+  (2) (Erasure / error duality.) floor((d* - 1) / 2) corrupted stored equations are
+      correctable: the same minimum distance that gives an erasure budget of d* - 1
+      gives an error-correction radius of floor((d* - 1) / 2).
+  (3) (The m_min bridge, assuming full support.) Under the additional hypothesis
+      that all K value-patterns are stored (full support: m_v >= 1 for every v in
+      Q), d* >= (K/2) * m_min, where m_min = min_v m_v is the minimum per-class
+      store count. Hence codec control survives at least (K/2) * m_min adversarial
+      erasures. Without full support an unstored class contributes 0 columns to any
+      hyperplane complement, and the bound can fail (e.g., K=4, k=2: three stored
+      patterns at multiplicities 10, 1, 1, one unstored; the heaviest complement
+      holds only the one-multiplicity pattern, so d* = 1 but (K/2)*m_min = 2).
+
+Proof.
+
+(1) This is the textbook erasure-correction fact, transported through the sharp T4
+step. Erasing a stored key DELETES its column from G. By the definition of the
+cogirth, deleting any set of size < d* removes no cocircuit (the smallest
+cocircuit has size d*), so the surviving columns still span Q (rank k); this is
+the universal ("for every deletion") guarantee. By (T5b.1) there exists a hyperplane H capturing
+(total - d*) columns, and deleting exactly the d* columns OUTSIDE H leaves all
+survivors inside H, a proper subspace, so the surviving rank is at most k-1; since a
+single cocircuit deletion drops the rank by exactly one, it is k-1. The minimum
+deletion that breaks full rank is therefore exactly d*, the cogirth, which is the
+matroid-dual statement of the minimum distance of the code whose parity-check matrix
+is G (the dual distance of G). So d* is exact and tight. The VALUE in the broken regime is pinned by the sharp
+T4 step: at surviving rank k-1 the image pi(W) is a hyperplane of Q, so by the T4
+step law exactly K' = 2^(k-1) = K/2 classes are HIT, each at mass 1/K' = 2/K, and
+the other K/2 classes are MISSED at mass 0. Against the balanced codespace shares
+alpha = 1/K,
+
+    TV = (1/2) [ (K/2) | 2/K - 1/K | + (K/2) | 0 - 1/K | ]
+       = (1/2) [ (K/2)(1/K) + (K/2)(1/K) ]
+       = (1/2) [ 1/2 + 1/2 ] = 1/2,
+
+independent of K and of which hyperplane is hit. The collapse therefore lands
+PRECISELY on the T4 broken step (TV = 0.5), not at a generic large value. In the
+companion test this is realized with ZERO build-to-build spread (the residual band
+non-uniformity lives on the within-class bits, which the length-k codec quotients
+away), so the measured broken-step TV is 0.50000 exactly on every build.
+
+(2) Immediate from (1) by the erasure / error duality of the minimum distance: a
+code of minimum distance d* (here d* is the cogirth = dual distance of G) corrects
+any d* - 1 erasures and any floor((d* - 1) / 2) errors; an erased stored equation
+is a known-location erasure, a corrupted one is an unknown-location error.
+
+(3) Under full support, every hyperplane H of Q misses exactly K/2 of the K
+distinct value-patterns (its complement contains K/2 points of Q, all present by
+hypothesis), and each missed value-stack contributes at least m_min columns to the
+complement. Hence the deletion count for any H is at least (K/2) m_min, and by
+(T5b.1) so is the minimum, d* >= (K/2) m_min. Tightness: for the uniform-
+multiplicity full-support instance (all m_v = m), every hyperplane holds exactly
+K/2 patterns each with m columns, so d* = Km - (K/2)m = (K/2)m = (K/2)m_min;
+the bound is achieved with equality and m_min = m. For non-uniform full-support
+profiles a binding profile attaining equality exists (confirmed computationally in
+the companion test: the binding-profile cases realize d* = (K/2)m_min exactly).
+QED.
+
+#### What this converts, and the framing
+
+Part (3) is the bridge that converts T5's open m_min conjecture into a theorem.
+T5 observed only empirically (E2) that the deviation from ideal control is governed
+by the per-class store redundancy m_min and degrades as m_min falls toward the
+spanning minimum. T5b makes the CONTROL CRITERION ITSELF exact: the rank that T4
+makes the criterion of control persists under erasure until the cogirth d* is
+exhausted, and d* is lower-bounded by (K/2) m_min. So control is GUARANTEED until at
+least (K/2) m_min stored keys are erased, a quantity that grows linearly in the
+per-class redundancy m_min. The empirical E2 anchor (the skew_a profile, minority
+classes stored only ~25 times, sitting at the threshold EDGE with elevated
+per-build delta) is exactly the small-m_min, small-d* corner this theorem now
+explains: thin support has a small cogirth, hence a small erasure budget and a
+fragile control margin, while rich support has a large cogirth and a robust one.
+
+The clean separation of the two code invariants:
+
+    RANK governs CONTROL                 (T4: control iff rank pi|_W = log2 K).
+    COGIRTH / minimum distance governs   (T5b: control survives erasure up to the
+      the ROBUSTNESS of control           cogirth d*; d* >= (K/2) m_min).
+
+This is the standard pairing for a linear code, here read through the codec's class
+partition. The leakage-as-dual-code template is itself not new: Massey (1993)
+identified the minimal codewords of a linear code with the minimal access structure
+of the induced secret-sharing scheme, and Gluesing-Luerssen (2014) developed the
+Fourier-reflexive partition / MacWilliams duality under which a partition's leakage
+is governed by its dual. We do NOT claim the MacWilliams transform or the
+duality-template framing as new. What T5b contributes is the transport of the
+TEXTBOOK erasure-correction-capacity = matroid-cogirth = dual-distance fact through
+the specific, proven sharp T4 step rank pi|_W = log2 K, yielding an exact,
+multiplicity-aware erasure budget for codec control and the (K/2) m_min redundancy
+bound that closes the T5 conjecture.
+
+COMPUTATIONAL CONFIRMATION. The facts above are gated in
+`tests/v3/test_cogirth_robustness.cpp` (tag `[cogirth]`), which builds the real
+balanced M = 8, K = 8 ribbon-based encoded_retrieval, computes d* via (T5b.1) over
+the actual codec, performs the adversarial (delete the d* keys outside a maximizing
+hyperplane) and the d* - 1 erasures, and measures TV-to-codespace: control intact
+(rank k) below d*, the broken step at 0.50000 exactly at d*, and the bound
+d* >= (K/2) m_min on non-uniform profiles with the binding-profile equality
+d* = (K/2) m_min. The Python companion `analysis/cogirth_robustness.py` reproduces
+the closed form across k = 2, 3, 4, the exact broken step, the targeted-vs-random
+erasure curve (random first-break far above d*), and the m_min bound over random
+profiles. The existing E2 redundancy data (the skew_a profile) is the empirical
+anchor this theorem now explains.
 
 ## Security: frequency-analysis resistance (the FreqDist game)
 
@@ -1445,11 +1898,18 @@ or external: it is absent from the random-oracle treatments (Tier A, where there
 is no span to be transversal to, the output is always a fresh hash), and absent
 from the retrieval literature (Tier B, which does not study the non-member law at
 all). The subspace-meets-coset lemma and the resulting K' = |pi(W)| step function
-are the technical core, and the empirical cliff in E1 is its measured face.
+are the technical core, and the empirical cliff in E1 is its measured face. T4b
+extends the same structural picture to SKEWED codecs: the within-class subspaces
+form a flag, so the per-class mass is graded rather than two-valued, the realizable
+mass vectors are a non-increasing ladder in code length, full-span control realizes
+the codec's designed 2^(-l) Kraft law, and off-ladder targets (e.g. uniform over a
+skewed codec) are provably unreachable. The flag-and-ladder characterization is as
+novel as the threshold it generalizes, and is the part of the result that earlier
+drafts had explicitly deferred as open.
 
 ### Differentiation from adjacent work (explicit)
 
-Four adjacencies deserve an explicit boundary, since each shares a goal or a
+Five adjacencies deserve an explicit boundary, since each shares a goal or a
 formula with this note while differing in substance.
 
 1. The author's singular-hash-map (bernoulli_maps, `towell_bernoulli_maps`). It
@@ -1486,6 +1946,21 @@ formula with this note while differing in substance.
    frequency-independent by construction (T3), with no online smoothing, no fake
    traffic, and no padding. Same goal, different mechanism and different layer.
 
+5. Wiretap coset coding (Wyner 1975, `wyner1975wiretap`; Ozarow and Wyner 1984,
+   `ozarowwyner1984wiretap`; and the secrecy coset-code line that followed). It
+   shares the PRIMITIVE used by the randomized-encoding lemma after T4b: a message
+   is a coset of a fixed subspace and the encoder emits a uniform in-coset
+   representative to confuse a wiretapper, exactly what encode_random does to a
+   codec class class(v) = aligned(v) + C_{l_v}. The primitive is theirs. What is new
+   here is the invariance-plus-divergence STATEMENT for a STATIC GF(2) RETRIEVAL
+   structure: within-coset randomization of the STORED right-hand sides leaves the
+   non-member output law of the SOLVED structure exactly invariant (pi(W) conserved)
+   while diverging the solved snapshot z, i.e. off-set-invisible and
+   white-box-divergent at once. Wiretap coding studies a TRANSMITTED representative
+   against a channel eavesdropper and conserves a channel quantity; we study a STORED
+   representative against an adversary reading the static structure and conserve the
+   projected span pi(W) that governs the codec-controlled law.
+
 ### Home framing
 
 To be precise about where each piece lives: the ABSTRACT theory (the codec-output
@@ -1507,9 +1982,25 @@ is NOVEL, and what is OUT OF SCOPE) is recoverable from this one file.
   T1 under the explicit M1 idealization (uniform-on-W gives the codec-controlled
   law), T3 (the law depends only on the value support and the codec, never the
   storage multiplicities), T4 (the sharp transversality threshold, full control iff
-  rank pi|_W = log2 K, with a step transition), and the idealized FreqDist theorem
-  (advantage exactly zero under M1). These carry proofs verified by the
-  computational checks tagged [gf2], [span], [threshold], and [contrastive].
+  rank pi|_W = log2 K, with a step transition), T4b (the SKEWED case: the
+  variable-length codec is GRADED, with mass q(v) = h_v * 2^(dim(W intersect
+  C_{l_v}) - dim W) over the within-class flag, the realizable masses a
+  non-increasing ladder in code length, full-span control realizing the designed
+  2^(-l) law, and a uniform target provably unreachable), T5b (the cogirth d* of the
+  stored column system over Q is the EXACT, tight adversarial erasure budget before
+  codec control collapses, the collapse lands on the T4 step TV = 0.5, and
+  d* >= (K/2) m_min, so control survives at least (K/2) m_min erasures: this
+  converts T5's open m_min redundancy conjecture into a theorem, for the balanced
+  codec), the randomized-encoding invariance lemma (storing an INDEPENDENTLY drawn
+  per-key, per-occurrence uniform within-class representative c'(x) = encode_random(v(x))
+  in place of the canonical codeword leaves pi(W), and hence the entire non-member law
+  q(.), EXACTLY invariant while diverging the white-box solution snapshot z:
+  off-set-invisible and white-box-divergent, which resolves the deferred Q#5; PROVEN for
+  the balanced codec by the linear-algebra argument in the lemma, COMPUTATIONALLY
+  VERIFIED for skewed codecs with a flag-level algebraic proof deferred as a follow-on),
+  and the idealized FreqDist theorem (advantage exactly zero under M1). These carry proofs
+  verified by the computational checks tagged [gf2], [span], [threshold], [skewed],
+  [randomized], [cogirth], and [contrastive].
 
 - MEASURED: T5 (the real ribbon band deviates from the M1 idealization by
   delta = TV(law_real, law_M1), characterized empirically as small and
@@ -1517,12 +2008,22 @@ is NOVEL, and what is OUT OF SCOPE) is recoverable from this one file.
   governed by storage redundancy at the threshold edge), and the real FreqDist
   bound Adv <= 2(delta(p0) + delta(p1)). T5 is a [characterize] result: an
   empirical characterization plus a labeled big-O, not a proven closed-form bound.
+  (The QUALITATIVE redundancy dependence T5 observed is now PROVEN as T5b above; what
+  remains MEASURED is only the MAGNITUDE of delta inside the intact regime.)
 
-- OUT OF SCOPE (declared open): a full characterization of the SKEWED
-  (variable-length) codec threshold (T4 proves only the balanced case; whether the
-  skewed transition is sharp or genuinely graded is left open), and a structural
-  closed-form bound on the T5 deviation delta (the redundancy conjecture is offered
-  as the pattern the data exhibit, not a theorem). The security treatment defends
+- OUT OF SCOPE (declared open): a structural closed-form bound on the MAGNITUDE of
+  the T5 deviation delta inside the intact regime (the binary control criterion and
+  its erasure budget are now PROVEN as T5b; the residual within-regime delta
+  magnitude as m_min falls toward the edge stays an empirical characterization), and
+  the cogirth of the GRADED / skewed structure (T5b is proved for the BALANCED codec
+  matching T4's scope; extending the exact erasure budget to the T4b within-class
+  flag, where classes are cosets of different subspaces, is the natural follow-on).
+  (The m_min redundancy conjecture and the balanced cogirth / robustness question,
+  formerly open here, are now RESOLVED as T5b above and listed under PROVEN; the
+  SKEWED-codec mass characterization, formerly open, is RESOLVED as T4b; and the
+  randomized-encoding question Q#5, formerly deferred, is RESOLVED as the
+  randomized-encoding invariance lemma above and listed under PROVEN.) The
+  security treatment defends
   exactly one channel (the non-member value-frequency channel) against exactly one
   attack (single-instance frequency analysis), plus the reconciliation of the
   opposite-pulling multi-instance coincidence oracle; access-pattern, volume, and

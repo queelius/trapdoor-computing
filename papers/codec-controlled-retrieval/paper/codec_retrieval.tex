@@ -73,18 +73,28 @@ for a non-member key lies in the $\GF$ span $\W$ of the stored codewords, and un
 an idealized uniform-on-$\W$ model it follows a law fixed by a public value codec
 rather than by the private data. That law is provably independent of how often each
 value was stored: the span depends only on \emph{which} values are present, never on
-their multiplicities. The control is governed by a sharp threshold. Full codec
-control holds if and only if the stored codewords are transversal to the codec's
-class partition, equivalently $\rank \proj|_{\W} = \log_2 K$, a step function of an
-integer rank with no graded regime; below it whole codec classes receive exactly
-zero probability. We cash this out as a structural frequency-hiding property: in a
+their multiplicities. The control is governed by a sharp threshold. For a balanced
+codec, full codec control holds if and only if the stored codewords are transversal to
+the codec's class partition, equivalently $\rank \proj|_{\W} = \log_2 K$, a step
+function of an integer rank with no graded regime; below it whole codec classes receive
+exactly zero probability. For a skewed (variable-length) codec the regime is instead
+\emph{graded}: the per-class mass is a non-increasing ladder in code length, a uniform
+target is provably unreachable, and full-span control reproduces the codec's designed
+Kraft distribution. The robustness of control is a second code invariant: the matroid
+cogirth $d^\ast$ of the stored column system is the exact adversarial erasure budget
+before control collapses, at least $\tfrac{K}{2}\,m_{\min}$ under full support, so rank
+governs control while cogirth governs its robustness. We cash this out as a structural
+frequency-hiding property: in a
 distinguishing game (FreqDist) an adversary with non-member oracle access, even with
 unboundedly many adaptive queries, has advantage exactly zero in the idealized model
 (the two oracles are the identical law) and, in the real construction, the two
 non-member laws are within total variation $\delta(p_0)+\delta(p_1)$ of each other, so
 the advantage is at most that distance, where $\delta$ is a small, scale-independent,
 redundancy-governed deviation we measure to be at or below the query-sampling floor
-($0.00334$ at $10^5$ queries) up to $10^7$ keys. We are honest about the perimeter:
+($0.00334$ at $10^5$ queries) up to $10^7$ keys. Encoding stored values with a uniform
+within-class representative leaves the entire non-member law exactly invariant while
+diverging the white-box solution per build, snapshot confidentiality at zero per-query
+cost. We are honest about the perimeter:
 a second, multi-instance attack (a coincidence oracle with accuracy
 $1-\tfrac12\sum_v \al(v)^t$, defeated by \emph{concentrated} rather than flat codespace
 shares, so concentration is the better defense there) pulls the codec the opposite way,
@@ -169,7 +179,19 @@ new and crediting what is not.
   touches in a constant number of points, \cref{lem:subspace-coset}) is the coset weight
   distribution / coset-counting fact of coding theory~\cite{macwilliams1977}, which we
   apply in a new setting (the non-member output of a linear retrieval structure) to
-  obtain a security-relevant codec-control rule.
+  obtain a security-relevant codec-control rule. The skewed (variable-length) codec,
+  which the balanced argument leaves open, is resolved as a separate \emph{graded}
+  regime (\cref{thm:graded}): a non-increasing mass ladder in code length, a provably
+  unreachable uniform target, and full-span control that reproduces the codec's designed
+  Kraft distribution.
+  \item \textbf{(D, robustness.)} A second code invariant governs how robust control is.
+  The matroid cogirth $d^\ast$ of the stored column system over the value quotient is the
+  exact, tight adversarial erasure budget: control survives every deletion of fewer than
+  $d^\ast$ stored keys and collapses (to a non-member law at total variation $1/2$ from
+  the codec shares) at exactly $d^\ast$ well-chosen deletions, with $d^\ast \ge
+  \tfrac{K}{2}\,m_{\min}$ under full support (\cref{thm:cogirth}). This turns the
+  redundancy effect we previously only measured into a theorem, with the clean reading
+  that \emph{rank} governs control and \emph{cogirth} governs its robustness.
 \end{itemize}
 On the security side, we formalize a distinguishing game (FreqDist) in which the
 idealized adversary advantage is \emph{exactly zero} (\cref{thm:freqdist-ideal}) and, in
@@ -177,11 +199,18 @@ the real construction, the two non-member laws are within total variation
 $\delta(p_0)+\delta(p_1)$ of each other, so the advantage of an adversary issuing any
 number of adaptive non-member queries is at most that distance (\cref{thm:freqdist-real}),
 where $\delta$ is the small, scale-independent deviation of the real construction from the
-idealization, measured to be at or below the query-sampling floor up to ten million keys. We implement the construction
+idealization, measured to be at or below the query-sampling floor up to ten million keys.
+We also show that randomizing the within-class representative of each stored value leaves
+the entire non-member law exactly invariant while diverging the white-box solution per
+build (\cref{thm:randenc}), a snapshot-confidentiality property obtained at zero per-query
+cost. We implement the construction
 (header-only C++23) and validate every theorem empirically at scale. Finally, we are
 honest about the perimeter: a structurally different multi-instance attack, a
 coincidence oracle, is defeated by the \emph{opposite} codec choice, so there is no
-single optimal codec, only a public tunable lever between two security objectives.
+single optimal codec, only a public tunable lever between two security objectives; and we
+report two negative results that delimit the design space (a fused split-payload retrieval
+that never Pareto-dominates the separate composition, and a dynamic-insertion obstruction
+that explains why the structure is static).
 
 \paragraph{Threat model, in one breath.}
 The adversary has oracle access to a single deployed instance and queries it on keys
@@ -650,21 +679,162 @@ hit-class mass is $1/K' = |\W \inter C|/|\W|$ in general; it coincides with $1/|
 only because left-alignment forces $\W \inter C = \{0\}$, so $|\W \inter C| = 1$.)
 \end{example}
 
-\begin{remark}[The general skewed codec is open]
-\label{rem:skewed}
+\subsection{The skewed codec is graded, not sharp}
+\label{sec:t4b}
+
 The coset-counting argument uses one feature of the balanced case essentially: a
 \emph{single} homophone subspace $C$ describes the whole partition, so
-\cref{lem:subspace-coset} applies uniformly. A skewed codec (variable codeword lengths)
-has classes of unequal sizes $2^{M - \ell_v}$ that are cosets of \emph{different}
-subspaces $C_v$, so there is no common $C$ and the two-valued conclusion fails: different
-classes can in principle carry different positive densities. Full control still has a
-clean abstract statement, $|\class(v) \inter \W|/|\W| = \al(v)$ for every $v$ ($\W$ in
-general position with respect to the unequal partition), but characterizing which
-supports achieve it, and whether the skewed transition is still sharp or genuinely
-graded, is \emph{not} settled by the balanced argument, and we do not claim it. We state
-the balanced threshold as the proven, sharp result and explicitly defer the skewed case
-as open.
-\end{remark}
+\cref{lem:subspace-coset} applies uniformly. A skewed codec (variable codeword lengths,
+as in a genuine Huffman code) has classes of unequal sizes $2^{M - \ell_v}$ that are
+cosets of \emph{different} subspaces, so the two-valued conclusion can fail: different
+classes can carry different positive densities. We resolve this case the balanced
+argument left open. The classes are now cosets of the \emph{nested within-class flag}
+\[
+  \{0\} = C_M \subseteq C_{M-1} \subseteq \cdots \subseteq C_1 = (\text{low } M-1 \text{ bits}),
+  \qquad
+  \class(v) = \enc(v) + C_{\ell_v},
+\]
+where $C_\ell = \spn$ of the bottom $M - \ell$ standard basis vectors (a longer codeword
+fixes more top bits, hence frees fewer low bits, so the $C_\ell$ are nested). In the
+balanced case all $\ell_v$ are equal, every $C_\ell$ is the single subspace $C$, and the
+flag collapses to one rung, which is exactly why the balanced argument was two-valued.
+
+\begin{theorem}[Skewed codec: graded mass and the realizable ladder]
+\label{thm:graded}
+For a skewed \texttt{prefix\_codec}, the idealized non-member mass on each class is
+\begin{equation}
+  q(v) \;=\; |\class(v) \inter \W| / |\W|
+       \;=\; h_v \cdot 2^{\,\dim(\W \inter C_{\ell_v}) - \dim \W},
+  \qquad
+  h_v = [\, \enc(v) \in \W + C_{\ell_v} \,],
+  \label{eq:graded}
+\end{equation}
+with hit indicator $h_v$. Because the $C_\ell$ form a flag, $\dim(\W \inter C_\ell)$ is
+non-increasing in $\ell$, so among hit classes a shorter codeword carries at least the
+mass of any longer one: every realizable mass vector obeys a \emph{non-increasing ladder}
+in code length. This is a \emph{necessary} structural constraint, not a complete
+characterization. Two consequences:
+\begin{enumerate}
+  \item \emph{(Designed-Kraft punchline.)} When $\W = \GF^M$, every class is hit and
+  $\dim(\W \inter C_{\ell_v}) = M - \ell_v$, so $q(v) = 2^{-\ell_v} = \al(v)$: full-span
+  control reproduces the codec's designed Kraft / codespace-share law, which the balanced
+  two-valued regime provably cannot.
+  \item \emph{(Uniform is unreachable.)} For the Kraft-tight skew $\{1,2,3,3\}$ codec on
+  $M = 4$, no subspace $\W$ realizes a uniform $q = (\tfrac14,\tfrac14,\tfrac14,\tfrac14)$;
+  the nearest realizable vector is at total-variation distance exactly $1/4$ from uniform.
+\end{enumerate}
+\end{theorem}
+
+\begin{proof}[Proof sketch]
+The subspace-meets-coset lemma (\cref{lem:subspace-coset}) used only that a class is a
+coset of \emph{some} subspace; applied to $\class(v) = \enc(v) + C_{\ell_v}$ with its own
+$C_{\ell_v}$, it gives that $\W \inter \class(v)$ is empty or a coset of $\W \inter
+C_{\ell_v}$, hence \eqref{eq:graded}. The ladder is monotonicity of
+$\dim(\W \inter C_\ell)$ along the flag. (1) is the direct evaluation at $\W = \GF^M$.
+For (2), the shortest class $A$ (length $1$) is always hit and $q(A) = 2^{d_1 - \dim \W}$
+with $d_1 = \dim(\W \inter C_1)$; if $q$ were uniform then $q(A) = 1/4$ forces $d_1 =
+\dim \W - 2$, but then $\dim(\W + C_1) = \dim \W + (M-1) - (\dim \W - 2) = M + 1 > M$,
+impossible in $\GF^M$. The only consistent values are $d_1 = \dim \W$ ($q(A) = 1$,
+degenerate) or $\dim \W - 1$ ($q(A) = 1/2$); neither is $1/4$. The $q(A) = 1/2$
+contribution alone forces total-variation distance $\ge 1/4$ to uniform, over all
+subspaces $\W$. The full enumeration (every $\GF$ subspace for $M = 4$ and $M = 6$) is in
+\cref{app:proofs}.
+\end{proof}
+
+\begin{example}[The graded witness]
+\label{ex:graded}
+Take the skew $\{1,2,3,3\}$ codec on $M = 4$ with canonical left-aligned codewords $A =
+0000$ (len $1$), $B = 1000$ (len $2$), $C = 1100$ (len $3$), $D = 1110$ (len $3$), Kraft
+$\tfrac12 + \tfrac14 + \tfrac18 + \tfrac18 = 1$ (tight). With $\W$ the span of all four
+stored codewords, reducing $\{0000, 1000, 1100, 1110\}$ gives a basis $\{1000, 0100,
+0010\}$, so $\dim \W = 3$, $|\W| = 8$, and decoding the eight elements of $\W$ yields
+\[
+  q = (q(A), q(B), q(C), q(D)) = (\tfrac12, \tfrac14, \tfrac18, \tfrac18).
+\]
+Three distinct positive masses occur, so the regime is genuinely \emph{graded}: a single
+subspace meets distinct hit classes in distinct positive proportions, which the balanced
+single-homophone-subspace lemma forbids. Here $\W$ is the full stored-codeword span and
+$q$ coincides with the designed shares $2^{-\ell_v}$. The \texttt{[skewed][realizability]}
+check asserts \eqref{eq:graded}, the ladder, the punchline, and uniform-unreachability
+exactly (dyadic rationals over $|\W|$), and a companion enumeration over \emph{every}
+$\GF$ subspace for $M = 4$ and $M = 6$ confirms graded-exists, balanced-stays-sharp, and
+the realizability of the designed target versus the unreachability of uniform.
+\end{example}
+
+So the skewed regime trades the balanced ``flat or nothing'' dichotomy for a controllable
+ladder whose extreme point is the designed Kraft distribution itself. What remains open
+is finer: a complete characterization of the realizable set (the ladder is necessary, not
+sufficient), and the skewed analogue of the robustness theorem below.
+
+\subsection{Randomized encoding: invariance with white-box divergence}
+\label{sec:randenc}
+
+\Cref{rem:genericity} was explicit that the builder injects no pattern outside $\W$: it
+stores the \emph{canonical} codeword $\enc(v)$ of each value, the unique class
+representative whose within-class bits are zero. The codec already exposes the
+alternative, $\mathrm{enc\_rand}(v)$, which returns a uniform random representative of
+$\class(v)$ by setting the bottom $M - \ell_v$ bits at random rather than to zero. Wiring
+this into the builder in place of the canonical $\enc$ is the one open item earlier drafts
+deferred; we settle it here. The within-class directions are exactly the kernel of the
+value quotient: a within-class draw replaces $\enc(v)$ by $\enc(v) \oplus c$ with
+$c \in C_{\ell_v} = \ker(\proj)$ restricted to that class, so $\proj$ does not see the
+within-class bits at all.
+
+\begin{theorem}[Randomized-encoding invariance and divergence]
+\label{thm:randenc}
+Fix the key set $S$ and the stored values $v(x)$. Replace each canonical codeword
+$\cx = \enc(v(x))$ by an independently drawn (per stored key, per occurrence) uniform
+within-class representative $c'(x) = \mathrm{enc\_rand}(v(x)) = \enc(v(x)) \oplus c_x$
+with $c_x \in C_{\ell_{v(x)}}$ uniform and independent. Let $\W = \spn\{\cx\}$ and
+$\W' = \spn\{c'(x)\}$. Then:
+\begin{enumerate}
+  \item \emph{(Off-set invisibility.)} $\proj(\W') = \proj(\W)$ exactly, and hence the
+  \emph{entire} non-member output law is invariant: $q'(v) = q(v)$ for every value $v$,
+  even though the span size $|\W'|$ may differ from $|\W|$. (Proven below for the
+  balanced codec; computationally verified for skewed codecs, the flag-level proof being a
+  flagged follow-on.)
+  \item \emph{(White-box divergence.)} The solution matrix $\bz'$ solves a different
+  right-hand side ($c'(x)$ in place of $\cx$, freshly re-randomized each build), so
+  $\bz' \ne \bz$ in general even at a fixed ribbon seed.
+\end{enumerate}
+\end{theorem}
+
+\begin{proof}
+\emph{(1, balanced codec.)} Each generator $c'(x) = \cx \oplus c_x$ differs from $\cx$ by
+$c_x \in C = \ker(\proj)$, so $\proj(c'(x)) = \proj(\cx)$; since $\proj$ is $\GF$-linear it
+carries spans to spans, $\proj(\W') = \spn\{\proj(c'(x))\} = \spn\{\proj(\cx)\} =
+\proj(\W)$. For the balanced codec the mass formula simplifies to $q(v) = h_v / |\proj(\W)|$
+with $h_v = [\proj(\enc(v)) \in \proj(\W)]$, which depends on $\W$ \emph{only} through
+$\proj(\W)$. Hence $q'(v) = q(v)$ for every $v$. The added directions lie in $\ker(\proj)$
+and cancel in the normalized mass, so each class mass is pinned even as $|\W'|$ grows.
+\emph{(2.)} The build solves $\ay[x]^{\mathsf T}\bz = c'(x)$ rather than $\cx$; a different
+right-hand side yields a different back-substituted $\bz$, re-randomized again per build.
+No contradiction with (1): (1) concerns $\proj(\W)$, an invariant of the stored values
+modulo the within-class bits, while (2) concerns the solved snapshot $\bz$, which depends
+on those very bits.
+\end{proof}
+
+The primitive is textbook \emph{wiretap coset coding}~\cite{wyner1975wiretap,%
+ozarowwyner1984wiretap}: a message is a coset of a fixed subspace and the encoder
+transmits a uniform in-coset representative, fixing the syndrome (the message) while
+randomizing the within-coset choice to confuse a wiretapper. A codec class $\class(v) =
+\enc(v) + C_{\ell_v}$ is exactly such a coset, and $\mathrm{enc\_rand}$ picks a uniform
+in-coset representative, so this \emph{is} coset-coding randomization, transplanted to the
+\emph{right-hand side} of a static $\GF$ retrieval structure. The randomization primitive
+is not new; the new content is the invariance-plus-divergence statement for this static
+structure. Two consequences follow. (C1) The entire non-member value-frequency channel is
+unchanged by within-class randomization, so an attacker who samples non-member outputs
+sees identically distributed streams from a canonical and a randomized build (proven
+balanced, verified skewed; exact, not asymptotic in either case). (C2) Two builds of the
+\emph{same} data produce \emph{different} solution matrices, so within-class randomization
+raises the entropy of the white-box snapshot (replacing the fixed low-entropy zero-bit
+choice by a uniform within-class one) at zero per-query cost, the lookup remaining a single
+$a^{\mathsf T}\bz$. The \texttt{[randomized]} check gates all three claims at fixed seeds:
+exact mass invariance over $1300$ within-class re-encodings across four codecs (asserted by
+integer cross-multiplication, while $|\W|$ is observed to grow from $8$ to $16$ on the skew
+witness), empirical non-member agreement to total variation $0.0039$ over $30{,}000$
+queries, and white-box divergence in about $90\%$ of serialized solution bytes while the
+decoded non-member law is unchanged.
 
 \section{From the idealized model to the real construction}
 \label{sec:t5}
@@ -761,25 +931,135 @@ constant in the FreqDist bound (\cref{sec:security}) without introducing any ter
 grows with the frequency gap.
 \end{remark}
 
-\begin{remark}[Honestly labeled deliverable]
+\begin{remark}[Honestly labeled deliverable for the magnitude]
 \label{rem:t5-bound}
-We state the empirical characterization, not a theorem. \textbf{Observation.} For
-support comfortably above threshold (each class backed by many independent keys),
-$\delta = O(\text{sampling floor})$ and is indistinguishable from zero at the measured
-query budget, scale-independently in $N$ up to $10^7$. As $\W$ approaches the threshold
-(a class backed by a handful of keys), $\delta$ grows mildly, to $\sim 0.017$ at the
-edge (minority classes stored $\sim 25$ times), governed by the per-class store count,
-not by $N$ or by the storage frequencies. \textbf{Conjecture (qualitative, not proven).}
-The visible part of $\delta$ is controlled by the redundancy beyond the threshold
-dimension, equivalently by the minimum per-class store count $m_{\min}$; $\delta$ sits at
-the floor once $m_{\min}$ is large and degrades only as $m_{\min}$ falls toward the
-minimum needed to span. A structural proof, presumably bounding the non-uniformity of a
-banded $\GF$ solution on $\W$ in terms of the number of independent equations pinning
-$\W$, is left open. This is deliberately weaker than \cref{thm:support,thm:idealized,%
-thm:freqindep,thm:threshold}, which are proven; \cref{sec:t5} is where the real
-construction meets the idealization, and the honest deliverable is the measurement plus
-the big-$O$.
+For the \emph{magnitude} of $\delta$ we state an empirical characterization, not a
+closed-form theorem. \textbf{Observation.} For support comfortably above threshold (each
+class backed by many independent keys), $\delta = O(\text{sampling floor})$ and is
+indistinguishable from zero at the measured query budget, scale-independently in $N$ up to
+$10^7$. As $\W$ approaches the threshold (a class backed by a handful of keys), $\delta$
+grows mildly, to $\sim 0.017$ at the edge (minority classes stored $\sim 25$ times),
+governed by the per-class store count, not by $N$ or by the storage frequencies. A
+structural closed-form bound on the within-regime non-uniformity, bounding the deviation of
+a banded $\GF$ solution on $\W$ in terms of the number of independent equations pinning
+$\W$, remains open. This magnitude characterization is deliberately weaker than
+\cref{thm:support,thm:idealized,thm:freqindep,thm:threshold}, which are proven. The
+\emph{binary control criterion} that the redundancy governs, however, is now a theorem:
+\cref{thm:cogirth} below proves that the rank making control possible persists under
+adversarial erasure up to a code invariant, the cogirth, which is itself lower-bounded by
+the per-class store count $m_{\min}$.
 \end{remark}
+
+\subsection{Cogirth governs the robustness of control}
+\label{sec:t5b}
+
+\Cref{thm:threshold} answers \emph{when} control holds: iff the stored patterns reach rank
+$\log_2 K$ over the value quotient $\Quot$. We now answer the dual \emph{robustness}
+question, how many stored keys an adversary may erase before that rank, and with it codec
+control, collapses, and find the answer is a second code invariant. Where the threshold
+ties control to the \emph{rank} of the stored system, this ties the robustness of control
+to its \emph{minimum distance / cogirth}: the two standard invariants of a linear code,
+playing their textbook roles. We state and prove this for the balanced codec (matching
+\cref{thm:threshold}'s scope); the skewed/graded extension is a flagged follow-on.
+
+Fix the balanced codec, $K = 2^k$ classes, $\Quot = \GF^k$, and $\proj$ onto the top $k$
+codeword bits. Define the \emph{stored column system} over $\Quot$ with one column per
+stored \emph{key}, taken with multiplicity: a value $v$ stored $m_v$ times contributes
+$m_v$ identical columns $g_v = \proj(\enc(v))$. Stacking gives a $k \times n$ matrix $G$
+over $\Quot$ ($n$ = number of stored keys). By the engineering bridge \eqref{eq:bridge}
+control holds iff $\rank G = k$. The multiplicities do not change the rank, but they are
+essential to the robustness count, so the invariant must be defined over the stored
+\emph{multiset}; over distinct patterns the analogous count is trivially $1$ (a class
+backed by one key dies on one erasure), and the result would collapse to a restatement of
+\cref{thm:threshold}. Define $d^\ast$ to be the matroid \emph{cogirth} of $G$, that is, the
+fewest columns (counted with multiplicity) whose deletion drops $\rank G$ below $k$.
+The surviving columns drop below full rank iff they all lie in some hyperplane $H$ of
+$\Quot$, so the adversary must delete every column \emph{outside} $H$; minimizing over $H$,
+\begin{equation}
+  d^\ast \;=\; (\text{total columns}) \;-\; \max_{H \text{ hyperplane of } \Quot}
+              \big(\text{columns lying in } H\big),
+  \label{eq:cogirth}
+\end{equation}
+a finite minimum over the $2^k - 1$ hyperplanes $\ker(a)$, $a \ne 0$ ($g \in \ker(a)$ iff
+the $\GF$ parity $\langle g, a\rangle = 0$).
+
+\begin{theorem}[Cogirth is the erasure budget for control]
+\label{thm:cogirth}
+For the balanced codec with stored column system $G$ of rank $k$ over $\Quot$:
+\begin{enumerate}
+  \item $d^\ast$ is the \emph{exact, tight} adversarial erasure budget. Deleting fewer
+  than $d^\ast$ stored keys leaves $\rank G = k$ for \emph{every} deletion (control intact,
+  the M1 regime); and some $d^\ast$ well-chosen deletions drop the rank to $k-1$, stepping
+  control into the broken regime of \cref{thm:threshold}, where the realized non-member law
+  has total variation exactly $1/2$ from the codespace shares.
+  \item \emph{(Erasure / error duality.)} $\lfloor (d^\ast - 1)/2 \rfloor$ corrupted stored
+  equations are correctable, the same minimum distance giving an erasure budget $d^\ast - 1$
+  and an error-correction radius $\lfloor (d^\ast - 1)/2 \rfloor$.
+  \item \emph{(The $m_{\min}$ bridge, full support.)} If all $K$ value-patterns are stored
+  ($m_v \ge 1$ for every $v \in \Quot$), then $d^\ast \ge \tfrac{K}{2}\, m_{\min}$, where
+  $m_{\min} = \min_v m_v$. Hence control survives at least $\tfrac{K}{2}\,m_{\min}$
+  adversarial erasures. (Without full support the bound can fail.)
+\end{enumerate}
+\end{theorem}
+
+\begin{proof}
+\emph{(1)} This is the textbook erasure-correction fact transported through the sharp
+\cref{thm:threshold} step. By the definition of the cogirth, deleting any set of size
+$< d^\ast$ removes no cocircuit, so the survivors still span $\Quot$ (rank $k$). By
+\eqref{eq:cogirth} a hyperplane $H$ captures $(\text{total} - d^\ast)$ columns, and
+deleting exactly the $d^\ast$ columns outside $H$ leaves all survivors in $H$, a proper
+subspace, so surviving rank is $k-1$ (a single cocircuit deletion drops rank by exactly
+one). The minimum breaking deletion is therefore exactly $d^\ast$, the dual distance of
+$G$. The value in the broken regime is pinned by \cref{thm:threshold}: at surviving rank
+$k-1$ the image $\proj(\W)$ is a hyperplane, so exactly $K' = 2^{k-1} = K/2$ classes are
+hit at mass $2/K$ and the other $K/2$ are missed at $0$; against $\al = 1/K$,
+\[
+  \TV = \tfrac12\Big[\tfrac{K}{2}\big|\tfrac{2}{K} - \tfrac1K\big|
+       + \tfrac{K}{2}\big|0 - \tfrac1K\big|\Big]
+      = \tfrac12\big[\tfrac12 + \tfrac12\big] = \tfrac12,
+\]
+independent of $K$ and of which hyperplane is hit, landing precisely on the broken step.
+\emph{(2)} Immediate from (1) by erasure/error duality of the minimum distance.
+\emph{(3)} Under full support every hyperplane $H$ misses exactly $K/2$ of the $K$ distinct
+value-patterns, and each missed stack contributes $\ge m_{\min}$ columns to the complement,
+so the deletion count for any $H$ is $\ge \tfrac{K}{2}\,m_{\min}$, hence so is the minimum
+$d^\ast$. Tightness: for uniform multiplicity $m_v = m$ every hyperplane holds exactly
+$K/2$ patterns each with $m$ columns, so $d^\ast = Km - \tfrac{K}{2}m = \tfrac{K}{2}m =
+\tfrac{K}{2}m_{\min}$.
+\end{proof}
+
+Part (3) is the bridge that converts the previously-only-empirical redundancy effect into
+a theorem: control is \emph{guaranteed} until at least $\tfrac{K}{2}\,m_{\min}$ stored keys
+are erased, a quantity linear in the per-class redundancy. The clean separation is
+\[
+  \begin{aligned}
+    &\text{\textsc{rank} governs \textsc{control}}
+      &&\text{(\cref{thm:threshold})}, \\
+    &\text{\textsc{cogirth / minimum distance} governs the \textsc{robustness} of control}
+      &&\text{(\cref{thm:cogirth})}.
+  \end{aligned}
+\]
+The empirical anchor (the skew\_a profile, minority classes stored only $\sim 25$ times,
+sitting at the threshold edge with elevated per-build $\delta$) is exactly the small-$d^\ast$
+corner this theorem now explains: thin support has a small cogirth, hence a small erasure
+budget and a fragile control margin. The leakage-as-dual-code template is itself not new:
+Massey~\cite{massey1993minimal} identified the minimal codewords of a linear code with the
+minimal access structure of the induced secret-sharing scheme, and
+Gluesing-Luerssen~\cite{gluesingluerssen2014fourier} developed the Fourier-reflexive
+partition / MacWilliams duality under which a partition's leakage is governed by its dual.
+We do not claim the MacWilliams transform or the duality template as new; what
+\cref{thm:cogirth} contributes is the transport of the textbook
+erasure-capacity~$=$~cogirth~$=$~dual-distance fact through the specific, proven sharp rank
+threshold, yielding an exact, multiplicity-aware erasure budget and the
+$\tfrac{K}{2}\,m_{\min}$ redundancy bound. \textbf{Scope nuance.} \Cref{thm:cogirth} governs
+the \emph{binary} control criterion ($\rank = \log_2 K$, equivalently $\delta = 0$ under
+M1) and its erasure budget; it does \emph{not} bound the magnitude of the within-regime
+$\delta$ (the elevation as $m_{\min}$ falls toward the edge stays the empirical
+characterization of \cref{rem:t5-bound}). A \texttt{[cogirth]} check on the real balanced
+$M = 8$, $K = 8$ structure computes $d^\ast$ via \eqref{eq:cogirth}, performs the
+adversarial and the $d^\ast - 1$ erasures, and measures control intact below $d^\ast$, the
+broken step at $0.50000$ exactly at $d^\ast$, and the bound with the binding-profile
+equality $d^\ast = \tfrac{K}{2}m_{\min}$.
 
 \section{Security: frequency-analysis resistance}
 \label{sec:security}
@@ -1340,29 +1620,65 @@ $\delta(p_0)+\delta(p_1)$, capping the advantage at that distance
 (\cref{thm:freqdist-real}), a property of the static bytes with zero per-query cost, where
 PANCAKE and FSE pay bandwidth or re-encoding online.
 
+\paragraph{Two probed design-space negatives.}
+We probed two natural extensions and report both as honest negatives, since each delimits
+the design space the construction occupies. \textbf{(1) The fused split-payload retrieval
+is empty.} One might solve a single ribbon system whose $M$-bit slot is split into $r$
+fingerprint bits and $M - r$ value bits, hoping to beat the separate two-structure
+composition (a perfect-hash/fingerprint filter plus a separate retrieval). It does not: the
+measured difference in bits per key is $0.00000$ at every $(M, r, N)$ tested, since the two
+designs solve the same total number of $\GF$ equations; the only saving is one shared
+metadata block (about $192/N$ bits, below noise), and although the fused build is about
+$1.7\times$ faster it does not move the (bits/key, false-positive rate, value-capacity)
+frontier at all. The fused construction therefore never Pareto-dominates the separate
+composition, and that design-space cell is empty. \textbf{(2) Local re-solve loses to
+rebuild on insertion.} For the banded ribbon system, forward elimination of an inserted row
+is band-confined ($O(W)$), but the back-substitution \emph{repair} is $O(N)$ (about $N/2$):
+a supercritical leftward percolation with mean offspring $\mu \approx W/2.5 \gg 1$. The band
+width required for solvability ($W \approx 64$) is exactly the width that makes the repair
+percolation supercritical, so there is no band width at which the build succeeds \emph{and} a
+single insertion's repair stays confined; on top of that, $8$ to $54\%$ of insertions are
+linearly infeasible and force a rebuild outright. Local $\GF$ re-solve therefore provably
+loses to periodic rebuild (crossover at about $2W$ inserts). This is why our construction is
+static: dynamism would need a different (overlay) route, not an in-place re-solve. These two
+negatives sit against settled dynamic-retrieval bounds (the dynamic lower bounds of
+Kuszmaul and Walzer~\cite{kuszmaulwalzer2024dynamic}; the tight incremental/dynamic bounds
+and phase transition of Kuszmaul, Putterman, et al.~\cite{kuszmaulputterman2025incremental};
+extendable incremental perfect hashing~\cite{berceaeven2022extendable}; the build-only
+nature of Ribbon's incremental banding~\cite{dillinger2021ribbon}; and the bolt-on-Bloom
+dynamization of IXOR/IBIF~\cite{reviriego2024ixor}, which dynamizes by adding a filter rather
+than by re-solving): they explain, rather than contradict, the static design.
+
 \paragraph{Limitations.}
-Three boundaries are explicit. The threshold theorem (\cref{thm:threshold}) is proven for the
-\emph{balanced} linear codec; the skewed (variable-length) case lacks a single homophone subspace,
-its abstract full-control condition is stated but whether its transition stays sharp or becomes
-genuinely graded is open (\cref{rem:skewed}). The deviation $\delta$ (\cref{sec:t5}) is
-\emph{characterized}, not bounded in closed form: we deliver the measurement and a labeled
-big-$O$, and conjecture but do not prove that $\delta$ is governed by the minimum per-class store
-count (\cref{rem:t5-bound}). And the security treatment defends exactly one channel against
-exactly one attack: the non-member value-frequency channel against single-instance frequency
-analysis, plus the reconciliation of the opposite-pulling multi-instance coincidence oracle;
-access-pattern, volume, and size leakage are not addressed, and the structure is static.
+The boundaries are explicit. The sharp threshold (\cref{thm:threshold}) and the cogirth
+robustness theorem (\cref{thm:cogirth}) are proven for the \emph{balanced} linear codec; the
+skewed (variable-length) case is resolved as the \emph{graded} regime (\cref{thm:graded}), but
+two finer skewed questions remain open: a complete characterization of the realizable mass
+set (the non-increasing ladder is necessary, not sufficient), and the skewed analogues of the
+cogirth budget and of the randomized-encoding invariance (\cref{thm:randenc}, proven for
+balanced and only computationally verified for skewed). The \emph{magnitude} of the deviation
+$\delta$ (\cref{sec:t5}) is \emph{characterized}, not bounded in closed form: we deliver the
+measurement and a labeled big-$O$, while the binary control criterion it governs is now the
+theorem \cref{thm:cogirth}; a closed-form bound on the within-regime $\delta$ magnitude in
+terms of redundancy stays open (\cref{rem:t5-bound}). And the security treatment defends
+exactly one channel against exactly one attack: the non-member value-frequency channel against
+single-instance frequency analysis, plus the reconciliation of the opposite-pulling
+multi-instance coincidence oracle; access-pattern, volume, and size leakage are not addressed,
+and the structure is static (the dynamic-insertion obstruction above explains why).
 
 \paragraph{Future work.}
-The skewed-codec threshold is the most pressing open problem: a characterization of which supports
-put $\W$ in general position with respect to an unequal class partition, and whether the resulting
-transition is sharp. A structural closed-form bound on $\delta$ in terms of storage redundancy
-would upgrade \cref{sec:t5} from a measurement to a theorem. A white-box or randomized-encoding
-angle (filling free slots with a designed pattern rather than zero, which \cref{rem:genericity}
-flags as the place the support could be enlarged on purpose) may let the construction realize
-output laws beyond the stored span. More broadly, this is the construction-and-experiments
-companion to the cipher-maps program~\cite{towell2026ciphermaps}: it supplies the $\GF$-linear
-retrieval backend that abstraction lacks, and the opposite-pull between the two attacks is the
-linear-retrieval instance of its $(\TV, \text{length})$ frontier.
+Three resolved items leave sharper successors. The skewed codec is now \emph{graded}
+(\cref{thm:graded}); what remains is a complete characterization of its realizable mass set
+(the ladder is necessary, not sufficient) and the skewed analogues of the cogirth budget
+(\cref{thm:cogirth}) and of the randomized-encoding invariance (\cref{thm:randenc}), each of
+which we prove for the balanced codec and verify computationally in the skewed case. For the
+deviation $\delta$, the binary control criterion is now a theorem via the cogirth, but a
+structural closed-form bound on the within-regime $\delta$ \emph{magnitude} in terms of storage
+redundancy would upgrade the remaining \cref{sec:t5} characterization to a theorem. More
+broadly, this is the construction-and-experiments companion to the cipher-maps
+program~\cite{towell2026ciphermaps}: it supplies the $\GF$-linear retrieval backend that
+abstraction lacks, and the opposite-pull between the two attacks is the linear-retrieval
+instance of its $(\TV, \text{length})$ frontier.
 
 \paragraph{Takeaway.}
 The values an XOR retrieval structure returns for non-member keys are not arbitrary junk: they are
@@ -1419,6 +1735,25 @@ $a \in \B^m$. Therefore $\Rz \subseteq \W$, and with $\W \subseteq \Rz$ we concl
 full quantification over all $a \in \B^m$ (not only the realizable band-indicators $\ay$) is what
 makes the equality hold; the reachable set of single-band outputs is contained in $\W$ and spans it,
 but need not equal it as a raw set. \qed
+
+\section{Skewed realizability: the full subspace enumeration}
+\label{app:skewed}
+
+\Cref{thm:graded} characterizes the skewed mass vector \eqref{eq:graded} and asserts uniform
+is unreachable. The uniform-unreachability dimension argument is given in the proof sketch; the
+remaining content is the claim that the realizable set is governed by the ladder and that the
+designed Kraft target is achievable while uniform is not, which we verify by exhaustive
+enumeration. For a fixed $M$ we enumerate \emph{every} $\GF$ subspace $\W$ of $\GF^M$, compute
+$q(v)$ in two independent ways, by decoding each element of $\W$ through the real
+\texttt{prefix\_codec} and by the formula \eqref{eq:graded} (using $\dim(\W \inter C_\ell) =
+\dim \W + \dim C_\ell - \dim(\W + C_\ell)$), and confirm they agree. The subspace counts match
+the Galois numbers ($67$ for $M = 4$, $2825$ for $M = 6$), so the enumeration is complete. The
+checks confirm, over all $\W$: (i) the formula \eqref{eq:graded} holds for every subspace; (ii)
+a balanced codec on the same $M$ stays sharp (a single positive mass on its hit classes); (iii)
+the skew $\{1,2,3,3\}$ witness is graded (three distinct positive masses, \cref{ex:graded});
+(iv) the designed Kraft target $q(v) = 2^{-\ell_v}$ is realized (by $\W = \GF^M$); and (v) no
+subspace realizes the uniform target, with the nearest realizable vector at total-variation
+distance exactly $1/4$. This is the exhaustive backing for \cref{thm:graded}.
 
 \bibliographystyle{plainnat}
 \bibliography{refs}

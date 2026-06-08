@@ -120,3 +120,69 @@ bounds, and the E1-E4 numbers were transcribed faithfully and verified against t
 - NEXT: papermill:format-validator pass (venue formatting / PoPETs class if switching
   off article); optional move of remaining T1-T4 proofs into the appendix if a page
   budget is imposed; optional citation of the two uncited dietzfelbinger entries.
+
+## Discovery integration (2026-06-08): three open questions resolved + two design-space negatives
+
+Integrated the upgraded maph note (`maph/docs/codec_controlled_retrieval.md` @ `f4855fc`,
+branch `sp4-discovery-integration`, snapshotted to `source/construction-note.md` with a
+provenance header) into `paper/codec_retrieval.tex`. Three previously-deferred open
+questions are now stated results, and two honest negatives were added to the discussion.
+
+RESOLVED OPEN QUESTIONS (now theorems/propositions in the paper):
+1. Skewed-codec threshold (was `rem:skewed`, "explicitly deferred as open"). Replaced by
+   the T4b GRADED result (new subsection `sec:t4b`, `thm:graded`, `ex:graded`): per-class
+   mass `q(v) = h_v * 2^(dim(W cap C_{l_v}) - dim W)`; the realizable masses form a
+   NON-INCREASING LADDER in code length (necessary, not sufficient); a uniform target over
+   the skew {1,2,3,3} codec is UNREACHABLE (min-TV 1/4); full-span control reproduces the
+   designed Kraft law `q(v)=2^(-l_v)`. Full subspace enumeration backing in new
+   `app:skewed`.
+2. m_min conjecture (was the "Conjecture (qualitative, not proven)" in `rem:t5-bound`).
+   Replaced by the T5b COGIRTH theorem (new subsection `sec:t5b`, `thm:cogirth`): the
+   matroid cogirth d* of the stored column system over Q is the exact, tight adversarial
+   erasure budget (broken step at TV=1/2 at exactly d* deletions); floor((d*-1)/2)
+   error-correction; d* >= (K/2)*m_min under full support converts the conjecture to a
+   theorem. Framing: RANK governs control (T4); COGIRTH governs robustness (T5b). Scope
+   nuance recorded: T5b governs the BINARY control criterion + erasure budget; the
+   within-regime delta MAGNITUDE stays the empirical T5 characterization (`rem:t5-bound`
+   retained for the magnitude only). Cite-and-differentiate Massey 1993 + Gluesing-Luerssen
+   2014.
+3. Randomized-encoding angle (Q#5; was a future-work "white-box or randomized-encoding
+   angle"). Now `thm:randenc` (new subsection `sec:randenc`): within-class randomized
+   encoding leaves the entire non-member law EXACTLY invariant (proven balanced, verified
+   skewed) while diverging the white-box solution per build. Snapshot confidentiality at
+   zero per-query cost. Primitive = wiretap coset coding (Wyner 1975; Ozarow-Wyner 1984),
+   cited; new content is the invariance-plus-divergence statement for a static GF(2)
+   structure.
+
+TWO DISCUSSION NEGATIVES (new "Two probed design-space negatives" paragraph in
+`sec:conclusion`, honest negatives, NOT theorems):
+- SPLIT-PAYLOAD HYBRID is empty: a fused (r fingerprint + (M-r) value) single-system
+  retrieval never Pareto-dominates the separate composition (Delta bits/key = 0.00000;
+  only saving ~192/N bits of metadata; 1.7x faster build does not move the frontier).
+- DYNAMIC-INSERTION OBSTRUCTION: insertion repair is supercritical (back-substitution O(N),
+  mean offspring ~W/2.5 >> 1); the band width needed for solvability (W~64) is exactly the
+  width that makes repair supercritical, and 8-54% of insertions are infeasible. Local
+  re-solve provably loses to periodic rebuild (crossover ~2W). Explains why the structure
+  is static. Positioned against Kuszmaul-Walzer STOC 2024, Kuszmaul-Putterman SODA 2025,
+  Bercea-Even STOC 2022, Ribbon (build-only), IXOR/IBIF TNSM 2024.
+
+BIB: added massey1993minimal, gluesingluerssen2014fourier (arXiv 1304.1207),
+wyner1975wiretap, ozarowwyner1984wiretap, kuszmaulwalzer2024dynamic,
+kuszmaulputterman2025incremental (arXiv 2410.10002), berceaeven2022extendable,
+reviriego2024ixor (TNSM 2024). Some fields (Kuszmaul-Putterman author list, IXOR/IBIF
+exact title/authors) are approximate and flagged in-bib to verify before submission.
+
+ABSTRACT + INTRO updated: abstract now mentions the graded skewed regime, the cogirth
+robustness invariant, and the randomized-encoding invariance (briefly); intro contributions
+list gained item (D, robustness) and extended item (C) with the graded resolution, plus a
+randomized-encoding sentence and a sentence flagging the two negatives. Limitations and
+Future-work paragraphs rewritten so the three resolved items are no longer listed as open;
+remaining open items are now: the skewed flag-level proofs of robustness and invariance, the
+complete realizable-set characterization, and the within-regime continuous-delta-magnitude
+bound.
+
+BUILD: `cd paper && make` -> 29 pages (was 23), 0 undefined refs/cites, 0 bibtex warnings.
+Two large display overfull boxes I introduced were fixed (reflowed the cogirth definition
+and the rank/cogirth separation display); 3 minor overfull boxes remain (two sub-1pt, one
+38pt in the PRE-EXISTING leakage-abuse related-work paragraph, not introduced here).
+Stage stays draft-complete (results integrated; no new venue/format change).
