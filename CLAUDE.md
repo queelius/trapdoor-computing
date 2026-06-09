@@ -104,7 +104,17 @@ trapdoor-computing/
   .papermill/state.md   # Papermill project state (stage, thesis, next actions)
 ```
 
-**Subtree workflow**: Each paper under `papers/` is a git subtree with its own remote. Remote names are short (`cipher-maps`, `maximizing-confidentiality`, `algebraic-cipher-types`); the directory name uses the long form. (The `boolean-algebra` remote was retired 2026-06-09 when that paper was archived; its GitHub repo remains canonical.) Edit in place and commit normally. Push back: `git subtree push --prefix=papers/<dir> <remote> main`. Pull upstream: `git subtree pull --prefix=papers/<dir> <remote> main --squash`.
+**Subtree workflow**: Each paper under `papers/` is a git subtree. Edit in place and commit normally. Push back: `git subtree push --prefix=papers/<dir> <remote> main`. Pull upstream: `git subtree pull --prefix=papers/<dir> <remote> main --squash`.
+
+Paper subtree remotes (set up 2026-06-09; dedicated `paper-*` repos):
+
+| Subtree dir | Remote name | GitHub repo |
+|---|---|---|
+| `papers/cipher-maps` | `cipher-maps` | `queelius/paper-cipher-maps` |
+| `papers/algebraic-cipher-types` | `algebraic-cipher-types` | `queelius/paper-algebraic-cipher-types` |
+| `papers/maximizing-confidentiality` | `maximizing-confidentiality` | `queelius/entropy-maximization-encrypted-search` |
+
+**Caveat (do not confuse):** `queelius/cipher-maps` is the **Python library** (the embedded repo at `src/cipher-maps/`, gitignored, its own `.git`), NOT the paper. The cipher-maps *paper* lives at `queelius/paper-cipher-maps`. Earlier the monorepo's `cipher-maps` subtree remote was mistakenly pointed at the library repo; it now points at `paper-cipher-maps`. The `boolean-algebra` remote was retired 2026-06-09 (paper archived). Other paper subtrees (`cipher-rekeying`, `codec-controlled-retrieval`, `cipher-closures`, `cipher-program-construction`, `adaptive-trapdoor`) do not yet have dedicated `paper-*` repos; the whole monorepo is backed up on the `boolean-algebra-reframe` branch at `queelius/trapdoor-computing`.
 
 ## Relationship to Bernoulli Ecosystem
 
