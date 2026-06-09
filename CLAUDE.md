@@ -112,9 +112,10 @@ Paper subtree remotes (set up 2026-06-09; dedicated `paper-*` repos):
 |---|---|---|
 | `papers/cipher-maps` | `cipher-maps` | `queelius/paper-cipher-maps` |
 | `papers/algebraic-cipher-types` | `algebraic-cipher-types` | `queelius/paper-algebraic-cipher-types` |
-| `papers/maximizing-confidentiality` | `maximizing-confidentiality` | `queelius/entropy-maximization-encrypted-search` |
+| `papers/maximizing-confidentiality` | `maximizing-confidentiality` | `queelius/paper-maximizing-confidentiality` |
+| `papers/cipher-rekeying` | `cipher-rekeying` | `queelius/paper-cipher-rekeying` |
 
-**Caveat (do not confuse):** `queelius/cipher-maps` is the **Python library** (the embedded repo at `src/cipher-maps/`, gitignored, its own `.git`), NOT the paper. The cipher-maps *paper* lives at `queelius/paper-cipher-maps`. Earlier the monorepo's `cipher-maps` subtree remote was mistakenly pointed at the library repo; it now points at `paper-cipher-maps`. The `boolean-algebra` remote was retired 2026-06-09 (paper archived). Other paper subtrees (`cipher-rekeying`, `codec-controlled-retrieval`, `cipher-closures`, `cipher-program-construction`, `adaptive-trapdoor`) do not yet have dedicated `paper-*` repos; the whole monorepo is backed up on the `boolean-algebra-reframe` branch at `queelius/trapdoor-computing`.
+**Caveat (do not confuse):** `queelius/cipher-maps` is the **Python library** (the embedded repo at `src/cipher-maps/`, gitignored, its own `.git`), NOT the paper. The cipher-maps *paper* lives at `queelius/paper-cipher-maps`. Earlier the monorepo's `cipher-maps` subtree remote was mistakenly pointed at the library repo; it now points at `paper-cipher-maps`. The `boolean-algebra` remote was retired 2026-06-09 (paper archived). The remaining paper subtrees (`codec-controlled-retrieval`, `cipher-closures`, `cipher-program-construction`, `adaptive-trapdoor`) do not yet have dedicated `paper-*` repos; the whole monorepo is backed up on the `boolean-algebra-reframe` branch at `queelius/trapdoor-computing`.
 
 ## Relationship to Bernoulli Ecosystem
 
