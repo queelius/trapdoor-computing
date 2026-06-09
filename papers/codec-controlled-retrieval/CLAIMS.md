@@ -42,6 +42,7 @@ cross-check the linear-algebra gates with exact rational arithmetic.
 | `item1.py`, `item1_general.py` | T4c realizable set: enumerates subspaces, the necessary conditions, sufficiency for `{1,2,3,3}`, insufficiency for `{2,2,3,3,3,3}` |
 | `item2.py` | the `thm:randenc` skewed counterexample (4 distinct laws over 256 draws) and the saturated regime |
 | `saturation.py` | saturation sufficiency over 12000 redraws; necessity is false; rank non-monotonicity |
+| `freqdist_per_observation.py` | the corrected `thm:freqdist-real` scoping: optimal single-observation Adv == TV exactly (no factor of 2, exact rationals), and the many-query advantage grows toward 1 for fixed distinct laws (so the per-observation scope is necessary) |
 
 These reimplement the C++ gates in pure Python with `fractions.Fraction`, so the
 agreement is exact, not floating-point, and the counterexamples are independent of
