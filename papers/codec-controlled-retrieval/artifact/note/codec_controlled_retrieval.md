@@ -1,11 +1,3 @@
-<!--
-PROVENANCE (snapshot, do not edit here; edit the upstream note and re-sync).
-Source of record: maph/docs/codec_controlled_retrieval.md
-Pinned commit: 772d50200df3fb484a67e3f90c9b3e4e5e61351d (2026-06-08 21:39:31 -0500)
-Regenerate: scripts/sync-from-maph.sh 772d502
-This file is a verbatim copy of the upstream note.
--->
-
 # Codec-controlled retrieval: a theorem-grade note
 
 This note is the theorem-grade companion to `docs/CODESPACE_NONMEMBERS.md`.

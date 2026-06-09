@@ -1490,9 +1490,15 @@ the numbers below are read directly from the committed result files. Nothing her
 introduces a new claim: E1 is the empirical face of the threshold (\cref{thm:threshold}),
 E2 of frequency independence (\cref{thm:freqindep}) and the redundancy effect
 (\cref{sec:t5}), E3 of the scale-independence and sampling-floor analysis (\cref{sec:t5}),
-and E4 of the reconciliation direction (\cref{sec:reconciliation}). The construction is
-implemented in the \texttt{maph} research playground; build and analysis scripts are
-provided for reproduction.
+and E4 of the reconciliation direction (\cref{sec:reconciliation}). Beyond the experiments,
+\emph{every} theorem in this paper carries a computational gate (a Catch2 test that checks it
+on the real construction, by exact integer or rational arithmetic where the claim is exact);
+the gates, the source-of-record note, and independent pure-Python cross-checks (which produced
+the counterexamples) are collected in a self-contained, version-pinned artifact that builds and
+runs without the upstream repository, with a claim-to-gate map. The construction lives in the
+\texttt{maph} research playground; because its development branch moves, the artifact pins a
+specific commit and is archived for a stable identifier, which the camera-ready cites in place
+of a moving repository.
 
 \subsection{E1: the span threshold is sharp}
 
