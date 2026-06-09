@@ -75,7 +75,6 @@ Earlier rounds (2026-03-19, 2026-03-26) are summarized in `.papermill/state.md`;
 
 Relationships are spelled out in `.papermill/state.md` under `related_papers`. Three live in this monorepo:
 
-- `../boolean-algebra-over-trapdoor-sets/`: online construction instantiated here
 - `../algebraic-cipher-types/`: algebraic/functorial framing
 - `../maximizing-confidentiality/`: entropy-ratio confidentiality measure (uses cipher maps)
 

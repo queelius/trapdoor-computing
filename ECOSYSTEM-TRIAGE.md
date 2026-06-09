@@ -120,9 +120,10 @@ Core mathematical content is authentic. Jan-Feb 2026 commits show Claude-assiste
 
 ## Separate Repositories
 
-### boolean-algebra-over-trapdoor-sets (DRIFTED)
+### boolean-algebra-over-trapdoor-sets (ARCHIVED 2026-06-09)
 
-**Location**: `trapdoor-computing/papers/boolean-algebra-over-trapdoor-sets` (moved from oblivious-computing)
+**Status**: Retired from the monorepo and archived to `~/github/archived/boolean-algebra-over-trapdoor-sets`. The canonical GitHub repo is retained. Reason: the construction is a single-hash Bloom filter over deterministic trapdoor encodings (the paper itself says so), giving the SSE/deterministic-encryption leakage profile (the equality channel plus a plaintext-Boolean membership result, i.e. the K=1 corner the cipher-map framework exists to improve upon). Insufficiently novel as a standalone. Its two load-bearing kernels were folded into active papers: the generalized-Boolean-algebra (Boolean ring without unit) characterization into `algebraic-cipher-types` (Remark `rem:trapdoor-set-algebra`), and the K=1 deterministic baseline into `cipher-maps` §9.4 (online construction).
+**Location (archived)**: `~/github/archived/boolean-algebra-over-trapdoor-sets`
 **Repo**: github.com/queelius/boolean-algebra-over-trapdoor-sets
 **Pre-Claude boundary**: commit 549091a (2024-07-07)
 
@@ -159,5 +160,5 @@ Backup copy of oblivious-computing monorepo. Contains deprecated/ and deprecated
 2. **F2 is replaced by** the trapdoor computing design doc (`formalism/DESIGN-trapdoor-reframing.md`)
 3. **F1 is useful reference** but not canonical — Claude's formalization of the author's ideas, math is correct
 4. **cipher_maps_unified** rewrite on hold — formalism first, paper second
-5. **boolean-algebra repo** — revert to 549091a or archive post-drift work
+5. **boolean-algebra repo**: DONE (2026-06-09). Kernels folded into cipher-maps §9.4 + algebraic-cipher-types; standalone archived to `~/github/archived/`.
 6. **foundational/ and extensions/ dirs** may not be worth keeping — they're Claude's interpretation of the author's work, organized in Claude's preferred structure. The blog posts + design doc are the real foundations.

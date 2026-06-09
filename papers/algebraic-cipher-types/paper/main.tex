@@ -1206,6 +1206,33 @@ The cipher Boolean is the special case $Y = \{\mathrm{True},
 bounded integers, or any codomain where the output distribution is known.
 \end{remark}
 
+\begin{remark}[Algebra of the underlying trapdoor sets]
+\label{rem:trapdoor-set-algebra}
+The cipher Boolean type is the confidential lift of a simpler object: the
+\emph{trapdoor set}, whose elements are one-way encodings
+$\tau_k(v) = H(k \mathbin{\|} v)$ on which union, intersection, difference,
+and symmetric difference act directly over the encodings.  The algebraic
+structure of these sets is weaker than full Boolean algebra.  Over an
+unbounded universe the finite trapdoor sets under
+$(\cup, \cap, \setminus, \triangle, \emptyset)$ form a \emph{generalized}
+Boolean algebra: a relatively complemented distributive lattice with least
+element $\emptyset$ but no greatest element, equivalently a Boolean ring
+without unit ($\triangle$ as addition, $\cap$ as multiplication).  They are
+\emph{not} a Boolean algebra, because complement is absent:
+$X \setminus A$ is infinite and has no finite trapdoor-set representation.
+A finite universe restores the greatest element $\tau(X)$ and hence
+complement $\tau(X) \setminus \tau(A)$, at the cost of materializing the
+encoding of the entire universe.  The compact single-hash bit-vector
+(Bloom) representation supplies a syntactic bitwise complement, but it does
+not preserve set complement.  The cipher Boolean type of
+\Cref{def:cipher-bool} is the confidential ($K > 1$, trusted-decode) lift
+of this algebra; the deterministic ($K = 1$) case is its online
+instantiation in the foundation paper~\cite{towell2026cipher}, where
+membership is answered untrusted-side by equality of encodings and the
+trapdoor set carries the leakage profile of deterministic and searchable
+encryption.
+\end{remark}
+
 
 %% --------------------------------------------------------------------
 \subsection{Noise Unreliability}

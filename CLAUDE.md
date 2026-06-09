@@ -30,8 +30,9 @@ This repo collects the authentic formalism and develops it into papers. The Bern
 
 **This is critical.** Prior Claude sessions drifted the formalism toward ORAM-style access-pattern indistinguishability, which is NOT this framework's privacy model. Privacy here comes from one-way hash + uniform representation, not access-pattern hiding.
 
-- **Source of truth**: `foundations/` (authentic 2023-2024 blog posts)
-- **Formalism**: `formalism/DESIGN-trapdoor-reframing.md` (four properties, parameter decomposition) and `formalism/cipher-map-formalism.md` (precise definitions, constructions, composition theorem)
+- **Authentic source**: `foundations/` (authentic 2023-2024 blog posts). The historical record. It carries occasional errata, flagged inline (e.g. the inverted homophonic prescription `K(x) ∝ 1/D(x)` in `trapdoor-boolean-algebra.md`, corrected to `K(x) ∝ D(x)`).
+- **Canonical spine**: `formalism/cipher-map-formalism.md` is the reconciled source of truth for shared definitions: the cipher-map tuple, the four properties, the composition theorem, the two-scale confidentiality measures (§4A), and the Paper Map plus canonical-notation table (§8). When a paper and the spine disagree on a shared definition, the spine wins. `formalism/DESIGN-trapdoor-reframing.md` holds the four-properties / parameter-decomposition design rationale; `formalism/notation.md` is the conventions guide that defers to the spine's §8 table.
+- **Reconciliation report**: `formalism/cross-paper-consistency.md` logs cross-paper drift (notation, bibkeys, measure conflations) with fix status (items C-1 through C-10). Read it before "fixing" an apparent inconsistency: it may already be tracked or deliberately resolved.
 - **Full classification**: `ECOSYSTEM-TRIAGE.md` maps every paper/repo as AUTHENTIC, CLAUDE-EXPANDED, MIXED, or DRIFTED
 - **Do NOT** import ORAM, differential privacy, simulation-based, or game-based crypto definitions. If you find yourself writing `\Adv`, `\Simulator`, `\Trace`, or `\PPT`, stop. That's the wrong formalism.
 
@@ -52,12 +53,16 @@ cd papers/algebraic-cipher-types/paper && make
 cd papers/maximizing-confidentiality && make
 # also: make quick (single pass), make stats (page/section counts)
 
-# boolean-algebra-over-trapdoor-sets (Makefile inside paper/ subdir)
-cd papers/boolean-algebra-over-trapdoor-sets/paper && make
-
 # adaptive-trapdoor paper (idea/preliminary; depends on the
 # cipher-maps experimental harness for empirical results)
 cd papers/adaptive-trapdoor/paper && make
+
+# The remaining papers all follow the paper/Makefile convention.
+# cd papers/<name>/paper && make  where <name> is one of:
+#   codec-controlled-retrieval  (towell2026codec; construction + experiments companion to cipher-maps)
+#   cipher-rekeying             (rekeying via cipher closures)
+#   cipher-closures             (cipher data structures + code-data duality; spun out of cipher-rekeying 2026-06)
+#   cipher-program-construction (realizing programs as cipher-map compositions; spun out of algebraic-cipher-types 2026-06)
 
 # algebraic_cipher_types-legacy: original 2019-2022 C++ library, ARCHIVED 2026-04-29
 # (kept for provenance; do not build, do not edit; see ARCHIVED.md inside)
@@ -73,26 +78,33 @@ cd <paper_dir> && pdflatex main.tex && bibtex main && pdflatex main.tex && pdfla
 trapdoor-computing/
   foundations/          # Authentic 2023-2024 blog posts (source of truth)
   formalism/            # Design docs and formal development
-    cipher-map-formalism.md       # Precise definitions, composition theorem
+    cipher-map-formalism.md       # RECONCILED CANONICAL SPINE: defs, composition, two-scale measures (§4A), paper map + notation table (§8)
+    cross-paper-consistency.md    # Reconciliation report: notation/bibkey drift, measure conflations, fix status (C-1..C-10)
+    notation.md                   # Notation conventions guide (defers to spine §8 table)
     DESIGN-trapdoor-reframing.md  # Four properties, parameter decomposition
   papers/               # Git subtrees, each with its own GitHub remote
-    cipher-maps/                       # Core cipher-maps paper, QIF-restructured
+    cipher-maps/                       # Core cipher-maps paper, QIF-restructured (the hub; towell2026cipher)
+    codec-controlled-retrieval/        # towell2026codec: GF(2)-linear ribbon/XOR construction + experiments companion to cipher-maps
     algebraic-cipher-types/            # Algebraic cipher types: type algebra, sum impossibility, orbit closure, cipher Boolean eval
     cipher-program-construction/       # Realizing programs as cipher-map compositions (spun out of algebraic-cipher-types 2026-06-03; scaffold)
-    cipher-rekeying/                   # Cipher rekeying via closures (2026-04 draft)
+    cipher-rekeying/                   # Cipher rekeying via closures (2026-04 draft; closure/data-structure material spun out 2026-06-03)
+    cipher-closures/                   # Cipher data structures + the code-data duality (spun out of cipher-rekeying 2026-06-03; scaffold)
     maximizing-confidentiality/        # "The Entropy Ratio", QIF-grounded
     adaptive-trapdoor/                 # Distributional drift / online K(x) retuning (idea/preliminary)
-    boolean-algebra-over-trapdoor-sets/  # Pre-July-2024 authentic only
+    (boolean-algebra-over-trapdoor-sets retired 2026-06-09: kernels folded into
+     cipher-maps §9.4 online construction + algebraic-cipher-types; standalone
+     archived to ~/github/archived/, canonical GitHub repo retained)
   src/                  # Shared source artifacts (cipher-maps Python library, nested git repo)
   .archive/             # Snapshots of older drafts and superseded variants
     oblivious-computing-deprecated/    # Pre-July-2024 monorepo with DRIFTED formalism
     algebraic_cipher_types-legacy/     # Original 2019-2022 C++ notebook (archived 2026-04-29)
+  SISTER-PAPER-DOIS.md  # Zenodo DOI checklist; closes cipher-maps R8 MAJ-1 (sister-paper "in preparation" citations)
   FUTURE-RESEARCH.md    # Five salient ideas mined from the archived C++ notebook
   ECOSYSTEM-TRIAGE.md   # Classification of all related papers/code
   .papermill/state.md   # Papermill project state (stage, thesis, next actions)
 ```
 
-**Subtree workflow**: Each paper under `papers/` is a git subtree with its own remote. Remote names are short (`cipher-maps`, `boolean-algebra`, `maximizing-confidentiality`, `algebraic-cipher-types`); the directory name uses the long form. Edit in place and commit normally. Push back: `git subtree push --prefix=papers/<dir> <remote> main`. Pull upstream: `git subtree pull --prefix=papers/<dir> <remote> main --squash`.
+**Subtree workflow**: Each paper under `papers/` is a git subtree with its own remote. Remote names are short (`cipher-maps`, `maximizing-confidentiality`, `algebraic-cipher-types`); the directory name uses the long form. (The `boolean-algebra` remote was retired 2026-06-09 when that paper was archived; its GitHub repo remains canonical.) Edit in place and commit normally. Push back: `git subtree push --prefix=papers/<dir> <remote> main`. Pull upstream: `git subtree pull --prefix=papers/<dir> <remote> main --squash`.
 
 ## Relationship to Bernoulli Ecosystem
 
@@ -115,7 +127,7 @@ The Bernoulli side provides quantitative error theory. The trapdoor side adds cr
 
 - `~/github/cipher-maps/`: Python implementation backing the experimental claims in the papers. Provides PHF-backed cipher maps, the cipher Boolean type (AND/OR/NOT as cipher maps over a partitioned hash space), typed composition chains via `CipherSpace` tags, and end-to-end Boolean search. The 20 Newsgroups benchmarks, FPR-compounding validation, and granularity experiments cited in `cipher-maps` and `maximizing-confidentiality` come from this library.
 - `oblivious-computing/`: Legacy monorepo. Foundational papers (F1-F4) and extensions (E1-E2). F2 is DRIFTED (wrong ORAM formalism). Application papers are MIXED.
-- `boolean-algebra-over-trapdoor-sets/`: Pre-July-2024 commits (up to 549091a) are authentic. Later commits are Claude-drifted.
+- `~/github/archived/boolean-algebra-over-trapdoor-sets/`: ARCHIVED 2026-06-09. The trapdoor-set construction (deterministic K=1 Bloom-image set algebra, the equality-channel/plaintext-Boolean leakage regime). Its two load-bearing kernels were folded into the active papers: the generalized-Boolean-algebra characterization into `algebraic-cipher-types` (Remark `rem:trapdoor-set-algebra`), and the K=1 deterministic baseline into `cipher-maps` §9.4 (online construction). Pre-July-2024 commits (up to 549091a) are authentic; the standalone was retired as insufficiently novel on its own (the construction is a single-hash Bloom filter; the contribution was the algebra, now folded).
 
 ## Publication Surface
 

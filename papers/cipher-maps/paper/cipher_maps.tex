@@ -155,7 +155,7 @@ flattens the cipher value distribution by an order of magnitude
 
 \paragraph{Bernoulli error model.}
 The error framework underlying cipher maps is the Bernoulli
-model~\cite{bernoulli-types}.  Two axioms (element-wise independence and
+model~\cite{bernoulli2026sets}.  Two axioms (element-wise independence and
 conditional independence of block error rates) reduce the error model from
 exponential complexity to two parameters per element.  This tractability is
 what makes the composition theorem (Property~4) possible: errors combine
@@ -2194,7 +2194,8 @@ $\mathrm{Bool} \to \mathrm{Set} \to \mathrm{Map} \to \mathrm{Relation} \to
 \mathrm{Type}$, where each level inherits the error model from the level
 below.  The formalism presented here covers maps ($X \to Y$); relations and
 algebraic types (sum types, product types) require the extensions developed in
-the Bernoulli relations and algebraic types work~\cite{bernoulli-types}.
+the Bernoulli map algebra~\cite{bernoulli2026maps} and the algebraic-type
+model~\cite{bernoulli2026datatype}.
 The BHF (Bernoulli Hash Function) construction from that framework is the
 optimal cipher map for the batch strategy: it achieves the
 $-\log_2 \varepsilon + H(Y)$ lower bound with $O(1)$ query time.
@@ -2224,12 +2225,27 @@ domain $X$ and function $f$ at construction time.  An alternative
 per-element hashes, with no seed search.  Union, intersection, and
 complement reduce to bitwise OR, AND, and NOT; union is exact but
 intersection and complement are approximate (cross-element hash collisions
-and the pigeonhole principle, respectively).  This approach---the
-\emph{trapdoor Boolean algebra}---is developed in a companion
-paper~\cite{bernoulli-types}.  The batch and online strategies offer
-complementary trade-offs: batch achieves information-theoretically optimal
-space with tunable correctness; online enables incremental construction and
-algebraic composition at the cost of space exponential in set size.
+and the pigeonhole principle, respectively).  This approach, the
+\emph{trapdoor Boolean algebra}, is the online instantiation of the cipher
+map framework, and its confidentiality is governed by the same homophony
+dial $K(x)$ as the batch case.  At $K = 1$ (deterministic encoding) the
+construction occupies the weakest corner of the design space: set elements
+are deterministic one-way encodings, membership is answered on the untrusted
+side by equality of encodings, and the result is a plaintext Boolean.  This
+exposes both the equality predicate among encodings and the query answer
+itself---the leakage profile of deterministic and searchable encryption, the
+very regime the cipher map framework exists to improve upon.  Raising
+$K > 1$ closes the equality channel (Property~2, representation uniformity)
+and returns membership to the opaque, trusted-decode regime: the untrusted
+machine then computes Boolean operations over opaque hashes without learning
+any truth value.  The finite trapdoor sets form a generalized Boolean
+algebra (a Boolean ring without unit) rather than a Boolean algebra, since
+the complement of a finite set is not finitely representable;
+\cite{towell2026algebraic} gives the algebraic characterization.  The batch
+and online strategies offer complementary trade-offs: batch achieves
+information-theoretically optimal space with tunable correctness; online
+enables incremental construction and algebraic composition at the cost of
+space exponential in set size.
 
 \subsection{Bounded Composition as a Security Feature}
 \label{subsec:bounded-composition}
