@@ -102,8 +102,9 @@ Dawn~Xiaodong Song, David Wagner, and Adrian Perrig.
 \bibitem[Towell(2026{\natexlab{a}})]{towell2026bernoulli}
 Alexander Towell.
 \newblock Bernoulli data types: Approximate algebraic types with quantitative
-  error, 2026{\natexlab{a}}.
-\newblock Manuscript in preparation.
+  error.
+\newblock Zenodo, 2026{\natexlab{a}}.
+\newblock URL \url{https://doi.org/10.5281/zenodo.19105399}.
 
 \bibitem[Towell(2026{\natexlab{b}})]{towell2026cipher}
 Alexander Towell.
@@ -121,8 +122,9 @@ Alexander Towell.
 \bibitem[Towell(2026{\natexlab{d}})]{towell2026maxconf}
 Alexander Towell.
 \newblock Maximizing confidentiality under trapdoor computing: Encoding
-  granularity and optimal space, 2026{\natexlab{d}}.
-\newblock Manuscript in preparation.
+  granularity and optimal space.
+\newblock Zenodo, 2026{\natexlab{d}}.
+\newblock URL \url{https://doi.org/10.5281/zenodo.20607278}.
 
 \bibitem[Turing(1936)]{turing1936computable}
 Alan~M Turing.

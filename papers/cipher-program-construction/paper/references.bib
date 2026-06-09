@@ -2,7 +2,9 @@
   title={Algebraic Cipher Types: Confidentiality Trade-offs in Type Constructors over Trapdoor Computing},
   author={Towell, Alexander},
   year={2026},
-  note={Manuscript in preparation}
+  doi={10.5281/zenodo.20607285},
+  howpublished={Zenodo},
+  url={https://doi.org/10.5281/zenodo.20607285}
 }
 
 @misc{towell2026cipher,
@@ -20,4 +22,131 @@
   number={3},
   pages={538--544},
   year={1984}
+}
+
+% ===== Prior-art survey (papermill:prior-art, 2026-06-04) =====
+% --- Foundational: obliviousness model, trapdoor lineage, white-box construction ancestor ---
+@inproceedings{yao1986how,
+  title={How to Generate and Exchange Secrets},
+  author={Yao, Andrew Chi-Chih},
+  booktitle={27th Annual Symposium on Foundations of Computer Science (FOCS)},
+  pages={162--167},
+  year={1986},
+  organization={IEEE}
+}
+
+@article{goldreich1996software,
+  title={Software Protection and Simulation on Oblivious {RAMs}},
+  author={Goldreich, Oded and Ostrovsky, Rafail},
+  journal={Journal of the ACM},
+  volume={43},
+  number={3},
+  pages={431--473},
+  year={1996}
+}
+
+@inproceedings{curtmola2006searchable,
+  title={Searchable Symmetric Encryption: Improved Definitions and Efficient Constructions},
+  author={Curtmola, Reza and Garay, Juan and Kamara, Seny and Ostrovsky, Rafail},
+  booktitle={Proceedings of the 13th ACM Conference on Computer and Communications Security (CCS)},
+  pages={79--88},
+  year={2006}
+}
+
+@inproceedings{chow2002whitebox,
+  title={White-Box Cryptography and an {AES} Implementation},
+  author={Chow, Stanley and Eisen, Philip and Johnson, Harold and van Oorschot, Paul C.},
+  booktitle={Selected Areas in Cryptography (SAC 2002)},
+  series={Lecture Notes in Computer Science},
+  volume={2595},
+  pages={250--270},
+  year={2003},
+  publisher={Springer}
+}
+
+@inproceedings{billet2004cryptanalysis,
+  title={Cryptanalysis of a White Box {AES} Implementation},
+  author={Billet, Olivier and Gilbert, Henri and Ech-Chatbi, Charaf},
+  booktitle={Selected Areas in Cryptography (SAC 2004)},
+  series={Lecture Notes in Computer Science},
+  volume={3357},
+  pages={227--240},
+  year={2005},
+  publisher={Springer}
+}
+
+@inproceedings{delerablee2013whitebox,
+  title={White-Box Security Notions for Symmetric Encryption Schemes},
+  author={Delerabl{\'e}e, C{\'e}cile and Lepoint, Tancr{\`e}de and Paillier, Pascal and Rivain, Matthieu},
+  booktitle={Selected Areas in Cryptography (SAC 2013)},
+  series={Lecture Notes in Computer Science},
+  volume={8282},
+  year={2014},
+  publisher={Springer}
+}
+
+% --- Competing: whole-program realization / function hiding (different models) ---
+@article{zdancewic2002secure,
+  title={Secure Program Partitioning},
+  author={Zdancewic, Steve and Zheng, Lantian and Nystrom, Nathaniel and Myers, Andrew C.},
+  journal={ACM Transactions on Computer Systems},
+  volume={20},
+  number={3},
+  pages={283--328},
+  year={2002}
+}
+
+@inproceedings{chong2007swift,
+  title={Secure Web Applications via Automatic Partitioning},
+  author={Chong, Stephen and Liu, Jed and Myers, Andrew C. and Qi, Xin and Vikram, K. and Zheng, Lantian and Zheng, Xin},
+  booktitle={Proceedings of the 21st ACM Symposium on Operating Systems Principles (SOSP)},
+  pages={31--44},
+  year={2007}
+}
+
+@inproceedings{liu2015oblivm,
+  title={{ObliVM}: A Programming Framework for Secure Computation},
+  author={Liu, Chang and Wang, Xiao Shaun and Nayak, Kartik and Huang, Yan and Shi, Elaine},
+  booktitle={2015 IEEE Symposium on Security and Privacy (S\&P)},
+  pages={359--376},
+  year={2015}
+}
+
+@inproceedings{buscher2018hycc,
+  title={{HyCC}: Compilation of Hybrid Protocols for Practical Secure Computation},
+  author={B{\"u}scher, Niklas and Demmler, Daniel and Katzenbeisser, Stefan and Kretzmer, David and Schneider, Thomas},
+  booktitle={Proceedings of the 2018 ACM SIGSAC Conference on Computer and Communications Security (CCS)},
+  pages={847--861},
+  year={2018}
+}
+
+@inproceedings{kolesnikov2008practical,
+  title={A Practical Universal Circuit Construction and Secure Evaluation of Private Functions},
+  author={Kolesnikov, Vladimir and Schneider, Thomas},
+  booktitle={Financial Cryptography and Data Security (FC 2008)},
+  series={Lecture Notes in Computer Science},
+  volume={5143},
+  pages={83--97},
+  year={2008},
+  publisher={Springer}
+}
+
+@inproceedings{boyle2015function,
+  title={Function Secret Sharing},
+  author={Boyle, Elette and Gilboa, Niv and Ishai, Yuval},
+  booktitle={Advances in Cryptology -- EUROCRYPT 2015},
+  series={Lecture Notes in Computer Science},
+  volume={9057},
+  pages={337--367},
+  year={2015},
+  publisher={Springer}
+}
+
+% --- Complementary: constant-time / verified obliviousness (open-problem link) ---
+@inproceedings{almeida2016verifying,
+  title={Verifying Constant-Time Implementations},
+  author={Almeida, Jos{\'e} Bacelar and Barbosa, Manuel and Barthe, Gilles and Dupressoir, Fran{\c{c}}ois and Emmi, Michael},
+  booktitle={25th USENIX Security Symposium},
+  pages={53--70},
+  year={2016}
 }
