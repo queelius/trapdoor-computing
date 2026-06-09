@@ -1,0 +1,25 @@
+cff-version: 1.2.0
+message: "If you use this work, please cite it as below."
+title: "Algebraic Cipher Types: Confidentiality Trade-offs in Type Constructors over Trapdoor Computing"
+type: article
+authors:
+  - family-names: Towell
+    given-names: Alexander
+    orcid: "https://orcid.org/0000-0001-6443-9897"
+    affiliation: "Southern Illinois University Edwardsville"
+repository-code: "https://github.com/queelius/paper-algebraic-cipher-types"
+license: CC-BY-4.0
+doi: "10.5281/zenodo.20607285"
+url: "https://doi.org/10.5281/zenodo.20607285"
+date-released: 2026-06-09
+keywords:
+  - trapdoor computing
+  - cipher types
+  - algebraic data types
+  - type constructors
+  - functorial framework
+  - orbit closure
+  - cipher Boolean
+  - noise propagation
+  - quantitative information flow
+  - privacy-preserving computation

@@ -1,0 +1,24 @@
+cff-version: 1.2.0
+message: "If you use this work, please cite it as below."
+title: "The Entropy Ratio: Quantitative Confidentiality for Trapdoor Computing"
+type: article
+authors:
+  - family-names: Towell
+    given-names: Alexander
+    orcid: "https://orcid.org/0000-0001-6443-9897"
+    affiliation: "Southern Illinois University Edwardsville"
+repository-code: "https://github.com/queelius/paper-maximizing-confidentiality"
+license: CC-BY-4.0
+doi: "10.5281/zenodo.20607278"
+url: "https://doi.org/10.5281/zenodo.20607278"
+date-released: 2026-06-09
+keywords:
+  - trapdoor computing
+  - quantitative information flow
+  - entropy ratio
+  - Fannes-Audenaert inequality
+  - cipher maps
+  - parameterized leakage
+  - homophonic substitution
+  - encrypted search
+  - privacy-preserving computation
