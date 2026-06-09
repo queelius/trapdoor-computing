@@ -789,6 +789,8 @@ $$
 $$
 even if $\Pr_D\lbrace a\rbrace$ and $\Pr_D\lbrace b\rbrace$ are significantly different.
 
+> **Errata note (added 2026-06-02).** The phrase "inversely proportional to $\Pr_D(a)$" above is backwards. The observed probability of a single cipher representation of $a$ is $\Pr_D(a)/K(a)$, where $K(a)$ is the number of representations; flattening this to a constant requires $K(a) \propto \Pr_D(a)$, so *frequent* elements need *more* representations, not fewer. This is the classical Simmons (1979) homophonic prescription. The inverse form $K(a) \propto 1/\Pr_D(a)$ makes the cipher-value distribution more skewed, not less. The original (incorrect) text is preserved here for provenance; the corrected prescription is carried by the papers and by `formalism/cipher-map-formalism.md` (Property 2). See `formalism/cross-paper-consistency.md`, item C-1.
+
 When doing a membership query, we uniformly sample one of these representations so that the unigram distribution of elements in $\lbrace0,1\rbrace$ is uniform. This is a kind of *marginal uniformity*.
 
 However, this approach has serious shortcomings:
