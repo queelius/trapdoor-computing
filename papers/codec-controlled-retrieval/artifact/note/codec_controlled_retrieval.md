@@ -1222,25 +1222,28 @@ criterion itself.
 ### The security hook (brief; formalized in the security section below)
 
 The FreqDist advantage between two storage profiles p0 and p1 with the SAME
-support satisfies Adv <= 2 TV(law_real under p0, law_real under p1). Both real
-laws are within delta of the SAME idealized M1 law (which is frequency-
-independent by T3, since W depends only on the support). By the triangle
-inequality, TV(law_real(p0), law_real(p1)) <= delta(p0) + delta(p1), so
+support satisfies, for the optimal test on a SINGLE observed non-member output,
+Adv <= TV(law_real under p0, law_real under p1), with equality for the optimal
+test (Le Cam; in the Adv = |2 Pr[b' = b] - 1| convention the per-observation
+advantage IS the TV, no factor of 2). Both real laws are within delta of the SAME
+idealized M1 law (which is frequency-independent by T3, since W depends only on
+the support). By the triangle inequality,
+TV(law_real(p0), law_real(p1)) <= delta(p0) + delta(p1), so
 
-    Adv <= 2 (delta(p0) + delta(p1)),
+    Adv <= delta(p0) + delta(p1)        (per observation),
 
-a residual bounded by ~4 times the per-build T5 deviation: ~0.012 for rich
-support on both sides (delta ~ 0.003 each, so Adv <= 2(0.003+0.003) = 0.012) and
-up to ~0.04 when one profile is at the threshold edge (delta ~ 0.017 for the thin
-side and ~0.003 for the rich side, so Adv <= 2(0.017+0.003) = 0.04). Crucially,
-per E2 this residual does NOT grow
+a residual of about twice the per-build T5 deviation: ~0.006 for rich support on
+both sides (delta ~ 0.003 each) and up to ~0.02 when one profile is at the
+threshold edge (delta ~ 0.017 for the thin side and ~0.003 for the rich side).
+Crucially, per E2 this residual does NOT grow
 with the frequency gap between p0 and p1: it is governed by the redundancy of the
 thinner profile, not by how different the two frequency vectors are. T5 thus caps
 the frequency-analysis leakage of the non-member channel at a small constant set
 by storage redundancy, independent of the plaintext frequencies. The formal
-FreqDist security statement, with the game definition and the exact constant, is
-the security section below ("Security: frequency-analysis resistance (the FreqDist
-game)"); T5 supplies the deviation budget it consumes.
+FreqDist security statement, with the game definition, the exact per-observation
+constant, and the honest scoping of what more queries buy, is the security section
+below ("Security: frequency-analysis resistance (the FreqDist game)"); T5 supplies
+the deviation budget it consumes.
 
 ### Summary of T5
 
@@ -1261,9 +1264,10 @@ game)"); T5 supplies the deviation budget it consumes.
   store count does. The elevation does NOT encode storage frequency (cross-
   profile advantage tracks the per-build floor, not the frequency gap), so it does
   not break T3, it only loosens the FreqDist constant.
-- Security hook: Adv <= 2 (delta(p0) + delta(p1)) bounds the residual FreqDist
-  advantage by ~0.012 (both sides rich) to ~0.04 (one side at threshold edge),
-  frequency-gap-independent; this is formalized in the security section below.
+- Security hook: the per-observation FreqDist advantage is at most
+  delta(p0) + delta(p1) (no factor of 2), ~0.006 (both sides rich) to ~0.02 (one
+  side at threshold edge), frequency-gap-independent; formalized, with the
+  many-query scoping, in the security section below.
 - T5b (next subsection, PROVEN): the redundancy dependence T5 only observed is a
   theorem. The matroid cogirth d* of the stored column system is the exact
   adversarial erasure budget before control collapses, and d* >= (K/2) * m_min, so
@@ -1762,7 +1766,7 @@ plus T1 (the law is a function of W and the codec). The advantage is zero not
 because distinguishing is hard but because there is nothing to distinguish: the
 two oracles are one and the same law.
 
-### Real bound: advantage at most twice the summed T5 deviation
+### Real bound: the two laws are close; per-observation advantage at most the summed T5 deviation
 
 Under the real construction the two oracles are not exactly equal: each profile's
 build solves its own banded GF(2) system and so has its own solution matrix z,
@@ -1772,38 +1776,54 @@ delta(p_b) = TV(law_real(p_b), law_M1), the per-build T5 deviation from the shar
 M1 law. (The M1 law is the SAME object for both, being frequency-independent by
 T3: W is common, so law_M1 is common.)
 
-The standard fact that statistical distinguishing advantage is bounded by total
-variation gives
-
-    Adv(A) <= 2 * TV(law_real(p0), law_real(p1))
-
-for any adversary observing samples from one of the two laws. (The factor 2 is the
-convention attached to Adv = |2 Pr[b' = b] - 1|; with the alternative convention
-Adv = |Pr[b' = b in 0,1] - 1/2| the bound reads <= TV. The optimal single-sample
-distinguisher achieves exactly the TV; the bound is the per-instance leakage cap.)
-The clean way to bound the right-hand side is per realization against the shared
-idealization: each profile's realized non-member law is within its own T5 deviation
-of the SAME M1 law (the M1 law is common because W is common, by T3), so by the
-triangle inequality for TV the two realized laws are within the sum of their
-deviations of each other. Concretely, routing through the common M1 law,
+The right object is the DISTANCE BETWEEN THE TWO REAL LAWS, bounded through the
+common idealization. Each profile's realized law is within its own T5 deviation of
+the same M1 law, so by the triangle inequality for TV, routing through that common
+law,
 
     TV(law_real(p0), law_real(p1))
         <= TV(law_real(p0), law_M1) + TV(law_M1, law_real(p1))
-        =  delta(p0) + delta(p1),
+        =  delta(p0) + delta(p1).
 
-so
+For the advantage: the optimal test on ONE observed non-member output distinguishes
+two laws with advantage exactly their total variation in the Adv = |2 Pr[b' = b] - 1|
+convention (the optimal single-observation test has Pr[b' = b] = 1/2 + TV/2, so
+Adv = TV; this is Le Cam's two-point bound). Hence the PER-OBSERVATION advantage
+satisfies
 
-    Adv(A) <= 2 ( delta(p0) + delta(p1) ).
+    Adv(A) <= TV(law_real(p0), law_real(p1)) <= delta(p0) + delta(p1).
 
-This is the real FreqDist bound. It is the T5 security hook, now derived in the
-game. Plugging in the T5 numbers (the deviation budget T5 supplies):
+NO factor of 2 appears. (CORRECTION 2026-06-09: an earlier version of this bound
+read Adv <= 2(delta(p0) + delta(p1)), multiplying the per-sample TV by the Adv
+convention factor a second time; in this convention the optimal per-observation
+advantage IS the TV, as the parenthetical above shows, so the extra 2 was a
+convention-mixing error. The corrected numbers below are half the earlier ones.)
+
+What more queries do, and do not, buy. The TV display compares the two FIXED
+realized laws, so it does not degrade with the query count; but closeness of the
+two laws does NOT by itself cap the many-query advantage. A q-query adversary can
+estimate its instance's realized law to arbitrary precision as q grows, and two
+realized-law DISTRIBUTIONS (over builds) can each sit within delta of the ideal yet
+be nearly disjoint from each other inside that ball, in which case the estimated
+law would identify the profile despite the small per-observation TV. What
+forecloses that here is structural plus measured: by T3 the law contains no
+frequency term at all, so the per-build deviation is redundancy-and-seed noise
+rather than a profile signature, and E2 MEASURES the cross-profile distance to
+coincide with the same-profile rebuild floor (a fresh-seed rebuild of the SAME
+profile moves the law as much as switching profiles does). So the many-query
+ceiling, the separation between the two realized-law distributions, is measured at
+the per-build floor rather than proven by a closed-form bound; the proven content
+is the per-observation display above, and the many-query statement carries the
+same [characterize] label as T5 itself.
+
+Plugging in the T5 numbers (the deviation budget T5 supplies):
 
   - Both profiles rich (each codec class backed by many keys, W comfortably above
-    threshold): delta(p0) ~ delta(p1) ~ 0.003, so Adv(A) <= 2(0.003 + 0.003) =
-    0.012.
+    threshold): delta(p0) ~ delta(p1) ~ 0.003, so per observation
+    Adv(A) <= 0.003 + 0.003 = 0.006, about twice the per-build deviation.
   - One profile at the threshold EDGE (a minority class stored only a handful of
     times, the E2 skew_a regime): delta ~ 0.017 on the thin side and ~0.003 on the
-    rich side, so Adv(A) <= 2(0.017 + 0.003) = 0.04.
+    rich side, so per observation Adv(A) <= 0.017 + 0.003 = 0.02.
 
 E2 (the empirical FreqDist experiment, generated by maph's
 `benchmarks/bench_freq_independence.cpp` with result data in the bijou repo at
@@ -1816,7 +1836,7 @@ and skew_b-vs-skew_a all land at the same ~0.014 magnitude, tracking the noisier
 having very different storage-frequency gaps (33/33/33, 50/25/25, and 90/5/5 each
 against 99/0.5/0.5). The pair uniform-vs-skew_b (a real 33-vs-90 frequency gap,
 both profiles rich) sits at the ~0.0036 floor. So the advantage is governed by the
-redundancy of the thinner build (its delta), exactly as 2(delta(p0) + delta(p1))
+redundancy of the thinner build (its delta), exactly as delta(p0) + delta(p1)
 predicts, and is independent of the frequency difference, exactly as the idealized
 Adv = 0 demands. The measured advantage is the residual T5 noise, not a frequency
 signal.
@@ -1848,9 +1868,12 @@ worth being explicit about the perimeter.
 
   - What it covers. The value-FREQUENCY channel of non-member outputs: an adversary
     with non-member oracle access cannot learn the storage-frequency distribution
-    of values in S. Idealized advantage zero (M1, from T1 and T3); real advantage
-    at most 2(delta(p0) + delta(p1)), a small constant governed by storage
-    redundancy and independent of the frequency gap (T5, E2).
+    of values in S. Idealized advantage zero (M1, from T1 and T3); real
+    per-observation advantage at most delta(p0) + delta(p1), a small constant
+    governed by storage redundancy and independent of the frequency gap (T5, E2),
+    with the many-query reading scoped in the real-bound subsection (the laws'
+    separation carries no frequency term, and the measured cross-profile distance
+    sits at the same-profile rebuild floor).
 
   - What it does NOT cover. It says nothing about access-pattern leakage (which
     keys are queried, and any correlation structure across queries), nothing about
@@ -2077,8 +2100,8 @@ the threshold edge with almost no redundancy), a T5 effect, not a frequency-leak
 signal. This is the empirical confirmation of both the T3 independence (advantage
 does not grow with the frequency gap) and the T5 redundancy characterization
 (advantage is set by the per-class store count of the thinner build), and it
-realizes the FreqDist real bound Adv <= 2(delta(p0) + delta(p1)) with the residual
-governed by the thinner profile's delta.
+realizes the FreqDist real bound Adv <= delta(p0) + delta(p1) (per observation)
+with the residual governed by the thinner profile's delta.
 
 ### E3: the deviation is small and scale-independent (T5)
 
@@ -2315,7 +2338,11 @@ is NOVEL, and what is OUT OF SCOPE) is recoverable from this one file.
   delta = TV(law_real, law_M1), characterized empirically as small and
   scale-independent, at or below the query-sampling floor for rich support, and
   governed by storage redundancy at the threshold edge), and the real FreqDist
-  bound Adv <= 2(delta(p0) + delta(p1)). T5 is a [characterize] result: an
+  bound: per-observation Adv <= delta(p0) + delta(p1) (no factor of 2; an earlier
+  2(...) form double-counted the Adv convention factor, corrected 2026-06-09),
+  with the many-query ceiling, the separation of the realized-law distributions,
+  measured at the per-build floor (E2) rather than proven. T5 is a [characterize]
+  result: an
   empirical characterization plus a labeled big-O, not a proven closed-form bound.
   (The QUALITATIVE redundancy dependence T5 observed is now PROVEN as T5b above; what
   remains MEASURED is only the MAGNITUDE of delta inside the intact regime.)

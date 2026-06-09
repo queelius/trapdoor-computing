@@ -18,7 +18,7 @@ thesis:
     1. (A, NOT novel here, cited as baseline) The abstract law "codec codespace allocation controls the non-member output distribution", P(out=v) ~ |class(v)|/2^M, already appears in the author's bernoulli_maps singular-hash-map work (for a RANDOM-ORACLE construction) and is the distribution-transforming-encoder idea of Honey Encryption (juels2014honey; cheng2019pmte). Do NOT headline.
     2. (B, NOVEL) The same law SURVIVES the move to a GF(2)-LINEAR ribbon/XOR retrieval structure, where the output is an XOR of solution rows (not a fresh hash). The entire retrieval literature (Bloomier chazelle2004bloomier; ribbon/BuRR dillinger2022burr; binary-fuse graf2022binaryfuse) treats non-member output as arbitrary junk and never characterizes its distribution.
     3. (C, HEADLINE NOVEL) The sharp GF(2)-span threshold (T4): full codec control holds iff W is transversal to the codec class partition (rank pi|_W = log2 K), a step function of the integer rank. Found nowhere internal or external.
-    Security contribution: the FreqDist game, with idealized advantage proven exactly zero (from frequency independence T3) and a real bound Adv <= 2(delta(p0)+delta(p1)). Framed as INDEPENDENCE (indistinguishability), not a comparative leakage claim, which is what makes it immune to the direction error that inverted the coincidence-oracle reading.
+    Security contribution: the FreqDist game, with idealized advantage proven exactly zero (from frequency independence T3) and a real per-observation bound Adv <= delta(p0)+delta(p1) (no factor of 2; corrected 2026-06-09). Framed as INDEPENDENCE (indistinguishability), not a comparative leakage claim, which is what makes it immune to the direction error that inverted the coincidence-oracle reading.
   one_sentence: "The values an XOR (ribbon) retrieval structure returns for non-member keys are not arbitrary junk: they are uniform over the GF(2) span of the stored codewords, so a public codec (not the private data) determines that distribution, exactly when the stored values span the codec's class quotient, which hands a static data structure the frequency-hiding property that online encrypted-database defenses pay for per query."
   refined: "v2 (thesis crystallized, 2026-06-05; see .papermill/thesis-refined-2026-06-05.md). The novelty framing is now 'we turn a uniformly-acknowledged non-member-output-is-arbitrary into a characterized, codec-designable distribution governed by a sharp GF(2)-span threshold, and read off a structural zero-per-query-cost frequency-hiding property as the consequence.' v1 (bootstrap, 2026-06-05): thesis extracted from the completed maph construction note (source of record maph/docs/codec_controlled_retrieval.md @ a79d9c0). The technical substance (T1-T5, FreqDist security, experiments E1-E4) is already proven, computationally verified, and adversarially reviewed in SP2; this paper reshapes it into PoPETs venue form. Headline is the GF(2)-span threshold T4; the abstract codec-output law is cited as baseline (bernoulli_maps, Honey Encryption). PENDING: papermill:thesis sharpening, papermill:outline, then drafting the sections from the source note."
 
@@ -70,10 +70,9 @@ venue:
     - "IEEE Transactions on Information Theory (long-term, if recast around the space-accuracy duality)"
 
 next_actions:
-  - "papermill:thesis (sharpen the central claim and the one-sentence novelty)"
-  - "papermill:outline (section-by-section plan; the skeleton in paper/codec_retrieval.tex already mirrors the note)"
-  - "Add the three gap citations to refs.bib (Filic-Paterson, Patel et al., Hu-Kuszmaul)"
-  - "papermill:draft (multi-agent draft from source/construction-note.md)"
+  - "Pre-submission only (deferred by design, NOT yet done): switch article -> PETS class + add \\keywords{}, then re-check the page budget (PoPETs 25+2); anonymize for double-blind (author block, self-citations towell2026ciphermaps/bernoulli_maps, repo names maph/bijou); mint the Zenodo artifact DOI and cite it. See SUBMISSION-CHECKLIST.md. (Held back deliberately: pets.cls needs the venue class file; anonymization is submission-time and would obstruct further editing.)"
+  - "Optional strengthening: M-METH-2 full re-run with >=10 build seeds at 1e6/1e7 (this pass only SOFTENED the E3 claim + added the rep-cost/floor caveat in prose, not re-run, since a re-run touches the pinned maph artifact). Verify the SWAT author list (abbreviated to 'and others' in refs.bib, flagged in-bib) and the IHOP title before submission."
+  - "Optional: scouts' minor extra cites (Modern MPH survey, Non-Malleable Codes from Wire-Tap, Kellaris CCS16, FSE-2024 revisit, Filic ASIACRYPT24) would further round out related work; not required."
 ---
 
 # Papermill state: Codec-Controlled Retrieval (towell2026codec)
@@ -186,3 +185,157 @@ Two large display overfull boxes I introduced were fixed (reflowed the cogirth d
 and the rank/cogirth separation display); 3 minor overfull boxes remain (two sub-1pt, one
 38pt in the PRE-EXISTING leakage-abuse related-work paragraph, not introduced here).
 Stage stays draft-complete (results integrated; no new venue/format change).
+
+## Thesis crystallization + abstract tighten (2026-06-09)
+
+papermill:status + papermill:thesis pass. The v2 thesis stands; crystallized it as a
+3-tier hierarchy (A baseline / B novel / C headline threshold) so the abstract could
+inherit that shape. The abstract was 509 words narrating all nine theorem families at
+flat weight; rewrote it to the "spine + duality" scope (~308 words, down from 509, a ~40%
+cut; the AskUserQuestion option labels' "~200w" estimate ran low, but the approved preview
+text is verbatim what landed, and the real win is structural): the B/C spine, the
+sharp balanced threshold, the rank-governs-control / cogirth-governs-robustness duality,
+the FreqDist security payoff, and a one-clause coincidence-oracle honesty note. Deferred
+to the body (still fully present there): the T4b graded regime, T4c, and the
+randomized-encoding result.
+
+Correctness fix folded in: the abstract now states the real FreqDist advantage as
+<= delta(p0)+delta(p1) (NO factor of 2), matching thm:freqdist-real and the 2026-06-05
+polish note ("Factor-2 phrasing gone"). An interim option preview had reintroduced the
+2x; corrected against the body theorem before writing.
+
+Build: cd paper && make -> 32 pages, 0 undefined refs/cites, 0 hard errors, 2 pre-existing
+overfull boxes (lines 1377, 1747; not the abstract). Stage unchanged (draft-complete).
+Also: created the paper-local CLAUDE.md and added a codec-controlled-retrieval row to
+~/github/CLAUDE.md.
+
+NEXT: fresh papermill:review of the current 32pp (prior review predates the +10pp of new
+theorems), then polish + anonymize.
+
+## Multi-agent review (2026-06-09)
+
+Ran papermill:review as 8 specialists dispatched in parallel from the main loop (logic,
+methodology, novelty, prose, citation, format, + targeted & broad literature scouts), so
+the serial fallback that hit the 2026-06-05 run did not recur. Report:
+`.papermill/reviews/2026-06-09/review.md`. Verdict: MINOR REVISION (no incorrect core
+result; the 5 new theorems are sound, every E1-E4 number matches the CSVs, and both scouts
+confirm the headline novelty is SAFE: no prior work characterizes the non-member value
+distribution of any retrieval structure).
+
+ONE CRITICAL, fixed this pass: the abstract+intro claimed multi-query FreqDist advantage
+<= delta(p0)+delta(p1) in the REAL construction. False for delta>0 (two fixed distinct laws
+become perfectly distinguishable as n->inf); the bound is a SINGLE-OBSERVATION cap, exactly
+as thm:freqdist-real is scoped. This is the prior review's M1, fixed in the theorem but
+never propagated to the front matter; the 2026-06-09 abstract rewrite preserved it. Now
+corrected in both abstract and intro (idealized zero holds for any query count; real claim
+is per-observation). Cross-verified by logic + prose + methodology.
+
+ALSO fixed this pass: cheng2019pmte had a fabricated author list (corrected to the verified
+5 authors); dietzfelbinger2019gauss venue STACS -> ESA 2019; abstract floor wording "at or
+below" -> "straddle" (two of four E3 means sit above the analytic floor). Build still clean
+(32pp, 0 undefined, no hard errors).
+
+DEFERRED (need author judgment / larger work; in next_actions): M-NOV-1 self-collision with
+cipher-maps prop:rand-encoding (the invariance is shared; our white-box-divergence + skewed
+counterexample is the genuine delta, currently unflagged); M-PROSE-1/2/3 the headline is
+buried under the robustness/refinement material before its security payoff, sec:randenc is
+misfiled in the threshold section, contributions bullets overloaded; M-METH-2 large-N reps;
+3 Major new citations (Learned Static Function DS, IHOP, SWAT); pets.cls + keywords +
+anonymization. Citation-verifier separately CONFIRMED kuszmaulputterman2025incremental (the
+author list flagged approximate in the 2026-06-08 record) is in fact correct.
+
+## Full revision pass against the 2026-06-09 review (2026-06-09)
+
+Implemented essentially all review findings except the pre-submission venue items. Build
+after: `cd paper && make` -> 33 pages (was 32), 0 undefined refs/cites, 0 hard errors, 1
+negligible 0.82pt overfull box (the 38pt related-work box is fixed), 0 em-dashes.
+
+STRUCTURAL (M-PROSE-1/2): full restructure. The four refinement blocks (sec:t4b skewed/
+graded + thm:realizable, sec:t5b cogirth, sec:t5c per-rung cogirth, sec:randenc) were moved
+out of the spine into a NEW section 9 "Refinements: the skewed regime, robustness, and
+randomized encoding" (sec:refinements), placed after the reconciliation section. The spine is
+now uninterrupted: threshold (5) -> idealized-to-real (6) -> security (7) -> two-attacks (8) ->
+refinements (9) -> evaluation (10). Done via a line-slice reassembly (blocks tile the file
+exactly; cleveref kept every cross-ref resolving, verified by a clean build). Added a
+forward-pointer at the end of section 5 and a section-9 intro.
+
+CONTENT FIXES applied:
+- C1 multi-query overclaim also fixed in the conclusion (was a third copy); abstract+intro
+  fixed in the prior pass. M-LOGIC-1: freqdist-real proof prose recast to separate the
+  single-observation bound from the (correct) frequency-independence-of-the-separation argument.
+- M-PROSE-3: contributions split (item C = threshold only; new item D "refinements and
+  robustness" gathers graded/realizable/cogirth/per-rung/randenc with a pointer to
+  sec:refinements; dropped the undefined "mass-over-codespace-share"). Removed the redundant
+  standalone randenc sentence from the intro (also fixes prose-m1: "saturated" before its def).
+- M-NOV-1: one differentiation sentence added to related-work point (2) isolating the genuine
+  delta vs cipher-maps prop:rand-encoding (white-box z-divergence + skewed boundary).
+- Citations: added oya2022ihop, zheng2024swat, hermann2025learned to refs.bib with prose
+  (IHOP/SWAT in the frequency-smoothing paragraph; Learned Static Function as the closest
+  mechanical cousin in the intro). m3: FINDINGS.md bound synced to drop the 2(...).
+- M-LOGIC-2: saturation-sufficiency now explicitly labeled as the computationally-verified step
+  with the general closed form left open. M-METH-2: E3 "flat in N" softened, rep counts + cost
+  + the n_q-dependent floor (E1/E2 at 5e4 -> ~0.0047; E3 at 1e5 -> 0.00334) stated.
+- Minors: logic m1 (TV>=1/4 justification corrected to total-excess), logic m2 (cogirth
+  top-bit wording), MIN-1 (zipf 0.34 -> 0.43), MIN-4 (E4 caption near-saturation SE), prose-m2
+  (float labels "punchline"/"witness" -> descriptive), prose-m4 (junk motif trimmed to the
+  abstract+conclusion bookend), M-METH-1 straddle (prior pass), 38pt overfull reflow.
+
+CONSCIOUSLY DECLINED (with reason): prose-m5 (move the M1-on-image remark to the appendix) left
+in the body because it serves MIN-5 (the realizable-band caveat) where a reader needs it; the
+two cosmetic bibkey renames (reviriego/gluesing) skipped as no-factual-consequence; pets.cls /
+keywords / anonymization / Zenodo DOI held for the submission pass (see next_actions).
+
+## PoPETs submission port (2026-06-09)
+
+Confirmed PoPETs 2027 reqs: body <= 12 pages excluding bib + clearly-marked appendices; format
+acmart sigconf + \usepackage{popets}; double-blind; submit at submit.petsymposium.org. Next firm
+deadline Issue 2 = 2026-08-31 (then Nov 30, Feb 28).
+
+Created a SEPARATE submission version, preserving the full article version:
+- paper/codec_retrieval.tex + refs.bib = de-anonymized 33pp article version (unchanged).
+- paper/codec_retrieval_popets.tex + refs_popets.bib = the PoPETs submission version.
+
+Submission version (build: pdflatex; bibtex; pdflatex x2):
+- acmart sigconf (nonacm, anonymous). amssymb \Bbbk clash fixed; remark defined locally (acmart
+  predefines theorem/lemma/definition/example but not remark); topmatter + keywords; acmnumeric cites.
+- PAGE FIT: §9 Refinements (4 theorem-heavy subsections) MOVED to a new appendix (app:refinements),
+  a tight summary kept in body §9. BODY = 12 pages exactly (concl p12, appendix from p13). Hits <=12.
+- ANONYMIZED: acmart anonymous hides authors; in-body "the author's X" -> third person; "maph" ->
+  "an open-source research codebase"; the 2 self-cite bib entries anonymized in refs_popets.bib.
+  Verified pdftotext = 0 identity strings.
+- BUILD: 0 errors, 0 undefined. Overflow: fixed 2 wide E-tables (\resizebox) + 2 worst body displays
+  (aligned). REMAINING cosmetic: 3 minor body overflows (28/11/10pt) + ~9 appendix overflows
+  (worst 66/63/57pt; same aligned/resizebox fix).
+
+REMAINING TO SUBMIT (nothing blocks the essentials; deadline 2026-08-31):
+1. Drop official popets.sty into paper/ (PETS author kit; not findable via public URL; built on
+   acmart nonacm sigconf as faithful base, popets.sty only changes masthead, not the 12pp fit).
+2. Polish ~12 remaining overflow boxes (mechanical aligned/resizebox).
+3. Check full PoPETs guidelines for an AI/LLM-disclosure requirement; add a statement if required
+   (this paper used multi-agent drafting/review substantially).
+4. Human proofread of the anonymized PDF.
+5. Zenodo artifact DOI: defer to camera-ready.
+6. THE UPLOAD is the user's (authenticated HotCRP at submit.petsymposium.org).
+
+## Polish + AI disclosure complete (2026-06-09)
+
+Finished the submission-version polish. Overflow boxes 25 -> 1 (the last is sub-5pt,
+invisible): added \emergencystretch{3em} (cleared most prose boxes), shrank+shortened the
+back-substitution verbatim block (\footnotesize + trimmed inline comments), and aligned-broke
+the wide appendix displays (flag chain, eq:graded with \frac, the rank/cogirth textsc display)
+plus the body TV-triangle display. Added the PoPETs-required \section*{Disclosure of generative
+AI use} as back matter (excluded from the page count): honest and specific about drafting/review,
+human verification against the artifact gates, and the AI-assisted-then-verified bibliography
+(noting the one caught-and-corrected author-list error), per the policy's BibTeX caution. Verified
+in the rendered PDF: body still 12 pages, 0 errors, 0 identity strings, disclosure present.
+Submission version is now clean modulo the popets.sty masthead swap and a human proofread.
+
+## Venue structure + submission tracker (2026-06-09)
+
+Reorganized for per-venue tailoring (user request). Canonical content stays in
+paper/codec_retrieval.tex + paper/refs.bib (article, de-anonymized). The PoPETs version
+moved to venue/popets/ (main.tex + refs.bib + Makefile + NOTES.md). Cross-venue status and
+the decision log now live in the top-level SUBMISSIONS.md (the submission ledger);
+venue/README.md documents the convention. Build the PoPETs version: cd venue/popets && make
+(verified: 12pp body, 0 errors, 0 leaks, AI disclosure present). PoPETs status: PREPARED,
+pre-submission; remaining = popets.sty swap + proofread + HotCRP upload (deadline 2026-08-31).

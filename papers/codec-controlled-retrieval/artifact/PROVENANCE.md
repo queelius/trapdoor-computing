@@ -4,15 +4,15 @@ This artifact is a self-contained, pinned extract of the maph research repositor
 It reproduces the computational gates behind every theorem in the manuscript
 without requiring a maph checkout. Regenerate it with:
 
-    scripts/sync-from-maph.sh 772d502
+    scripts/sync-from-maph.sh 2606a4a
 
 ## Pin
 
 - Upstream: maph (https://github.com/queelius/maph), the C++23 perfect-hashing
   research playground.
-- Commit: `772d50200df3fb484a67e3f90c9b3e4e5e61351d`
-  (2026-06-08 21:39:31 -0500)
-- Subject: feat: T4c complete characterization of the realizable non-member-mass set
+- Commit: `2606a4aed583463984befaea56e54d8b5113ed83`
+  (2026-06-09 16:16:00 -0500)
+- Subject: fix: FreqDist real bound is per-observation Adv <= delta(p0)+delta(p1), no factor of 2
 
 maph is a research playground and its `master` moves; this artifact is pinned to
 the commit above and is the stable reference for the manuscript. Do not cite maph

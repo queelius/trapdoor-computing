@@ -22,7 +22,7 @@ cross-check the linear-algebra gates with exact rational arithmetic.
 | `thm:cogirth-graded` (T5c) | per-rung cogirth FAMILY (graded); T5b is the single-rung collapse | T5c | `test_cogirth_graded` (`[cogirth][graded]`) | bridge identity; per-rung cogirth vs exhaustive first-change; cascade 3/6/9; collapse |
 | `thm:randenc` | balanced invariance unconditional; skewed FALSE in general, holds under saturation | randomized section | `test_randomized_encoding` (`[randomized]`) + `test_randomized_boundary` (`[randomized][boundary]`) | saturated invariance (exact + empirical + white-box divergence); the `{A,A,B}` counterexample; saturation sufficiency |
 | `thm:freqdist-ideal` | idealized FreqDist advantage is exactly zero | Security | (T3 gate) + `source/results/freq_independence/` | the two oracles are the identical law under M1 |
-| `thm:freqdist-real` | real advantage `<= 2(delta(p0)+delta(p1))` | Security | `source/results/scale/`, `freq_independence/` | delta measured at/below the sampling floor up to 1e7 keys |
+| `thm:freqdist-real` | the two real laws are within `delta(p0)+delta(p1)`; per-observation advantage at most that (no factor of 2; corrected 2026-06-09) | Security | `source/results/scale/`, `freq_independence/` | delta measured at/below the sampling floor up to 1e7 keys; many-query ceiling measured at the rebuild floor (E2) |
 | `lem:subspace-coset` | a subspace meets a coset in empty-or-a-coset | T4 | `test_skewed_realizability` (uses it per length) | the counting lemma the flag formula rests on |
 
 ## Experiments (E1 to E4)

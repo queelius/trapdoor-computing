@@ -1,30 +1,23 @@
-\documentclass[11pt]{article}
+\documentclass[acmsmall,review]{acmart}
 
-% Essential packages (matched to the cipher-maps companion preamble)
-\usepackage[margin=1in]{geometry}
-\usepackage{amsmath,amssymb,amsthm}
+% ACM TOPS submission format (acmart acmsmall, single-column journal). For the real
+% submission, confirm the TOPS review model: if double-anonymous, add `anonymous` to the
+% documentclass and apply the anonymization deltas (see NOTES.md). acmart already loads
+% amsmath, amsthm, booktabs, hyperref, and natbib.
+\acmJournal{TOPS}
+\settopmatter{printacmref=false, printfolios=true}
+\setcopyright{none}
+\renewcommand\footnotetextcopyrightpermission[1]{}
+\citestyle{acmnumeric}
 \usepackage{mathtools}
-\usepackage[numbers,square]{natbib}
-\usepackage{booktabs}
-\usepackage{hyperref}
-\hypersetup{hypertexnames=false}
+\let\Bbbk\relax % amssymb and acmart's math font both define \Bbbk
+\usepackage{amssymb}
 \usepackage{cleveref}
-\usepackage{algorithm}
-\usepackage{algpseudocode}
 
-% Theorem environments
-\theoremstyle{definition}
-\newtheorem{definition}{Definition}[section]
-
-\theoremstyle{plain}
-\newtheorem{theorem}{Theorem}[section]
-\newtheorem{lemma}[theorem]{Lemma}
-\newtheorem{corollary}[theorem]{Corollary}
-\newtheorem{proposition}[theorem]{Proposition}
-
-\theoremstyle{remark}
-\newtheorem{remark}{Remark}[section]
-\newtheorem{example}{Example}[section]
+% acmart predefines theorem, lemma, corollary, proposition, definition, and example,
+% but not remark, so we add it here.
+\newtheorem{remark}{Remark}
+\setlength{\emergencystretch}{3em}
 
 % Notation (aligned with the cipher-maps companion where shared)
 \newcommand{\enc}{\mathrm{enc}}
@@ -53,14 +46,17 @@
 \newcommand{\lawM}{\mu_{M1}}                % idealized (M1) non-member law
 \newcommand{\inter}{\cap}
 
-\title{Codec-Controlled Retrieval:\\
-Structural Frequency-Hiding from the Non-Member Channel of XOR Retrieval}
-\author{Alexander Towell\\\texttt{lex@metafunctor.com}}
-\date{June 2026}
-
 \begin{document}
 
-\maketitle
+\title{Codec-Controlled Retrieval: Structural Frequency-Hiding from the Non-Member Channel of XOR Retrieval}
+\author{Alexander Towell}
+\affiliation{%
+  \institution{Southern Illinois University Edwardsville}
+  \city{Edwardsville}
+  \state{Illinois}
+  \country{USA}
+}
+\email{lex@metafunctor.com}
 
 \begin{abstract}
 A retrieval data structure (Bloomier, ribbon, XOR, binary-fuse) returns a value
@@ -92,6 +88,11 @@ multi-instance coincidence oracle pulls the codec the opposite way, defeated by
 codec, only a public tunable frontier. The construction is a header-only C++23
 implementation, and every theorem has a passing empirical check at scale.
 \end{abstract}
+
+\keywords{retrieval data structures, frequency hiding, XOR retrieval, GF(2) linear
+algebra, leakage suppression, structured encryption}
+
+\maketitle
 
 % =====================================================================
 % Source of record: source/construction-note.md (the proven, reviewed
@@ -1977,7 +1978,22 @@ $\ge$ share and the ladder yet no subspace realizes it, so beyond thin codecs th
 form of \cref{thm:realizable} is the only complete description. This is the exhaustive backing
 for \cref{thm:graded} and \cref{thm:realizable}.
 
-\bibliographystyle{plainnat}
+\section*{Disclosure of generative AI use}
+In keeping with ACM's policy on generative AI, we report our use of large language model
+(LLM) based tools in preparing this manuscript. \emph{Drafting and editing:} an agentic
+multi-tool writing-and-review system was used to reshape pre-existing, human-developed
+technical results into journal prose, to copy-edit, and to run editorial review passes;
+the authors reviewed and approved all resulting text. \emph{Verification:} every theorem,
+proof, bound, and numerical value was checked by the authors against the computational gates
+and committed result files of the accompanying artifact, and no theorem statement or
+experimental number originated from an LLM. \emph{Literature and bibliography:} LLM-assisted
+web search was used to locate related work and to draft some BibTeX entries, each of which
+was then verified against primary sources; one LLM-introduced bibliographic error (an
+incorrect author list) was caught during this verification and corrected. The authors take
+full responsibility for the entire manuscript, including all claims, proofs, measurements,
+and citations; no AI system is an author.
+
+\bibliographystyle{ACM-Reference-Format}
 \bibliography{refs}
 
 \end{document}

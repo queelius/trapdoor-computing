@@ -87,9 +87,11 @@ first change-point equals `min_v d*_rung(v)`.
 - T5: the real-band deviation `delta = TV(law_real, law_M1)` is small, scale-
   independent, and at or below the query-sampling floor (`0.00334` at `1e5` queries)
   up to `1e7` keys. This is an empirical characterization plus a labeled big-O.
-- `thm:freqdist-real`: the real advantage is bounded by `2(delta(p0)+delta(p1))`,
-  with `delta` measured as above. The binary control criterion it governs is the
-  theorem T5b/T5c; the within-regime `delta` magnitude is the measured part.
+- `thm:freqdist-real`: the per-observation real advantage is bounded by
+  `delta(p0)+delta(p1)` (NO factor of 2; the earlier `2(...)` form multiplied the
+  per-sample TV by the Adv convention factor and was corrected 2026-06-09), with
+  `delta` measured as above. The binary control criterion it governs is the theorem
+  T5b/T5c; the within-regime `delta` magnitude is the measured part.
 
 ### Open (declared)
 
