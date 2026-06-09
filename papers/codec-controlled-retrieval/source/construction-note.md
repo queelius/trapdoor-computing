@@ -1,10 +1,11 @@
 <!--
 PROVENANCE (snapshot, do not edit here; edit the upstream note).
 Source of record: maph/docs/codec_controlled_retrieval.md
-Commit: db8f602 on maph master. This snapshot reflects the upgraded note,
-        which adds T4b graded/skewed realizability, T5b cogirth robustness,
-        the randomized-encoding invariance lemma, and T5c (the per-rung
-        cogirth family for graded control; T5b is its single-rung collapse).
+Commit: 772d502 on maph master. This snapshot reflects the upgraded note, which
+        adds T4b graded/skewed realizability, T4c (complete realizable-set
+        characterization), T5b cogirth robustness, T5c (per-rung cogirth family
+        for graded control), and the randomized-encoding lemma with its
+        corrected skewed boundary (false in general; saturation sufficient).
 Snapshot refreshed: 2026-06-08, for towell2026codec integration.
 This file is a verbatim copy of the upstream note used as the source of record
 for the paper/codec_retrieval.tex manuscript.
@@ -22,7 +23,9 @@ establishes T1 and T2 (the idealized uniformity result on the stored-pattern
 span), T3 (frequency independence), T4 (the sharp codec-control threshold,
 stated as transversality of W to the codec's class partition) together with T4b
 (its skewed / variable-length resolution: the mass is graded over the within-class
-flag, and the realizable set is a non-increasing ladder in code length), T5
+flag) and T4c (the complete characterization of the realizable set: the constructive
+subspace-chain form, with the mass-over-codespace-share and ladder conditions
+necessary, and sufficient only for thin codecs), T5
 (the real-incidence deviation, characterizing how far the real near-uniform ribbon
 band departs from the T1 idealization) together with T5b (the robustness of codec
 control under key erasure: the matroid cogirth of the stored column system is the
@@ -208,13 +211,15 @@ reachable set could exceed W; the property is therefore a property of this
 builder, not of ribbon retrieval in the abstract. One builder variant does
 NOT break it: storing an independently drawn (per stored key, per occurrence)
 uniform within-class representative c'(x) = encode_random(v(x)) in place of the
-canonical codeword (the randomized-encoding lemma after T4b, resolving Q#5). That
+canonical codeword (the randomized-encoding lemma after T4b, settling Q#5). That
 variant changes the stored right-hand sides per key independently, hence the span W
 and the solution z, but the per-key independent draws only add directions inside the
-within-class subspace: it leaves pi(W), and so the entire non-member law, exactly
-invariant (proven for balanced, computationally verified for skewed). It is the
-benign case (off-set-invisible, white-box-divergent), not the span-breaking
-one warned against here. The computational check
+within-class subspaces, so the stored patterns stay in their valid classes and the
+containment R(z) = W still holds. Its effect on the non-member LAW is the subject of
+that lemma: invariant for balanced codecs (and for skewed codecs under saturation),
+but NOT invariant for skewed codecs in general. Either way it is a benign builder
+variant for the containment property here (white-box-divergent), not the span-breaking
+one warned against. The computational check
 in `tests/v3/test_prefix_codec.cpp` (tag `[span]`) verifies the inclusion
 direction consistent with this corrected statement: across 30000 distinct
 non-member queries every output's re-encoded canonical pattern landed in W
@@ -771,6 +776,65 @@ formula computed via `gf2_rank` (using dim(W intersect C) = dim W + dim C - dim(
 matched against the Galois numbers 67 and 2825), confirms graded-exists, balanced-stays-sharp, the
 formula for all W, and the realizability of the designed target versus the unreachability of uniform.
 
+### T4c: the realizable set, completely characterized
+
+T4b gives the per-W mass formula and the necessary non-increasing ladder, but leaves the realizable SET
+itself open: which mass vectors q arise as q(W) for SOME subspace W? The ladder is necessary, not
+sufficient (the uniform vector obeys it yet is unreachable). T4c characterizes the realizable set
+completely.
+
+CONSTRUCTIVE CHARACTERIZATION (complete). Let l_max be the longest code length and, for l <= l_max, let
+tau_{l' -> l} drop the bottom l' - l bits. A mass vector q is realizable iff there is a SUBSPACE U of
+GF(2)^{l_max} with
+
+    q(v) = [ c_v in U_{l_v} ] * 2^(- dim U_{l_v}),     U_l := tau_{l_max -> l}(U),
+
+where c_v is v's top-l_v-bit codeword. The U_l are the truncation-compatible chain of per-length
+projections, and the realizable set is exactly the image of this map over subspaces U.
+
+Proof. Forward: given W set U = pi_{l_max}(W); then U_l = pi_l(W) (the projections factor through
+truncation, pi_l = tau_{l_max -> l} composed with pi_{l_max}) and q(v) = h_v 2^(-rank pi_{l_v}(W)) is the
+displayed formula (the bridge identity, later T5c.0). Backward: given U, lift it to
+W = { (u, 0^{M - l_max}) : u in U } (U in the top l_max bits, zeros below); then pi_l(W) =
+tau_{l_max -> l}(U) = U_l for every l, so q(W) is the displayed vector. QED.
+
+CLEAN NECESSARY CONDITIONS. Every realizable q satisfies, all read off the formula:
+
+  (a) q is a dyadic probability vector (the Kraft-tight codec partitions GF(2)^M, so sum_v q(v) = 1);
+  (b) q(v) in {0} union {2^(-r) : 0 <= r <= l_v} (its reduced denominator is a power of two at most
+      2^{l_v}, since dim U_{l_v} <= l_v);
+  (c) a value with the all-zero codeword is ALWAYS hit (0 lies in every subspace U_{l_v});
+  (d) MASS >= CODESPACE SHARE: q(v) > 0 implies q(v) >= 2^(-l_v) (because dim U_{l_v} <= l_v);
+  (e) the LADDER: l(u) <= l(v) and both hit implies q(u) >= q(v) (the U_l are nested truncations, so
+      dim U_l is non-decreasing in l); this also forces hit values of the SAME length to carry equal mass.
+
+The uniform diagnosis, sharpened. The earlier T4b dimension argument for uniform-unreachability is
+exactly condition (d) at the shortest value: the uniform vector fails because q(A) = 1/4 < 2^(-1) = 1/2,
+a violation of MASS >= SHARE, NOT of the ladder (uniform is a flat, hence non-increasing, ladder that the
+ladder criterion alone admits). Mass-share is the clean general form of the "q(A) in {1/2, 1}" constraint,
+applying to every value at once.
+
+SUFFICIENCY IS CODEC-DEPENDENT. For the skew {1,2,3,3} codec the clean conditions (a)-(e) are also
+SUFFICIENT: the realizable set is EXACTLY the eight vectors they admit (verified by enumerating all 67
+subspaces of GF(2)^4 against the clean candidates). For this codec the conditions are a complete LOCAL
+(per-value) description. But they are NOT sufficient in general. For the codec {2,2,3,3,3,3} (two
+length-2 and four length-3 codewords, Kraft-tight) the clean law q = (1/4, 1/4, 1/4, 1/4, 0, 0) (both
+length-2 values and TWO of the four length-3 values at 1/4, the other two missed) passes (a)-(e) yet no
+subspace realizes it. The two length-3 hits 100, 101 at mass 1/4 force pi_3(W) = span{100, 101} =
+{000, 001, 100, 101}, the unique 2-dim subspace containing both (and it excludes 110, 111, consistent with
+those being missed). But then the truncation compatibility pi_2(W) = tau_{3 -> 2}(pi_3(W)) gives pi_2(W) =
+{00, 10}, of dimension 1, so the length-2 codeword 01 is NOT in pi_2(W) and that value is MISSED, with mass
+0 rather than the required 1/4. The two length-2 hits at 1/4 demanded dim pi_2(W) = 2 (full), which the
+length-3 hit set forbids: the rungs clash under truncation. The
+obstruction is a HIT-GEOMETRY constraint of the subspace chain, not a per-value condition; the constructive
+characterization above is the complete answer, and the ladder/clean conditions are necessary but not, in
+general, sufficient.
+
+Computational confirmation. The realizable set, the clean necessary conditions, the sharpened uniform
+diagnosis, the {1,2,3,3} sufficiency (clean == realizable), and the {2,2,3,3,3,3} insufficiency witness
+are gated in `tests/v3/test_realizable_set.cpp` (tag `[realizable]`), which enumerates EVERY subspace of
+GF(2)^4, builds the realizable image, and compares it to the clean-candidate set for both codecs.
+
 ### Summary of T4
 
 - For a balanced linear codec (K classes, each a coset of the homophone subspace C, alpha = 1/K), the
@@ -787,81 +851,121 @@ formula for all W, and the realizability of the designed target versus the unrea
   C_M subset ... subset C_1, the mass is q(v) = h_v * 2^(dim(W intersect C_{l_v}) - dim W), and because
   the flag is nested every realizable mass vector satisfies a NON-INCREASING LADDER condition in code
   length (this is a necessary constraint, not a complete characterization: the uniform vector satisfies
-  the ladder condition yet is unreachable, as the dimension argument in T4b shows). The skewed regime is
+  the ladder condition yet is unreachable). The skewed regime is
   therefore GRADED, not sharp (explicit witness: the skew {1,2,3,3} codec on M = 4 with W =
   the stored-codeword span gives q = (1/2, 1/4, 1/8, 1/8), three distinct positive masses). Full-span
   control gives q(v) = 2^(-l_v), the codec's designed Kraft law (achieved by W = GF(2)^M); a uniform
-  target is unreachable by the dimension argument (closest TV = 1/4 for that codec).
+  target is unreachable.
+- T4c COMPLETES the realizable-set question: the realizable laws are exactly the image of the
+  subspace-chain map q(v) = [c_v in U_{l_v}] 2^(-dim U_{l_v}) (U_l the truncations of a subspace U).
+  The clean necessary conditions are a dyadic probability vector with q(v) >= the codespace share
+  2^(-l_v) when hit (MASS >= SHARE, the sharp form of the uniform obstruction: uniform fails because
+  q(A) = 1/4 < 1/2, not the ladder) plus the ladder. These are SUFFICIENT for {1,2,3,3} (a complete
+  local description, the eight realizable laws) but NOT in general: {2,2,3,3,3,3} has clean laws no
+  subspace realizes, due to a hit-geometry constraint, so the constructive form is the complete answer.
 
-### Randomized encoding: invariance plus white-box divergence (resolves Q#5)
+### Randomized encoding: balanced invariance, skewed saturation boundary (settles Q#5)
 
 The genericity note for T2 (Step 3) was explicit that the builder injects no pattern outside W: it stores
 the CANONICAL codeword c(x) = aligned(x) of each value, the unique class representative whose within-class
 bits are zero. The codec already exposes the alternative: encode_random(v, rng) returns a UNIFORM RANDOM
 representative of class(v), setting the bottom M - l_v bits at random instead of zero. Wiring encode_random
 into the builder (in place of the canonical encode) was the one open item earlier drafts deferred, recorded
-here as Q#5. We now settle it as a lemma.
+here as Q#5. We settle it as a lemma with a SHARP BOUNDARY: invariance is unconditional for balanced codecs
+but FAILS for skewed codecs in general, holding under a saturation condition (sufficient, not necessary).
 
-The within-class directions are exactly the kernel of the value quotient. By construction class(v) =
-aligned(v) + C_{l_v}, and the within-class subspace C_{l_v} = ker(pi) restricted to that class is spanned by
-the bottom M - l_v standard basis vectors: it is the same nested flag C_M subset ... subset C_1 that T4b
-uses. A within-class draw replaces aligned(v) by aligned(v) XOR c with c in C_{l_v}; equivalently it adds a
-vector lying in ker(pi). So pi(aligned(v) XOR c) = pi(aligned(v)) for every draw: the value quotient does not
-see the within-class bits at all.
+The within-class directions are exactly the kernels of the per-length quotients, and for a skewed codec
+those kernels DIFFER by length, which is the whole subtlety. By construction class(v) = aligned(v) +
+C_{l_v}, where the within-class subspace C_{l_v} = ker(pi_{l_v}) is spanned by the bottom M - l_v standard
+basis vectors: the same nested flag C_M subset ... subset C_1 that T4b uses (a longer codeword fixes more
+top bits, so its within-class kernel is SMALLER). A within-class draw for value v replaces aligned(v) by
+aligned(v) XOR c with c in C_{l_v}. That c is invisible to pi_l for l <= l_v (then c in C_{l_v} subset C_l =
+ker pi_l), but for a LONGER length l > l_v we have C_{l_v} not subset C_l, so c can have nonzero top-l bits
+and pi_l(aligned(v) XOR c) != pi_l(aligned(v)). For a BALANCED codec there is a single length k and a single
+kernel C_k, so every draw is invisible to the one projection pi_k that matters, and the balanced invariance
+below is unconditional. For a SKEWED codec the per-length kernels disagree, and randomizing a short value is
+visible to longer-value projections: that is exactly how invariance can fail, and saturation is what
+forecloses it.
 
-LEMMA (randomized-encoding invariance plus divergence). Fix the key set S and the stored values v(x).
-Replace each stored canonical codeword c(x) = aligned(x) by an INDEPENDENTLY drawn (per stored key,
-per occurrence) uniform within-class representative c'(x) = encode_random(v(x)) = aligned(x) XOR c_x
-with c_x in C_{l_{v(x)}} drawn uniformly and independently for each x. Let W = span{ c(x) } and
-W' = span{ c'(x) } be the two stored-pattern spans. Then:
+The per-class mass depends on W only through the per-length projections. The T4b flag formula
+q(v) = h_v * 2^(dim(W intersect C_{l_v}) - dim W) is, by rank-nullity (ker pi_{l_v} = C_{l_v}),
+exactly q(v) = h_v * 2^(-rank pi_{l_v}(W)) with h_v = [pi_{l_v}(aligned(v)) in pi_{l_v}(W)], where pi_l
+keeps the top l bits. So whether the law moves under randomization is exactly whether any pi_l(W) moves.
 
-  (i)  pi(W') = pi(W) EXACTLY (the projection of the stored span onto the value quotient Q is invariant),
-       and hence the ENTIRE non-member output law is invariant: q'(v) = |class(v) intersect W'| / |W'|
-       equals q(v) = |class(v) intersect W| / |W| for every value v. For the BALANCED codec (single
-       homophone subspace C = ker(pi)), this is PROVEN by the linear-algebra argument below. For SKEWED
-       codecs (per-value subspaces C_{l_v} forming a nested flag), invariance is COMPUTATIONALLY VERIFIED
-       (0/1300 mismatches including the M=4 skew {1,2,3,3} witness and M=6 codecs; see Computational
-       confirmation below); a flag-level algebraic proof is a natural follow-on, deferred as an open item.
+LEMMA (randomized encoding: balanced invariance, skewed saturation, white-box divergence). Fix the key set
+S and the stored values v(x). Replace each stored canonical codeword c(x) = aligned(x) by an INDEPENDENTLY
+drawn (per stored key, per occurrence) uniform within-class representative c'(x) = encode_random(v(x)) =
+aligned(x) XOR c_x with c_x in C_{l_{v(x)}} drawn uniformly and independently for each x. Let
+W = span{ c(x) } and W' = span{ c'(x) }. Then:
+
+  (i-balanced) For a BALANCED codec (all l_v = k, a SINGLE within-class subspace C = C_k = ker(pi_k)),
+       pi_k(W') = pi_k(W) EXACTLY, so the ENTIRE non-member law is invariant: q'(v) = q(v) for every v.
+       This is UNCONDITIONAL.
+
+  (i-skewed) For a SKEWED codec the law is NOT invariant in general. There is no single ker(pi): a draw
+       c_x in C_{l_{v(x)}} is invisible to pi_l for l <= l_{v(x)} but VISIBLE to pi_l for l > l_{v(x)} (a
+       longer codeword keeps more top bits). Randomizing a SHORT value can therefore enlarge a LONGER
+       value's projection pi_l(W) and turn a missed class into a hit.
+       COUNTEREXAMPLE (skew {1,2,3,3}, M = 4): store the multiset {A, A, B} (the length-1 value A twice, B
+       once, C and D unstored). Canonically W = span{0000, 1000} and q = (1/2, 1/2, 0, 0). The draw
+       A -> 0000, A -> 0100, B -> 1000 gives W' = span{0000, 0100, 1000} and q' = (1/2, 1/4, 1/4, 0): q(B)
+       halves and the missed class C lights up. Over all 256 within-class draws of this store FOUR distinct
+       laws occur; only 64 reproduce the canonical one.
+       (Saturation: a sufficient condition.) Invariance holds for EVERY draw WHENEVER the canonical W is
+       SATURATED: pi_l(W) = GF(2)^l (full) for every code length l. Saturation is SUFFICIENT but NOT
+       necessary: storing only the length-1 value A keeps every draw inside class(A) = {top bit 0}, so
+       q = (1, 0, 0, 0) is invariant although pi_1(W) = {0} is not full. FULL SUPPORT (every value stored at
+       least once) implies saturation and is the regime in which the empirical and exact tests confirm
+       invariance. The balanced case is the degenerate one rung where the only relevant projection pi_k has
+       ker pi_k = C carrying ALL randomization, so balance gives invariance UNCONDITIONALLY, without even
+       needing saturation.
 
   (ii) The ribbon solution matrix z' (the white-box snapshot) DIVERGES from z per build: it solves a
        different right-hand side (c'(x) instead of c(x), and a fresh independent per-key draw each build),
-       so z' != z in general even at a fixed ribbon seed.
+       so z' != z in general even at a fixed ribbon seed. This is UNAFFECTED by (i).
 
 PROOF.
-(i) BALANCED CODEC (single homophone subspace C = ker(pi), same for all values).
-    Each generator c'(x) = c(x) XOR c_x differs from c(x) by c_x in C = ker(pi), so pi(c'(x)) = pi(c(x)).
-    The projection pi is GF(2)-linear, so it carries spans to spans: pi(W') = span{ pi(c'(x)) } =
-    span{ pi(c(x)) } = pi(W). For the balanced codec the mass formula simplifies to
-    q(v) = h_v * 2^(-dim pi(W)) = h_v / |pi(W)|, which depends on W ONLY through pi(W) and is INDEPENDENT
-    of dim W itself. The hit indicator h_v = [pi(aligned(v)) in pi(W)] also depends only on pi(W). Each
-    within-class draw adds a vector in C = ker(pi), so pi(W') = pi(W) as shown, and hence every
-    q'(v) = q(v). The absolute span SIZE may differ (|W'| can exceed |W|: the per-key independent draws can
-    add directions inside ker(pi), which is precisely what can enlarge W, consistent with the observed
-    |W|: 8 -> 16 on the skew witness). In the balanced case, those added directions lie in C = ker(pi) and
-    cancel in the normalized mass, so each class mass is pinned.
-    SKEWED CODEC (per-value subspaces C_{l_v} forming a nested flag, no single ker(pi)).
-    The single-pi argument above does not apply directly: the within-class subspaces differ per value, and
-    the absolute intersection dimension dim(W intersect C_{l_v}) is not individually conserved under
-    per-class moves (it can shift, as the {1,2,3,3} witness shows with dim W moving 3 -> 4). Only the
-    DIFFERENCE dim(W intersect C_{l_v}) - dim W is conserved, which suffices to pin q(v). A complete
-    flag-level algebraic proof (showing both the hit indicator h_v and the difference
-    dim(W intersect C_{l_{v'}}) - dim W are preserved under per-class moves, using the flag nesting
-    C_{l_{v(x)}} subset C_{l_{v'}} iff l_{v(x)} >= l_{v'}) is a natural extension, deferred as a follow-on
-    analogous to the cogirth-of-graded extension. Invariance for the skewed case is COMPUTATIONALLY
-    VERIFIED: see Computational confirmation below.
-(ii) The ribbon build solves a_x^T z = c'(x) for all x in S (versus a_x^T z = c(x) for the canonical build);
-    a different right-hand side yields a different solved z by back-substitution, and a fresh within-class
-    draw per build re-randomizes it again. There is no contradiction with (i): (i) is a statement about
-    pi(W), an invariant of the stored VALUES modulo the within-class bits, while (ii) is a statement about
-    the solved SNAPSHOT z, which depends on those very bits. QED.
+(i-balanced) Each generator c'(x) = c(x) XOR c_x differs from c(x) by c_x in C = ker(pi_k), so
+pi_k(c'(x)) = pi_k(c(x)); pi_k is GF(2)-linear, so pi_k(W') = span{pi_k(c'(x))} = span{pi_k(c(x))} =
+pi_k(W). The balanced mass q(v) = h_v 2^(-rank pi_k(W)) and the hit indicator both depend on W only through
+pi_k(W), so every q'(v) = q(v). The span SIZE may differ (|W'| can exceed |W|: per-key draws add directions
+inside ker(pi_k), enlarging W, e.g. 8 -> 16 on the witness), but those directions lie in ker(pi_k) and
+cancel in the normalized mass. UNCONDITIONAL.
+(i-skewed) The counterexample is a direct computation (gated exactly in the companion test). Canonically
+rank pi_3(W) = 1: W = {0000, 1000}, so pi_3(W) = {000, 100} with the single direction pi_3(B), and C, D are
+missed. In the breaking draw the perturbed A -> 0100 contributes the NEW top-3 direction pi_3(0100) = 010,
+raising rank pi_3(W') to 2 (pi_3(W') = {000, 010, 100, 110}); the codeword 110 of C now lies in pi_3(W'), so
+C lights up at 1/4 and q(B) halves, while 111 (D) is still absent, leaving D missed: q' = (1/2, 1/4, 1/4, 0).
+This is exactly the obstruction: a short value's draw c_x in C_{l_{v(x)}} need not lie in ker pi_l = C_l for a
+longer length l, so pi_l(W) is not conserved. The earlier draft's claim that the difference
+dim(W intersect C_{l_v}) - dim W = -rank pi_{l_v}(W) is conserved under per-class moves is FALSE (here rank
+pi_3 goes 1 -> 2, the difference -1 -> -2). SUFFICIENCY of saturation: redrawing leaves every LONG
+generator's projection fixed (a value of length >= l has its draw in C_{l_v} subset C_l = ker pi_l, so pi_l
+is unchanged) and moves a SHORT generator only in bits below its own codeword length. When every pi_l(W) is
+already full it stays full under every draw, so every q'(v) = h_v 2^(-rank pi_l(W)) = q(v); this is verified
+exhaustively on the full-support store (all 128 within-class draws reproduce the law) and over 12000 redraws
+across five codecs (rank pi_l never drops from full, though for an UNSATURATED store a redraw can lower a
+non-full rank). Saturation is thus sufficient, not necessary (the store-only-A example above is invariant yet
+unsaturated). Full support implies saturation: the complete set of canonical codewords, each zero-padded or
+truncated to its top l bits, spans GF(2)^l at every code length l.
+(ii) The ribbon build solves a_x^T z = c'(x) for all x in S (versus a_x^T z = c(x)); a different right-hand
+side yields a different solved z by back-substitution, and a fresh within-class draw per build re-randomizes
+it again. No contradiction with (i): (i) concerns pi_l(W), an invariant of the stored VALUES modulo the
+within-class bits (under balance or saturation), while (ii) concerns the solved SNAPSHOT z, which depends on
+those very bits. QED.
 
 Two consequences.
 
-  (C1) Off-set statistical invisibility. By (i) the entire non-member value-frequency channel q(.) is
-       UNCHANGED by within-class randomization: there is no off-set distribution gap to detect, and an
-       attacker who can only sample non-member outputs sees identically distributed streams from a canonical
-       and a randomized build. For the balanced codec this is PROVEN (algebraic argument above); for skewed
-       codecs it is COMPUTATIONALLY VERIFIED. In both cases the result is exact, not asymptotic.
+  (C1) Off-set statistical invisibility (under balance or saturation). When (i) applies, the entire
+       non-member value-frequency channel q(.) is UNCHANGED by within-class randomization: an attacker who
+       only samples non-member outputs sees identically distributed streams from a canonical and a
+       randomized build, exactly (not asymptotically). This holds UNCONDITIONALLY for the balanced codec and,
+       for a skewed codec, whenever the store is SATURATED (every pi_l(W) full, e.g. full support; a
+       sufficient condition, not necessary). For a
+       skewed codec with PARTIAL support, randomization is NOT off-set-invisible: it can change q (the
+       {A, A, B} counterexample turns the missed class C into a hit), so balance or saturation is a
+       PRECONDITION for using within-class randomization as a confidentiality measure. This is the corrected
+       form of the earlier (over-broad) claim that skewed invariance held in general.
 
   (C2) White-box snapshot entropy at zero per-query cost. By (ii) two builds of the SAME data (same S, same
        values) produce DIFFERENT solution matrices z. Within-class randomization therefore INCREASES the
@@ -880,27 +984,40 @@ to confuse a wiretapper. Here a codec class class(v) = aligned(v) + C_{l_v} is e
 within-class subspace C_{l_v}, and encode_random picks a uniform in-coset representative: this IS
 coset-coding randomization, transplanted to the RIGHT-HAND SIDE of a STATIC GF(2) retrieval structure. The
 randomization primitive is not new. The NEW content is the invariance-plus-divergence STATEMENT for this
-static structure: that within-coset randomization of the stored right-hand sides leaves the non-member output
-law of the SOLVED structure exactly invariant (i) while diverging the solved snapshot (ii), i.e. it is
-off-set-invisible and white-box-divergent simultaneously. Wiretap coset coding studies a TRANSMITTED coset
-representative against an eavesdropper on a noisy channel; we study a STORED coset representative against an
-adversary reading the static solved structure, and the conserved quantity is the projected span pi(W) that
-governs the codec-controlled law, not a channel capacity.
+static structure, WITH ITS BOUNDARY: within-coset randomization of the stored right-hand sides leaves the
+non-member output law of the SOLVED structure exactly invariant while diverging the solved snapshot (ii),
+PROVIDED the relevant projection is conserved, which holds unconditionally for a single coset (balanced) and,
+for the per-length flag of cosets (skewed), exactly under saturation. The wiretap analogy is tight only for
+the single-coset (balanced or saturated) case: there one fixed subspace carries all randomization. A skewed
+codec is a FLAG of cosets of different subspaces, and randomizing within a short value's (larger) coset is
+visible to a longer value's (finer) projection, which is precisely why off-set invisibility can fail and must
+be earned by saturation. Wiretap coset coding studies a TRANSMITTED coset representative against an
+eavesdropper on a noisy channel; we study a STORED coset representative against an adversary reading the
+static solved structure, and the conserved quantity is the projected span pi_l(W) that governs the
+codec-controlled law, not a channel capacity.
 
 Computational confirmation. The Catch2 test tagged [randomized] (tests/v3/test_randomized_encoding.cpp)
-gates all three claims at fixed rng seeds. (1) EXACT invariance: over 1300 random within-class re-encodings
-across four codecs (the M = 4 skew {1,2,3,3} and three M = 6 codecs), every per-class mass q(v) is
-bit-identical between the canonical and randomized stored sets, asserted by integer cross-multiplication
+gates the balanced/saturated claims at fixed rng seeds. (1) EXACT invariance: over 1300 random within-class
+re-encodings across four codecs (the M = 4 skew {1,2,3,3} and three M = 6 codecs), every per-class mass q(v)
+is bit-identical between the canonical and randomized stored sets, asserted by integer cross-multiplication
 hit_c * |W'| == hit_r * |W| so the comparison is exact rather than floating-point, while |W| itself is
 observed to change (it grows from 8 to 16 on the skew witness), confirming the masses are pinned even as the
-span size moves. (2) EMPIRICAL invariance: a canonical encoded_retrieval and a randomized ribbon build on the
-same 2000 keys/values (M = 8 prefix codec) agree on the non-member decoded distribution over 30000 queries to
-TV = 0.0039, well inside sampling noise, with member lookups correct in both. (3) WHITE-BOX divergence: 1988
-of 2196 serialized solution bytes differ between the canonical and randomized builds (about 90 percent),
-while the decoded non-member law is the same. The standalone discovery probe corroborates at larger query
-budgets: the empirical non-member TV(canonical, randomized) is 7e-3 over 2M queries, equal in order to the
-TV between two same-data different-ribbon-seed CANONICAL builds (pure sampling noise, shrinking like
-1/sqrt(Q)), and the white-box byte divergence 195/300 matches a plain reseed's 213/300.
+span size moves. NOTE: every store in this test holds FULL SUPPORT (one of each value), hence is SATURATED;
+that is why invariance holds there. (2) EMPIRICAL invariance: a canonical encoded_retrieval and a randomized
+ribbon build on the same 2000 keys/values (M = 8 prefix codec, full support) agree on the non-member decoded
+distribution over 30000 queries to TV = 0.0039, well inside sampling noise, with member lookups correct in
+both. (3) WHITE-BOX divergence: 1988 of 2196 serialized solution bytes differ between the canonical and
+randomized builds (about 90 percent), while the decoded non-member law is the same.
+
+The BOUNDARY is gated separately in tests/v3/test_randomized_boundary.cpp (tag [randomized][boundary]). It
+exhibits the skewed counterexample exactly: store {A, A, B} on skew {1,2,3,3} has canonical law
+(1/2, 1/2, 0, 0), yet over all 256 within-class draws four distinct laws occur (only 64 reproduce the
+canonical), and the explicit draw A -> 0000, A -> 0100, B -> 1000 gives (1/2, 1/4, 1/4, 0). It then gates the
+saturation theorem: store {A, B, C, D} (full support, every projection full) yields the SAME law on all 128
+within-class draws. The earlier exact-invariance numbers above are consistent with this: they sit inside the
+saturated regime where the theorem guarantees invariance, and the standalone discovery probe's empirical
+TV(canonical, randomized) = 7e-3 over 2M queries (matched by a plain ribbon reseed) was likewise on a
+full-support build.
 
 ## T5: the real-incidence deviation
 
@@ -2195,13 +2312,14 @@ is NOVEL, and what is OUT OF SCOPE) is recoverable from this one file.
   codec control collapses, the collapse lands on the T4 step TV = 0.5, and
   d* >= (K/2) m_min, so control survives at least (K/2) m_min erasures: this
   converts T5's open m_min redundancy conjecture into a theorem, for the balanced
-  codec), the randomized-encoding invariance lemma (storing an INDEPENDENTLY drawn
-  per-key, per-occurrence uniform within-class representative c'(x) = encode_random(v(x))
-  in place of the canonical codeword leaves pi(W), and hence the entire non-member law
-  q(.), EXACTLY invariant while diverging the white-box solution snapshot z:
-  off-set-invisible and white-box-divergent, which resolves the deferred Q#5; PROVEN for
-  the balanced codec by the linear-algebra argument in the lemma, COMPUTATIONALLY
-  VERIFIED for skewed codecs with a flag-level algebraic proof deferred as a follow-on),
+  codec), the randomized-encoding lemma with its sharp boundary (storing an INDEPENDENTLY
+  drawn per-key, per-occurrence uniform within-class representative c'(x) = encode_random(v(x))
+  diverges the white-box solution snapshot z while leaving the non-member law q(.) EXACTLY
+  invariant for the BALANCED codec unconditionally, and for SKEWED codecs whenever the store
+  is SATURATED (every pi_l(W) full, e.g. full support; sufficient, not necessary); skewed invariance is FALSE in general,
+  with the exact counterexample store {A,A,B} on skew {1,2,3,3} giving canonical (1/2,1/2,0,0)
+  but a randomized draw (1/2,1/4,1/4,0); this settles Q#5 with a boundary, correcting the
+  earlier over-broad skewed claim),
   and the idealized FreqDist theorem (advantage exactly zero under M1). These carry proofs
   verified by the computational checks tagged [gf2], [span], [threshold], [skewed],
   [randomized], [cogirth], and [contrastive].
@@ -2217,17 +2335,18 @@ is NOVEL, and what is OUT OF SCOPE) is recoverable from this one file.
 
 - OUT OF SCOPE (declared open): a structural closed-form bound on the MAGNITUDE of
   the T5 deviation delta inside the intact regime (the binary control criterion and
-  its erasure budget are now PROVEN as T5b; the residual within-regime delta
-  magnitude as m_min falls toward the edge stays an empirical characterization), and
-  the cogirth of the GRADED / skewed structure (T5b is proved for the BALANCED codec
-  matching T4's scope; extending the exact erasure budget to the T4b within-class
-  flag, where classes are cosets of different subspaces, is the natural follow-on).
-  (The m_min redundancy conjecture and the balanced cogirth / robustness question,
-  formerly open here, are now RESOLVED as T5b above and listed under PROVEN; the
-  SKEWED-codec mass characterization, formerly open, is RESOLVED as T4b; and the
-  randomized-encoding question Q#5, formerly deferred, is RESOLVED as the
-  randomized-encoding invariance lemma above and listed under PROVEN.) The
-  security treatment defends
+  its erasure budget are now PROVEN as T5b/T5c; the residual within-regime delta
+  magnitude as m_min falls toward the edge stays an empirical characterization).
+  (Several questions formerly open here are now RESOLVED and listed under PROVEN: the
+  m_min redundancy conjecture and the balanced cogirth / robustness question as T5b;
+  the GRADED / skewed cogirth, formerly the natural follow-on, as T5c (a per-rung
+  cogirth family along the within-class flag, with T5b its single-rung collapse); the
+  complete SKEWED-codec mass characterization as T4c (the T4b ladder is necessary; the
+  constructive subspace-chain form is the complete answer, and the mass >= share and
+  ladder conditions, while necessary, are NOT reducible to a local per-class description
+  in general); and the randomized-encoding question Q#5 as the
+  randomized-encoding lemma above, settled with a sharp boundary, balanced/saturated
+  invariance with a skewed counterexample.) The security treatment defends
   exactly one channel (the non-member value-frequency channel) against exactly one
   attack (single-instance frequency analysis), plus the reconciliation of the
   opposite-pulling multi-instance coincidence oracle; access-pattern, volume, and

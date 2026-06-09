@@ -93,9 +93,10 @@ non-member laws are within total variation $\delta(p_0)+\delta(p_1)$ of each oth
 the advantage is at most that distance, where $\delta$ is a small, scale-independent,
 redundancy-governed deviation we measure to be at or below the query-sampling floor
 ($0.00334$ at $10^5$ queries) up to $10^7$ keys. Encoding stored values with a uniform
-within-class representative leaves the entire non-member law exactly invariant while
-diverging the white-box solution per build, snapshot confidentiality at zero per-query
-cost. We are honest about the perimeter:
+within-class representative diverges the white-box solution per build while leaving the
+non-member law exactly invariant (unconditionally for a balanced codec, and for a skewed
+codec under a saturation condition that full support meets; it can change the law otherwise),
+snapshot confidentiality at zero per-query cost. We are honest about the perimeter:
 a second, multi-instance attack (a coincidence oracle with accuracy
 $1-\tfrac12\sum_v \al(v)^t$, defeated by \emph{concentrated} rather than flat codespace
 shares, so concentration is the better defense there) pulls the codec the opposite way,
@@ -184,7 +185,9 @@ new and crediting what is not.
   which the balanced argument leaves open, is resolved as a separate \emph{graded}
   regime (\cref{thm:graded}): a non-increasing mass ladder in code length, a provably
   unreachable uniform target, and full-span control that reproduces the codec's designed
-  Kraft distribution.
+  Kraft distribution. Its realizable set is then characterized completely
+  (\cref{thm:realizable}): the constructive subspace-chain form, with mass-over-codespace-share
+  and the ladder necessary but, beyond thin codecs, not sufficient.
   \item \textbf{(D, robustness.)} A second code invariant governs how robust control is.
   The matroid cogirth $d^\ast$ of the stored column system over the value quotient is the
   exact, tight adversarial erasure budget: control survives every deletion of fewer than
@@ -205,10 +208,11 @@ $\delta(p_0)+\delta(p_1)$ of each other, so the advantage of an adversary issuin
 number of adaptive non-member queries is at most that distance (\cref{thm:freqdist-real}),
 where $\delta$ is the small, scale-independent deviation of the real construction from the
 idealization, measured to be at or below the query-sampling floor up to ten million keys.
-We also show that randomizing the within-class representative of each stored value leaves
-the entire non-member law exactly invariant while diverging the white-box solution per
-build (\cref{thm:randenc}), a snapshot-confidentiality property obtained at zero per-query
-cost. We implement the construction
+We also show that randomizing the within-class representative of each stored value diverges
+the white-box solution per build while leaving the non-member law exactly invariant
+(unconditionally for balanced codecs, and for skewed codecs exactly when the store is
+saturated, e.g. under full support; it can change the law under partial support), a
+snapshot-confidentiality property obtained at zero per-query cost (\cref{thm:randenc}). We implement the construction
 (header-only C++23) and validate every theorem empirically at scale. Finally, we are
 honest about the perimeter: a structurally different multi-instance attack, a
 coincidence oracle, is defeated by the \emph{opposite} codec choice, so there is no
@@ -766,11 +770,46 @@ $\GF$ subspace for $M = 4$ and $M = 6$ confirms graded-exists, balanced-stays-sh
 the realizability of the designed target versus the unreachability of uniform.
 \end{example}
 
-So the skewed regime trades the balanced ``flat or nothing'' dichotomy for a controllable
-ladder whose extreme point is the designed Kraft distribution itself. What remains open
-is finer: a complete characterization of the realizable set (the ladder is necessary, not
-sufficient). The skewed analogue of the robustness theorem below is
-\cref{thm:cogirth-graded}, a per-rung family of cogirths along this same flag.
+The realizable set itself, which mass vectors arise as $q(\W)$ for \emph{some} $\W$, admits
+a complete characterization.
+
+\begin{theorem}[The realizable set, completely characterized]
+\label{thm:realizable}
+Write $l_{\max}$ for the longest code length and $\tau_{l' \to l}$ for the map that drops the
+bottom $l' - l$ bits. A mass vector $q$ is realizable iff there is a subspace $U \subseteq
+\GF^{l_{\max}}$ with
+\[
+  q(v) = [\, c_v \in U_{\ell_v} \,] \cdot 2^{-\dim U_{\ell_v}},
+  \qquad U_\ell := \tau_{l_{\max} \to \ell}(U),
+\]
+$c_v$ being $v$'s top-$\ell_v$-bit codeword. Every realizable $q$ is a dyadic probability
+vector obeying \emph{mass $\ge$ codespace share} ($q(v) > 0 \Rightarrow q(v) \ge 2^{-\ell_v}$)
+and the ladder; these necessary conditions are \emph{sufficient} for thin codecs (for skew
+$\{1,2,3,3\}$ they cut the realizable set to exactly eight laws) but not in general.
+\end{theorem}
+
+\begin{proof}[Proof sketch]
+Forward: set $U = \proj_{l_{\max}}(\W)$, so $U_\ell = \proj_\ell(\W)$ (the projections factor
+through truncation), and the flag formula \eqref{eq:graded}, equivalently $q(v) = h_v\,
+2^{-\rank \proj_{\ell_v}(\W)}$ by rank--nullity, gives the displayed formula.
+Backward: lift $U$ to $\W = U \times \{0\}^{M - l_{\max}}$, for which $\proj_\ell(\W) =
+\tau_{l_{\max} \to \ell}(U)$. Mass $\ge$ share is $\dim U_{\ell_v} \le \ell_v$; the ladder is
+the monotonicity of $\dim U_\ell$ along the truncation chain. The conditions are not sufficient
+in general: for the codec with two length-2 and four length-3 codewords,
+$q = (\tfrac14,\tfrac14,\tfrac14,\tfrac14,0,0)$ obeys both yet no subspace realizes it, since the
+length-3 hits $100, 101$ force $\proj_3(\W) = \{000,001,100,101\}$, whose truncation
+$\proj_2(\W) = \{00,10\}$ has dimension $1$ and so misses the length-2 codeword $01$ that the law
+needs hit. A \texttt{[realizable]} check enumerates all $67$ subspaces of $\GF^4$ and confirms the
+characterization, the eight-law sufficiency, and this witness.
+\end{proof}
+
+This sharpens the unreachability of uniform in \cref{thm:graded}: the uniform vector fails not the
+ladder (it is a flat, hence non-increasing, ladder) but \emph{mass $\ge$ share} at the shortest
+value, $q(A) = \tfrac14 < 2^{-1}$, the clean general form of the dimension constraint $q(A) \in
+\{\tfrac12, 1\}$. So the skewed regime trades the balanced ``flat or nothing'' dichotomy for a
+controllable ladder whose realizable extreme point is the designed Kraft distribution itself. The
+skewed analogue of the robustness theorem below is \cref{thm:cogirth-graded}, a per-rung family of
+cogirths along this same flag.
 
 \subsection{Randomized encoding: invariance with white-box divergence}
 \label{sec:randenc}
@@ -781,43 +820,57 @@ representative whose within-class bits are zero. The codec already exposes the
 alternative, $\mathrm{enc\_rand}(v)$, which returns a uniform random representative of
 $\class(v)$ by setting the bottom $M - \ell_v$ bits at random rather than to zero. Wiring
 this into the builder in place of the canonical $\enc$ is the one open item earlier drafts
-deferred; we settle it here. The within-class directions are exactly the kernel of the
-value quotient: a within-class draw replaces $\enc(v)$ by $\enc(v) \oplus c$ with
-$c \in C_{\ell_v} = \ker(\proj)$ restricted to that class, so $\proj$ does not see the
-within-class bits at all.
+deferred; we settle it here, with a sharp boundary. The within-class directions are the
+kernels of the \emph{per-length} quotients, and for a skewed codec these kernels differ by
+length, which is the whole subtlety. A within-class draw for value $v$ adds $c \in
+C_{\ell_v} = \ker(\proj_{\ell_v})$; this is invisible to $\proj_\ell$ for $\ell \le \ell_v$
+but \emph{visible} to $\proj_\ell$ for $\ell > \ell_v$ (a longer codeword keeps more top
+bits). For a balanced codec there is a single length and a single kernel, so every draw is
+invisible to the one projection that matters and invariance is unconditional; for a skewed
+codec, randomizing a short value is visible to longer-value projections, which is exactly how
+invariance can fail.
 
-\begin{theorem}[Randomized-encoding invariance and divergence]
+\begin{theorem}[Randomized encoding: balanced invariance, skewed saturation, divergence]
 \label{thm:randenc}
 Fix the key set $S$ and the stored values $v(x)$. Replace each canonical codeword
 $\cx = \enc(v(x))$ by an independently drawn (per stored key, per occurrence) uniform
-within-class representative $c'(x) = \mathrm{enc\_rand}(v(x)) = \enc(v(x)) \oplus c_x$
-with $c_x \in C_{\ell_{v(x)}}$ uniform and independent. Let $\W = \spn\{\cx\}$ and
-$\W' = \spn\{c'(x)\}$. Then:
+within-class representative $c'(x) = \enc(v(x)) \oplus c_x$ with $c_x \in C_{\ell_{v(x)}}$
+uniform and independent. Let $\W = \spn\{\cx\}$ and $\W' = \spn\{c'(x)\}$. Then:
 \begin{enumerate}
-  \item \emph{(Off-set invisibility.)} $\proj(\W') = \proj(\W)$ exactly, and hence the
-  \emph{entire} non-member output law is invariant: $q'(v) = q(v)$ for every value $v$,
-  even though the span size $|\W'|$ may differ from $|\W|$. (Proven below for the
-  balanced codec; computationally verified for skewed codecs, the flag-level proof being a
-  flagged follow-on.)
+  \item \emph{(Balanced, unconditional.)} For a balanced codec (single $C = \ker\proj$),
+  $\proj(\W') = \proj(\W)$ exactly, so the \emph{entire} non-member law is invariant,
+  $q'(v) = q(v)$ for every $v$, even as $|\W'|$ may grow.
+  \item \emph{(Skewed, false in general; saturation sufficient.)} For a skewed codec the law
+  is \emph{not} invariant in general. On skew $\{1,2,3,3\}$, storing $\{A,A,B\}$ has canonical
+  $q = (\tfrac12,\tfrac12,0,0)$, but the draw $A \to 0000$, $A \to 0100$, $B \to 1000$ gives
+  $q' = (\tfrac12,\tfrac14,\tfrac14,0)$ (over all $256$ within-class draws, four distinct laws
+  occur). Invariance holds for \emph{every} draw whenever $\W$ is \emph{saturated}
+  ($\proj_\ell(\W) = \GF^\ell$ for every code length $\ell$): a sufficient, not necessary,
+  condition that full support guarantees.
   \item \emph{(White-box divergence.)} The solution matrix $\bz'$ solves a different
   right-hand side ($c'(x)$ in place of $\cx$, freshly re-randomized each build), so
-  $\bz' \ne \bz$ in general even at a fixed ribbon seed.
+  $\bz' \ne \bz$ in general even at a fixed ribbon seed. Unaffected by (1)--(2).
 \end{enumerate}
 \end{theorem}
 
 \begin{proof}
-\emph{(1, balanced codec.)} Each generator $c'(x) = \cx \oplus c_x$ differs from $\cx$ by
-$c_x \in C = \ker(\proj)$, so $\proj(c'(x)) = \proj(\cx)$; since $\proj$ is $\GF$-linear it
-carries spans to spans, $\proj(\W') = \spn\{\proj(c'(x))\} = \spn\{\proj(\cx)\} =
-\proj(\W)$. For the balanced codec the mass formula simplifies to $q(v) = h_v / |\proj(\W)|$
-with $h_v = [\proj(\enc(v)) \in \proj(\W)]$, which depends on $\W$ \emph{only} through
-$\proj(\W)$. Hence $q'(v) = q(v)$ for every $v$. The added directions lie in $\ker(\proj)$
-and cancel in the normalized mass, so each class mass is pinned even as $|\W'|$ grows.
-\emph{(2.)} The build solves $\ay[x]^{\mathsf T}\bz = c'(x)$ rather than $\cx$; a different
-right-hand side yields a different back-substituted $\bz$, re-randomized again per build.
-No contradiction with (1): (1) concerns $\proj(\W)$, an invariant of the stored values
-modulo the within-class bits, while (2) concerns the solved snapshot $\bz$, which depends
-on those very bits.
+\emph{(1).} Each $c'(x) = \cx \oplus c_x$ differs from $\cx$ by $c_x \in C = \ker(\proj)$, so
+$\proj(c'(x)) = \proj(\cx)$ and (by $\GF$-linearity) $\proj(\W') = \proj(\W)$. The balanced
+mass $q(v) = h_v / |\proj(\W)|$ depends on $\W$ only through $\proj(\W)$, so $q' \equiv q$
+unconditionally; the added directions lie in $\ker(\proj)$ and cancel in the normalized mass
+even as $|\W'|$ grows. \emph{(2).} The counterexample is direct: canonically
+$\rank\proj_3(\W) = 1$ (only $B$'s top-3 direction; $C, D$ missed), and the draw $A \to 0100$
+adds $\proj_3(0100) = 010$, raising $\rank\proj_3(\W')$ to $2$, so $C$'s codeword $110$ enters
+$\proj_3(\W')$ and $C$ lights up at $\tfrac14$ while $D$ stays missed. The obstruction is that a
+short value's draw $c_x \in C_{\ell_{v(x)}}$ need not lie in $\ker\proj_\ell$ for a longer
+$\ell$. Sufficiency of saturation: redrawing fixes every long generator's projection (a
+length-$\ge\ell$ draw lies in $C_{\ell_v} \subseteq \ker\proj_\ell$) and moves short generators
+only in bits below their codeword length, so a full $\proj_\ell(\W)$ stays full at every
+$\ell$ and each $q'(v) = h_v\,2^{-\rank\proj_\ell(\W)} = q(v)$; this is verified exhaustively on
+the full-support store and over $12{,}000$ redraws across five codecs. Saturation is sufficient,
+not necessary (storing only $A$ keeps every draw in $\class(A)$, invariant yet unsaturated).
+\emph{(3).} A different right-hand side yields a different back-substituted $\bz$; no
+contradiction with (1)--(2), which constrain $\proj_\ell(\W)$, not the solved snapshot $\bz$.
 \end{proof}
 
 The primitive is textbook \emph{wiretap coset coding}~\cite{wyner1975wiretap,%
@@ -828,19 +881,29 @@ randomizing the within-coset choice to confuse a wiretapper. A codec class $\cla
 in-coset representative, so this \emph{is} coset-coding randomization, transplanted to the
 \emph{right-hand side} of a static $\GF$ retrieval structure. The randomization primitive
 is not new; the new content is the invariance-plus-divergence statement for this static
-structure. Two consequences follow. (C1) The entire non-member value-frequency channel is
-unchanged by within-class randomization, so an attacker who samples non-member outputs
-sees identically distributed streams from a canonical and a randomized build (proven
-balanced, verified skewed; exact, not asymptotic in either case). (C2) Two builds of the
+structure \emph{with its boundary}. The wiretap analogy is tight only for the single-coset
+(balanced or saturated) case; a skewed codec is a flag of cosets of different subspaces, and
+randomizing within a short value's coset is visible to a longer value's projection. Two
+consequences follow. (C1) When invariance applies, the entire non-member value-frequency
+channel is unchanged by within-class randomization, so an attacker who samples non-member
+outputs sees identically distributed streams from a canonical and a randomized build, exactly.
+This holds unconditionally for a balanced codec and, for a skewed codec, whenever the store is
+saturated (full support suffices); under \emph{partial} support a skewed codec is not off-set
+invisible, so balance or saturation is a precondition for using within-class randomization as a
+confidentiality measure. (C2) Two builds of the
 \emph{same} data produce \emph{different} solution matrices, so within-class randomization
 raises the entropy of the white-box snapshot (replacing the fixed low-entropy zero-bit
 choice by a uniform within-class one) at zero per-query cost, the lookup remaining a single
-$a^{\mathsf T}\bz$. The \texttt{[randomized]} check gates all three claims at fixed seeds:
-exact mass invariance over $1300$ within-class re-encodings across four codecs (asserted by
-integer cross-multiplication, while $|\W|$ is observed to grow from $8$ to $16$ on the skew
-witness), empirical non-member agreement to total variation $0.0039$ over $30{,}000$
-queries, and white-box divergence in about $90\%$ of serialized solution bytes while the
-decoded non-member law is unchanged.
+$a^{\mathsf T}\bz$. The \texttt{[randomized]} check gates the balanced/saturated claims at
+fixed seeds: exact mass invariance over $1300$ within-class re-encodings across four codecs
+(asserted by integer cross-multiplication, while $|\W|$ grows from $8$ to $16$ on the skew
+witness), empirical non-member agreement to total variation $0.0039$ over $30{,}000$ queries,
+and white-box divergence in about $90\%$ of serialized solution bytes while the decoded
+non-member law is unchanged; every store there has full support, hence is saturated. A separate
+\texttt{[randomized][boundary]} check exhibits the skewed counterexample exactly (store
+$\{A,A,B\}$ on skew $\{1,2,3,3\}$: canonical $(\tfrac12,\tfrac12,0,0)$, four distinct laws over
+the $256$ draws) and the saturation theorem ($128$ draws of the full-support store all reproduce
+the law).
 
 \section{From the idealized model to the real construction}
 \label{sec:t5}
@@ -1759,12 +1822,11 @@ than by re-solving): they explain, rather than contradict, the static design.
 \paragraph{Limitations.}
 The boundaries are explicit. The sharp threshold (\cref{thm:threshold}) and the cogirth
 robustness theorem (\cref{thm:cogirth}) are proven for the \emph{balanced} linear codec; the
-skewed (variable-length) case is resolved as the \emph{graded} regime (\cref{thm:graded}),
-with the skewed cogirth analogue now the per-rung family of \cref{thm:cogirth-graded}; two
-finer skewed questions remain open: a complete characterization of the realizable mass set
-(the non-increasing ladder is necessary, not sufficient), and the skewed analogue of the
-randomized-encoding invariance (\cref{thm:randenc}, proven for balanced and only
-computationally verified for skewed). The \emph{magnitude} of the deviation
+skewed (variable-length) case is now resolved across the board, as the \emph{graded} regime
+(\cref{thm:graded}), the complete realizable-set characterization (\cref{thm:realizable}), the
+per-rung cogirth family (\cref{thm:cogirth-graded}), and the randomized-encoding boundary
+(\cref{thm:randenc}: balanced invariance is unconditional, while skewed invariance is false in
+general and holds under saturation). The \emph{magnitude} of the deviation
 $\delta$ (\cref{sec:t5}) is \emph{characterized}, not bounded in closed form: we deliver the
 measurement and a labeled big-$O$, while the binary control criterion it governs is now the
 theorem \cref{thm:cogirth}; a closed-form bound on the within-regime $\delta$ magnitude in
@@ -1775,12 +1837,13 @@ multi-instance coincidence oracle; access-pattern, volume, and size leakage are 
 and the structure is static (the dynamic-insertion obstruction above explains why).
 
 \paragraph{Future work.}
-The resolved items leave sharper successors. The skewed codec is now \emph{graded}
-(\cref{thm:graded}) and its cogirth budget is the per-rung family of
-\cref{thm:cogirth-graded}; what remains is a complete characterization of its realizable mass
-set (the ladder is necessary, not sufficient) and the skewed analogue of the
-randomized-encoding invariance (\cref{thm:randenc}), which we prove for the balanced codec and
-verify computationally in the skewed case. For the
+The resolved items leave sharper successors. The skewed codec is now fully mapped: graded
+(\cref{thm:graded}), its realizable set characterized (\cref{thm:realizable}), its cogirth
+budget a per-rung family (\cref{thm:cogirth-graded}), and its randomized-encoding boundary
+settled (\cref{thm:randenc}). The natural successors are quantitative: a sharper description of
+the hit-geometry obstruction that makes the local conditions insufficient (which
+truncation-compatible chains arise), and a clean necessity characterization for randomized-
+encoding invariance beyond the saturation sufficient condition. For the
 deviation $\delta$, the binary control criterion is now a theorem via the cogirth, but a
 structural closed-form bound on the within-regime $\delta$ \emph{magnitude} in terms of storage
 redundancy would upgrade the remaining \cref{sec:t5} characterization to a theorem. More
@@ -1848,11 +1911,12 @@ but need not equal it as a raw set. \qed
 \section{Skewed realizability: the full subspace enumeration}
 \label{app:skewed}
 
-\Cref{thm:graded} characterizes the skewed mass vector \eqref{eq:graded} and asserts uniform
-is unreachable. The uniform-unreachability dimension argument is given in the proof sketch; the
-remaining content is the claim that the realizable set is governed by the ladder and that the
-designed Kraft target is achievable while uniform is not, which we verify by exhaustive
-enumeration. For a fixed $M$ we enumerate \emph{every} $\GF$ subspace $\W$ of $\GF^M$, compute
+\Cref{thm:graded} characterizes the skewed mass vector \eqref{eq:graded}, and
+\cref{thm:realizable} characterizes the realizable \emph{set} as the image of the
+subspace-chain map. The remaining content is computational: that the formula holds on every
+subspace, that the designed Kraft target is achievable while uniform is not, and that the clean
+necessary conditions (mass $\ge$ share and the ladder) are sufficient for the thin
+$\{1,2,3,3\}$ codec but not in general. We verify all of it by exhaustive enumeration. For a fixed $M$ we enumerate \emph{every} $\GF$ subspace $\W$ of $\GF^M$, compute
 $q(v)$ in two independent ways, by decoding each element of $\W$ through the real
 \texttt{prefix\_codec} and by the formula \eqref{eq:graded} (using $\dim(\W \inter C_\ell) =
 \dim \W + \dim C_\ell - \dim(\W + C_\ell)$), and confirm they agree. The subspace counts match
@@ -1860,9 +1924,14 @@ the Galois numbers ($67$ for $M = 4$, $2825$ for $M = 6$), so the enumeration is
 checks confirm, over all $\W$: (i) the formula \eqref{eq:graded} holds for every subspace; (ii)
 a balanced codec on the same $M$ stays sharp (a single positive mass on its hit classes); (iii)
 the skew $\{1,2,3,3\}$ witness is graded (three distinct positive masses, \cref{ex:graded});
-(iv) the designed Kraft target $q(v) = 2^{-\ell_v}$ is realized (by $\W = \GF^M$); and (v) no
+(iv) the designed Kraft target $q(v) = 2^{-\ell_v}$ is realized (by $\W = \GF^M$); (v) no
 subspace realizes the uniform target, with the nearest realizable vector at total-variation
-distance exactly $1/4$. This is the exhaustive backing for \cref{thm:graded}.
+distance exactly $1/4$; and (vi) for skew $\{1,2,3,3\}$ the realizable set is exactly the eight
+laws the clean conditions admit (so the conditions are sufficient there), whereas for the codec
+$\{2,2,3,3,3,3\}$ the clean law $(\tfrac14,\tfrac14,\tfrac14,\tfrac14,0,0)$ satisfies mass
+$\ge$ share and the ladder yet no subspace realizes it, so beyond thin codecs the constructive
+form of \cref{thm:realizable} is the only complete description. This is the exhaustive backing
+for \cref{thm:graded} and \cref{thm:realizable}.
 
 \bibliographystyle{plainnat}
 \bibliography{refs}
