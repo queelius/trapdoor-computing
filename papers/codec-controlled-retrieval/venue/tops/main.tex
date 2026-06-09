@@ -383,9 +383,14 @@ Both are guaranteed by the builder as written: no step injects a pattern outside
 (no random fill of free slots, no fingerprint salt added to a value). A future builder
 variant that filled free slots with nonzero patterns, or added a non-$\W$ constant to
 a right-hand side, would break this; the property is one of \emph{this} builder, not
-of ribbon retrieval in the abstract. A computational check (tag \texttt{[span]})
-confirms the inclusion: across $30{,}000$ distinct non-member queries every output's
-re-encoded canonical pattern landed in $\W$, with zero violations.
+of ribbon retrieval in the abstract. A computational gate (tag
+\texttt{[span][raw]}) confirms the inclusion falsifiably: it drives the ribbon directly
+with the canonical right-hand sides and asserts the \emph{undecoded} $M$-bit output of
+$30{,}000$ distinct non-member queries lies in $\W$, where only $4$ of the $16$ possible
+raw patterns do ($2$ of $16$ in a companion sub-threshold instance). A
+decode-then-re-encode check cannot serve here: for a Kraft-tight codec whose canonical
+patterns all lie in $\W$, the re-encoded pattern lands in $\W$ for \emph{every}
+conceivable raw output, so such a check verifies only the class-level law.
 \end{remark}
 
 \subsection{The idealized law on the stored span}
@@ -481,9 +486,15 @@ idealized non-member law is independent of the storage frequencies.
 In the real construction the two laws are not exactly equal: each build solves a
 different banded system and so has its own near-uniform (rather than exactly uniform)
 law on the shared $\W$. The two real laws therefore differ only by the per-build
-deviation from $\Uniform(\W)$ characterized in \cref{sec:t5}, a quantity bounded there
-and independent of the storage frequencies; no frequency-dependent term appears in
-either the idealized law or that error budget.
+deviation from $\Uniform(\W)$ characterized in \cref{sec:t5}. The scope of that rider,
+stated carefully: the idealized law contains no frequency term at all (the theorem
+above), and the deviation contains no term growing with the frequency \emph{gap}
+between two profiles (E2: the cross-profile distance sits at the same-profile rebuild
+floor); but the deviation's \emph{magnitude} does depend on per-class storage
+redundancy, a function of the $m_v$ (thin support elevates $\delta$, the effect
+\cref{sec:t5} characterizes and the cogirth theorems explain). An observer of an
+elevated deviation can learn that some class is thinly stored; what it cannot learn is
+the direction or shape of the frequency vector.
 
 \paragraph{Consequence for security.}
 An adversary who probes the structure with non-member keys is sampling from the law of
@@ -1115,7 +1126,9 @@ coset of \emph{some} subspace; applied to $\class(v) = \enc(v) + C_{\ell_v}$ wit
 $C_{\ell_v}$, it gives that $\W \inter \class(v)$ is empty or a coset of $\W \inter
 C_{\ell_v}$, hence \eqref{eq:graded}. The ladder is monotonicity of
 $\dim(\W \inter C_\ell)$ along the flag. (1) is the direct evaluation at $\W = \GF^M$.
-For (2), the shortest class $A$ (length $1$) is always hit and $q(A) = 2^{d_1 - \dim \W}$
+For (2), the shortest class $A$ (length $1$) is always hit (its codeword is the
+all-zero pattern, so $\enc(A) = 0 \in \W + C_1$ for every $\W$, condition (c) of
+\cref{thm:realizable}; dimension alone would not give this) and $q(A) = 2^{d_1 - \dim \W}$
 with $d_1 = \dim(\W \inter C_1)$; if $q$ were uniform then $q(A) = 1/4$ forces $d_1 =
 \dim \W - 2$, but then $\dim(\W + C_1) = \dim \W + (M-1) - (\dim \W - 2) = M + 1 > M$,
 impossible in $\GF^M$. The only consistent values are $d_1 = \dim \W$ ($q(A) = 1$,
@@ -1160,7 +1173,7 @@ bottom $l' - l$ bits. A mass vector $q$ is realizable iff there is a subspace $U
 \]
 $c_v$ being $v$'s top-$\ell_v$-bit codeword. Every realizable $q$ is a dyadic probability
 vector obeying \emph{mass $\ge$ codespace share} ($q(v) > 0 \Rightarrow q(v) \ge 2^{-\ell_v}$)
-and the ladder; these necessary conditions are \emph{sufficient} for thin codecs (for skew
+and the ladder; these necessary conditions are \emph{sufficient} for some codecs (for skew
 $\{1,2,3,3\}$ they cut the realizable set to exactly eight laws) but not in general.
 \end{theorem}
 
@@ -1974,7 +1987,7 @@ subspace realizes the uniform target, with the nearest realizable vector at tota
 distance exactly $1/4$; and (vi) for skew $\{1,2,3,3\}$ the realizable set is exactly the eight
 laws the clean conditions admit (so the conditions are sufficient there), whereas for the codec
 $\{2,2,3,3,3,3\}$ the clean law $(\tfrac14,\tfrac14,\tfrac14,\tfrac14,0,0)$ satisfies mass
-$\ge$ share and the ladder yet no subspace realizes it, so beyond thin codecs the constructive
+$\ge$ share and the ladder yet no subspace realizes it, so in general the constructive
 form of \cref{thm:realizable} is the only complete description. This is the exhaustive backing
 for \cref{thm:graded} and \cref{thm:realizable}.
 

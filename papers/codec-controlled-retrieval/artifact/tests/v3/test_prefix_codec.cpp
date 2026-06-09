@@ -515,3 +515,91 @@ TEST_CASE("T4: sharp codec-control threshold at rank == log2 K (transversality)"
         }
     }
 }
+
+// ===== T2 RAW containment: the falsifiable span gate =====
+//
+// The other [span]/[contrastive] checks in this file verify the CLASS-LEVEL
+// law: they decode the output and re-encode the decoded value's canonical
+// pattern before testing membership in W. For a Kraft-tight codec whose
+// canonical patterns all lie in W, that re-encoded pattern is in W for EVERY
+// conceivable raw output (decode is total), so those checks cannot falsify
+// the T2 containment "reachable outputs subset W": the decode step erases
+// exactly the within-class bits where a violation would live.
+//
+// This test is the falsifiable gate. It drives the ribbon DIRECTLY with the
+// same canonical right-hand sides the codec composition stores, and checks
+// the RAW (undecoded) M-bit lookup output of non-member queries lies in W.
+// Above threshold |W| = 4 of 16 possible raw patterns; sub-threshold
+// |W| = 2 of 16. A theorem violation has most of the output space to land on.
+
+TEST_CASE("T2 raw containment: undecoded non-member outputs lie in W",
+          "[prefix_codec][span][raw]") {
+    constexpr unsigned M = 4;
+    enum class V : uint8_t { A, B, C, D };
+    prefix_codec<V, M> cdc({{V::A, 2}, {V::B, 2}, {V::C, 2}, {V::D, 2}}, V::A);
+    using ribbon = ribbon_retrieval<M>;
+
+    // --- Above-threshold instance: store A, B, C (rank 2 = log2 K). ---
+    auto keys = make_keys(2000);
+    std::vector<uint64_t> pats;
+    pats.reserve(keys.size());
+    for (size_t i = 0; i < keys.size(); ++i) {
+        pats.push_back(cdc.encode(static_cast<V>(i % 3)));  // A,B,C canonical RHS
+    }
+
+    typename ribbon::builder b;
+    for (size_t i = 0; i < keys.size(); ++i) {
+        b.add(keys[i], static_cast<typename ribbon::value_type>(pats[i]));
+    }
+    b.with_seed(7);
+    auto rib = b.build();
+    REQUIRE(rib.has_value());
+
+    // W = span{enc(A), enc(B), enc(C)}; the gate is NON-VACUOUS: |W| = 4 < 16,
+    // so 12 of the 16 possible raw outputs would fail the containment check.
+    std::vector<uint64_t> stored{cdc.encode(V::A), cdc.encode(V::B), cdc.encode(V::C)};
+    auto basis = maph::detail::gf2_basis(stored);
+    REQUIRE(maph::detail::gf2_span(basis).size() == 4u);
+
+    // (a) member RAW lookups reproduce the exact stored canonical patterns.
+    for (size_t i = 0; i < keys.size(); ++i) {
+        REQUIRE(static_cast<uint64_t>(rib->lookup(keys[i])) == pats[i]);
+    }
+
+    // (b) non-member RAW outputs all lie in W: the T2 containment, falsifiably.
+    for (size_t i = 0; i < 30000; ++i) {
+        const uint64_t raw =
+            static_cast<uint64_t>(rib->lookup("RAWSPAN_" + std::to_string(i)));
+        REQUIRE(maph::detail::gf2_in_span(raw, basis));
+    }
+
+    // --- Sub-threshold instance: store only A, B (rank 1 < log2 K = 2). ---
+    // W2 = {enc(A), enc(B)} has |W2| = 2 of 16: an even sharper gate, and the
+    // decoded outputs realize the T4 step (classes C and D missed exactly).
+    auto keys2 = make_keys(1000, 99);
+    std::vector<uint64_t> pats2;
+    pats2.reserve(keys2.size());
+    for (size_t i = 0; i < keys2.size(); ++i) {
+        pats2.push_back(cdc.encode(static_cast<V>(i % 2)));  // A,B only
+    }
+    typename ribbon::builder b2;
+    for (size_t i = 0; i < keys2.size(); ++i) {
+        b2.add(keys2[i], static_cast<typename ribbon::value_type>(pats2[i]));
+    }
+    b2.with_seed(11);
+    auto rib2 = b2.build();
+    REQUIRE(rib2.has_value());
+
+    std::vector<uint64_t> stored2{cdc.encode(V::A), cdc.encode(V::B)};
+    auto basis2 = maph::detail::gf2_basis(stored2);
+    REQUIRE(maph::detail::gf2_span(basis2).size() == 2u);
+
+    for (size_t i = 0; i < 15000; ++i) {
+        const uint64_t raw =
+            static_cast<uint64_t>(rib2->lookup("RAWSUB_" + std::to_string(i)));
+        REQUIRE(maph::detail::gf2_in_span(raw, basis2));
+        const V out = cdc.decode(raw);
+        // T4 step at rank 1: only the two hit classes can appear.
+        REQUIRE((out == V::A || out == V::B));
+    }
+}

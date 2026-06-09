@@ -12,7 +12,7 @@ cross-check the linear-algebra gates with exact rational arithmetic.
 
 | Manuscript | Result | Note section | Gate (tag) | What it checks |
 |---|---|---|---|---|
-| `thm:support` (T1) | non-member output support is exactly the stored span `W` | T1/T2 | `test_prefix_codec` (`[span][nonmember]`) | reachable outputs span `W`, `R(z) = W` |
+| `thm:support` (T1) | non-member output support is contained in the stored span `W` (`R(z) = W`) | T1/T2 | `test_prefix_codec` (`[span][raw]`, the falsifiable gate) | RAW undecoded non-member outputs lie in `W` (4/16 and 2/16 instances); the older `[span]` checks verify the class-level law only |
 | `thm:idealized` (T2) | idealized law is uniform on `W`, decoded by the codec | T1/T2 | `test_prefix_codec` (`[span][nonmember]`) | decode of `Uniform(W)` is the codec-controlled law |
 | `thm:freqindep` (T3) | the non-member law is independent of storage frequency | T3 | `test_prefix_codec` (`[contrastive]`) | same `W`, different store counts, identical law |
 | `thm:threshold` (T4) | sharp control threshold: control iff `rank pi|_W = log2 K` (balanced) | T4 | `test_prefix_codec` (`[threshold]`) | step in the integer rank; over/under regimes |

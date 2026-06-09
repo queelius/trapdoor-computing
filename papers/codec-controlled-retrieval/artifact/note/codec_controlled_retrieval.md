@@ -12,7 +12,7 @@ stated as transversality of W to the codec's class partition) together with T4b
 (its skewed / variable-length resolution: the mass is graded over the within-class
 flag) and T4c (the complete characterization of the realizable set: the constructive
 subspace-chain form, with the mass-over-codespace-share and ladder conditions
-necessary, and sufficient only for thin codecs), T5
+necessary, and sufficient for some codecs, e.g. the skew {1,2,3,3}, but not in general), T5
 (the real-incidence deviation, characterizing how far the real near-uniform ribbon
 band departs from the T1 idealization) together with T5b (the robustness of codec
 control under key erasure: the matroid cogirth of the stored column system is the
@@ -45,7 +45,8 @@ read directly from `include/maph/retrieval/ribbon_retrieval.hpp` and
 
 - For a key y, `lookup(y)` computes `row_spec_for(y) = (start, coeffs)`,
   where `coeffs` is a 64-bit odd word (the low bit is forced to 1) and
-  `start` is a band offset in [0, m - W + 1) with band width W = 64. Then
+  `start` is a band offset in [0, m - w_band + 1) with band width w_band =
+  64 (we reserve W for the stored-pattern span below). Then
   `query_row(start, coeffs)` returns the XOR of `solution_[start + bit]`
   over every set bit `bit` of `coeffs`. Define the band-indicator vector
   a_y in {0,1}^m to be the 64 bits of `coeffs` placed at offset `start`
@@ -149,10 +150,11 @@ closed-under-XOR induction used below, each `pivot_value[col]` accumulates
 XORs of the c(x) and of other (earlier) `pivot_value` entries, which are
 themselves XORs of the c(x); so every `pivot_value[col]` is an XOR of some
 subset of { c(x) }, an element of W. Back-substitution then sets
-`solution_[col]` to `pivot_value[col]` XORed with already-assigned
-downstream entries `solution_[ref]`. By induction on decreasing `col` (the
-loop runs from the largest column down, and each referenced
-`ref = col + offset + bit > col` was assigned in an earlier iteration),
+`solution_[col]` to `pivot_value[col]` XORed with downstream entries
+`solution_[ref]`. By induction on decreasing `col` (the loop runs from the
+largest column down, so each referenced `ref = col + offset + bit > col` is
+either a pivot column assigned in an earlier iteration or a free column,
+which holds the zero of the initial zero-fill, an element of W by (P1)),
 each `solution_[col]` is an XOR of elements of W, hence itself in W (W is
 closed under XOR). Out-of-range references (`ref >= num_rows`) are dropped
 by the builder and contribute 0, which is in W, so they preserve the
@@ -206,14 +208,24 @@ containment R(z) = W still holds. Its effect on the non-member LAW is the subjec
 that lemma: invariant for balanced codecs (and for skewed codecs under saturation),
 but NOT invariant for skewed codecs in general. Either way it is a benign builder
 variant for the containment property here (white-box-divergent), not the span-breaking
-one warned against. The computational check
-in `tests/v3/test_prefix_codec.cpp` (tag `[span]`) verifies the inclusion
-direction consistent with this corrected statement: across 30000 distinct
-non-member queries every output's re-encoded canonical pattern landed in W
-(basis computed from the three stored canonical patterns), with zero
-violations. This confirms reachable outputs subset W (and so R(z) = W,
-since W subset R(z) always); it does not, and need not, assert raw-set
-equality of the reachable set with W. Part (b) of the same test separately
+one warned against. The computational gate for the inclusion direction is
+the RAW-pattern check in `tests/v3/test_prefix_codec.cpp` (tag
+`[span][raw]`): it drives the ribbon directly with the same canonical
+right-hand sides the codec composition stores and asserts the UNDECODED
+M-bit output of 30000 distinct non-member queries lies in W, in both an
+above-threshold instance (|W| = 4 of 16 possible raw patterns) and a
+sub-threshold one (|W| = 2 of 16), so a violation has most of the output
+space to land on: the check is falsifiable. (CORRECTION 2026-06-09: the
+check this paragraph previously cited re-encoded the DECODED output before
+testing membership; for a Kraft-tight codec whose canonical patterns all lie
+in W, that re-encoded pattern lies in W for EVERY conceivable raw output,
+because decoding erases exactly the within-class bits where a violation
+would live. That check verifies the class-level law, and is retained for
+that purpose, but it has no falsification power for the raw containment;
+the raw gate above replaces it as the confirmation of this step.) This
+confirms reachable outputs subset W (and so R(z) = W, since W subset R(z)
+always); it does not, and need not, assert raw-set equality of the
+reachable set with W. Part (b) of the [span] class-law test separately
 verifies the frequency formula derived below.
 
 ### Step 4 (T1): the idealized uniform-on-W model
@@ -234,10 +246,13 @@ real construction approaches. It is taken here as a hypothesis, NOT proven
 from the band geometry.
 
 Why M1 is the right idealization to study. The support is correct and is
-proven: by Step 3 the row space is R(z) = W, the reachable outputs are
-contained in W, and they span W, so W is exactly the set of patterns a
-query output can range over and every element of W is in principle in play
-(each generator is realized by a member key). What M1 adds on top of this
+proven: by Step 3 the row space is R(z) = W, every query output (member or
+non-member) is contained in W, and the outputs taken over ALL keys span W
+(each stored generator c(x) is realized by its own member key x; we do not
+claim non-member outputs alone span W, nor that the reachable set equals W
+as a raw set, per the Step 3 disclaimer). So W is the tightest subspace
+enclosing every query output, and every element of W is in principle in
+play. What M1 adds on top of this
 proven support is a symmetry assumption, flatness across W. A band a_y that
 mixed the rows of z maximally, hitting every fiber of the query map equally,
 would realize Uniform(W) exactly; M1 is the idealization in which the band
@@ -324,9 +339,12 @@ predicted share is 1/4, matching the observed non-member frequencies.
 - T2 (support): the row space of the solved matrix z satisfies R(z) = W,
   the GF(2) span of the stored canonical patterns, under the builder's
   genericity condition (free slots zero, occupied slots are XORs of stored
-  patterns). The reachable non-member outputs are contained in W and span
-  W; they are not claimed to equal W as a raw set (a non-generator element
-  of W need not be the output of any single band-indicator).
+  patterns). All reachable outputs are contained in W, and span it once
+  member keys are included (each stored generator is realized by its own
+  member key); non-member outputs alone are contained in W but not claimed
+  to span it, and the reachable set is not claimed to equal W as a raw set
+  (a non-generator element of W need not be the output of any single
+  band-indicator).
 - T1 (uniformity): this is an idealization, model M1, which posits the
   pre-decoding output a_y^T z ~ Uniform(W) directly on the proven support
   W. It is not derived from the band structure. Under M1 the pre-decoding
@@ -408,9 +426,20 @@ construction the two distributions are not exactly equal: each build solves
 a different banded system and so has its own solution matrix z, giving its
 own near-uniform (rather than exactly uniform) law on the shared W. The two
 real distributions therefore differ only by the per-build T5 deviation from
-Uniform(W), a quantity bounded by the T5 analysis and independent of the
-storage frequencies. No frequency-dependent term appears in either the
-idealized law or the T5 error budget.
+Uniform(W). Scope of that rider, stated carefully: the IDEALIZED law contains
+no frequency term at all (that is the theorem above), and the per-build
+deviation contains no term growing with the frequency GAP between two
+profiles (E2: the cross-profile distance sits at the same-profile rebuild
+floor). But the deviation's MAGNITUDE does depend on the per-class storage
+redundancy, which is a function of the multiplicities m_v: thin per-class
+support (small m_min) elevates delta (E2 measures 0.0036 at 50/25/25 vs
+0.0190 at 99/0.5/0.5, same support and codec), and T5b/T5c prove the
+underlying mechanism. So an observer of an elevated deviation can learn that
+some class is thinly stored; what it cannot learn is the direction or shape
+of the frequency vector. (CORRECTION 2026-06-09: an earlier version of this
+paragraph claimed the deviation was "independent of the storage frequencies"
+outright, which the document's own T5/E2 characterization contradicts; the
+gap-independence form above is the correct rider.)
 
 ### Consequence for security (FreqDist)
 
@@ -441,12 +470,16 @@ support {A, B, C}, but storage frequencies 99% / 0.5% / 0.5% for the first
 and 50% / 25% / 25% for the second, a raw frequency gap of up to 0.49 per
 value. The test confirms both predictions of T3 directly:
 
-1. Shared W. It computes the basis of W once from the shared support,
-   stored = { encode(A), encode(B), encode(C) }, and checks that the
+1. Shared W (class-level). It computes the basis of W once from the shared
+   support, stored = { encode(A), encode(B), encode(C) }, and checks that the
    re-encoded canonical pattern of every non-member output of BOTH
    structures lies in this single W (`gf2_in_span`), with zero violations
-   across the probed non-member keys. This is the T2 support identity
-   instantiated on the common W that T3 guarantees the two builds share.
+   across the probed non-member keys. Honest scope: because decode is total
+   and re-encoding lands on a canonical pattern, this check verifies the
+   CLASS-LEVEL law on the common W, not the raw T2 containment; the
+   falsifiable raw-pattern containment gate is the `[span][raw]` test
+   described under T2 (CORRECTION 2026-06-09; this item previously presented
+   the class-level check as the T2 support identity).
 
 2. Frequency independence. It measures each structure's non-member output
    frequencies over 30000 distinct keys and requires that the two
@@ -582,11 +615,14 @@ partial credit and no graded approach to alpha:
     the exact factor K/K' > 1, since K' < K), and
   - the K - K' missed classes are EXACTLY zero, not small.
 
-Raising K' to the next attainable value (the next power of two) is the only way the vector can change;
-it jumps discontinuously. There is no intermediate regime in which some class sits strictly between 0
-and 1/K, nor one in which the hit classes drift gradually toward alpha. The mass vector is a step
-function of the single integer rank pi|_W, flipping to the flat 1/K profile precisely at
-rank pi|_W = log2 K.
+The mass PROFILE (the multiset of class masses: K' classes at 1/K', the other K - K' at exactly 0)
+can change only by K' moving to another power of two; it jumps discontinuously. There is no
+intermediate regime in which some class sits strictly between 0 and 1/K, nor one in which the hit
+classes drift gradually toward alpha. Precisely: the PROFILE is a step function of the single integer
+rank pi|_W, flipping to the flat 1/K profile exactly at rank pi|_W = log2 K; WHICH classes are hit at
+a fixed sub-threshold rank still depends on the image pi(W) itself (two rank-1 spans can hit
+different class pairs), so the full vector is a function of pi(W), with only its profile a function
+of the rank.
 
 ### Connection to the canonical-pattern picture and the engineering rule
 
@@ -672,8 +708,10 @@ are NESTED: a longer codeword fixes more top bits, hence frees fewer low bits, s
 
     {0} = C_M  subset  C_{M-1}  subset  ...  subset  C_1 = (low M - 1 bits),
 
-a complete flag in GF(2)^M. (In the balanced case all l_v are equal, every C_l is the single subspace
-C, and the flag collapses to one rung: that is exactly why the balanced argument was two-valued.)
+a full chain of nested subspaces with one dimension per step (dimensions 0 through M - 1; a complete
+flag of C_1, stopping short of the full space). (In the balanced case all l_v are equal, every C_l is
+the single subspace C, and the flag collapses to one rung: that is exactly why the balanced argument
+was two-valued.)
 
 The realizability formula. The subspace-meets-coset lemma of the previous subsection used only that a
 class is a coset of SOME subspace; it applies to each class(v) = aligned(v) + C_{l_v} with its own
@@ -731,11 +769,13 @@ the ladder criterion alone). The correct argument is as follows.
 
 The codec classes partition GF(2)^M and the codec is Kraft-tight, so any realizable q is a
 probability vector: sum_v q(v) = 1. The shortest-codeword class A (length 1) is always hit (its
-within-class subspace C_1 has dim M - 1, so the coset condition is easily satisfied), and q(A) =
+canonical codeword is the all-zero pattern, so aligned(A) = 0 lies in the subspace W + C_1 for EVERY
+W: the zero-codeword mechanism T4c records as its condition (c); note the dimension of C_1 alone
+would not give this, e.g. a length-1 codeword 1 with W = {0} subset C_1 is missed), and q(A) =
 2^(d_1 - dim W) where d_1 = dim(W intersect C_1) <= min(dim W, M - 1). Suppose for contradiction q is
-uniform, q(v) = 1/4 for all four classes. Then q(A) = 1/4, so d_1 = dim W - 2. For q to be uniform
-the non-increasing ladder forces dim(W intersect C_l) = dim W - 2 for every length l present; in
-particular dim(W intersect C_1) = dim W - 2. But then dim(W + C_1) = dim W + (M - 1) - (dim W - 2) =
+uniform, q(v) = 1/4 for all four classes. Then q(A) = 1/4, so by the mass formula at the hit class A
+(not the ladder, which is only a monotonicity statement) d_1 = dim(W intersect C_1) = dim W - 2; only
+this l = 1 instance is needed. But then dim(W + C_1) = dim W + (M - 1) - (dim W - 2) =
 M + 1 > M, which is impossible in GF(2)^M. Hence d_1 is not dim W - 2, and the only values consistent
 with the formula are d_1 = dim W (giving q(A) = 1, degenerate: W subset C_1) or d_1 = dim W - 1
 (giving q(A) = 1/2). Neither gives q(A) = 1/4, so q can never be flat at 1/4.
@@ -743,11 +783,15 @@ with the formula are d_1 = dim W (giving q(A) = 1, degenerate: W subset C_1) or 
 Therefore a UNIFORM target over this skewed codec is unreachable by any W. The closest reachable q to
 uniform (1/4, 1/4, 1/4, 1/4) has total-variation distance exactly 1/4 > 0: the nearest realizable
 vector is (1/2, 1/4, 1/4, 0) (and the witness (1/2, 1/4, 1/8, 1/8) also attains TV = 1/4 from
-uniform). The q(A) = 1/2 contribution alone gives L1 distance 1/2 to uniform's 1/4, a gap of 1/4, so
-total-variation distance is at least 1/4. This bound holds over ALL subspaces W of GF(2)^M, not only
-the member-codeword spans. More generally any target that fails the non-increasing-ladder NECESSARY
-condition is unreachable for the same reason (the ladder criterion handles those cases directly); the
-dimension argument handles targets that pass the ladder condition but are still unreachable.
+uniform). Since q(A) is in {1/2, 1}, the A coordinate alone deviates from uniform's 1/4 by at least
+1/4; a probability vector balances a coordinate's excess with equal total deficit elsewhere, so the
+L1 distance to uniform is at least 1/2 and the total-variation distance at least 1/4. This bound
+holds over ALL subspaces W of GF(2)^M, not only the member-codeword spans. Scope of the two criteria
+(per T4c): a target failing the non-increasing-ladder NECESSARY condition is unreachable by the
+ladder criterion directly, and FOR THIS CODEC the dimension (mass >= share) argument handles every
+target that passes the ladder yet is unreachable, since T4c proves the two conditions jointly
+complete here; in general they are not jointly complete (the {2,2,3,3,3,3} hit-geometry witness of
+T4c passes both and is still unreachable).
 
 By contrast the codec's DESIGNED 2^(-l) law IS reachable: it is achieved by W = GF(2)^M as shown
 directly in the full-span punchline above (q(v) = 2^(-l_v) for all v), which is the novel constructive
@@ -784,6 +828,14 @@ truncation, pi_l = tau_{l_max -> l} composed with pi_{l_max}) and q(v) = h_v 2^(
 displayed formula (the bridge identity, later T5c.0). Backward: given U, lift it to
 W = { (u, 0^{M - l_max}) : u in U } (U in the top l_max bits, zeros below); then pi_l(W) =
 tau_{l_max -> l}(U) = U_l for every l, so q(W) is the displayed vector. QED.
+
+Operational scope. Realizability above quantifies over ALL subspaces W of GF(2)^M; a deployed
+canonical build only produces W = span of a SUBSET of the canonical codewords, so the operational
+image is contained in the characterized set. For the skew {1,2,3,3} codec the two images COINCIDE:
+every one of the eight realizable laws is attained by some canonical-subset span (verified by
+enumerating all 15 nonempty canonical subsets against all 67 subspaces). No general coincidence is
+claimed; read the characterization as exact for the subspace question and as an upper bound on the
+laws a canonical deployment can exhibit.
 
 CLEAN NECESSARY CONDITIONS. Every realizable q satisfies, all read off the formula:
 

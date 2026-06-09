@@ -61,6 +61,45 @@ REDUCED systems, not the original `{d*_rung(v)}`. In the witness the law changes
 3, 6, 9 while the per-rung cogirths are `9, 3, 3, 3` (6 is not among them). Only the
 first change-point equals `min_v d*_rung(v)`.
 
+### 5. (2026-06-09 fresh audit) The T3 rider overclaimed frequency-independence of the deviation
+
+The T3 lemma's rider said the real per-build deviation is "independent of the storage
+frequencies" with "no frequency-dependent term in the T5 error budget." The note's own
+E2 data contradict that: delta is 0.0036 at 50/25/25 but 0.0190 at 99/0.5/0.5 with the
+same support and codec, and T5b/T5c prove the mechanism (per-class redundancy = a
+function of the multiplicities). Corrected to the gap-independence form: nothing in the
+law or the deviation grows with the frequency GAP (E2: cross-profile distance sits at
+the same-profile rebuild floor), but the deviation MAGNITUDE leaks per-class
+redundancy: an observer can learn a class is thinly stored, never the frequency
+vector's direction or shape.
+
+### 6. (2026-06-09 fresh audit) The original T2 "span check" was vacuous; replaced by a raw gate
+
+The old confirmation re-encoded the DECODED output before testing membership in `W`.
+For a Kraft-tight codec whose canonical patterns all lie in `W`, that re-encoded
+pattern lies in `W` for EVERY conceivable raw output (decoding erases exactly the
+within-class bits where a violation would live), so the check could not fail and had
+zero falsification power for the containment "reachable outputs subset W". The
+falsifiable replacement is the `[span][raw]` gate (`test_prefix_codec.cpp`): it drives
+the ribbon directly with canonical right-hand sides and asserts the UNDECODED M-bit
+non-member output lies in `W`, where only 4 of 16 (above threshold) and 2 of 16
+(sub-threshold) raw patterns do. The old checks are retained, rescoped as class-level
+law checks. Same lesson as correction 1: a passing check is only as strong as what
+could have made it fail.
+
+### 7. (2026-06-09 fresh audit) Mechanism and precision fixes in T4/T4b
+
+The T4b "class A is always hit" step was justified by the dimension of `C_1`, which is
+non-probative (a length-1 codeword `1` with `W = {0}` has the same dimension and is
+missed); the true mechanism is that A's codeword is all-zero, so `aligned(A) = 0` lies
+in `W + C_1` for every `W` (T4c condition (c)). Also tightened: "non-member outputs
+span W" (the span is over all keys; non-member outputs alone are only contained in
+`W`); the T4 sharpness claim (the mass PROFILE is a step function of the rank; which
+classes are hit depends on `pi(W)` itself); the ladder-vs-dimension scope (jointly
+complete only for `{1,2,3,3}`, per T4c); and T4c gained an operational-scope note (the
+canonical-subset image equals the subspace image for `{1,2,3,3}`, verified by
+enumeration; contained in it in general).
+
 ## Scope ledger
 
 ### Proven (theorem, with a computational gate)

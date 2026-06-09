@@ -13,7 +13,7 @@
 #
 set -euo pipefail
 
-DEFAULT_PIN="2606a4a"
+DEFAULT_PIN="660110a"
 MAPH="${MAPH_REPO:-$HOME/github/repos/maph}"
 COMMIT="${1:-$DEFAULT_PIN}"
 

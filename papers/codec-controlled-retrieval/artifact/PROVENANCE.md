@@ -4,15 +4,15 @@ This artifact is a self-contained, pinned extract of the maph research repositor
 It reproduces the computational gates behind every theorem in the manuscript
 without requiring a maph checkout. Regenerate it with:
 
-    scripts/sync-from-maph.sh 2606a4a
+    scripts/sync-from-maph.sh 660110a
 
 ## Pin
 
 - Upstream: maph (https://github.com/queelius/maph), the C++23 perfect-hashing
   research playground.
-- Commit: `2606a4aed583463984befaea56e54d8b5113ed83`
-  (2026-06-09 16:16:00 -0500)
-- Subject: fix: FreqDist real bound is per-observation Adv <= delta(p0)+delta(p1), no factor of 2
+- Commit: `660110a4b30c4f413c163b6ec3fd88c15f581f2e`
+  (2026-06-09 16:43:27 -0500)
+- Subject: fix: fresh-audit corrections to T1-T4c (raw span gate; T3 rider; T4b mechanisms)
 
 maph is a research playground and its `master` moves; this artifact is pinned to
 the commit above and is the stable reference for the manuscript. Do not cite maph

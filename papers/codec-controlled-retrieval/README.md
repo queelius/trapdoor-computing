@@ -21,7 +21,7 @@ structural frequency-hiding native to a static data structure.
 Draft-complete (32 pages). Tracking via papermill (`.papermill/state.md`). The
 technical substance is developed, computationally gated, and adversarially reviewed.
 Source of record for the technical content: `maph/docs/codec_controlled_retrieval.md`
-at pinned commit `2606a4a`, mirrored in `source/construction-note.md` and
+at pinned commit `660110a`, mirrored in `source/construction-note.md` and
 `artifact/note/` here.
 
 ## What is proven
