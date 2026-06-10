@@ -5,9 +5,11 @@ author: "Alexander Towell <lex@metafunctor.com>"
 type: research-monograph
 audience: "researchers and graduate students in security, cryptography, information theory"
 
-notebook_stack: python-uv      # python-uv | r-renv | quarto | none
-notebook_dir: notebooks
-notebook_library: "../../src/cipher-maps (package trapdoor_maps)"
+notebook_stack: none           # minimal-notebook decision (2026-06-10): figures are
+                               # pre-generated from the trapdoor_maps library; the
+                               # notebook-author agent is NOT dispatched.
+notebook_dir: notebooks        # unused under the minimal-notebook decision
+notebook_library: "../../src/cipher-maps (package trapdoor_maps; source of pre-generated figures)"
 
 build_command: "cd book && make"
 canonical_source: "../../formalism/cipher-map-formalism.md"
@@ -56,5 +58,13 @@ landmines:
   - "orbit set-form denominator |X|, not 2^n"
   - "compositional lower bound is Assouad, not Le Cam"
 
-status: scaffolded   # scaffolded -> designed -> drafting -> review -> done
+design_decisions:   # settled 2026-06-10 via /bookwright:design master
+  length: "concise synthesis, ~150-220pp; theorems stated with proof sketches + pointers to the standalone papers"
+  notebooks: "minimal; pre-generated figures from trapdoor_maps, no paired notebooks"
+  frontiers: "research-agenda roadmap (Part VI); new results land in future papers, not here"
+  bernoulli: "appendix primer (Appendix A); main text cites the Bernoulli papers"
+  exercises: none
+master_spec: "docs/superpowers/specs/2026-06-10-master-design.md"
+
+status: designed   # scaffolded -> designed -> drafting -> review -> done
 created: 2026-06-10
