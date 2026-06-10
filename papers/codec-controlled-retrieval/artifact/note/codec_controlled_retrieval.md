@@ -205,7 +205,7 @@ variant changes the stored right-hand sides per key independently, hence the spa
 and the solution z, but the per-key independent draws only add directions inside the
 within-class subspaces, so the stored patterns stay in their valid classes and the
 containment R(z) = W still holds. Its effect on the non-member LAW is the subject of
-that lemma: invariant for balanced codecs (and for skewed codecs under saturation),
+that lemma: invariant for balanced codecs (and for skewed codecs under full support),
 but NOT invariant for skewed codecs in general. Either way it is a benign builder
 variant for the containment property here (white-box-divergent), not the span-breaking
 one warned against. The computational gate for the inclusion direction is
@@ -903,15 +903,17 @@ GF(2)^4, builds the realizable image, and compares it to the clean-candidate set
   local description, the eight realizable laws) but NOT in general: {2,2,3,3,3,3} has clean laws no
   subspace realizes, due to a hit-geometry constraint, so the constructive form is the complete answer.
 
-### Randomized encoding: balanced invariance, skewed saturation boundary (settles Q#5)
+### Randomized encoding: balanced invariance, skewed full-support boundary (settles Q#5)
 
 The genericity note for T2 (Step 3) was explicit that the builder injects no pattern outside W: it stores
 the CANONICAL codeword c(x) = aligned(x) of each value, the unique class representative whose within-class
 bits are zero. The codec already exposes the alternative: encode_random(v, rng) returns a UNIFORM RANDOM
 representative of class(v), setting the bottom M - l_v bits at random instead of zero. Wiring encode_random
 into the builder (in place of the canonical encode) was the one open item earlier drafts deferred, recorded
-here as Q#5. We settle it as a lemma with a SHARP BOUNDARY: invariance is unconditional for balanced codecs
-but FAILS for skewed codecs in general, holding under a saturation condition (sufficient, not necessary).
+here as Q#5. We settle it as a lemma with a boundary: invariance is unconditional for balanced codecs,
+FAILS for skewed codecs in general, and holds for skewed codecs under FULL SUPPORT (sufficient, proven
+below; not necessary). A SATURATION condition proposed in an earlier revision (every pi_l(W) full) is NOT
+sufficient; see the counterexample in the proof.
 
 The within-class directions are exactly the kernels of the per-length quotients, and for a skewed codec
 those kernels DIFFER by length, which is the whole subtlety. By construction class(v) = aligned(v) +
@@ -923,7 +925,7 @@ ker pi_l), but for a LONGER length l > l_v we have C_{l_v} not subset C_l, so c 
 and pi_l(aligned(v) XOR c) != pi_l(aligned(v)). For a BALANCED codec there is a single length k and a single
 kernel C_k, so every draw is invisible to the one projection pi_k that matters, and the balanced invariance
 below is unconditional. For a SKEWED codec the per-length kernels disagree, and randomizing a short value is
-visible to longer-value projections: that is exactly how invariance can fail, and saturation is what
+visible to longer-value projections: that is exactly how invariance can fail, and full support is what
 forecloses it.
 
 The per-class mass depends on W only through the per-length projections. The T4b flag formula
@@ -931,7 +933,7 @@ q(v) = h_v * 2^(dim(W intersect C_{l_v}) - dim W) is, by rank-nullity (ker pi_{l
 exactly q(v) = h_v * 2^(-rank pi_{l_v}(W)) with h_v = [pi_{l_v}(aligned(v)) in pi_{l_v}(W)], where pi_l
 keeps the top l bits. So whether the law moves under randomization is exactly whether any pi_l(W) moves.
 
-LEMMA (randomized encoding: balanced invariance, skewed saturation, white-box divergence). Fix the key set
+LEMMA (randomized encoding: balanced invariance, skewed full-support boundary, white-box divergence). Fix the key set
 S and the stored values v(x). Replace each stored canonical codeword c(x) = aligned(x) by an INDEPENDENTLY
 drawn (per stored key, per occurrence) uniform within-class representative c'(x) = encode_random(v(x)) =
 aligned(x) XOR c_x with c_x in C_{l_{v(x)}} drawn uniformly and independently for each x. Let
@@ -950,14 +952,19 @@ W = span{ c(x) } and W' = span{ c'(x) }. Then:
        A -> 0000, A -> 0100, B -> 1000 gives W' = span{0000, 0100, 1000} and q' = (1/2, 1/4, 1/4, 0): q(B)
        halves and the missed class C lights up. Over all 256 within-class draws of this store FOUR distinct
        laws occur; only 64 reproduce the canonical one.
-       (Saturation: a sufficient condition.) Invariance holds for EVERY draw WHENEVER the canonical W is
-       SATURATED: pi_l(W) = GF(2)^l (full) for every code length l. Saturation is SUFFICIENT but NOT
-       necessary: storing only the length-1 value A keeps every draw inside class(A) = {top bit 0}, so
-       q = (1, 0, 0, 0) is invariant although pi_1(W) = {0} is not full. FULL SUPPORT (every value stored at
-       least once) implies saturation and is the regime in which the empirical and exact tests confirm
-       invariance. The balanced case is the degenerate one rung where the only relevant projection pi_k has
-       ker pi_k = C carrying ALL randomization, so balance gives invariance UNCONDITIONALLY, without even
-       needing saturation.
+       (Full support: a sufficient condition.) For a COMPLETE (Kraft-tight) codec, invariance holds for
+       EVERY draw whenever the store has FULL SUPPORT (every value stored at least once); then every draw
+       realizes the codec's DESIGNED Kraft law q(v) = 2^(-l_v) exactly. (Completeness is used in the proof
+       below, via sibling pairing of the deepest codewords; the note's codecs are all Kraft-tight.) Full support is sufficient but NOT necessary: storing only the length-1
+       value A keeps every draw inside class(A) = {top bit 0}, so q = (1, 0, 0, 0) is invariant although the
+       support is partial. (CORRECTION 2026-06-09, same day: an intermediate revision claimed SATURATION,
+       every pi_l(W) full, as the sufficient condition. That is FALSE: on the codec {2,2,2,3,3} the store
+       {B, C, E} is saturated yet 16 of its 32 within-class draws change the law, e.g. C -> 1010 collapses D
+       from 1/8 to 0; see the proof. The verification behind the saturation claim had sampled only
+       FULL-SUPPORT saturated stores, the same blind spot this section documents for the original Q#5
+       error.) The balanced case is the degenerate one rung where the only relevant projection pi_k has
+       ker pi_k = C carrying ALL randomization, so balance gives invariance UNCONDITIONALLY, without any
+       support hypothesis.
 
   (ii) The ribbon solution matrix z' (the white-box snapshot) DIVERGES from z per build: it solves a
        different right-hand side (c'(x) instead of c(x), and a fresh independent per-key draw each build),
@@ -978,42 +985,58 @@ C lights up at 1/4 and q(B) halves, while 111 (D) is still absent, leaving D mis
 This is exactly the obstruction: a short value's draw c_x in C_{l_{v(x)}} need not lie in ker pi_l = C_l for a
 longer length l, so pi_l(W) is not conserved. The earlier draft's claim that the difference
 dim(W intersect C_{l_v}) - dim W = -rank pi_{l_v}(W) is conserved under per-class moves is FALSE (here rank
-pi_3 goes 1 -> 2, the difference -1 -> -2). SUFFICIENCY of saturation: redrawing leaves every LONG
-generator's projection fixed (a value of length >= l has its draw in C_{l_v} subset C_l = ker pi_l, so pi_l
-is unchanged) and moves a SHORT generator only in bits below its own codeword length. When every pi_l(W) is
-already full it stays full under every draw, so every q'(v) = h_v 2^(-rank pi_l(W)) = q(v); this is verified
-exhaustively on the full-support store (all 128 within-class draws reproduce the law) and over 12000 redraws
-across five codecs (rank pi_l never drops from full, though for an UNSATURATED store a redraw can lower a
-non-full rank). Saturation is thus sufficient, not necessary (the store-only-A example above is invariant yet
-unsaturated). Full support implies saturation: the complete set of canonical codewords, each zero-padded or
-truncated to its top l bits, spans GF(2)^l at every code length l.
+pi_3 goes 1 -> 2, the difference -1 -> -2). WHY SATURATION IS NOT SUFFICIENT: a redraw can drop a FULL
+projection. On {2,2,2,3,3} (canonical A = 0000, B = 0100, C = 1000 of length 2; D = 1100, E = 1110 of
+length 3) the store {B, C, E} is saturated (pi_2 images {01, 10, 11} full; pi_3 images {010, 100, 111}
+full) WITHOUT full support (A, D unstored). The draw C -> 1010 gives pi_3 images {010, 101, 111}: but in
+the span, 0100 XOR 1010 = 1110 = E's generator, so W' = span{0100, 1010, 1110} has dimension 2, pi_3(W')
+rank 2, and the law moves from the designed (1/4, 1/4, 1/4, 1/8, 1/8) to (1/4, 1/4, 1/4, 0, 1/4): D
+collapses. Exhaustively, 16 of the 32 within-class draws of this store change the law. The flaw in the
+earlier argument: a full pi_l(W) can owe its fullness to SHORT generators' images, which the redraw moves;
+fullness is preserved only when the moving images are pinned modulo the fixed ones.
+SUFFICIENCY OF FULL SUPPORT (proof, by sibling contraction). Induct on the depth l_max of the complete
+code tree. Every depth-l_max codeword's sibling is also a depth-l_max codeword (an internal sibling would
+have deeper descendants), so the deepest codewords partition into sibling pairs; under full support both
+members of some pair are stored, their level-l_max images are their full codewords (a length-l_max value
+has C_{l_max} trivial in the image, so its image is FIXED), and their XOR is e_low, the lowest image
+coordinate. Hence e_low lies in pi_{l_max}(W') for EVERY draw. Quotient by e_low: images truncate to
+length l_max - 1, each deepest sibling pair contracts to its parent (a leaf of a complete code of depth
+l_max - 1, still "stored", with a FIXED truncated image), shorter values keep their variation, and full
+support carries over. By induction the truncated images span GF(2)^(l_max - 1); together with e_low the
+images span GF(2)^(l_max), so pi_{l_max}(W') is full, and every shallower pi_l(W') = tau(pi_{l_max}(W'))
+is full. Then q'(v) = h_v 2^(-rank pi_{l_v}(W')) = 2^(-l_v) = q(v) for every v: the designed Kraft law,
+invariant. (Base case l_max = 1: the two length-1 codewords are fixed at 0 and 1.) Verified exhaustively
+on the {1,2,3,3} full-support store (all 128 draws) and the {2,2,2,3,3} full-support store (all 256
+draws), alongside the saturated-not-full counterexample above (gated in the companion test).
 (ii) The ribbon build solves a_x^T z = c'(x) for all x in S (versus a_x^T z = c(x)); a different right-hand
 side yields a different solved z by back-substitution, and a fresh within-class draw per build re-randomizes
 it again. No contradiction with (i): (i) concerns pi_l(W), an invariant of the stored VALUES modulo the
-within-class bits (under balance or saturation), while (ii) concerns the solved SNAPSHOT z, which depends on
-those very bits. QED.
+within-class bits (under balance or full support), while (ii) concerns the solved SNAPSHOT z, which depends
+on those very bits. QED.
 
 Two consequences.
 
-  (C1) Off-set statistical invisibility (under balance or saturation). When (i) applies, the entire
+  (C1) Off-set statistical invisibility (under balance or full support). When (i) applies, the entire
        non-member value-frequency channel q(.) is UNCHANGED by within-class randomization: an attacker who
        only samples non-member outputs sees identically distributed streams from a canonical and a
-       randomized build, exactly (not asymptotically). This holds UNCONDITIONALLY for the balanced codec and,
-       for a skewed codec, whenever the store is SATURATED (every pi_l(W) full, e.g. full support; a
-       sufficient condition, not necessary). For a
-       skewed codec with PARTIAL support, randomization is NOT off-set-invisible: it can change q (the
-       {A, A, B} counterexample turns the missed class C into a hit), so balance or saturation is a
-       PRECONDITION for using within-class randomization as a confidentiality measure. This is the corrected
-       form of the earlier (over-broad) claim that skewed invariance held in general.
+       randomized build, exactly (not asymptotically). This holds UNCONDITIONALLY for the balanced codec
+       and, for a skewed codec, under FULL SUPPORT (sufficient, proven above; not necessary). For a skewed
+       codec with partial support, randomization is NOT off-set-invisible in general: it can change q (the
+       {A, A, B} counterexample turns the missed class C into a hit, and even the SATURATED {B, C, E} store
+       on {2,2,2,3,3} moves), so balance or full support is the PRECONDITION for using within-class
+       randomization as a confidentiality measure. This is the corrected form of two earlier over-broad
+       claims (skewed invariance in general; then saturation as the boundary).
 
   (C2) White-box snapshot entropy at zero per-query cost. By (ii) two builds of the SAME data (same S, same
-       values) produce DIFFERENT solution matrices z. Within-class randomization therefore INCREASES the
-       entropy of the white-box snapshot (the serialized solution): an adversary who reads the static
-       structure off disk cannot distinguish two randomized builds of the same data from two builds of
-       DIFFERENT data any better than the off-set law already allows, and the canonical zero-bit pattern (a
-       fixed, low-entropy choice) is replaced by a uniform within-class one. This is a snapshot / white-box
-       confidentiality property, obtained at zero per-query cost (the query path is unchanged; the lookup is
-       still a single a^T z).
+       values) produce DIFFERENT solution matrices z: the canonical zero-bit pattern (a fixed, low-entropy
+       choice) is replaced by a uniform within-class one, raising the entropy of the serialized snapshot per
+       build, at zero per-query cost (the query path is unchanged; the lookup is still a single a^T z).
+       Scope, stated carefully: this is an ENTROPY statement, not an indistinguishability bound. The
+       snapshot still determines W' and every pi_l(W') (T2 applies to the randomized build: R(z') = W'), so
+       what a white-box reader can infer beyond the off-set law is NOT bounded here; a snapshot-
+       indistinguishability theorem (e.g. that two randomized same-data builds cannot be told from two
+       different-data builds beyond the off-set law) is OPEN, and an earlier draft's claim of exactly that
+       was unsupported (CORRECTION 2026-06-09).
 
 Primitive, and what is new here. The primitive is textbook WIRETAP COSET CODING (Wyner 1975,
 `wyner1975wiretap`; Ozarow and Wyner 1984, `ozarowwyner1984wiretap`; and the secrecy coset-code line that
@@ -1025,24 +1048,24 @@ coset-coding randomization, transplanted to the RIGHT-HAND SIDE of a STATIC GF(2
 randomization primitive is not new. The NEW content is the invariance-plus-divergence STATEMENT for this
 static structure, WITH ITS BOUNDARY: within-coset randomization of the stored right-hand sides leaves the
 non-member output law of the SOLVED structure exactly invariant while diverging the solved snapshot (ii),
-PROVIDED the relevant projection is conserved, which holds unconditionally for a single coset (balanced) and,
-for the per-length flag of cosets (skewed), exactly under saturation. The wiretap analogy is tight only for
-the single-coset (balanced or saturated) case: there one fixed subspace carries all randomization. A skewed
+PROVIDED the law is conserved, which holds unconditionally for a single coset (balanced) and, for the
+per-length flag of cosets (skewed), under full support. The wiretap analogy is tight only for the
+balanced (or skewed full-support) case: there the law is pinned for every draw. A skewed
 codec is a FLAG of cosets of different subspaces, and randomizing within a short value's (larger) coset is
 visible to a longer value's (finer) projection, which is precisely why off-set invisibility can fail and must
-be earned by saturation. Wiretap coset coding studies a TRANSMITTED coset representative against an
+be earned by full support. Wiretap coset coding studies a TRANSMITTED coset representative against an
 eavesdropper on a noisy channel; we study a STORED coset representative against an adversary reading the
 static solved structure, and the conserved quantity is the projected span pi_l(W) that governs the
 codec-controlled law, not a channel capacity.
 
 Computational confirmation. The Catch2 test tagged [randomized] (tests/v3/test_randomized_encoding.cpp)
-gates the balanced/saturated claims at fixed rng seeds. (1) EXACT invariance: over 1300 random within-class
+gates the balanced/full-support claims at fixed rng seeds. (1) EXACT invariance: over 1300 random within-class
 re-encodings across four codecs (the M = 4 skew {1,2,3,3} and three M = 6 codecs), every per-class mass q(v)
 is bit-identical between the canonical and randomized stored sets, asserted by integer cross-multiplication
 hit_c * |W'| == hit_r * |W| so the comparison is exact rather than floating-point, while |W| itself is
 observed to change (it grows from 8 to 16 on the skew witness), confirming the masses are pinned even as the
-span size moves. NOTE: every store in this test holds FULL SUPPORT (one of each value), hence is SATURATED;
-that is why invariance holds there. (2) EMPIRICAL invariance: a canonical encoded_retrieval and a randomized
+span size moves. NOTE: every store in this test holds FULL SUPPORT (one of each value); that is why
+invariance holds there. (2) EMPIRICAL invariance: a canonical encoded_retrieval and a randomized
 ribbon build on the same 2000 keys/values (M = 8 prefix codec, full support) agree on the non-member decoded
 distribution over 30000 queries to TV = 0.0039, well inside sampling noise, with member lookups correct in
 both. (3) WHITE-BOX divergence: 1988 of 2196 serialized solution bytes differ between the canonical and
@@ -1052,11 +1075,13 @@ The BOUNDARY is gated separately in tests/v3/test_randomized_boundary.cpp (tag [
 exhibits the skewed counterexample exactly: store {A, A, B} on skew {1,2,3,3} has canonical law
 (1/2, 1/2, 0, 0), yet over all 256 within-class draws four distinct laws occur (only 64 reproduce the
 canonical), and the explicit draw A -> 0000, A -> 0100, B -> 1000 gives (1/2, 1/4, 1/4, 0). It then gates the
-saturation theorem: store {A, B, C, D} (full support, every projection full) yields the SAME law on all 128
-within-class draws. The earlier exact-invariance numbers above are consistent with this: they sit inside the
-saturated regime where the theorem guarantees invariance, and the standalone discovery probe's empirical
-TV(canonical, randomized) = 7e-3 over 2M queries (matched by a plain ribbon reseed) was likewise on a
-full-support build.
+full-support theorem: store {A, B, C, D} yields the SAME law on all 128 within-class draws, and the
+{2,2,2,3,3} full-support store the same law on all 256, while the SATURATION REFUTATION is gated alongside:
+the saturated-not-full store {B, C, E} on {2,2,2,3,3} yields TWO distinct laws over its 32 draws (16 break),
+with the explicit draw C -> 1010 giving (1/4, 1/4, 1/4, 0, 1/4). The earlier exact-invariance numbers above
+are consistent with this: they sit inside the full-support regime where the theorem guarantees invariance,
+and the standalone discovery probe's empirical TV(canonical, randomized) = 7e-3 over 2M queries (matched by
+a plain ribbon reseed) was likewise on a full-support build.
 
 ## T5: the real-incidence deviation
 
@@ -1179,8 +1204,9 @@ how far above the span threshold W sits, i.e. how many independent stored keys
 back each codec class. E2 (maph benchmark `benchmarks/bench_freq_independence.cpp`,
 result data in the bijou repo at `benchmarks/freq_independence/results.csv`) makes
 this explicit. It fixes the skewed length-{1, 2, 2} codec
-(codespace shares 0.5 / 0.25 / 0.25) on support {V0, V1, V2}, all profiles at
-GF(2) rank 2 = log2 K, and reports a per-build same-profile cross-seed baseline
+(codespace shares 0.5 / 0.25 / 0.25) on support {V0, V1, V2}, all profiles above
+the span threshold for this codec (pi_2(W) full: GF(2) rank 2 = l_max; with K = 3
+values log2 K is not the criterion), and reports a per-build same-profile cross-seed baseline
 (building one profile twice with different seeds and TV-ing the two non-member
 laws). This baseline isolates per-build T5 variance plus sampling noise:
 
@@ -1210,8 +1236,11 @@ growing N at fixed support richness does not change delta, but thinning a class'
 support toward the threshold does.
 
 IMPORTANT (T5 elevation does not undermine T3 / FreqDist). Even in the thin-
-support elevated regime, E2 showed that the elevated deviation does NOT encode
-storage frequency. The cross-PROFILE advantage tracks the per-build baseline of
+support elevated regime, E2 showed that the elevated deviation does NOT encode the
+frequency GAP or the direction of the frequency vector. (It DOES reveal per-class
+THINNESS: the elevation is a function of the per-class store count, which the
+multiplicities determine, exactly as the corrected T3 rider states. What follows
+is the gap-independence.) The cross-PROFILE advantage tracks the per-build baseline of
 the noisier profile in the pair, not the frequency gap: uniform-vs-skew_a, mid-
 vs-skew_a, and skew_b-vs-skew_a all land at the same ~0.014 magnitude despite
 very different frequency gaps, of the same order as (and bounded by) skew_a's own
@@ -1230,18 +1259,24 @@ characterize it empirically (E3, E2) and state:
 
   OBSERVATION (T5, empirical). For support comfortably above the span threshold
   (each codec class backed by many independent stored keys), the deviation of the
-  real ribbon band from Uniform(W) is delta = O(sampling floor) and is
-  indistinguishable from zero at the measured query budget: the measured TV
-  equals the n_q^(-1/2) query-sampling-noise floor (0.00334 at n_q = 100000 for
-  K = 8) to within confidence intervals, scale-independently in N up to 1e7. As W
+  real ribbon band from Uniform(W) is AT OR BELOW the query-sampling resolution of
+  the measured budget: the measured TV equals the n_q^(-1/2) sampling-noise floor
+  (0.00334 at n_q = 100000 for K = 8) to within confidence intervals,
+  scale-independently in N up to 1e7. (Not a big-O in n_q: delta is a fixed
+  property of a build; the statement is that at the measured budget it is
+  resolution-limited, heuristically <= about 0.0011 systematic at n_q = 1e5.) As W
   approaches the span threshold (a codec class backed by only a handful of stored
-  keys), delta grows mildly, to ~0.017 at the threshold edge (E2 skew_a, minority
-  classes stored ~25 times), and is governed by the per-class store count
-  (redundancy), not by N or by the storage frequencies.
+  keys), the deviation grows mildly: the same-profile cross-seed TV, a two-build
+  distance that lower-bounds the larger build's delta by half and is itself the
+  operative law-vs-law quantity in FreqDist, rises to ~0.017-0.019 at the
+  threshold edge (E2 skew_a, minority classes stored ~25 times). The elevation is
+  governed by the per-class store count (redundancy), not by N and not by the
+  frequency GAP between profiles.
 
-  THEOREM (T5b, the redundancy dependence, proven below). The qualitative pattern
-  the data exhibit, that codec control is governed by the per-class store
-  redundancy m_min, is now a theorem rather than a conjecture. The subsection "T5b:
+  THEOREM (T5b, the robustness budget, proven below). Part of the qualitative
+  pattern the data exhibit is now a theorem: the m_min-governance of control's
+  ROBUSTNESS (the binary criterion's erasure budget) is proven below as T5b; the
+  within-regime MAGNITUDE elevation remains the empirical characterization above. The subsection "T5b:
   cogirth governs robustness of codec control" (after the T5 summary) defines the
   matroid cogirth d* of the stored column system over the value quotient Q and
   proves that d* is the exact, tight, adversarial erasure budget: control (rank
@@ -1291,7 +1326,8 @@ Crucially, per E2 this residual does NOT grow
 with the frequency gap between p0 and p1: it is governed by the redundancy of the
 thinner profile, not by how different the two frequency vectors are. T5 thus caps
 the frequency-analysis leakage of the non-member channel at a small constant set
-by storage redundancy, independent of the plaintext frequencies. The formal
+by storage redundancy (a function of the multiplicities, per the corrected T3
+rider) and independent of the frequency GAP between the profiles. The formal
 FreqDist security statement, with the game definition, the exact per-observation
 constant, and the honest scoping of what more queries buy, is the security section
 below ("Security: frequency-analysis resistance (the FreqDist game)"); T5 supplies
@@ -1313,18 +1349,20 @@ the deviation budget it consumes.
 - E2: the one visible T5 effect is REDUNDANCY-governed. Rich support gives delta
   at the floor (~0.003); thin support at the threshold edge (skew_a, minority
   classes stored ~25 times) gives delta ~0.017. N does not move delta; per-class
-  store count does. The elevation does NOT encode storage frequency (cross-
-  profile advantage tracks the per-build floor, not the frequency gap), so it does
-  not break T3, it only loosens the FreqDist constant.
+  store count does. The elevation encodes per-class THINNESS (redundancy, a
+  function of the m_v) but not the frequency gap or direction (cross-profile
+  advantage tracks the per-build floor, not the gap), so the idealized T3 stands
+  and the FreqDist constant merely loosens.
 - Security hook: the per-observation FreqDist advantage is at most
   delta(p0) + delta(p1) (no factor of 2), ~0.006 (both sides rich) to ~0.02 (one
   side at threshold edge), frequency-gap-independent; formalized, with the
   many-query scoping, in the security section below.
-- T5b (next subsection, PROVEN): the redundancy dependence T5 only observed is a
-  theorem. The matroid cogirth d* of the stored column system is the exact
-  adversarial erasure budget before control collapses, and d* >= (K/2) * m_min, so
-  control survives at least (K/2) * m_min erasures. This converts the open m_min
-  conjecture above into a theorem.
+- T5b (next subsection, PROVEN): the ROBUSTNESS half of the redundancy dependence
+  T5 observed is a theorem. The matroid cogirth d* of the stored column system is
+  the exact adversarial erasure (and corruption) budget before control collapses,
+  and d* >= (K/2) * m_min, so control survives at least (K/2) * m_min erasures.
+  This converts the open m_min conjecture's CONTROL half into a theorem; the
+  within-regime delta MAGNITUDE stays the empirical characterization above.
 - T5c (PROVEN, the graded extension after T5b): for a SKEWED codec the single
   cogirth becomes a per-rung FAMILY {d*_rung(v)} along the within-class flag, with
   whole-law budget d*_graded = min over hit rungs and a GRADUAL rung-by-rung
@@ -1369,10 +1407,11 @@ the columns of G span Q, i.e.
 
 The multiplicities do not change the rank (repeating a column never raises rank),
 but they are essential to the robustness count below, and the invariant MUST be
-defined over the stored MULTISET. Over DISTINCT patterns the analogous count is
-trivially 1, since a class backed by a single key dies on a single erasure, and the
-result would collapse to a restatement of T4. With multiplicities the count is a
-genuinely new number.
+defined over the stored MULTISET: without multiplicity the budget cannot see
+per-class redundancy (a class stored a thousand times and a class stored once
+contribute the same single column), so the count would be a function of the
+support alone and could not express the m_min dependence. With multiplicities the
+count is a genuinely new number.
 
 #### The invariant: cogirth d*, and its closed form
 
@@ -1424,17 +1463,27 @@ THEOREM (T5b). For the balanced codec with stored column system G of rank k over
       drops the rank to k-1, stepping control into the T4 BROKEN regime, where
       the realized non-member law is the T4 step law and its TV-to-codespace is
       EXACTLY 0.5.
-  (2) (Erasure / error duality.) floor((d* - 1) / 2) corrupted stored equations are
-      correctable: the same minimum distance that gives an erasure budget of d* - 1
-      gives an error-correction radius of floor((d* - 1) / 2).
+  (2) (Corruption budget.) d* is ALSO the exact budget for arbitrary CORRUPTION
+      (substitution) of stored values: control survives every corruption of fewer
+      than d* stored keys' values, and some d* well-chosen substitutions drop the
+      rank to k-1. (CORRECTION 2026-06-09: an earlier version claimed
+      floor((d* - 1)/2) corrupted equations are CORRECTABLE, transporting the
+      textbook decoding radius. That was a category error: the decoding radius
+      protects a codeword of a code with minimum distance d*, but here EVERY column
+      multiset is a legal build, two legal systems can differ in a single column,
+      and no decoder, even knowing the true column multiset, can identify which
+      stored equations were corrupted. No correction claim survives; the persistence
+      claim above is what the cogirth actually buys.)
   (3) (The m_min bridge, assuming full support.) Under the additional hypothesis
       that all K value-patterns are stored (full support: m_v >= 1 for every v in
       Q), d* >= (K/2) * m_min, where m_min = min_v m_v is the minimum per-class
       store count. Hence codec control survives at least (K/2) * m_min adversarial
       erasures. Without full support an unstored class contributes 0 columns to any
-      hyperplane complement, and the bound can fail (e.g., K=4, k=2: three stored
-      patterns at multiplicities 10, 1, 1, one unstored; the heaviest complement
-      holds only the one-multiplicity pattern, so d* = 1 but (K/2)*m_min = 2).
+      hyperplane complement, and the bound can fail. Explicit instance (K=4, k=2,
+      patterns 00, 01, 10, 11): store 00 with multiplicity 10 and 01, 10 with
+      multiplicity 1 each, leave 11 unstored. The hyperplane {00, 10} has
+      complement {01, 11} holding the single 01 key, so d* = 1 < 2 = (K/2)*m_min.
+      (The arrangement matters: other placements of the heavy class give d* = 2.)
 
 Proof.
 
@@ -1444,11 +1493,15 @@ cogirth, deleting any set of size < d* removes no cocircuit (the smallest
 cocircuit has size d*), so the surviving columns still span Q (rank k); this is
 the universal ("for every deletion") guarantee. By (T5b.1) there exists a hyperplane H capturing
 (total - d*) columns, and deleting exactly the d* columns OUTSIDE H leaves all
-survivors inside H, a proper subspace, so the surviving rank is at most k-1; since a
-single cocircuit deletion drops the rank by exactly one, it is k-1. The minimum
-deletion that breaks full rank is therefore exactly d*, the cogirth, which is the
-matroid-dual statement of the minimum distance of the code whose parity-check matrix
-is G (the dual distance of G). So d* is exact and tight. The VALUE in the broken regime is pinned by the sharp
+survivors inside H, a proper subspace, so the surviving rank is at most k-1; and it
+is exactly k-1, because the survivors SPAN a (k-1)-dimensional space: if their span
+U had dim <= k-2, then U plus any one column outside it would still fit inside some
+hyperplane H', which would capture strictly more columns than H, contradicting the
+maximality in (T5b.1). The minimum deletion that breaks full rank is therefore
+exactly d*, the cogirth, which equals the minimum distance of the code GENERATED by
+the rows of G (equivalently, the dual distance of the code G checks: a nonzero
+combination a^T G has weight = the number of columns outside ker(a), minimized at
+the heaviest hyperplane). So d* is exact and tight. The VALUE in the broken regime is pinned by the sharp
 T4 step: at surviving rank k-1 the image pi(W) is a hyperplane of Q, so by the T4
 step law exactly K' = 2^(k-1) = K/2 classes are HIT, each at mass 1/K' = 2/K, and
 the other K/2 classes are MISSED at mass 0. Against the balanced codespace shares
@@ -1464,10 +1517,13 @@ companion test this is realized with ZERO build-to-build spread (the residual ba
 non-uniformity lives on the within-class bits, which the length-k codec quotients
 away), so the measured broken-step TV is 0.50000 exactly on every build.
 
-(2) Immediate from (1) by the erasure / error duality of the minimum distance: a
-code of minimum distance d* (here d* is the cogirth = dual distance of G) corrects
-any d* - 1 erasures and any floor((d* - 1) / 2) errors; an erased stored equation
-is a known-location erasure, a corrupted one is an unknown-location error.
+(2) Persistence: if fewer than d* keys' values are corrupted, the UNTOUCHED columns
+form the survivor set of a deletion of size < d*, which still spans Q by (1); the
+corrupted system contains those columns, so its rank is k. Tightness: corrupt the
+d* keys whose columns lie outside a maximizing hyperplane H of (T5b.1), assigning
+each a value whose pattern lies in H (possible: every hyperplane of Q contains K/2
+of the K value patterns); every column then lies in H and the rank is k-1, the
+broken regime, by the same step computation as (1).
 
 (3) Under full support, every hyperplane H of Q misses exactly K/2 of the K
 distinct value-patterns (its complement contains K/2 points of Q, all present by
@@ -1476,10 +1532,12 @@ complement. Hence the deletion count for any H is at least (K/2) m_min, and by
 (T5b.1) so is the minimum, d* >= (K/2) m_min. Tightness: for the uniform-
 multiplicity full-support instance (all m_v = m), every hyperplane holds exactly
 K/2 patterns each with m columns, so d* = Km - (K/2)m = (K/2)m = (K/2)m_min;
-the bound is achieved with equality and m_min = m. For non-uniform full-support
-profiles a binding profile attaining equality exists (confirmed computationally in
-the companion test: the binding-profile cases realize d* = (K/2)m_min exactly).
-QED.
+the bound is achieved with equality and m_min = m. Non-uniform binding profiles
+also exist, by construction: fix a hyperplane H0, give each of the K/2 patterns
+OUTSIDE H0 multiplicity m_min, and each pattern inside H0 any multiplicity
+>= m_min (strictly larger for non-uniformity). Every hyperplane's complement then
+weighs at least (K/2) m_min, with equality at H0, so d* = (K/2) m_min exactly
+(the companion test confirms instances of this construction). QED.
 
 #### What this converts, and the framing
 
@@ -1577,7 +1635,7 @@ per stored key x, with multiplicity. Its span is pi_v(W). Because erasing keys c
 only DELETE projected columns, pi_v(W) can only shrink, and a finite-dimensional
 span shrinks as a set iff its rank drops. So:
 
-  - HIT rung (h_v = 1, q(v) > 0). Define
+  - HIT rung with rank pi_v(W) >= 1 (h_v = 1, 0 < q(v) < 1). Define
 
         d*_rung(v) = the matroid COGIRTH of the pi_v-projected column multiset
                    = (total cols) - max over functionals a nontrivial on the
@@ -1587,6 +1645,14 @@ span shrinks as a set iff its rank drops. So:
     (this excludes a perpendicular to pi_v(W)); (T5c.1) is then the minimum number of
     columns whose deletion drops rank pi_v(W).
 
+  - PINNED hit rung (h_v = 1 with rank pi_v(W) = 0, i.e. q(v) = 1). Then every
+    projected column is zero, NO functional is nontrivial, and (T5c.1) is a maximum
+    over the empty set: define d*_rung(v) = infinity. Correctly so: q(v) = 1 forces
+    v's codeword top bits to be all zero (pi_v(aligned(v)) in {0}), so under every
+    erasure pi_v(W') stays {0} and h_v stays 1: q(v) is pinned at 1. (The cascade's
+    terminal state, e.g. (1, 0, 0, 0), is exactly this configuration; the companion
+    code returns infinity here.)
+
   - MISSED rung (h_v = 0, q(v) = 0). Erasure shrinks W, hence pi_v(W), so
     pi_v(aligned(v)) -- already outside pi_v(W) -- stays outside: h_v stays 0 and
     q(v) is pinned at 0 under EVERY erasure. d*_rung(v) = infinity.
@@ -1595,11 +1661,12 @@ span shrinks as a set iff its rank drops. So:
 
 THEOREM (T5c). Fix a skewed codec, stored values with multiplicity, and W.
 
-  (1) (Per-rung exact threshold.) For a HIT rung v, d*_rung(v) of (T5c.1) is the
-      EXACT minimum number of stored-key erasures that changes q(v): every erasure
-      of fewer than d*_rung(v) keys leaves q(v) invariant, and some erasure of
-      exactly d*_rung(v) keys changes it (q(v) DOUBLES if v stays hit, or COLLAPSES
-      to 0 if the rank drop also drops h_v to 0).
+  (1) (Per-rung exact threshold.) For a HIT rung v with rank pi_v(W) >= 1,
+      d*_rung(v) of (T5c.1) is the EXACT minimum number of stored-key erasures that
+      changes q(v): every erasure of fewer than d*_rung(v) keys leaves q(v)
+      invariant, and some erasure of exactly d*_rung(v) keys changes it (q(v)
+      DOUBLES if v stays hit, or COLLAPSES to 0 if the rank drop also drops h_v to
+      0). A PINNED hit rung (q(v) = 1) has d*_rung(v) = infinity and never changes.
   (2) (Missed rungs.) For a MISSED rung, q(v) = 0 under every erasure;
       d*_rung(v) = infinity. A missed class never becomes hit.
   (3) (Graded budget.) The realized law q as a WHOLE first changes at
@@ -1609,9 +1676,13 @@ THEOREM (T5c). Fix a skewed codec, stored values with multiplicity, and W.
       Below it every erasure leaves the ENTIRE law q invariant; at it the thinnest
       hit rung breaks. This is the exact, tight whole-law erasure budget.
   (4) (Cascade.) The law has more than one change point in general. The first is
-      d*_graded (part 3); continued erasure breaks the remaining hit rungs one at a
-      time, each at the cogirth of the correspondingly REDUCED projected system (an
-      adaptive process on the shrinking W). The successive change points are in
+      d*_graded (part 3); continued erasure breaks further hit rungs at the cogirths
+      of the correspondingly REDUCED projected systems (an adaptive process on the
+      shrinking W). When the reduced thresholds are distinct, the COLLAPSES arrive
+      one rung per change point; surviving rungs may simultaneously DOUBLE at the
+      same point (in the witness, B's collapse at 3 erasures doubles C and D), and
+      under tied thresholds several rungs change together (the balanced case is the
+      extreme: whole hyperplane-halves of classes collapse at once). The successive change points are in
       general NOT the original per-rung cogirths {d*_rung(v)}: only the first equals
       min over hit rungs of d*_rung(v). At every stage q is the T4b law on the
       current W, so mass is conserved and the freed mass redistributes by the flag
@@ -1622,8 +1693,12 @@ THEOREM (T5c). Fix a skewed codec, stored values with multiplicity, and W.
       there is one within-class subspace C_k, one projection, one projected column
       system, and a SINGLE common cogirth d*_rung(v) = d* shared by every rung
       (equal to the T5b value (K/2) m in the full-support uniform-multiplicity case).
-      The family collapses to the single T5b threshold and the cascade to the single
-      T5b step. T5b is exactly the single-rung case of T5c.
+      The per-rung FAMILY collapses to one shared value at every stage, and the
+      FIRST change point is the T5b threshold with the T5b broken step (TV = 0.5).
+      The CASCADE does not collapse to one step: it continues through the reduced
+      systems, one rank per stage (k, k-1, ..., 0; e.g. {2,2,2,2} at m = 3 changes
+      at 6 cumulative erasures and again at 9). T5b is exactly the FIRST-threshold,
+      single-rung case of T5c, not the whole cascade.
 
 Proof.
 
@@ -1632,11 +1707,11 @@ changes iff pi_v(W) changes. Since erasure only deletes projected columns, pi_v(
 can only shrink, and shrinks as a set iff rank pi_v(W) drops. By the cogirth
 definition (T5c.1), no deletion of fewer than d*_rung(v) columns drops that rank (the
 smallest cocircuit of the projected matroid has size d*_rung(v)), so q(v) is
-invariant below the threshold; and deleting a minimum cocircuit of size d*_rung(v)
-drops the rank by EXACTLY one (the maximum column count in a proper flat is attained
-on a hyperplane, since any lower-rank flat extends to a hyperplane holding at least
-as many columns; that maximizing hyperplane is itself a flat, so the survivors span
-it and the rank drops by exactly one), so q(v) changes. At that drop, if pi_v(aligned(v))
+invariant below the threshold; and deleting the d*_rung(v) columns outside a
+maximizing hyperplane H drops the rank by EXACTLY one: the survivors span a space of
+dimension exactly rank - 1, since a survivor span of dimension <= rank - 2, extended
+by any one column outside it, would still fit in a hyperplane capturing strictly
+more columns than H, contradicting the maximality in (T5c.1). So q(v) changes. At that drop, if pi_v(aligned(v))
 remains in the smaller image then h_v stays 1 and q(v) = 2^(-rank) doubles; if it
 leaves the image then h_v flips to 0 and q(v) collapses to 0. (A flip of h_v without
 a rank drop is impossible: equal rank with pi_v(W') subset pi_v(W) forces equality of
@@ -1669,9 +1744,12 @@ the flag formula onto the surviving hit rungs.
 (5) When every l_v = k there is one within-class subspace C_k and one projection
 pi = pi_v for all v, so all rungs share the projected column system over Q = GF(2)^k
 and its single cogirth. By the T5b computation that cogirth is (K/2) m for the full
-support uniform-multiplicity profile. Equal thresholds collapse (4) to one change
-point, where the surviving image pi(W) is a hyperplane of Q and the realized law is
-the T4 broken step with TV = 0.5; this is precisely T5b. QED.
+support uniform-multiplicity profile. At the FIRST change point the surviving image
+pi(W) is a hyperplane of Q and the realized law is the T4 broken step with TV = 0.5:
+precisely T5b. Equal thresholds make each change point SIMULTANEOUS across rungs,
+not unique: the cascade continues through the reduced systems, dropping one rank per
+stage until rank 0 (e.g. {2,2,2,2} at m = 3: the law changes at 6 erasures, rank 2
+to 1, and again at 9, rank 1 to 0). T5b describes the first stage. QED.
 
 #### The witness, and the framing
 
@@ -2378,7 +2456,8 @@ is NOVEL, and what is OUT OF SCOPE) is recoverable from this one file.
   drawn per-key, per-occurrence uniform within-class representative c'(x) = encode_random(v(x))
   diverges the white-box solution snapshot z while leaving the non-member law q(.) EXACTLY
   invariant for the BALANCED codec unconditionally, and for SKEWED codecs whenever the store
-  is SATURATED (every pi_l(W) full, e.g. full support; sufficient, not necessary); skewed invariance is FALSE in general,
+  has FULL SUPPORT (sufficient, proven by sibling contraction; not necessary; the intermediate
+  saturation condition was REFUTED by the {2,2,2,3,3} store {B,C,E}); skewed invariance is FALSE in general,
   with the exact counterexample store {A,A,B} on skew {1,2,3,3} giving canonical (1/2,1/2,0,0)
   but a randomized draw (1/2,1/4,1/4,0); this settles Q#5 with a boundary, correcting the
   earlier over-broad skewed claim),
@@ -2411,8 +2490,8 @@ is NOVEL, and what is OUT OF SCOPE) is recoverable from this one file.
   constructive subspace-chain form is the complete answer, and the mass >= share and
   ladder conditions, while necessary, are NOT reducible to a local per-class description
   in general); and the randomized-encoding question Q#5 as the
-  randomized-encoding lemma above, settled with a sharp boundary, balanced/saturated
-  invariance with a skewed counterexample.) The security treatment defends
+  randomized-encoding lemma above, settled with a boundary, balanced/full-support
+  invariance with skewed counterexamples.) The security treatment defends
   exactly one channel (the non-member value-frequency channel) against exactly one
   attack (single-instance frequency analysis), plus the reconciliation of the
   opposite-pulling multi-instance coincidence oracle; access-pattern, volume, and

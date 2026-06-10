@@ -4,15 +4,15 @@ This artifact is a self-contained, pinned extract of the maph research repositor
 It reproduces the computational gates behind every theorem in the manuscript
 without requiring a maph checkout. Regenerate it with:
 
-    scripts/sync-from-maph.sh 660110a
+    scripts/sync-from-maph.sh 402c8ca
 
 ## Pin
 
 - Upstream: maph (https://github.com/queelius/maph), the C++23 perfect-hashing
   research playground.
-- Commit: `660110a4b30c4f413c163b6ec3fd88c15f581f2e`
-  (2026-06-09 16:43:27 -0500)
-- Subject: fix: fresh-audit corrections to T1-T4c (raw span gate; T3 rider; T4b mechanisms)
+- Commit: `402c8cadd431093264e7d25090e5b08c3f430ab1`
+  (2026-06-10 00:01:28 -0500)
+- Subject: fix: fresh-audit corrections to the randomized section, T5, T5b, T5c
 
 maph is a research playground and its `master` moves; this artifact is pinned to
 the commit above and is the stable reference for the manuscript. Do not cite maph

@@ -31,8 +31,11 @@
  *       rank by one and steps control to the T4 BROKEN regime, where the broken
  *       value is exactly the T4 step TV = 0.5 for the K' = K/2 collapse. So d* is
  *       the exact, tight, adversarial erasure budget.
- *   (2) floor((d* - 1) / 2) corrupted stored equations are correctable (the
- *       erasure / error duality of the minimum distance).
+ *   (2) d* is ALSO the exact CORRUPTION (substitution) budget: control survives
+ *       every corruption of fewer than d* stored keys' values, and d* well-chosen
+ *       substitutions (into a maximizing hyperplane) break it. (An earlier
+ *       "floor((d*-1)/2) errors correctable" claim was withdrawn: no code
+ *       constraint anchors decoding here; see the note's CORRECTION 2026-06-09.)
  *   (3) d* >= (K/2) * m_min, where m_min is the minimum per-class store count.
  *       This LOWER-BOUNDS the cogirth by per-class redundancy and converts the
  *       previously-open T5 m_min conjecture into a theorem.
@@ -46,10 +49,11 @@
  *     thinnest stacks lie outside the maximizing hyperplane.
  *
  * CRITICAL: the invariant is defined over the stored MULTISET (with
- * multiplicities). Over DISTINCT patterns the cogirth is trivially 1 (a class
- * backed by one key dies on one erasure) and the result would be a thin
- * restatement of T4. With multiplicities, d* is a genuinely new number
- * (= (K/2) m for the grid, = m for a basis), distinct from log2 K and from 1.
+ * multiplicities). Without multiplicity the budget cannot see per-class
+ * redundancy (a class stored a thousand times and one stored once contribute the
+ * same single column), so the count would be a function of the support alone.
+ * With multiplicities, d* is a genuinely new number (= (K/2) m for the grid,
+ * = m for a basis), distinct from log2 K.
  *
  * Measurement reuses benchmarks/codec_experiment.hpp (TV-to-codespace). 4-space
  * indent, 100-char lines, no em-dashes.
@@ -69,6 +73,7 @@
 #include <cstdint>
 #include <numeric>
 #include <random>
+#include <set>
 #include <span>
 #include <string>
 #include <unordered_set>
@@ -492,4 +497,72 @@ TEST_CASE("T5b: d* >= (K/2)*m_min on non-uniform profiles, with equality when th
             REQUIRE(dstar >= m_min);  // the weaker per-value bound, also always true
         }
     }
+}
+
+// ===== T5b claim (2): d* is ALSO the exact CORRUPTION (substitution) budget. =====
+//
+// Corrupting a stored key substitutes its value (its column moves to another
+// value-pattern); unlike erasure the column count is preserved. Persistence:
+// with fewer than d* corruptions the untouched columns are the survivors of a
+// deletion of size < d*, which still span Q, and the corrupted system contains
+// them, so control (rank k) holds for EVERY corruption pattern and EVERY choice
+// of substituted values. Tightness: substituting the d* keys whose columns lie
+// outside a maximizing hyperplane with values INSIDE it (V0's column 000 lies in
+// every hyperplane) drops the rank to k-1. This replaces a withdrawn
+// "floor((d*-1)/2) errors are correctable" claim, which transported the textbook
+// decoding radius into a setting with no code constraint on legal builds
+// (CORRECTION 2026-06-09; see the note).
+
+TEST_CASE("T5b: cogirth d* is the exact corruption (substitution) budget",
+          "[cogirth][robustness]") {
+    auto codec = make_codec();
+    const size_t m = 3;
+    std::vector<V> full(ALPHABET.begin(), ALPHABET.end());
+    std::vector<size_t> mult(ALPHABET.size(), m);
+
+    // Stored multiset: full support, multiplicity m each; d* = (K/2) m.
+    const size_t dstar = cogirth(codec, full, mult);
+    REQUIRE(dstar == (K / 2) * m);
+
+    std::vector<V> stored;
+    for (V v : ALPHABET)
+        for (size_t j = 0; j < m; ++j) stored.push_back(v);
+    REQUIRE(surviving_rank(codec, stored) == k);
+
+    // (a) PERSISTENCE: corrupt exactly d* - 1 keys, random positions and random
+    // replacement values, many trials: the corrupted multiset's rank stays k.
+    std::mt19937_64 rng{2026};
+    std::uniform_int_distribution<size_t> pos(0, stored.size() - 1);
+    std::uniform_int_distribution<int> val(0, static_cast<int>(K) - 1);
+    for (int trial = 0; trial < 300; ++trial) {
+        std::vector<V> corrupted = stored;
+        std::set<size_t> sites;
+        while (sites.size() < dstar - 1) sites.insert(pos(rng));
+        for (size_t s : sites) corrupted[s] = static_cast<V>(val(rng));
+        REQUIRE(surviving_rank(codec, corrupted) == k);
+    }
+
+    // (b) TIGHTNESS: find a maximizing hyperplane ker(a*), substitute every key
+    // whose column lies OUTSIDE it with V0 (column 000, inside every hyperplane).
+    // Exactly d* substitutions, and the rank drops to exactly k - 1.
+    uint32_t a_star = 0;
+    size_t best_in = 0;
+    for (uint32_t a = 1; a < (1u << k); ++a) {
+        size_t in_ker = 0;
+        for (V v : stored)
+            if ((__builtin_popcount(qvec(codec, v) & a) & 1) == 0) ++in_ker;
+        if (in_ker > best_in) { best_in = in_ker; a_star = a; }
+    }
+    REQUIRE(stored.size() - best_in == dstar);  // the maximizer realizes d*
+
+    std::vector<V> adversarial = stored;
+    size_t substituted = 0;
+    for (auto& v : adversarial) {
+        if ((__builtin_popcount(qvec(codec, v) & a_star) & 1) != 0) {
+            v = V::V0;  // move the column into ker(a*)
+            ++substituted;
+        }
+    }
+    REQUIRE(substituted == dstar);
+    REQUIRE(surviving_rank(codec, adversarial) == k - 1);  // broken: exactly k-1
 }

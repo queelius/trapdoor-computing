@@ -337,6 +337,34 @@ TEST_CASE("T5c: a missed rung stays at 0 under every erasure (d*_rung = infinity
     REQUIRE(d_star_rung(cdc, V::B, stored) != INF);
 }
 
+// ===== A PINNED hit rung (q(v) = 1, rank pi_v(W) = 0) also has d*_rung = INF. =====
+
+TEST_CASE("T5c: a pinned hit rung (q = 1) never changes (d*_rung = infinity)",
+          "[cogirth][graded]") {
+    auto cdc = skew_codec();
+
+    // Store only A (the all-zero codeword), twice: W = {0}, q = (1, 0, 0, 0).
+    // Rung A is HIT with rank pi_A(W) = 0: every projected column is zero, no
+    // functional is nontrivial, and (T5c.1)'s maximum ranges over the empty set;
+    // the convention (and the code) give d*_rung(A) = infinity. Correctly so:
+    // under every erasure pi_A(W') stays {0} and h_A stays 1, so q(A) is pinned
+    // at 1. This is the cascade's terminal configuration.
+    const std::vector<V> stored = {V::A, V::A};
+    const auto q0 = mass_by_enumeration(cdc, encode_all(cdc, stored));
+    REQUIRE(std::abs(q0[idx(V::A)] - 1.0) < EXACT);
+
+    REQUIRE(d_star_rung(cdc, V::A, stored) == INF);                 // pinned hit
+    REQUIRE(exhaustive_first_change(cdc, V::A, stored) == INF);     // truly never changes
+    REQUIRE(d_star_graded(cdc, stored) == INF);                     // whole law frozen
+
+    // The other rungs are MISSED (also INF), so the entire law is invariant
+    // under every erasure: no finite change point exists anywhere.
+    for (V v : {V::B, V::C, V::D}) {
+        REQUIRE(d_star_rung(cdc, v, stored) == INF);
+        REQUIRE(exhaustive_first_change(cdc, v, stored) == INF);
+    }
+}
+
 // ===== The CASCADE: gradual, multi-threshold, mass-conserving. =====
 
 TEST_CASE("T5c: the law degrades RUNG BY RUNG at thresholds 3, 6, 9 (gradual cascade)",

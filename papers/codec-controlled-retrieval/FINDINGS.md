@@ -100,6 +100,43 @@ complete only for `{1,2,3,3}`, per T4c); and T4c gained an operational-scope not
 canonical-subset image equals the subspace image for `{1,2,3,3}`, verified by
 enumeration; contained in it in general).
 
+### 8. (2026-06-09/10 second fresh audit) The randomized boundary is FULL SUPPORT, not saturation
+
+This lemma has now been corrected twice. The original claim (skewed invariance in
+general) was refuted by `{A,A,B}` (correction 1). The same-day patch (SATURATION,
+every `pi_l(W)` full, is sufficient) is ALSO false: on `{2,2,2,3,3}` the saturated
+store `{B,C,E}` has 16 of its 32 within-class draws change the law (the draw
+`C -> 1010` collapses D from 1/8 to 0). A full `pi_l(W)` can owe its fullness to
+SHORT generators' images, which the redraw moves. The correct boundary is FULL
+SUPPORT (every value stored), proven by sibling contraction on the complete code
+tree and confirmed across eight complete codes. Both wrong claims share one blind
+spot: each was "verified" only on full-support stores, which are saturated, so the
+test never entered the regime where the weaker condition fails. Gated by
+`test_randomized_boundary.cpp` (3) and `python/verification/randomized_full_support.py`.
+
+### 9. (2026-06-09/10) T5b "error duality" was a category error; it is a corruption budget
+
+T5b claimed `floor((d*-1)/2)` corrupted stored equations are CORRECTABLE,
+transporting the textbook decoding radius. That radius protects a codeword of a
+code with minimum distance `d*`; here EVERY column multiset is a legal build, two
+legal systems can differ in a single column, and no decoder (even knowing the true
+column multiset) can identify which equations were corrupted. The claim is
+withdrawn. What `d*` actually is, besides the erasure budget, is the exact
+CORRUPTION (substitution) budget: control survives every substitution of fewer
+than `d*` stored values, and `d*` well-chosen substitutions break it. Gated by a
+new persistence/tightness check in `test_cogirth_robustness.cpp`.
+
+### 10. (2026-06-09/10) T5c edge cases: pinned hit rungs and the balanced cascade length
+
+Two T5c clauses were wrong at edges. (a) The per-rung threshold was ill-defined for
+a saturated HIT rung (`rank pi_v(W) = 0`, `q(v) = 1`, the cascade's terminal
+state): `(T5c.1)`'s max ranges over the empty functional set. Fixed with a PINNED
+rung case (`d*_rung = infinity`, the rung never changes). (b) Claim (5) said the
+balanced cascade "collapses to one change point"; it does not: the cascade runs
+through ranks `k-1, ..., 0` (e.g. `{2,2,2,2}` at m=3 changes at 6 and again at 9
+erasures). T5b describes only the FIRST step. Gated by a new pinned-rung check in
+`test_cogirth_graded.cpp`.
+
 ## Scope ledger
 
 ### Proven (theorem, with a computational gate)
