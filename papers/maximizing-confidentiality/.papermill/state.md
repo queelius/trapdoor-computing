@@ -19,7 +19,7 @@ thesis:
   refined_original: "2026-04-01: Complete rewrite from cipher map formalism. Old 43-page paper replaced by 13-page theory paper."
 
 prior_art:
-  last_survey: null
+  last_survey: "2026-06-09 (ecosystem-wide adversarial survey; report at trapdoor-computing/.papermill/prior-art/2026-06-09-ecosystem-survey.md)"
   key_references:
     - "towell2026cipher - Cipher maps framework (four properties, composition, acceptance predicates)"
     - "towell2026algebraic - Algebraic cipher types (sum/product trade-offs, orbit closure)"
@@ -27,8 +27,17 @@ prior_art:
     - "Jaynes 1957 - Maximum entropy principle"
     - "Islam et al. 2012 - Access pattern leakage attacks"
     - "Cash et al. 2015 - Leakage-abuse attacks"
-    - "Simmons 1979 - Homophonic substitution"
-  gaps: "Prior work treats confidentiality qualitatively or via simulation-based security. This paper provides information-theoretic confidentiality grounded in the cipher map framework."
+    - "Simmons 1979 - Homophonic substitution (survey mention only; see gaps for the rigorous citations)"
+  gaps:
+    - "CRITICAL (headline positioning): Bindschaedler-Grubbs-Cash-Ristenpart-Shmatikov 'The Tao of Inference in Privacy-Protected Databases' PVLDB 2018 anticipates the QUALITATIVE two-scale separation (analytically optimal multinomial attack, extended across correlated columns, 96.9% multi-column recovery). NOT cited. Must cite + differentiate: they prove attack optimality; we prove the matching-minimax-rate theorem. Reposition headline as 'the sharp information-theoretic counterpart of a known phenomenon'."
+    - "Kawamoto-Chatzikokolakis-Palamidessi LMCS 2017 (QIF compositionality): bounds under independence, notes correlation breaks component-determines-total. The closest QIF-native precedent; cite. Our Assouad rate is the delta over KCP."
+    - "Farokhi-Sandberg (Automatica 2019 + IEEE TSG 2018): Fisher-information-as-privacy line. Thm 4.1 must credit it and reframe as instantiating that measure for the cipher-map noise construction (closed-form rho^2 with C(D) remains new)."
+    - "Homophonic rigor: add Gunther EUROCRYPT 1988 and/or Jendal-Kuhn-Massey EUROCRYPT 1989 alongside Simmons 1979 for Thm 4.2."
+    - "D.Smith-G.Smith CSF 2017 (tight leakage from repeated independent runs) = the canonical C2/coincidence citation for the Sec 9 discussion; Espinoza-Smith 2012 cascade for the MI-equality argument."
+    - "Duchi-Jordan-Wainwright FOCS 2013 (local privacy minimax rates): methodological cousin (Assouad/Fano, sqrt(domain/N) rates) with INVERTED intent (their rate is the guarantee, ours is the leakage). Cite with the contrast."
+    - "LEAKER (Kamara et al EuroS&P 2022): cite as the empirical counterpart; one sentence also justifies the 20NG corpus choice."
+    - "CRITICAL (FSE steelman, 2026-06-09 follow-up scout): this paper is the program's MOST EXPOSED to the 'FSE rebranded' objection. Verified by file inspection: it cites ONLY Simmons 1979 for homophonic substitution; no Lacharite-Paterson FSE (ToSC 2018), no PANCAKE (USENIX 2020), no FH-OPE (Kerschbaum CCS 2015), no Revisiting-FSE (Chen-Yang-Lv, Cybersecurity 2024), despite being built around the homophonic delta-reduction lever and listing 'homophonic substitution' in keywords. ALSO: Cao et al. VLDB 2023 frequency-revealing attacks on FH-OPE already contain the QUALITATIVE 'marginal flattening does not hide joint structure' insight; frame the two-scale theorem as 'we prove the bound the attack literature observed'. The required related-work sentence and 5 BibTeX entries are in the survey report Part VII."
+    - "VERDICT: sharp two-sided rate + MI-preservation survives as genuinely unclaimed (medium-high confidence), INCLUDING against the FSE line (steelman differentiator 5: formal half new, qualitative half is Cao 2023 / KCP / Tao-of-Inference territory). Qualitative separation does NOT survive. Seven BibTeX entries in the survey report Parts II + five more in Part VII."
 
 experiments:
   - name: "Boolean search on 20 Newsgroups"

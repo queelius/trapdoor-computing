@@ -118,7 +118,7 @@ deployment with a known query distribution, known vocabulary size, and
 known resource budget, how confidential is the system, and how can it be
 improved?
 
-Our central observation is that confidentiality in cipher map systems
+Confidentiality in cipher map systems
 decomposes into two scales.  At the \emph{marginal scale}, a single
 cipher map's leakage is controlled by its representation-uniformity
 parameter $\delta$, and the per-cipher-value entropy ratio gives a
@@ -126,9 +126,23 @@ clean translation.  At the \emph{compositional scale}, observations of
 multiple cipher map evaluations on a shared cipher value leak the
 joint over latent outputs at parametric rate, independent of $\delta$.
 The two scales do not reduce to each other: engineering at one does
-not engineer at the other.  This is the structural reason cipher-map
-confidentiality cannot be addressed by a single number, and is the
-spine of the paper.
+not engineer at the other.
+
+That marginal frequency-flattening fails to hide joint structure is,
+qualitatively, already known in the encrypted-data setting: multi-column
+inference attacks recover correlated columns far beyond what
+single-column defenses would suggest~\cite{bindschaedler2018tao}, and
+frequency-revealing attacks on frequency-hiding order-preserving
+encryption show that hiding a ciphertext marginal leaves joint and
+insertion-order structure recoverable~\cite{cao2023frequency}.  Our
+contribution is not that observation but its sharp form: we prove the
+compositional joint-recovery rate is
+$\Theta(|Y_1|\cdot|Y_2|/\xi^2)$ with matching upper and lower bounds,
+and that no per-cipher-map parameter---$\delta$ included---moves it.
+The structural reason cipher-map confidentiality cannot be reduced to
+a single number is therefore a theorem with an information-theoretic
+optimality guarantee, not a heuristic observed in attacks, and it is
+the spine of the paper.
 
 \paragraph{Marginal scale.}
 The central measure is the \emph{entropy ratio} $e = H/H^*$: the ratio
@@ -275,21 +289,69 @@ Smith~\cite{smith2009foundations} proposes min-entropy leakage as a
 worst-case measure; Alvim et al.~\cite{alvim2020science} provide a
 comprehensive treatment of information-theoretic leakage measures.
 The measure itself is not our contribution, and we do not claim
-novelty there.  What is new here is (i) the compositional leakage
-result showing that $\delta$-uniform marginals are insufficient when
-shared cipher values recur across evaluations
-(Theorems~\ref{thm:comp-leakage} and~\ref{thm:comp-leakage-lb})
-establishing the information-theoretically optimal rate
-$\Theta(|Y_1|\cdot|Y_2|/\xi^2)$ via matching upper and lower bounds,
-the paper's main result, and (ii) the \emph{Fannes bridge} connecting
-the representation-uniformity parameter $\delta$ of cipher maps to
-the entropy ratio
-($e \geq 1 - \delta - h_2(\delta)/n$), making $\delta$ the operational
-handle QIF does not have.  The QIF literature treats leakage of a
-function; the cipher map setting adds a four-parameter construction
-$(\eta, \varepsilon, \mu, \delta)$ and a composition discipline under
-which that leakage must be reasoned about.  We discuss the
-Shannon-vs-min-entropy choice in \S\ref{sec:discussion}.
+novelty there.  Closer to our compositional result, QIF has studied
+how leakage behaves under composition: Kawamoto et
+al.~\cite{kawamoto2017compositionality} bound whole-system leakage from
+component leakages and observe that, once components are correlated,
+the component leakages no longer determine the total; Espinoza and
+Smith~\cite{espinoza2012cascade} characterize cascade leakage, and
+Smith and Smith~\cite{smith2017tight} give tight bounds on leakage from
+repeated independent runs of a channel.  These give \emph{bounds} under
+structural assumptions; our compositional theorem
+(Theorems~\ref{thm:comp-leakage} and~\ref{thm:comp-leakage-lb}) gives a
+\emph{sharp, dimension-dependent rate} $\Theta(|Y_1|\cdot|Y_2|/\xi^2)$
+with a matching minimax lower bound, for two distinct maps observed on a
+shared cipher value.  The second contribution, the \emph{Fannes bridge}
+connecting the representation-uniformity parameter $\delta$ to the
+entropy ratio ($e \geq 1 - \delta - h_2(\delta)/n$), makes $\delta$ the
+operational handle the QIF measures do not themselves supply.  We
+discuss the Shannon-vs-min-entropy choice in \S\ref{sec:discussion}.
+
+\paragraph{Frequency-smoothing and homophonic encryption.}
+The marginal-scale lever of \S\ref{sec:levers}---assigning $K(x) \propto
+D(x)$ representations per value to flatten the observed cipher-value
+distribution---is the classical homophonic substitution of
+Simmons~\cite{simmons1979symmetric}, given an information-theoretic
+treatment by G{\"u}nther~\cite{gunther1988universal} and Jendal et
+al.~\cite{jendal1989information}.  In the encrypted-data setting this
+lever is the basis of \emph{frequency-smoothing encryption}: Lacharit{\'e}
+and Paterson~\cite{lacharite2018frequency} allocate homophones per record
+to defeat snapshot frequency analysis on deterministically encrypted data,
+with security stated as game-based indistinguishability and evaluated
+empirically for concrete parameters; Chen et
+al.~\cite{chen2024revisiting} revisit this line with sharper definitions.
+Frequency-hiding order-preserving encryption~\cite{kerschbaum2015frequency}
+applies the same multi-ciphertext-per-plaintext idea in the order-preserving
+setting, and PANCAKE~\cite{grubbs2020pancake} smooths \emph{access patterns}
+to near-uniform with injected fake queries.  Two differences set our
+treatment apart.  First, mechanism: representation uniformity is a property
+of a \emph{total} cipher map evaluated blindly by the untrusted machine, so
+real and filler queries are indistinguishable structurally (by totality)
+rather than by an online traffic-injection protocol, and there is no access
+stream for a correlation attack to exploit.  Second, and central to this
+paper: that line measures the \emph{marginal} (a flattened ciphertext or
+access distribution), whereas we prove that the same $\delta$ which bounds
+the marginal provably does not bound joint leakage under composition---a
+quantitative separation, with a matching minimax rate, that the
+frequency-smoothing literature does not contain.
+
+\paragraph{Multi-field and correlated inference.}
+The compositional phenomenon---marginal hiding leaving the joint
+recoverable---has been observed and attacked, though not given a matching
+rate.  Bindschaedler et al.~\cite{bindschaedler2018tao} give an
+analytically optimal multinomial inference attack that, extended across
+correlated columns, recovers far more than single-column defenses suggest;
+Cao et al.~\cite{cao2023frequency} show frequency-hiding order-preserving
+encryption leaks recoverable joint and insertion-order structure despite a
+hidden marginal; and the leakage-abuse line~\cite{cash2015leakage,
+naveed2015inference,islam2012access} demonstrates inference from preserved
+or co-occurrence structure.  Our Theorems~\ref{thm:comp-leakage}
+and~\ref{thm:comp-leakage-lb} supply what these attacks observe but do not
+prove: the information-theoretically optimal rate of joint recovery and its
+irreducibility by any per-map parameter.  The empirical evaluation
+frameworks for such attacks~\cite{kamara2022sok} are complementary; we give
+the analytic rate, and use the 20 Newsgroups corpus
+(\S\ref{sec:experiments}) to validate it.
 
 \paragraph{SSE leakage mitigation.}
 Noise injection for encrypted search has been studied in the SSE
@@ -666,6 +728,17 @@ as $D$ becomes a point mass; the $\rho^2$ scaling is exact only for
 distributions with bounded ratio to uniform.
 \end{proof}
 
+\begin{remark}[Relation to Fisher-information privacy]
+Using Fisher information as a privacy measure---certifying a mechanism by
+how much it lowers the Fisher information available to any estimator, via
+the Cram\'er--Rao bound---is the approach of Farokhi and
+Sandberg~\cite{farokhi2019ensuring}.  Theorem~\ref{thm:noise-dilution}
+instantiates that approach for the cipher map noise-injection construction:
+the new content is the closed-form dilution factor $\rho^2$ tied to the
+totality-enabled real/filler mixture, with the distribution-dependent
+constant $C(D)$.
+\end{remark}
+
 \paragraph{Cost.}
 Noise injection costs bandwidth: the total query volume increases by a
 factor of $(N + R) / N = 1 + R/N$.  It does not cost space (no
@@ -685,8 +758,12 @@ encodings, which holds with high probability under the random oracle
 model).  Flattening the cipher value distribution therefore requires
 $D(x)/K(x)$ to be constant in $x$: more frequent elements need
 \emph{more} representations, not fewer.  This is the classical
-homophonic substitution prescription~\cite{simmons1979symmetric}:
-$K(x) \propto D(x)$.
+homophonic substitution prescription~\cite{simmons1979symmetric,
+gunther1988universal,jendal1989information}: $K(x) \propto D(x)$.  In
+the encrypted-data setting it is the lever of frequency-smoothing
+encryption~\cite{lacharite2018frequency}; here it is realized as a
+property of a total cipher map rather than an online smoothing protocol
+(see \S\ref{sec:related}).
 
 \begin{theorem}[Representation uniformity via multiplicity]
 \label{thm:multiplicity}

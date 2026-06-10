@@ -23,7 +23,7 @@ thesis:
   refined: "v2 (thesis crystallized, 2026-06-05; see .papermill/thesis-refined-2026-06-05.md). The novelty framing is now 'we turn a uniformly-acknowledged non-member-output-is-arbitrary into a characterized, codec-designable distribution governed by a sharp GF(2)-span threshold, and read off a structural zero-per-query-cost frequency-hiding property as the consequence.' v1 (bootstrap, 2026-06-05): thesis extracted from the completed maph construction note (source of record maph/docs/codec_controlled_retrieval.md @ a79d9c0). The technical substance (T1-T5, FreqDist security, experiments E1-E4) is already proven, computationally verified, and adversarially reviewed in SP2; this paper reshapes it into PoPETs venue form. Headline is the GF(2)-span threshold T4; the abstract codec-output law is cited as baseline (bernoulli_maps, Honey Encryption). PENDING: papermill:thesis sharpening, papermill:outline, then drafting the sections from the source note."
 
 prior_art:
-  last_survey: "2026-06-03 (SP3 scouts: targeted novelty check + broad field map; ledger in the note)"
+  last_survey: "2026-06-09 (ecosystem-wide adversarial survey, supersedes 2026-06-03 SP3; report at trapdoor-computing/.papermill/prior-art/2026-06-09-ecosystem-survey.md)"
   key_references:
     - "towell_bernoulli_maps: the abstract codec-output formula (singular hash map, RANDOM-ORACLE construction). MUST-DIFFERENTIATE: same formula, different construction."
     - "towell2026ciphermaps: the abstraction this instantiates (random-oracle + RecSplit backends, NO linear backend). MUST-DIFFERENTIATE and cite as home framing. Cites this paper as towell2026codec."
@@ -38,9 +38,14 @@ prior_art:
     - "lacharite2018fse: frequency-smoothing encryption (homophonic). MUST-DIFFERENTIATE: cipher layer vs data-structure layer."
     - "naveed2015inference: NKW frequency-analysis attack (the threat the property defends against)."
   gaps:
-    - "Filic-Paterson CCS 2022 (adversarial correctness/privacy for AMQ-PDS): the closest EXTERNAL filter-confidentiality formalism; covers membership PDS, not the retrieval value-distribution. Read before claiming first-to-characterize. NOT yet in refs.bib."
-    - "Patel-Persiano-Yeo-Yung 2019 volume-hiding STE: closest information-theoretic cousin (shape an observable to a public target via a structural construction). NOT yet in refs.bib."
-    - "Static Retrieval Revisited (Hu-Kuszmaul FOCS 2025) and Learned Static Function Data Structures (2025): confirm the off-S distribution is still uncharacterized in 2025 SOTA. Strengthens novelty. NOT yet in refs.bib."
+    # 2026-06-09 survey: the three previously-named gaps are CLOSED. filic2022adversarial (CCS 2022,
+    # pp. 1037-1050, simulation-based + membership-only: clean differentiation), patel2019volumehiding
+    # (CCS 2019), and hu2025retrieval (FOCS 2025) are all VERIFIED in refs.bib and resolve to the intended
+    # papers. Hu-Kuszmaul FOCS 2025 CONFIRMS tier-B novelty: 2025 SOTA leaves off-set output uncharacterized.
+    - "MUST-ADD: XorMM (Wang-Sun-Li-Qi-Chen, 'Practical Volume-Hiding Encrypted Multi-Maps with Optimal Overhead and Beyond', CCS 2022). Closest XOR-structure + leakage-hiding + static cousin; uncited; a PoPETs referee will know it; independently corroborates the dynamic-insertion negative (XorMM cannot support insertions). It hides VOLUME, not the non-member value distribution, so novelty is unthreatened."
+    - "FRAMING FIX (T4): wire-tap II equivocation theory (incl. 'equivocation matrices', Entropy 2025) already knows 'integer rank controls a security transition' in the abstract. Move one wire-tap-distinguishing sentence INTO the T4 section (the contrast currently lives only in the randenc section ~140 lines later): wire-tap fixes a designed code and asks a secrecy/equivocation question; T4 fixes a public partition and asks a data-dependent output-distribution question. Novelty carriers: the object + the exact K/K' over-weighting with exact-zero step structure."
+    - "Optional one-liners: Waffle (SIGMOD 2023, PANCAKE successor); George-Kamara-Moataz-Espiritu ASIACRYPT 2025 (distribution-aware leakage suppression); Goyal-Sridhar-Zheng arXiv 2510.00165 (history-independence: different leak surface, same spirit); Markelon-Filic-Shrimpton CCS 2023; Modern MPHF Survey ACM CSUR 2025 (the 'junk output' anchor)."
+    - "VERDICT: tier B SURVIVES (high confidence); tier C / T4 SURVIVES (medium-high). Strongest novelty position of the three mature papers. BibTeX for XorMM + Waffle in the survey report."
 
 experiments:
   - name: "E1: span-threshold cliff (T4)"

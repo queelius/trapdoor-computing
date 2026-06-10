@@ -18,7 +18,7 @@ thesis:
   refined: "v5 (abstraction-forward redirection + self-contained confidentiality, 2026-06-03). Two changes from v4. (1) Thesis re-pointed at the cipher-map ABSTRACTION (the four measurable properties, with totality / noise-in -> noise-out as the foundational privacy mechanism) as the unit of analysis; the acceptance-predicate lever and the three-literature unification are reframed as CONSEQUENCES, not the headline. (2) The delta -> leakage confidentiality bound is now SELF-CONTAINED in-paper (prop:confidentiality + prop:homophonic's tight TV < (|X|-1)/N); companion towell2026maxconf demoted from formal home of a load-bearing claim to cite-for-depth on the broader entropy-ratio program -- motivated by maxconf being unposted (MAJ-6/CITE-6) and the 2026-06-02 finding that maxconf's |X|/(2N) multiplicity constant is wrong for n>=3 while cipher-maps' own bound is correct and tight. Also corrects the stale 'Shannon-optimal allocation does space + leakage simultaneously' framing to 'distinct corners of a frontier'. Prior versions: v1 (2026-03-19), v2 acceptance-predicate-forward (2026-03-27), v3 framework-first + Pareto + incorrect inversion (2026-05-04), v4 inversion corrected (2026-05-17). PENDING manuscript propagation: abstract '(formal framework in companion work)' hedge -> self-contained, intro positioning paragraph, parent CLAUDE.md 'simultaneously' line. OPEN (under discussion 2026-06-03): whether to fold the C(f) vs C(A->B) functorial-notation clarification into the cipher-maps section 2.1 convention note -- C as type constructor on A->B yields the cipher space C(A->B); C as functorial action on morphism f yields the cipher map C(f) = fhat; coherence = algebraic-cipher-types Prop 4.3 (points of C(A->B) are exactly the maps C(A)->C(B))."
 
 prior_art:
-  last_survey: "2026-05-17"
+  last_survey: "2026-06-09 (ecosystem-wide adversarial survey; report at trapdoor-computing/.papermill/prior-art/2026-06-09-ecosystem-survey.md)"
   key_references:
     - "bloom1970space: Bloom filters (HashSet subsumes as k=1 special case)"
     - "fredman1984storing: FKS perfect hashing"
@@ -44,14 +44,17 @@ prior_art:
     - "towell2026codec: Companion experiment suite (added R7 §10.6)"
     - "towell2026algebraic: Companion algebraic types (now used at §10.3 R7)"
   gaps:
-    - "Huffman 1952 (NOT in bib; R7 CITE-2 strong recommend - paper centers Huffman codes)"
-    - "Patel-Persiano-Yeo-Yung 2019 volume-hiding STE (NOT in bib; R6/R7 strong recommend)"
-    - "Alvim et al 2020 Science of QIF textbook (NOT in bib; R6/R7 recommend)"
-    - "Kopf-Smith 2010 min-entropy leakage (NOT in bib; R6/R7 strong recommend - foundational measure choice)"
-    - "Cover-Thomas 2006 (NOT in bib; R7 recommend - Kraft inequality and coding background)"
-    - "Pouliot-Wright 2016 Kraken co-occurrence attack (NOT in bib; R6/R7 recommend for §8.2)"
-    - "Geng-Smith 2025 or equivalent QIF multi-instance work (NOT in bib; R7 CITE-MIN-3 recommend for §8.3)"
-    - "Bellare-Ristenpart-Rogaway-Stegers 2009 FPE (NOT in bib; R6 consider)"
+    # 2026-06-09 ecosystem survey: all R6/R7 gap citations VERIFIED to exist; BibTeX ready in the survey report.
+    # Verified, ready to add: Huffman 1952; Patel-Persiano-Yeo-Yung CCS 2019; Alvim et al 2020 QIF book;
+    #   Kopf-Smith CSF 2010; Cover-Thomas 2006; Pouliot-Wright CCS 2016; Bellare et al FPE SAC 2009;
+    #   QIF multi-instance = Kopf-Basin CCS 2007 + Espinoza-Smith FAST 2011 (replaces the Geng-Smith placeholder).
+    - "CRITICAL NEW THREAT (frontier claim): Saad-Freer-Rinard-Mansinghka POPL 2020 'Optimal Approximate Sampling' proves the same two-distinct-corners (entropy-optimal vs TV-optimal under dyadic constraints) phenomenon for sampling. MUST cite + reframe the (TV,L) frontier as the security instantiation (TV-to-uniform as leakage, acceptance-predicate parameterization, Le Cam semantics), not as new trade-off geometry."
+    - "Adjacent coding theory to cite for the frontier: Charalambous et al TV-ball robust coding (arXiv 1202.0136); Bocherer distribution matching (KL-to-target; the KL-vs-TV gap is the actual novelty wedge)."
+    - "Coincidence oracle: situate vs Bellare-Ristenpart-Tessaro CRYPTO 2012 multi-instance security + Kopf-Basin 2007 + Espinoza-Smith 2012; closed form + Huffman-defends-best prescription is the new content."
+    - "Quantification-priority hazard: Lacharite-Paterson FSE (ePrint 2017/1068) + 'Revisiting Frequency-Smoothing Encryption' (Cybersecurity 2024) attack the same quantification gap. Narrow any 'first to quantify' language; head-to-head required."
+    - "Kamara-Moataz-Ohrimenko CRYPTO 2018 (leakage suppression) not in bib (the 2019 EUROCRYPT paper is)."
+    - "'Weiss-Shmatikov synthetic frequency-hiding' from earlier review notes is UNVERIFIED, likely a mis-citation; nearest real work is Oya-Kerschbaum USENIX 2021. Do not add without confirming."
+    - "FSE steelman (2026-06-09): MODERATE exposure to the 'FSE rebranded' objection. Cites FH-OPE (kerschbaum2015frequency) but NOT Lacharite-Paterson FSE (ToSC 2018) or PANCAKE (USENIX 2020) by name; FSE is the direct homophonic ancestor and its absence is conspicuous. Add both + the one-sentence differentiation from survey report Part VII (structural totality vs injected traffic; delta bounds marginal but provably not joint)."
 
 experiments:
   - name: "20 Newsgroups encrypted search"
