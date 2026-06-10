@@ -11,7 +11,20 @@ change (prepared / submitted / decision / camera-ready). Papermill working state
   revision pass and a full restructure (spine + appendix Refinements) are done.
 - **Canonical source**: `paper/codec_retrieval.tex` + `paper/refs.bib` (article class,
   de-anonymized, 33 pp). This is the content source of truth.
-- **Active target (2026-06-09)**: **ACM TOPS** (Transactions on Privacy and Security). A
+- **HOLD LIFTED (2026-06-10)**: the fresh-audit corrections #5-#10 were reconciled in another
+  session and COMMITTED to this branch (cd7c709 FreqDist scoping; 0834c11 T1-T4c #5-#7 + re-pin
+  maph 660110a; 5dca8ac second-half #8-#10 + re-pin maph 402c8ca): the manuscript, BOTH venue
+  ports, source/construction-note.md, artifact/note + PROVENANCE, the three updated gates, and
+  CLAIMS/FINDINGS. Verified in this working copy (full-support 18x, corruption-budget 16x,
+  gap-language 11x); venue/tops rebuilt clean (31pp, 0 errors/undefined/overfull, corrections in
+  the rendered PDF, acmsmall + AI disclosure intact).
+- **ONE RESIDUAL before submit**: the ABSTRACT (and the freqdist-real theorem-statement line)
+  still carry the #5 "separation is frequency-independent" overclaim; the body PROOF is corrected
+  but those two lines did not propagate. Align them to the gap-independent form (+ note the
+  per-class-redundancy magnitude leak) in canonical + both ports, rebuild, before uploading.
+- Author venue history (metafunctor.com/publications) is conference-heavy (Complex Networks 2025,
+  ICCCI/ICCCNT IEEE confs, ISCS 2026); conference option is on the table alongside TOPS.
+- **Prior active target (pre-hold)**: **ACM TOPS** (Transactions on Privacy and Security). A
   rolling-deadline journal: no fixed deadline to miss, a 35-page limit with no per-page fees,
   and the cogirth / randomized-encoding / graded refinements stay first-class **in-body**. The
   submission version is BUILT at `venue/tops/` (acmsmall, 30 pp, 0 errors, de-anonymized).

@@ -79,7 +79,7 @@ advantage exactly zero in the idealized model, for any number of adaptive querie
 since the two oracles are then the identical law. In the real construction the two
 non-member laws lie within total variation $\delta(p_0)+\delta(p_1)$, so a single
 observation distinguishes them by at most that distance, and more queries only sharpen
-an estimate of two fixed laws whose separation is frequency-independent; here $\delta$
+an estimate of two fixed laws whose separation does not grow with the frequency gap; here $\delta$
 is a small, scale-independent, redundancy-governed deviation we measure to straddle the
 query-sampling floor ($0.00334$ at $10^5$ queries) up to $10^7$ keys, at zero per-query
 cost, where online encrypted-database defenses pay per query. A second,
@@ -194,7 +194,7 @@ number of adaptive queries, because the two oracles are then the identical law. 
 real construction the two non-member laws are within total variation
 $\delta(p_0)+\delta(p_1)$ of each other, so a single observed output distinguishes them
 with advantage at most that distance (\cref{thm:freqdist-real}), and additional queries
-only sharpen an adversary's estimate of two fixed, frequency-independent laws whose
+only sharpen an adversary's estimate of two fixed laws whose
 separation stays $\delta$-bounded; here $\delta$ is the small, scale-independent deviation
 of the real construction from the idealization, measured to straddle the query-sampling
 floor up to ten million keys.
@@ -888,7 +888,7 @@ draws, since \cref{def:freqdist} grants unboundedly many adaptive queries.
 
 \begin{theorem}[FreqDist, real: the two laws are close]
 \label{thm:freqdist-real}
-The two real non-member laws are close in total variation, frequency-independently and
+The two real non-member laws are close in total variation, independently of the frequency gap and
 regardless of how many samples are drawn:
 \[
   \TV\big(\lawreal(p_0), \lawreal(p_1)\big) \;\le\; \delta(p_0) + \delta(p_1).
@@ -1863,7 +1863,7 @@ million keys (\cref{sec:t5}). Read as security, this is structural frequency-hid
 distinguishing adversary with non-member oracle access has advantage exactly zero in the
 idealized model for any number of adaptive queries (\cref{thm:freqdist-ideal}); in the real
 construction the two non-member laws are within total variation $\delta(p_0)+\delta(p_1)$, a
-fixed, frequency-independent separation that no number of queries can widen, so a single
+fixed separation, independent of the frequency gap, that no number of queries can widen, so a single
 observation distinguishes them by at most that distance (\cref{thm:freqdist-real}), a property
 of the static bytes with zero per-query cost, where PANCAKE and FSE pay bandwidth or re-encoding
 online.
