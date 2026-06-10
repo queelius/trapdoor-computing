@@ -4,8 +4,16 @@ Single place that says where this paper stands across venues. Update on every st
 change (prepared / submitted / decision / camera-ready). Papermill working state is in
 `.papermill/state.md`; this file is the submission ledger.
 
-## Current state (as of 2026-06-09)
+## Current state (as of 2026-06-10)
 
+- **SUBMITTED to ACM TOPS, 2026-06-10. Manuscript ID TOPS-2026-06-0371.** Single-blind
+  (the ScholarOne flow required no anonymized manuscript), so the de-anonymized 31pp acmsmall
+  PDF (`venue/tops/main.pdf`) went in, with a cover letter drafted in-voice, 3 keywords
+  (searchable encryption / frequency hiding / retrieval data structures), funding=none,
+  prior-history=NONE, and all ACM policy attestations. Now under editorial processing; await
+  reviewer assignment then first decision (no fixed ETA; first decisions typically run months).
+  The exclusive-submission attestation binds the paper to TOPS while under review, so PoPETs and
+  other venues are fallbacks only if TOPS rejects or the paper is withdrawn.
 - **Paper**: content-complete and reviewed. Multi-agent editorial review 2026-06-09
   (report: `.papermill/reviews/2026-06-09/review.md`, verdict minor revision); the
   revision pass and a full restructure (spine + appendix Refinements) are done.
@@ -18,31 +26,27 @@ change (prepared / submitted / decision / camera-ready). Papermill working state
   CLAIMS/FINDINGS. Verified in this working copy (full-support 18x, corruption-budget 16x,
   gap-language 11x); venue/tops rebuilt clean (31pp, 0 errors/undefined/overfull, corrections in
   the rendered PDF, acmsmall + AI disclosure intact).
-- **ONE RESIDUAL before submit**: the ABSTRACT (and the freqdist-real theorem-statement line)
-  still carry the #5 "separation is frequency-independent" overclaim; the body PROOF is corrected
-  but those two lines did not propagate. Align them to the gap-independent form (+ note the
-  per-class-redundancy magnitude leak) in canonical + both ports, rebuild, before uploading.
+- **#5 abstract residual: RESOLVED (commit befcb27)**: the abstract, intro, freqdist-real
+  theorem-statement, and conclusion lines were aligned to the gap-independent form across
+  canonical + both venue ports; the 3 legitimate "the M1 law is frequency-independent" (T3)
+  spots were kept. The submitted PDF reflects this.
 - Author venue history (metafunctor.com/publications) is conference-heavy (Complex Networks 2025,
   ICCCI/ICCCNT IEEE confs, ISCS 2026); conference option is on the table alongside TOPS.
-- **Prior active target (pre-hold)**: **ACM TOPS** (Transactions on Privacy and Security). A
-  rolling-deadline journal: no fixed deadline to miss, a 35-page limit with no per-page fees,
-  and the cogirth / randomized-encoding / graded refinements stay first-class **in-body**. The
-  submission version is BUILT at `venue/tops/` (acmsmall, 30 pp, 0 errors, de-anonymized).
-  Remaining before submit: confirm the TOPS review model (single-blind vs double-anonymous;
-  see `venue/tops/NOTES.md`) and, if double-anonymous, apply the anonymization deltas; then a
-  proofread and the ACM submission upload. The PoPETs version is held as the conference/
-  companion fallback.
+- **Why ACM TOPS**: a rolling-deadline journal (no fixed deadline to miss), a 35-page limit
+  with no per-page fees, and the cogirth / randomized-encoding / graded refinements stay
+  first-class **in-body**. Submitted from `venue/tops/` (acmsmall, 31 pp, de-anon, single-blind).
+  The PoPETs version is retained as a fallback if TOPS rejects.
 
 ## Venue status
 
 | Venue | Status | Format | Body limit | Deadline model | Source | Notes |
 |---|---|---|---|---|---|---|
-| **ACM TOPS** | **active target; BUILT** | acmsmall (single-col) | 35 pp, no per-page fees | rolling | `venue/tops/` | 30 pp, 0 errors, refinements in-body, de-anon; confirm blinding before submit |
+| **ACM TOPS** | **SUBMITTED 2026-06-10 (TOPS-2026-06-0371)** | acmsmall (single-col) | 35 pp, no per-page fees | rolling | `venue/tops/` | 31 pp, single-blind, de-anon; under editorial processing |
 | IEEE TIFS | considered, declined | IEEEtran 2-col | no cap but $220/pg overlength from p11 | rolling | not built | strong fit, but ~$900-1400 overlength fee at this length; declined in favor of TOPS (no fee) |
 | Designs, Codes & Cryptography | candidate (coding identity) | Springer journal | generous | rolling | to build | best home for the GF(2)/cogirth/coset/wiretap math; privacy framing becomes secondary motivation |
 | ESORICS 2027 | candidate (conference) | LNCS | 16 pp (+ appendix; 20 total) | ~Jan 2027 (fixed) | to build | roomier than PoPETs but still capped + fixed deadline; ESORICS 2026 deadline (Jan 9 2026) passed |
 | IEEE Trans. Inf. Theory | fallback (prestige / identity shift) | IEEEtran | none | rolling | not built | top prestige, no page limit, but recast around information theory; ~12-18 mo review |
-| PoPETs 2027 (Issue 3) | prepared, on hold | acmart sigconf + popets | 12 pp | paper 2026-11-30 | `venue/popets/` | ready; kept as the conference/companion fallback if we stay with PoPETs |
+| PoPETs 2027 (Issue 3) | fallback only (TOPS holds the paper) | acmart sigconf + popets | 12 pp | paper 2026-11-30 | `venue/popets/` | ready; submit ONLY if TOPS rejects/withdrawn (exclusive-submission attestation) |
 
 Status vocabulary: candidate -> preparing -> prepared -> submitted -> under review ->
 {major revision | minor revision | accept | reject} -> camera-ready -> published | withdrawn.
@@ -74,6 +78,13 @@ Status vocabulary: candidate -> preparing -> prepared -> submitted -> under revi
 
 ## Decision log
 
+- 2026-06-10: **SUBMITTED to ACM TOPS** as Manuscript ID **TOPS-2026-06-0371** (sole author,
+  date 10-Jun-2026). Single-blind (the ScholarOne flow required no anonymized file). Driven via
+  Playwright through ScholarOne: uploaded the corrected 31pp PDF, pasted the #5-aligned
+  <=250-word abstract, added 3 keywords, drafted a cover letter in-voice, answered funding=none,
+  supplementary=No, prior-history=NONE, and all ACM policy attestations. The #5 abstract residual
+  was aligned first (commit befcb27). Next: editorial processing, reviewer assignment, first
+  decision.
 - 2026-06-09: Missed the PoPETs Issue 2 registration window. The prepared version waits (Issue
   3, paper 2026-11-30) as a fallback, but the author chose to reconsider a roomier venue so the
   refinements stay in-body. Ran a venue survey (papermill:venue): ESORICS 2026 deadline (Jan 9
