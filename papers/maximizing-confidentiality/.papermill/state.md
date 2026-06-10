@@ -1,6 +1,6 @@
 ---
 title: "The Entropy Ratio: Quantitative Confidentiality for Trapdoor Computing"
-stage: polish-complete (28pp, 6 review rounds, all theorems empirically anchored)
+stage: venue-settled CSF (31pp article-class; 2026-06-10 review round clean MINOR-REVISION, fixes in 59db449; remaining: IEEE 2-column port to <=12pp body + free appendices + double-blind anonymization)
 format: latex
 authors:
   - name: "Alexander Towell"
@@ -56,8 +56,10 @@ experiments:
     description: "Real trapdoor maps built by the library; joint recovery reproduces the rate c=0.32; eta sets a recovery floor."
 
 venue:
-  target: "Theory venue (28pp; TCC / CSF / QIF workshop candidates -- run /papermill:venue to pick)"
-  candidates: ["TCC", "CSF (Computer Security Foundations)", "QIF workshop"]
+  target: "CSF (IEEE Computer Security Foundations Symposium) -- settled 2026-06-10 after a 5-specialist review. Novelty and methodology auditors both call it the clean fit for a matching-bounds theorem; needs no new experiments. PoPETs was runner-up (more reach, but gates on an m-sweep of the realized attack + a standard SSE corpus)."
+  candidates: ["CSF (Computer Security Foundations)", "PoPETs", "TCC", "QIF workshop"]
+  requirements: "CSF format (stable across years; CSF 2027 CFP not yet posted as of 2026-06): two-column IEEE Proceedings style, body <= 12 pages EXCLUDING bibliography and well-marked appendices, DOUBLE-BLIND review."
+  format_todo: "Paper is documentclass[11pt]{article}, single-column, 31pp. Remaining pre-submission work: (1) port to IEEEtran 2-column; (2) keep body <= 12pp by pushing the Assouad proof + extended experiments into free (non-counted) appendices; (3) anonymize for double-blind (remove author block; anonymize self-cites towell2026cipher / towell2026algebraic). No deadline pressure: CSF 2027 CFP is not out yet."
 
 review_history: []
 
