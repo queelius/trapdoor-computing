@@ -1,0 +1,60 @@
+# bookwright project config. Read by the drafting and review agents.
+project: trapdoor-computing-monograph
+title: "Trapdoor Computing: Computing on Opaque Encodings"
+author: "Alexander Towell <lex@metafunctor.com>"
+type: research-monograph
+audience: "researchers and graduate students in security, cryptography, information theory"
+
+notebook_stack: python-uv      # python-uv | r-renv | quarto | none
+notebook_dir: notebooks
+notebook_library: "../../src/cipher-maps (package trapdoor_maps)"
+
+build_command: "cd book && make"
+canonical_source: "../../formalism/cipher-map-formalism.md"
+
+# Through-line: trapdoor computing as computing on opaque encodings, with
+# confidentiality that is measurable (QIF) not negligible (crypto), and
+# composition that is predictable. Consolidate the framework, then pivot
+# to a frontier of open problems.
+
+parts:
+  - id: part1
+    title: "The Paradigm"
+    folds: ["foundations/", "formalism/cipher-map-formalism.md (sec 1-3)"]
+  - id: part2
+    title: "The Cipher Map Abstraction"
+    folds: ["papers/cipher-maps", "formalism (sec 2-4)"]
+  - id: part3
+    title: "Algebra and Types"
+    folds: ["papers/algebraic-cipher-types", "foundations/trapdoor-boolean-algebra.md"]
+  - id: part4
+    title: "Confidentiality"
+    folds: ["papers/maximizing-confidentiality (SUMMARIZE only; standalone at CSF)", "formalism (sec 4A)"]
+  - id: part5
+    title: "Constructions"
+    folds:
+      - "papers/codec-controlled-retrieval"
+      - "papers/cipher-rekeying"
+      - "papers/cipher-closures"
+      - "papers/cipher-program-construction"
+      - "src/cipher-maps"
+  - id: part6
+    title: "Frontiers"
+    folds: [".papermill/prior-art/2026-06-09-ecosystem-survey.md"]
+
+provenance_constraint: >
+  Privacy comes from one-way hash + uniform representation, NOT
+  access-pattern hiding. Do NOT import ORAM / differential-privacy /
+  simulation-based / game-based crypto definitions. Confidentiality is
+  measurable (QIF), not negligible. Two scales (marginal delta; compositional
+  orbit/coincidence/joint-recovery) must not be conflated. Spine sec 4A is
+  the authority.
+
+landmines:
+  - "Fannes (linear in delta), not Pinsker (quadratic)"
+  - "homophonic K(x) proportional to D(x), not 1/D(x)"
+  - "orbit set-form denominator |X|, not 2^n"
+  - "compositional lower bound is Assouad, not Le Cam"
+
+status: scaffolded   # scaffolded -> designed -> drafting -> review -> done
+created: 2026-06-10
