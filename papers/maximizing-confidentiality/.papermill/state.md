@@ -1,6 +1,6 @@
 ---
 title: "The Entropy Ratio: Quantitative Confidentiality for Trapdoor Computing"
-stage: venue-settled CSF (31pp article-class; 2026-06-10 review round clean MINOR-REVISION, fixes in 59db449; remaining: IEEE 2-column port to <=12pp body + free appendices + double-blind anonymization)
+stage: CSF port complete (venue/csf/ IEEEtran 12pp body, proofs/measurement in appendices A-D, anonymized, builds clean; canonical single-column main.tex unchanged. Pre-submission remainder: AI-disclosure per CSF 2027 policy + final proofread)
 format: latex
 authors:
   - name: "Alexander Towell"
@@ -59,7 +59,7 @@ venue:
   target: "CSF (IEEE Computer Security Foundations Symposium) -- settled 2026-06-10 after a 5-specialist review. Novelty and methodology auditors both call it the clean fit for a matching-bounds theorem; needs no new experiments. PoPETs was runner-up (more reach, but gates on an m-sweep of the realized attack + a standard SSE corpus)."
   candidates: ["CSF (Computer Security Foundations)", "PoPETs", "TCC", "QIF workshop"]
   requirements: "CSF format (stable across years; CSF 2027 CFP not yet posted as of 2026-06): two-column IEEE Proceedings style, body <= 12 pages EXCLUDING bibliography and well-marked appendices, DOUBLE-BLIND review."
-  format_todo: "Paper is documentclass[11pt]{article}, single-column, 31pp. Remaining pre-submission work: (1) port to IEEEtran 2-column; (2) keep body <= 12pp by pushing the Assouad proof + extended experiments into free (non-counted) appendices; (3) anonymize for double-blind (remove author block; anonymize self-cites towell2026cipher / towell2026algebraic). No deadline pressure: CSF 2027 CFP is not out yet."
+  format_todo: "DONE 2026-06-10: CSF venue port at venue/csf/ (IEEEtran conference 2-col, 12pp body, Assouad proof kept in body, measurement + Boolean-chains + finite-sample + empirical-anchor moved to appendices A-D, anonymized for double-blind, 0 undefined refs, 0 wide overfull, 0 PDF identity leaks). Canonical single-column main.tex untouched. Remaining before submission: (1) add AI-use disclosure once CSF 2027 policy is posted; (2) final proofread of the 2-col render; (3) submit when CSF 2027 CFP opens."
 
 review_history: []
 
