@@ -1,6 +1,6 @@
 ---
 title: "The Entropy Ratio: Quantitative Confidentiality for Trapdoor Computing"
-stage: CSF port complete (venue/csf/ IEEEtran 12pp body, proofs/measurement in appendices A-D, anonymized, builds clean; canonical single-column main.tex unchanged. Pre-submission remainder: AI-disclosure per CSF 2027 policy + final proofread)
+stage: MAJOR-REVISION per round-2 Fable review (2026-06-11, .papermill/reviews/2026-06-11/review.md; overturns round-1 minor). Verified defects -- Thm 4.1(1) mixture-entropy equality FALSE (computes H(C,B) not H(C); case study corrects 0.88 -> 0.84 and 0.98 -> 0.94, wrong formula reproduces published values to 4 decimals); Thm 4.1(3) statement true but proof invalid as written (pointwise-bound repair) + regime condition missing in prose; Thm 5.1(2) MI equality needs canonical-output hypothesis (general truth is >=); Property-2 delta defined on ambient B^n is unsatisfiable for sparse images (define on image; cross-paper item C-11); conclusion stale numbers (33.5/112.9, p_T^k for AND). Port: queelius URL in PDF (anonymization breach; line-broken URL defeated the line-based grep), 3 table + 2 display overflows, 4 seam fixes. Thm 5.2 Assouad verified correct twice. Fix round pending; then re-port per venue/csf/NOTES.md.
 format: latex
 authors:
   - name: "Alexander Towell"
@@ -58,6 +58,7 @@ experiments:
 venue:
   target: "CSF (IEEE Computer Security Foundations Symposium) -- settled 2026-06-10 after a 5-specialist review. Novelty and methodology auditors both call it the clean fit for a matching-bounds theorem; needs no new experiments. PoPETs was runner-up (more reach, but gates on an m-sweep of the realized attack + a standard SSE corpus)."
   candidates: ["CSF (Computer Security Foundations)", "PoPETs", "TCC", "QIF workshop"]
+  plan_2026_06_11: "User-confirmed path: CSF 2027 cycle 1 primary (projected ~Jul 24 2026 from the CSF 2026 cycle pattern Jul 24 / Oct 9 / Jan 29; CFP not yet posted as of 2026-06-11; watch ieee-security.org), with PoPETs 2027 Issue 2 as dated fallback (submission Aug 31 2026 FIRM, notification Nov 1 2026, petsymposium.org/cfp27.php) if the CSF CFP has not appeared by mid-July. PoPETs path additionally requires the methodology-gating experiments (m-sweep on realized attack + one standard SSE corpus, ~1 day) and the acmart port swap (codec venue/popets is the template)."
   requirements: "CSF format (stable across years; CSF 2027 CFP not yet posted as of 2026-06): two-column IEEE Proceedings style, body <= 12 pages EXCLUDING bibliography and well-marked appendices, DOUBLE-BLIND review."
   format_todo: "DONE 2026-06-10: CSF venue port at venue/csf/ (IEEEtran conference 2-col, 12pp body, Assouad proof kept in body, measurement + Boolean-chains + finite-sample + empirical-anchor moved to appendices A-D, anonymized for double-blind, 0 undefined refs, 0 wide overfull, 0 PDF identity leaks). Canonical single-column main.tex untouched. Remaining before submission: (1) add AI-use disclosure once CSF 2027 policy is posted; (2) final proofread of the 2-col render; (3) submit when CSF 2027 CFP opens."
 
