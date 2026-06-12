@@ -103,3 +103,31 @@ Not a bug (both uses are correct), but a reader who sees "by Le Cam" in one pape
 6. **C-8**: defer; revisit if a future paper needs arity-aware orbits.
 
 A single shared `trapdoor.bib` plus a common macro preamble (`trapdoor-macros.sty`) `\input` by every paper would prevent C-2, C-5, and C-6 from recurring. Worth doing before the next paper is started.
+
+---
+
+## 2026-06-11 round-2 update (Entropy Ratio major revision)
+
+The round-2 (Fable) review of the Entropy Ratio paper drove a major
+revision (logged in its `.papermill/reviews/2026-06-11/`) that touches
+three items here:
+
+- **C-9 RESOLVED (in Entropy Ratio).** $H^*$ is now uniformly
+  $H^* = \log_2|\mathrm{im}(\enc)|$ throughout: Property 2, the Fannes
+  bound (Thm 3.1 part 3), the $K=1$ clause (part 2, now an equality), the
+  noise theorem, and the case study all normalize by the populated-support
+  log-size. The old $n$-vs-$\log_2|X|$ split is gone.
+- **C-10 RESOLVED (in Entropy Ratio).** Representation uniformity is now
+  defined against $U_{\mathrm{im}}$ (Property 2); the ambient-$U$ / $\B^n$
+  statement is demoted to the ROM/computational layer (birthday term).
+- **C-11 (NEW): the spine and Cipher Maps still carry the ambient-$\delta$
+  definition.** Spine Property 2 and `cipher-maps` define
+  $\delta = \mathrm{TV}(Q, U)$ against uniform on $\B^n$, which is $\approx
+  1$ for any sparse-image construction (the defect the Entropy Ratio paper
+  just fixed). Entropy Ratio now DEVIATES from the spine here, in the
+  correct direction. **Action:** propagate the image-relative definition
+  to the spine (Property 2) and `cipher-maps`; until then this is a
+  documented, deliberate deviation, not drift. Entropy Ratio is the
+  reference for the corrected form. (Also fixed in this round, not a
+  cross-paper item: Thm 4.1 part 1 mixture entropy $H(C)$ vs $H(C,B)$,
+  Entropy Ratio CLAUDE.md Landmine 5.)
