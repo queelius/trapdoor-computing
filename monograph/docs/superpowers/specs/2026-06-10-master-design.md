@@ -19,6 +19,8 @@ Researchers and graduate students in security, cryptography, and information the
 
 Research monograph, single authorial voice, intuition-first but rigorous. Theorems are stated precisely with **proof sketches plus pointers**; full proofs of the headline results live in the standalone papers and are cited (concise-synthesis depth, target ~150-220 pp). No exercises. Each chapter closes with a **Notes and Provenance** section (citations, authentic-source pointers, and any open sub-questions), the research-monograph analog of bibliographic notes.
 
+**Density calibration (2026-06-17, after drafting ch1-2).** Motivation chapters run tight: Part I came in at ~4.5 pp (ch1) and ~3 pp (ch2), ~8-10 pp for the part, and reads complete. The technical parts (II-V) run to their natural, richer length (theorem- and construction-driven). Book target recalibrated to ~150 pp body. The per-chapter page budgets in section 4 are over-estimates for Part I and remain upper guides for the technical parts.
+
 ## 4. Structure (parts, chapters, page budgets)
 
 Six parts, fourteen chapters, three appendices. Body ~174 pp; with front matter and appendices ~198 pp.

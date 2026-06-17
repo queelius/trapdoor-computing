@@ -36,9 +36,14 @@ Update rule: when a part is drafted, fill its section below before moving on.
 
 ## Per-part harvest
 
-### Part I: The Paradigm (designed 2026-06-16; not yet drafted)
-- **Extraction:** EC-1 (the paradigm paper). Sections 1.1-1.4 are its spine; written self-contained so 1.1-1.3 stand without the book roadmap.
-- **Back-port / reconcile while drafting:** BP-1 (the 1.3 entropy-ratio tease must use image-relative delta, not ambient), BP-2 (verify the four-cannots verbatim against the spine and produce the canonical list), BP-3 (the Ch 2 table). Fairness watch: keep the Ch 2 contrasts about threat-model difference, never "ours is better"; never echo the inverted `1/D(x)` homophonic erratum from the authentic `foundations/trapdoor-boolean-algebra.md`.
+### Part I: The Paradigm (DRAFTED 2026-06-17; ch1 ~4.5pp, ch2 ~3pp)
+- **Extraction (EC-1):** both chapters drafted lift-ready. The position-paper spine is ch1 sec 1.1-1.4 (paradigm, the four cannots, measured-not-negligible, the four claims) + ch2 (the privacy-source thesis and the comparison table). An ~8-12pp position/overview paper can be lifted with light editing (drop the book roadmap 1.4, add a contributions paragraph).
+- **Back-port findings, status:**
+  - BP-1 (image-relative delta): ch1 sec 1.3 teases the entropy ratio with `H* = log2|im(enc)|`; verified, no ambient leak.
+  - BP-2 (canonical four-cannots): ch1 sec 1.2 states them as decode / distinguish-real-from-filler / determine-domain / correct-from-noise, each paired with the blocking property, derived from the spine capability table. No divergence found while drafting; this is now a clean canonical form the papers can cite. ACTION: consider promoting it into the spine.
+  - BP-3 (positioning table): ch2 sec 2.5 (`tab:not`) drafted (ORAM / FHE / garbled / SSE-PPE rows). ACTION: candidate to promote into the spine as a shared figure.
+  - The access-pattern-drift correction (the no-ORAM guardrail) is now in the book, ch2 sec 2.1 and 2.3, with the rule "any argument resting on access-pattern indistinguishability has drifted" stated for the whole book.
+- Fairness held: all ch2 contrasts are about threat-model difference, not "ours is better"; the homophonic mention uses `K(x) propto D(x)`, never `1/D(x)`.
 
 ### Part II: The Cipher Map Abstraction
 _(to fill when designed/drafted)_
