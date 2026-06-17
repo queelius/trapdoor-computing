@@ -1,0 +1,255 @@
+% Chapter 1: Computing on Opaque Encodings
+% DEFINES: ch:opaque-encodings; sec:oblivious-service, sec:untrusted-sees,
+%   sec:measured-not-negligible, sec:book-shape, sec:ch1-notes
+% REFERENCES (forward, part labels only): part:abstraction,
+%   part:confidentiality, part:constructions, part:frontiers
+
+\chapter{Computing on Opaque Encodings}
+\label{ch:opaque-encodings}
+
+\section{The Oblivious Service}
+\label{sec:oblivious-service}
+
+Imagine a search engine that cannot read your queries, and cannot read the
+answers it returns, yet still returns the right ones. You type a word; a
+device you trust turns it into an opaque token, a string of bits with no
+visible structure. The server holds an enormous lookup table that maps
+tokens to tokens. It receives your token, looks up a result token, and
+sends it back. Your device turns that result back into an answer. At no
+point does the server see the word you searched for, the documents it
+returned, or even whether two of your queries were the same. It computes,
+usefully, on data whose meaning it cannot recover.
+
+Trace one query through the picture. You search for a sensitive word; call
+it $x$. Your device computes a token $c = \enc(x)$, say a sixty-four-bit
+string that looks, to anyone without the secret, like a random draw. It
+sends $c$ to the server. The server holds a function $\fhat$ that it
+applies to $c$ and nothing else: it does not parse $c$, does not look up
+$x$ in any plaintext index, does not branch on what $c$ ``means.'' It
+returns $\fhat(c)$, another opaque string, and your device decodes it into
+the list of matching documents. The server has done real work, a lookup
+over a structure that encodes the whole corpus, and has learned nothing it
+could write down: not the word, not the result, not even that you searched
+twice for the same thing if your device encoded it two different ways.
+
+This is the setting of \emph{trapdoor computing}, and the picture
+generalizes well past search. Split the world into two machines. A
+\emph{trusted machine} holds a secret and two private operations: an
+encoder that turns a value into a token, and a decoder that turns a token
+back into a value. We write these $\enc$ and $\dec$, and call the trusted
+machine $T$. An \emph{untrusted machine}, which we call $U$, holds only a
+function $\fhat$ on bit strings, bits in, bits out, and evaluates it on
+whatever it is given. To deploy a latent function $f : X \to Y$ in this
+world, the trusted machine encodes an input $x$ as a token $c = \enc(x)$,
+the untrusted machine computes $\fhat(c)$ blindly, and the trusted machine
+decodes the result as $\dec(\fhat(c))$, an approximation of $f(x)$. The
+secret, and the ability to cross between meanings and tokens, lives
+entirely on $T$; the untrusted machine sees opaque bits flowing through an
+opaque table. Membership testing is the special case $f : X \to \{0,1\}$,
+``is this in the set?''; a recommender is $f$ mapping a user token to an
+item token; a database lookup is $f$ from a key to a record. The same
+two-machine arrangement carries all of them.
+
+Two features of this arrangement do the work, and it is worth fixing them
+in mind now because the rest of the book returns to them constantly. The
+first is that $\fhat$ is \emph{total}: it is defined on every bit string,
+not just on the tokens that encode real inputs. Feed it a random string and
+it answers; there is no ``not found,'' no error, no signal that the input
+was meaningless. A total function has no special cases for the untrusted
+machine to notice. The second is that a single value may have many tokens,
+and the tokens are arranged so that, to anyone without the secret, they
+look like uniform random strings. Frequency, the usual handle on encrypted
+data, finds nothing to grip: the most common query and the rarest one
+produce token streams that look alike.
+
+We call $\fhat$, together with its encoder, decoder, and secret, a
+\emph{cipher map}: a total function on bit strings that implements a
+trapdoor approximation of a hidden function.\footnote{The cipher map is
+given its precise definition, as a tuple with four measurable properties,
+in \Cref{part:abstraction}. This chapter stays informal on purpose.} The
+word ``approximation'' is deliberate and will be paid for honestly: a
+cipher map is allowed to be wrong occasionally, and we will see that the
+small error budget is not only a construction convenience but a source of
+privacy in its own right. The rest of this book is about what such maps can
+compute, how their errors compose, how much they leak, and how to build
+them. But the whole subject begins with this one image: a machine doing
+genuine work on encodings it cannot read.
+
+\section{What the Untrusted Machine Sees}
+\label{sec:untrusted-sees}
+
+Put yourself in the position of the untrusted machine. You hold a lookup
+table $\fhat$ and you watch a stream of tokens arrive, each of which you
+evaluate and return. Over time you see many tokens and many results, and
+you may keep every one of them and analyze them at leisure. The governing
+question of this book is simple to ask: \emph{how much do you learn?}
+
+The honest answer is that the right design leaves you with very little, and
+it is worth being precise about why, because the reasons are not one trick
+but four, each blocking a different line of attack.
+
+\begin{itemize}
+\item \textbf{It cannot decode.} A token is the image of a value under a
+  one-way encoding keyed by a secret the untrusted machine does not hold.
+  It sees $c$, never the $x$ behind it, and inverting the encoding is the
+  hard direction of a one-way function. This is the most basic wall and the
+  one most easily taken for granted.
+\item \textbf{It cannot distinguish a real query from filler.} Because
+  $\fhat$ is total, the trusted machine can mix in random strings as decoy
+  queries, and they produce output exactly as real tokens do. Watch a
+  thousand tokens go by; if two hundred of them were decoys, nothing in the
+  stream marks which two hundred. There is no ``undefined input'' to give a
+  decoy away, and so no way to subtract the noise back out.
+\item \textbf{It cannot determine the domain, or which tokens encode the
+  same value.} Values are spread across many tokens, and the tokens are
+  arranged to be close to uniform, so the frequency analysis that breaks
+  deterministic encryption finds no purchase. The untrusted machine cannot
+  recover which inputs are in play, and it cannot tell two encodings of one
+  value from encodings of two different values; the heavy-hitter query and
+  the singleton look the same from where it sits.
+\item \textbf{It cannot be sure a result is correct.} A cipher map is
+  allowed a small error rate. An occasional wrong answer means that any
+  particular answer might be the wrong one, so even a result the untrusted
+  machine could somehow read would carry an irreducible ambiguity: it could
+  never say ``this membership answer is certainly yes'' rather than ``this
+  is one of the cases where the map erred.'' The error budget buys the
+  honest user plausible deniability.
+\end{itemize}
+
+These four are not accidents of one clever construction. Each is the
+consequence of a property that every cipher map has, and that we will name
+and measure in \Cref{part:abstraction}: \emph{totality} (every input
+produces output, so filler is indistinguishable from real),
+\emph{representation uniformity} (tokens are close to uniform, so frequency
+analysis fails), \emph{correctness} (a bounded error rate, which doubles as
+deniability), and \emph{composability} (the property that lets these maps
+be chained, which we will see is also the source of the subtlest leakage).
+The pairing is the point: each thing the adversary would like to do is
+foreclosed by a named, measurable feature, not by a hope that nobody has
+found the attack yet.
+
+What is left to the untrusted machine, then, is exactly a total function on
+opaque strings and a log of opaque strings it has evaluated. That is a
+remarkably uninformative thing to hold. It is not, however, an
+\emph{empty} thing to hold, and the difference between ``uninformative''
+and ``empty'' is where the real theory lives. The token stream does have a
+distribution; the lookup table does have structure; and a patient observer
+can, in principle, estimate things about them. The work of this book is to
+say precisely how much, and to give the designer the levers that drive that
+amount down. Pretending the leak is zero would be the same mistake the
+cryptographic literature has spent two decades correcting in encrypted
+search, where ``provably secure'' schemes fell to attacks that read exactly
+the residue the proofs declined to measure.
+
+\section{Measured, Not Negligible}
+\label{sec:measured-not-negligible}
+
+There is a habit of thought in cryptography that this book does not follow,
+and naming it early prevents confusion later. In the usual idiom, a scheme
+is secure when an adversary's advantage is \emph{negligible}: any attacker
+bounded by reasonable resources succeeds with probability that vanishes
+faster than any polynomial in a security parameter, a fact established by
+reducing an attack to some problem believed to be hard. Security, in that
+idiom, is asymptotic and all-or-nothing. Either the reduction goes through
+and the advantage is negligible, or it does not and you have learned
+nothing about how bad the leak actually is.
+
+Trapdoor computing asks a different question, and answers it in a different
+currency. The untrusted machine here is not trying to ``break'' anything in
+the reduction sense; it is a passive observer that gets to watch a
+distribution over tokens and is welcome to compute whatever it likes from
+it. That distribution is not nothing, and the right response is not to
+declare it negligible but to measure it. So instead of asking whether a
+bounded adversary can break the scheme, we ask how much the observable
+stream actually reveals, in bits, and we hold the designer responsible for
+the number. The tools are those of information theory, in the form the
+security community calls quantitative information flow: leakage is a
+quantity you compute, bound, and then engineer downward.
+
+The central measure is the \emph{entropy ratio} $e = H / H^{*}$: the
+entropy of the observed token distribution divided by the most it could
+be.\footnote{Here $H^{*} = \log_2 |\mathrm{im}(\enc)|$, the entropy of the
+uniform distribution over the tokens the construction actually populates,
+and the full theory, including how the parameter $\delta$ that controls
+$e$ is reduced and at what cost, is developed in
+\Cref{part:confidentiality}.} Read it as a fraction of the way to perfect:
+$e = 1$ means the observed stream is as featureless as uniform noise on its
+support, and the untrusted machine's best guess about any query is no
+better than blind chance; $e < 1$ means the stream carries structure, and
+the gap $1 - e$ is the part of an observer's uncertainty that the system
+has handed away. The numbers are operational. A system at $e = 0.72$ is
+leaking a real fraction of its query structure, enough that an observer
+with side information can start to rank guesses; pushed to $e = 0.94$ by
+the constructions of \Cref{part:confidentiality}, the residue is small
+enough that the same observer is reduced to near-guessing. The designer
+moves the number, and pays a stated price in space or bandwidth to do it.
+
+This is what we mean by confidentiality that is \emph{measured} rather than
+\emph{negligible}. It is not a stronger claim than the cryptographic one,
+nor a weaker one; it is a different and, for this setting, a more useful
+one. The cryptographic idiom is the right tool when there is a clean secret
+and a clean break to rule out, and it gives a guarantee that holds against
+all efficient adversaries at once. The measured idiom is the right tool
+when the adversary is handed a total function and asked, honestly, what it
+can infer from watching it work; then the actionable answer is a quantity,
+not an asymptote, and a quantity is something you can put on a dashboard and
+drive toward one.
+
+\section{The Shape of the Book}
+\label{sec:book-shape}
+
+Four claims run through everything that follows, and it helps to have them
+in one place. First, a single abstraction, the cipher map, \emph{unifies} a
+family of constructions that look unrelated at first: encrypted set
+membership, oblivious function tables, frequency-hiding retrieval, and the
+approximate data structures, Bloom filters and their kin, that the systems
+literature already knows. Second, its confidentiality lives at \emph{two
+scales} that do not reduce to each other, the leakage of a single map and
+the leakage of a chain of maps observed together, and engineering one does
+not engineer the other; the second scale, we will find, is created by the
+very composability that makes the framework useful. Third, its errors and
+its leakage \emph{compose predictably}, which is what makes building real
+systems out of these maps tractable rather than hopeful. Fourth, its
+privacy comes from \emph{one-way hashing and uniform representation}, not
+from hiding access patterns, a distinction sharp enough that the next
+chapter is devoted to it.
+
+The book follows those claims in order. \Cref{part:abstraction} builds the
+cipher map abstraction: the formal tuple, the four properties, and the
+constructions in the abstract. The part after it develops the algebra and
+type theory of cipher maps, how Boolean and product and sum structure
+survive, or fail to survive, the passage through a trapdoor.
+\Cref{part:confidentiality} is the confidentiality theory proper, the two
+scales and their measures, and it is where the entropy ratio of the
+previous section earns its definition. \Cref{part:constructions} comes down
+to earth with concrete constructions, hash-based, linear-algebraic, and
+composed, the ones that back the empirical claims made along the way.
+\Cref{part:frontiers} closes with the open problems, the places where the
+framework runs out and the next program begins. A reader who wants the
+whole picture should read it through; a reader who wants one result can
+follow the cross-references to the part that holds it, since each is built
+to stand on the named properties rather than on the chapter before it.
+
+\section{Notes and Provenance}
+\label{sec:ch1-notes}
+
+The framework collected here grew from a set of notes written in 2023 and
+2024, which remain the authentic source for its origin: a Bernoulli error
+model for approximate computation, an approximate Boolean algebra over
+trapdoor sets, an entropy-map construction for hiding function values, and
+a treatment of noisy logic gates and how their errors propagate. Those
+notes are cited in place as each idea is developed; this book is their
+synthesis, and the formal definitions, full proofs, and experiments live in
+the later parts and in the standalone papers that those parts cite.
+
+The stance of \Cref{sec:measured-not-negligible}, that confidentiality
+should be a measured quantity rather than an asymptotic guarantee, is the
+perspective of quantitative information
+flow~\cite{smith2009foundations,alvim2020science}, and the
+information-theoretic vocabulary used throughout, entropy, conditional
+entropy, mutual information, traces back to
+Shannon~\cite{shannon1949communication}. A standing convention governs the
+whole book: where this synthesis and the formal specification of the
+framework disagree on a shared definition, the specification is the
+authority, and any divergence found while writing is a bug in the
+synthesis, not a new result.
