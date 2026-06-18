@@ -891,3 +891,43 @@ How the paper family sits on this spine. Every paper imports the cipher-map tupl
 This table is the reference any new paper or revision should match. Deviations are drift and belong in the reconciliation report, not in a paper.
 
 For the *conventions* behind these symbols (the value / function / type notational levels, the cipher functor that unifies them, the rule for when to write `\hat f` versus `\mathsf{C}_s(f)`, the secret-versus-function subscript rule, and worked resolutions of recurring notation questions), see `notation.md`. That document is subordinate to this table: where they disagree on a symbol, this table wins.
+
+---
+
+## 9. Canonical Forms Consolidated by the Monograph (2026-06-18)
+
+Drafting the monograph (`monograph/`, 14 chapters) forced the whole program into one frame, and several statements that were scattered or implicit across the papers acquired a clean canonical form. They are promoted here so a paper can cite a single source. (This is the synthesis-engine payoff logged in `monograph/HARVEST.md`.)
+
+### 9.1 The Four Cannots (capability summary)
+
+Against the untrusted machine $U$, a cipher map guarantees four things $U$ cannot do, each blocked by a named property:
+
+1. **Cannot decode** a token to its latent value (one-way hash; only $T$ holds the trapdoor).
+2. **Cannot distinguish a real query from filler** (Totality, Property 1: every string answers).
+3. **Cannot determine the domain** or read which value a token carries (Representation Uniformity, Property 2: $Q$ is $\delta$-close to $U_{\mathrm{im}}$).
+4. **Cannot be sure a result is correct** (nonzero $\eta$, Property 3: an answer may be a true result or a cipher-map error, the deniability dual).
+
+Monograph Ch 1.2 (`sec:untrusted-sees`) is the canonical prose; cite this list rather than re-deriving it.
+
+### 9.2 The Cipher Closure (unifying abstraction)
+
+A **cipher closure** is a procedure that captures a trapdoor secret and exposes an operation interface over bit strings, with the secret reachable only through that interface. Cipher values, cipher maps, and cipher data structures are all cipher closures, differing only in the interface exposed; rekeying is a closure that transforms another closure's captured secret. This subsumes the value / map / data-structure / secret distinctions under one object (monograph Ch 13, `def:cipher-closure`; cipher-closures paper). It is the cleanest statement of the code-data duality the program rests on.
+
+### 9.3 The Two-Scale Irreducibility (canonical statement)
+
+Confidentiality lives at two scales that do not reduce to each other. The **marginal** scale (a single token) is governed by $\delta$ through the entropy ratio $e = H(Q)/H^*$ and its Fannes-Audenaert lower bound. The **compositional** scale (several evaluations on shared tokens) is governed by the joint-recovery rate $\Theta(|Y_1||Y_2|/\xi^2)$, **which no per-cipher-map parameter, $\delta$ included, can move**. Reducing $\delta$ is necessary but not sufficient; the compositional channel is intrinsic to composability (totality plus Property 4 create it). Monograph Ch 10 (`rem:irreducibility`) is the canonical statement; the Entropy Ratio paper owns the theorems.
+
+### 9.4 Two Ways to Hide Frequency
+
+Frequency-hiding has two mechanisms, and they differ in cost structure:
+
+| Mechanism | How | Cost |
+|---|---|---|
+| Homophonic multiplicity | $K(x) \propto D(x)$ spreads frequent values over tokens | space; per-query for online defenses |
+| GF(2) codec | non-member output law fixed on the stored span | one-time build, a rank condition; **zero per-query** |
+
+The structural (codec) mechanism is the program's distinctive contribution against the 2024 tunable-leakage field, where every neighbor pays per query. Monograph Ch 12 (`tab:hiding`); codec and Entropy Ratio papers.
+
+### 9.5 Promoted Tables (available to reuse)
+
+Two monograph tables are canonical positioning artifacts the papers may reuse: the "what trapdoor computing is not" comparison (Ch 2, `tab:not`: ORAM / FHE / garbled circuits / SSE-PPE rows, by threat-model difference) and the type-constructor algebra (Ch 7, `tab:constructors`: which constructors lift through the trapdoor, product passing and sum hitting the impossibility).
