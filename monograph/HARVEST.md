@@ -56,8 +56,14 @@ Update rule: when a part is drafted, fill its section below before moving on.
 - **Enrichment pattern (per 2026-06-18 density calibration: figures + worked examples):** ch3 = protocol figure (`fig:two-machines`) + transformations table (`tab:transformations`) + worked example (`ex:watchlist-numbers`); ch4 = two worked examples (`ex:delta-watchlist`, `ex:composition`) + two tables (`tab:compounding`, `tab:parameters`) + theorem/proof; ch5 = acceptance-partition figure (`fig:acceptance`) + proposition/derivation + two worked examples (`ex:acceptance-watchlist`, `ex:space-watchlist`). Density ~4-5pp/chapter (dense prose; rich elements present; all numbers Python-verified).
 - Landmines held: `delta` image-relative (0 ambient leak); composition `<=`; `K propto D` not `1/D`; `eta` = Bernoulli FNR -> appendix; no em-dash / banned phrase.
 
-### Part III: Algebra and Types
-_(to fill)_
+### Part III: Algebra and Types (ch6 DRAFTED 2026-06-18; ch7-8 pending)
+- **Harvest is back-port + one cross-cut** (`algebraic-cipher-types` + `foundations/trapdoor-boolean-algebra.md` consolidated; extraction N/A).
+- **ch6 (Boolean algebra over trapdoor values), DRAFTED:**
+  - The bit-image construction `F(A) = OR of element hashes` (`def:bit-image`), the operations table (`tab:boolean-ops`), a worked bit-level example (`ex:boolean-watchlist`, sets `S` and `V` over `n=8`).
+  - **LANDMINE handled (`thm:not-approximate`):** complement is approximate, `~F(A) subseteq F(A^c)`, BETTER for SMALL `|A|` (the corrected direction; the blog erratum claimed the reverse), full pigeonhole proof. Verified: 0 "better for large set", 1 "better...small".
+  - The equality channel (`rem:equality-channel`): the `K=1` deterministic baseline leaks value-equality; `K>1` (`def:uniformity`) breaks the bit algebra. The folded kernel of the retired boolean-algebra paper.
+  - **Cross-cut candidate:** the Boolean asymmetry (AND/OR exact, NOT approximate, error `~ |A|/2^n`) as a constraint the whole book inherits; candidate to promote into spine §3.4 as the reference treatment.
+- ch7 (algebraic cipher types: product passes, sum-type impossibility) and ch8 (orbit closure, `|X|`-denominator landmine) pending.
 
 ### Part IV: Confidentiality
 _(to fill; this is where BP-1 gets forced)_

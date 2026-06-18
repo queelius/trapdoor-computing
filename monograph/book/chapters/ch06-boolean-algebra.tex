@@ -1,0 +1,230 @@
+% Chapter 6: Boolean Algebra over Trapdoor Values
+% DEFINES: ch:boolean-algebra; sec:bit-images, sec:union-intersection,
+%   sec:complement-approximate, sec:equality-channel, sec:boolean-chains,
+%   sec:ch6-notes; def:bit-image, thm:not-approximate, ex:boolean-watchlist,
+%   rem:equality-channel, tab:boolean-ops
+% REFERENCES (backward): sec:strategies, def:correctness, thm:composition,
+%   def:uniformity, ex:watchlist-numbers
+% REFERENCES (forward, part labels): part:confidentiality, part:constructions
+
+\chapter{Boolean Algebra over Trapdoor Values}
+\label{ch:boolean-algebra}
+
+Part~II built the cipher map and its parameters; this part asks what
+algebra those objects support. The most concrete answer comes first. A set
+can be turned into a single trapdoor value, a bit string, on which the
+Boolean operations, union, intersection, and complement, are computed
+directly by bit operations, with no decoding. The result is an online
+cipher construction in the sense of \Cref{sec:strategies}: nothing is
+pre-solved, and the operations are exactly those the bit representation
+supports. It is also where a structural fact of the whole framework first
+appears: union and intersection pass through cleanly, but complement cannot,
+and the reason is a counting argument that no construction escapes.
+
+\section{Sets as Bit Images}
+\label{sec:bit-images}
+
+Fix a hash $h$ that sends each element of the universe to a position in an
+$n$-bit string. A set becomes the union of its elements' bits.
+
+\begin{definition}[Bit image]
+\label{def:bit-image}
+For a set $A$ drawn from the universe, the \emph{bit image} is
+\[
+  F(A) \;=\; \bigvee_{a \in A} h(a) \;\in\; \B^n,
+\]
+the bitwise OR of the one-bit hashes of its elements. Membership is tested
+by the bits: $x$ is reported in $A$ when $h(x)$'s bit is set in $F(A)$.
+\end{definition}
+
+The image $F(A)$ is a cipher value for the set $A$: the untrusted machine
+holds the bit string and can compute with it, but without $h$ it cannot
+read off which elements are present. Membership testing is one-sided. If
+$x \in A$ its bit is set, so a true member always tests positive; but the
+bit may also have been set by some other element $y \in A$ with
+$h(y) = h(x)$, a collision, in which case a non-member tests positive too.
+Those collisions are exactly the false positives, the correctness error
+$\eta$ of \Cref{def:correctness}, here realized as a Bloom-filter-style
+membership structure. The construction is deterministic: a set has one
+image, so $K(x) = 1$ in the language of \Cref{def:uniformity}. That
+determinism is what makes the algebra below exact, and, as
+\Cref{sec:equality-channel} shows, what it costs.
+
+\section{Union and Intersection}
+\label{sec:union-intersection}
+
+The two binary operations behave differently, and the difference is the
+chapter's first theme.
+
+Union is exact. Because $F$ is an OR of element bits, and OR distributes
+over the set union,
+\[
+  F(A \cup B) \;=\; F(A) \mathbin{|} F(B),
+\]
+with no error: every bit set by an element of $A \cup B$ is set on one side
+or the other, and none is spuriously introduced. Intersection is only
+one-sided. The bitwise AND keeps the positions set in both images, but a
+position can be set in both for the wrong reason, an element of
+$A \setminus B$ and an element of $B \setminus A$ that happen to hash to the
+same bit. Such cross-collisions survive the AND as spurious members, so
+\[
+  F(A \cap B) \;\subseteq\; F(A) \mathbin{\&} F(B),
+\]
+with equality exactly when no cross-collision occurs. The spurious bits are
+false positives for the intersection, never missing bits.
+\Cref{tab:boolean-ops} collects the operations.
+
+\begin{table}[t]
+\centering
+\caption{The set operations as bit operations, and whether each is exact.}
+\label{tab:boolean-ops}
+\begin{tabular}{@{}lll@{}}
+\toprule
+Set operation & Bit operation & Exact? \\
+\midrule
+$A \cup B$ & $F(A) \mathbin{|} F(B)$ & exact \\
+$A \cap B$ & $F(A) \mathbin{\&} F(B)$ & one-sided (spurious bits from collisions) \\
+$A^{\complement}$ & ${\sim} F(A)$ & approximate (\Cref{thm:not-approximate}) \\
+$\varnothing$ & $0^n$ & exact \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{example}[Combining two watchlists]
+\label{ex:boolean-watchlist}
+Take $n = 8$ and the watchlist $S = \{\mathrm{alice}, \mathrm{carol}\}$ of
+\Cref{ex:watchlist-numbers} beside a second list
+$V = \{\mathrm{carol}, \mathrm{dave}\}$. Suppose $h$ places alice at bit
+$1$, carol at bit $6$, and dave at bit $2$, so
+\[
+  F(S) = \mathtt{0100\,0010}, \qquad F(V) = \mathtt{0100\,0100} .
+\]
+Their union is exact: $F(S) \mathbin{|} F(V) = \mathtt{0100\,0110}$, the bits
+for alice, carol, and dave, which is precisely $F(S \cup V)$ for
+$S \cup V = \{\mathrm{alice}, \mathrm{carol}, \mathrm{dave}\}$. Their
+intersection here is also clean, $F(S) \mathbin{\&} F(V) =
+\mathtt{0100\,0000} = F(\{\mathrm{carol}\}) = F(S \cap V)$, because alice and
+dave land on different bits. Had they collided, say both on bit $2$, the AND
+would have kept bit $2$ as well, reporting a phantom member of $S \cap V$;
+that is the one-sided error the inclusion above allows.
+\end{example}
+
+\section{The Complement Is Approximate}
+\label{sec:complement-approximate}
+
+Union and intersection cost nothing or cost only spurious bits. Complement
+is different in kind: there is no exact bit operation for it, and the
+obstruction is a counting argument, not a defect of this particular hash.
+
+\begin{theorem}[The complement asymmetry]
+\label{thm:not-approximate}
+Let the universe be larger than the bit width, so that every bit position is
+set by some element. Then the bitwise complement ${\sim}F(A)$ satisfies
+\[
+  {\sim}F(A) \;\subseteq\; F(A^{\complement}),
+\]
+and the inclusion is strict whenever some bit is set by both an element of
+$A$ and an element of $A^{\complement}$. The gap grows with $\lvert A\rvert$:
+the approximation is tightest when $A$ is small and degrades as $A$ fills
+the bit space.
+\end{theorem}
+
+\begin{proof}
+A bit lies in ${\sim}F(A)$ exactly when no element of $A$ sets it. Since the
+universe is larger than the bit width, every bit is set by some element of
+the universe $A \cup A^{\complement}$; a bit set by no element of $A$ must
+then be set by some element of $A^{\complement}$, hence lies in
+$F(A^{\complement})$. So ${\sim}F(A) \subseteq F(A^{\complement})$. The
+reverse fails for any bit set both by an element of $A$ and by an element of
+$A^{\complement}$: such a bit is in $F(A^{\complement})$ but, being set in
+$F(A)$, not in ${\sim}F(A)$. The number of such doubly-set bits increases
+with $\lvert A\rvert$, since a larger $A$ sets more of the bit space and so
+shares more positions with $A^{\complement}$. When $A$ is small,
+$A^{\complement}$ is large and saturates the bits, $F(A^{\complement})
+\to 1^n$, while ${\sim}F(A)$, complementing a sparse $F(A)$, is also near
+$1^n$, and the two agree.
+\end{proof}
+
+The direction matters, and an early account of this construction got it
+backwards: complement is a \emph{better} approximation for \emph{small} sets
+and a worse one as the set grows, not the reverse. Intuitively, a small set
+leaves most of the bit space unset, and its complement genuinely fills that
+space; a large set has already crowded the bits, and complementing its image
+loses exactly the positions it shares with everything outside it. The error
+is governed by the ratio $\lvert A\rvert / 2^n$, the same fill factor that
+controls collisions, and it is structural: no finite-width construction can
+make complement exact over an unbounded universe, because the universe
+cannot be injected into $\B^n$. This asymmetry, exact joins, approximate
+complement, is inherited by every system built on a bitwise trapdoor
+algebra, and it returns whenever such a system is analyzed.
+
+\section{The Equality Channel}
+\label{sec:equality-channel}
+
+The determinism that makes union and intersection exact has a price, and
+naming it explains why this online algebra trades away confidentiality for
+expressiveness. Because $K = 1$, a set has a single image, so two sets are
+equal exactly when their images are: $F(A) = F(B)$ if and only if $A = B$
+(up to the collision error). An untrusted machine that holds two cipher
+sets can therefore test them for equality, and more generally can read the
+equality structure of everything it is given, which queries repeat, which
+results coincide, even though it cannot read the contents. This is the
+\emph{equality channel}, the leakage characteristic of a deterministic
+trapdoor representation.
+
+\begin{remark}[The cost of determinism]
+\label{rem:equality-channel}
+The equality channel is the flip side of \Cref{def:uniformity}. Hiding
+\emph{which} value a token encodes needed multiple representations,
+$K(x) > 1$, so that one value spreads across many tokens and equal values no
+longer produce equal tokens. The bit algebra here is the opposite extreme,
+$K = 1$: a single deterministic image per set, which is what lets the
+operations combine images directly, but which leaks equality in full. The
+two cannot both be had in this construction. Randomizing the image to raise
+$K$ would break the bit operations, since two random images of the same set
+no longer OR or AND meaningfully. The online Boolean algebra is therefore
+the exact-operations, equality-leaking corner of the design space; buying
+confidentiality back means leaving it for a batch construction with
+$K > 1$, at the cost of the clean algebra.
+\end{remark}
+
+\section{Boolean Chains and Their Error}
+\label{sec:boolean-chains}
+
+A Boolean circuit over cipher sets is a composition of cipher maps, so its
+error is governed by \Cref{thm:composition}, with one addition. Through a
+chain of joins and meets, the only error is the spurious-bit error of
+intersection, and it accrues exactly as the composition theorem predicts:
+the chain's correctness is bounded by $1 - \prod_i (1 - \eta_i)$, the
+inequality of \Cref{sec:composability}, with each $\eta_i$ the collision
+error of one operation. A circuit of unions and bounded intersections stays
+predictable in the way \Cref{ch:four-properties} promised.
+
+Complement breaks the pattern. Each NOT contributes not the tame collision
+error but the structural error of \Cref{thm:not-approximate}, which scales
+with the fill factor $\lvert A\rvert / 2^n$ of its operand rather than with a
+per-operation budget. A circuit dense in complements therefore degrades
+faster than one built from joins and meets alone, and the degradation is not
+removed by enlarging the structure, only deferred. The practical reading is
+the one the asymmetry forces: design Boolean cipher programs to lead with
+unions and intersections and to use complement sparingly and on small sets,
+where \Cref{thm:not-approximate} is tight.
+
+\section{Notes and Provenance}
+\label{sec:ch6-notes}
+
+The bit-image algebra is the trapdoor Boolean construction of the
+foundations notes, and the deterministic $K = 1$ baseline is the kernel of
+the retired boolean-algebra-over-trapdoor-sets paper, folded here. The
+operation table and the exact/approximate split follow the spine's
+treatment. The complement asymmetry (\Cref{thm:not-approximate}) is stated
+in its corrected direction: the original blog account claimed complement
+improves for large sets, which is backwards, and the spine carries the
+erratum; this chapter proves the correct direction from the pigeonhole
+argument. The equality channel is the leakage regime of the deterministic
+construction, the price the online algebra pays for exact operations, and it
+is the concrete motivation for the multiple-representation machinery of
+\Cref{def:uniformity}. The full Boolean cipher type, its noise behavior, and
+the experimental validation of the asymmetry are developed in
+\Cref{part:constructions}; the confidentiality of what the equality channel
+leaks is taken up at the active-adversary scale later in this part.
