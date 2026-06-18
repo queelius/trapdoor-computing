@@ -1,0 +1,75 @@
+% Appendix B: Notation Reference
+% DEFINES: app:notation
+% Consolidated from notation.sty and the spine's section 8 notation table.
+
+\chapter{Notation Reference}
+\label{app:notation}
+
+The symbols used throughout the book, collected. They match
+\texttt{notation.sty} and the reconciled spine's notation table; where a
+symbol is introduced in the text, the defining location is given.
+
+\section{Objects and Spaces}
+
+\begin{center}
+\begin{tabular}{@{}lll@{}}
+\toprule
+Symbol & Meaning & Introduced \\
+\midrule
+$\B = \{0,1\}$ & the bit alphabet; $\B^n$ is the $n$-bit token space & \Cref{def:cipher-map} \\
+$X$, $Y$ & latent domain and codomain of $f : X \to Y$ & \Cref{sec:machines} \\
+$f$, $g$ & latent functions & \Cref{sec:machines} \\
+$\fhat$, $\ghat$ & cipher-map approximations of $f$, $g$ & \Cref{def:cipher-map} \\
+$\enc$, $\dec$ & encoder and decoder (trusted machine only) & \Cref{def:cipher-map} \\
+$s$ & the trapdoor secret & \Cref{def:cipher-map} \\
+$\mathrm{im}(\enc)$ & populated support: tokens that encode real inputs & \Cref{sec:totality-support} \\
+$A(y)$ & acceptance region: tokens that decode to $y$ & \Cref{def:acceptance} \\
+$F(A)$ & bit image of a set $A$ (OR of element hashes) & \Cref{def:bit-image} \\
+$\cipher{X}$ & cipher type over $X$ & \Cref{sec:cipher-type} \\
+$\orbitF(c)$ & orbit closure of $c$ under operations $F$ & \Cref{def:orbit} \\
+$W$ & GF(2) span of stored codewords (codec) & \Cref{thm:span-output} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{Distributions and Parameters}
+
+\begin{center}
+\begin{tabular}{@{}lll@{}}
+\toprule
+Symbol & Meaning & Introduced \\
+\midrule
+$D$ & query / demand distribution on $X$ & \Cref{def:uniformity} \\
+$Q$ & observed token distribution (on $\mathrm{im}(\enc)$) & \Cref{def:uniformity} \\
+$U_{\mathrm{im}}$ & uniform distribution on $\mathrm{im}(\enc)$ & \Cref{def:uniformity} \\
+$\eta$ & correctness: error rate on in-domain inputs & \Cref{def:correctness} \\
+$\varepsilon$ & noise-decode probability & \Cref{sec:totality-support} \\
+$\mu = H(Y)$ & value-encoding cost & \Cref{sec:parameter-tuple} \\
+$\delta$ & representation uniformity: $\TV(Q, U_{\mathrm{im}})$ & \Cref{def:uniformity} \\
+$K(x)$ & multiplicity: number of encodings of $x$ & \Cref{def:uniformity} \\
+$H^{*}$ & $\log_2\lvert\mathrm{im}(\enc)\rvert$, max entropy on the support & \Cref{def:entropy-ratio} \\
+$e = H(Q)/H^{*}$ & entropy ratio (marginal leakage measure) & \Cref{def:entropy-ratio} \\
+$\rho$ & real-query fraction under noise injection & \Cref{sec:delta-levers} \\
+$p$ & entanglement (joint-encoding granularity) & \Cref{sec:granularity} \\
+$\xi$ & total-variation accuracy of an estimate & \Cref{thm:joint-recovery} \\
+$n$ & token bit width & \Cref{def:cipher-map} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{Operators}
+
+\begin{center}
+\begin{tabular}{@{}ll@{}}
+\toprule
+Symbol & Meaning \\
+\midrule
+$\TV(P, Q)$ & total variation distance between distributions \\
+$H(\cdot)$ & Shannon entropy; $h_2(\cdot)$ the binary entropy \\
+$I(\,\cdot\,;\,\cdot\,)$ & mutual information \\
+$D_{\mathrm{KL}}(\cdot \,\|\, \cdot)$ & Kullback-Leibler divergence \\
+$\rank$, $\proj$ & matrix rank and projection (codec construction) \\
+$\lvert \cdot \rvert$ & cardinality of a set \\
+\bottomrule
+\end{tabular}
+\end{center}

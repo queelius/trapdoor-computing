@@ -1,0 +1,46 @@
+% Appendix C: Proof Locations
+% DEFINES: app:proofs
+% The book proves elementary load-bearing results inline and points to the
+% standalone papers for the deeper ones. This appendix maps where each lives,
+% so no proof is silently missing: it is either here, or in a named companion.
+
+\chapter{Proof Locations}
+\label{app:proofs}
+
+The book follows one policy for proofs. Results that are elementary and
+load-bearing are proved inline, so the argument is self-contained where the
+reader meets it. Results whose full proofs are long, or whose home is a
+standalone paper under separate submission, are stated with their intuition
+and pointed to that paper, to keep the book a treatment rather than a
+reproduction. This appendix records where each major result's proof lives, so
+that ``proof omitted'' never means ``proof missing'': every result is either
+proved in the book or cited to a named companion with the proof.
+
+\begin{center}
+\begin{tabular}{@{}lll@{}}
+\toprule
+Result & Stated & Proof \\
+\midrule
+Composition theorem (\Cref{thm:composition}) & \Cref{ch:four-properties} & inline (full short proof) \\
+Space-accuracy duality (\Cref{prop:space-duality}) & \Cref{ch:constructions-abstract} & inline derivation; tight lower bound cited \\
+Complement asymmetry (\Cref{thm:not-approximate}) & \Cref{ch:boolean-algebra} & inline (pigeonhole) \\
+Orbit confidentiality bound (\Cref{thm:orbit-bound}) & \Cref{ch:orbit-closure} & inline (one-line mutual-information bound) \\
+Orbit monotonicity (\Cref{thm:monotonicity}) & \Cref{ch:orbit-closure} & inline sketch; full in \cite{towell2026algebraic} \\
+Product trade-off (\Cref{prop:product-tradeoff}) & \Cref{ch:algebraic-types} & \cite{towell2026algebraic} \\
+Sum-type impossibility (\Cref{thm:sum-impossibility}) & \Cref{ch:algebraic-types} & obstruction inline; full in \cite{towell2026algebraic} \\
+Fannes bridge (\Cref{prop:fannes}) & \Cref{ch:marginal-scale} & \cite{towell2026maxconf} (Thm 3.1) \\
+Joint-recovery rate (\Cref{thm:joint-recovery}) & \Cref{ch:compositional-scale} & \cite{towell2026maxconf} (Thms 5.1, 5.2; lower by Assouad) \\
+Non-member output on the span (\Cref{thm:span-output}) & \Cref{ch:gf2-retrieval} & \cite{towell2026codec} \\
+Rank threshold (\Cref{rem:rank-threshold}) & \Cref{ch:gf2-retrieval} & \cite{towell2026codec} \\
+Bernoulli composition / Kronecker factorization & \Cref{app:bernoulli} & \cite{towell2026bernoulli} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+No result in the book is left without a proof or a pointer to one. The
+elementary results, the composition bound, the space duality, the complement
+asymmetry, and the orbit bound, are the ones the book proves in full, because
+they are short and because the book is their natural home. Everything deeper
+belongs to a companion paper and is cited there, which is also why no
+separate appendix of deferred proofs is needed: the deferral is to the
+papers, mapped above, not to an appendix.
