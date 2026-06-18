@@ -1,0 +1,191 @@
+% Chapter 8: Orbit Closure and the Active Adversary
+% DEFINES: ch:orbit-closure; sec:active-adversary, sec:orbit-closure-def,
+%   sec:residual-entropy, sec:typed-chains, sec:ch8-notes;
+%   def:orbit, thm:monotonicity, thm:orbit-bound, cor:orbit-set-form,
+%   ex:orbit-names, rem:active-vs-marginal
+% REFERENCES (backward): def:uniformity, ch:boolean-algebra, thm:not-approximate,
+%   sec:granularity
+% REFERENCES (forward, part labels): part:confidentiality
+
+\chapter{Orbit Closure and the Active Adversary}
+\label{ch:orbit-closure}
+
+Every confidentiality statement so far has been about a \emph{passive}
+observer: the untrusted machine holds tokens and studies their distribution,
+and $\delta$ bounds what it can read from a single one. But the untrusted
+machine in this framework does more than watch. It \emph{evaluates}: it
+holds cipher maps, the Boolean operations of \Cref{ch:boolean-algebra} among
+them, and can apply them to the tokens it has, building new tokens and
+watching what coincides. This chapter measures what such an active adversary
+can learn, and the measure is a new one. It is not $\delta$, and the
+distinction between the two is the boundary between this part and the
+confidentiality theory that follows.
+
+\section{The Active Adversary}
+\label{sec:active-adversary}
+
+The shift is from observation to operation. A passive adversary sees a token
+$c$ and asks what its distribution leaks; the answer is governed by
+representation uniformity, $\delta$. An active adversary holds a set of
+cipher maps and applies them to $c$ in every combination, accumulating the
+tokens it can reach and noting which computations land on the same value.
+What it learns is no longer a property of $c$'s marginal distribution; it is
+a property of how far the exposed operations let it travel from $c$. A token
+can be marginally near-uniform, $\delta \approx 0$, and still surrender its
+latent value to an adversary whose operation set is rich enough to separate
+it from its neighbors. Representation uniformity does not bound this, and the
+quantity that does is combinatorial: the size of the reachable set.
+
+\section{Orbit Closure}
+\label{sec:orbit-closure-def}
+
+\begin{definition}[Orbit closure]
+\label{def:orbit}
+Let $F = \{\fhat_1, \ldots, \fhat_k\}$ be the cipher maps available to the
+untrusted machine, and $c \in \B^n$ a token. The \emph{orbit closure}
+$\orbitF(c) \subseteq \B^n$ is the smallest set containing $c$ and closed
+under the maps in $F$: if $c' \in \orbitF(c)$ and $\fhat_i \in F$ then
+$\fhat_i(c') \in \orbitF(c)$. Equivalently, it is the set of all tokens
+reachable from $c$ by composing operations of $F$ in any order.
+\end{definition}
+
+Because $\B^n$ is finite the orbit is finite, computed by breadth-first
+expansion from $c$. Two features make it the right object. First, the orbit
+\emph{set} depends only on $F$ and $c$, not on the latent function, the
+domain, or the trapdoor; the designer who knows which operations to expose
+can compute it without any secret, and read off in advance how far the
+untrusted machine can roam. Second, it is exactly the support of what the
+adversary observes: probing $c$ with $F$ resolves the computation to one of
+the tokens in $\orbitF(c)$, and what carries information about the latent
+value is \emph{which} one.
+
+\begin{theorem}[Monotonicity]
+\label{thm:monotonicity}
+If $F \subseteq G$ then $\orbitF(c) \subseteq \mathrm{orbit}_G(c)$ for every
+$c$.
+\end{theorem}
+
+The proof is a one-line induction on the orbit's construction: every token
+reachable using $F$ is reachable using the larger $G$, since each step
+available under $F$ is available under $G$. The reading is the design rule:
+exposing more operations can only enlarge the reachable set, never shrink
+it; with no operations at all, $\mathrm{orbit}_{\varnothing}(c) = \{c\}$ and
+the adversary learns nothing beyond the bare token. Every operation the
+trusted machine grants is an edge added to the reachability graph the
+adversary explores.
+
+\section{The Residual-Entropy Bound}
+\label{sec:residual-entropy}
+
+The orbit size turns directly into a confidentiality bound. Let $X$ be the
+latent value encoded by $c$, drawn from the input distribution, and let the
+adversary's observation, which token in $\orbitF(c)$ the computation
+resolves to, be a random variable supported on that orbit.
+
+\begin{theorem}[Confidentiality bound]
+\label{thm:orbit-bound}
+With $X$ the latent value behind $c$ and the active adversary's observation
+supported on $\orbitF(c)$,
+\[
+  H(X \mid \text{view}) \;\geq\; H(X) - \log_2 \lvert \orbitF(c)\rvert .
+\]
+\end{theorem}
+
+\begin{proof}
+The observation is supported on $\orbitF(c)$, a set of size
+$\lvert\orbitF(c)\rvert$, so its entropy is at most
+$\log_2\lvert\orbitF(c)\rvert$. Mutual information is bounded by the entropy
+of either side, so the information the view carries about $X$ is
+$I(X; \text{view}) \le \log_2\lvert\orbitF(c)\rvert$. Substituting into
+$H(X \mid \text{view}) = H(X) - I(X; \text{view})$ gives the claim.
+\end{proof}
+
+The bound has an equivalent set form, and the set form is where a recurring
+error must be avoided. Writing the confidentiality as the fraction of the
+latent space the adversary cannot rule out,
+\[
+  \mathrm{conf} \;\geq\; 1 - \frac{\lvert\orbitF(c)\rvert}{\lvert X\rvert},
+\]
+the denominator is $\lvert X\rvert$, the number of latent values, \emph{not}
+$2^n$, the size of the token space. The orbit lives in $\B^n$, but it is
+measured against the domain it could be encoding: an orbit of $m$ tokens can
+narrow $X$ to at most $m$ possibilities out of $\lvert X\rvert$, so the bound
+saturates, becomes vacuous, exactly when $\lvert\orbitF(c)\rvert \ge \lvert
+X\rvert$, a rich enough operation set identifying every latent value.
+Measuring the orbit against $2^n$ instead would make the bound trivially
+satisfied for every realizable orbit and say nothing.
+
+\begin{example}[Naming the four]
+\label{ex:orbit-names}
+Take the four names of \Cref{ex:watchlist-numbers} as the latent space,
+$\lvert X\rvert = 4$ and $H(X) = 2$ bits under a uniform prior, and a token
+$c$ encoding one unknown name. If the exposed operations generate an orbit
+of size $\lvert\orbitF(c)\rvert = 2$, the bound gives a residual
+$H(X \mid \text{view}) \ge 2 - \log_2 2 = 1$ bit, and the set form
+$\mathrm{conf} \ge 1 - 2/4 = 0.5$: the adversary can halve the candidate
+names but no more. Enrich the operations until the orbit reaches all four
+tokens for the four names, and the bound goes to $2 - \log_2 4 = 0$: vacuous,
+the name is in principle pinned down. The denominator throughout is the four
+names, not the $4096$ strings of the token space; the orbit is read against
+what it could mean, not against where it lives.
+\end{example}
+
+\begin{remark}[Which scale this is]
+\label{rem:active-vs-marginal}
+This bound is the \emph{active} scale, and it is governed by orbit size, not
+by $\delta$. The two scales are independent in both directions: a token can
+be marginally near-uniform ($\delta \approx 0$) and still leak its value
+through a large orbit when the operation set is rich, and a small orbit can
+cap active leakage even when $\delta$ is not negligible. No value of $\delta$
+bounds the orbit, and no orbit bound improves $\delta$; they are different
+axes and must not be conflated. The bound is also loose, deliberately: it
+counts the orbit's size but ignores the functional relations among its
+elements, which constrain the latent value further. Tightening it for
+specific operation sets, and the matching lower bounds for composition, is
+the work of \Cref{part:confidentiality}.
+\end{remark}
+
+\section{Typed Composition Chains}
+\label{sec:typed-chains}
+
+Orbit closure is the active face of a single cipher value; the compositional
+scale appears when typed cipher maps are chained. Feeding the output of one
+typed map into the next, the reachable set grows along the chain: a step
+that combines $a$ prior values into one expands the frontier by the step's
+arity, and the count of reachable tokens compounds through the chain rather
+than merely adding. The total an adversary can reach is bounded by the sum
+of these per-step frontiers, a quantity that grows with both the chain's
+length and the arity of its operations.
+
+What the orbit bound previews here, the full confidentiality theory
+delivers. When two cipher maps share an input, or a chain exposes the joint
+behavior of several latent values, the adversary's task becomes estimating a
+\emph{joint} distribution, and the difficulty of that estimation, the number
+of observations it takes and the precision it can reach, is the compositional
+confidentiality scale. Its headline is a recovery rate of order
+$\lvert Y_1\rvert\,\lvert Y_2\rvert / \xi^2$ in two latent variables, with a
+matching lower bound that no per-map parameter, $\delta$ included, can move.
+That rate, its tight lower bound, and the active-adversary measures that
+accompany it are \Cref{part:confidentiality}; this chapter has shown why
+they are needed, that operating on cipher values is a leakage channel of its
+own, distinct from observing them, and not closed by representation
+uniformity.
+
+\section{Notes and Provenance}
+\label{sec:ch8-notes}
+
+Orbit closure, its monotonicity, and the residual-entropy bound are the
+algebraic-cipher-types paper's, restated here with the elementary bound
+proved in full and monotonicity sketched, per the part's proof-depth
+decision. The set form $\mathrm{conf} \ge 1 - \lvert\orbitF(c)\rvert /
+\lvert X\rvert$ is stated with the denominator $\lvert X\rvert$, the latent
+space, guarding against the recurring slip of normalizing by the token space
+$2^n$. The two-scale separation, active orbit leakage versus marginal
+$\delta$, is the spine's, and it is the hinge between this part and the next:
+\Cref{part:confidentiality} takes the marginal scale to its tight
+entropy-ratio bound and the active scale to its compositional lower bounds,
+and the warning of \Cref{rem:active-vs-marginal}, that no single parameter
+governs both, is the reason that part needs the machinery it does. With
+orbit closure the algebra of Part~III is complete: the operations
+(\Cref{ch:boolean-algebra}), the types (\Cref{ch:algebraic-types}), and now
+the leakage that operating on cipher values incurs.

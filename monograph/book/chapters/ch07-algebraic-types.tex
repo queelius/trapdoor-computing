@@ -1,0 +1,222 @@
+% Chapter 7: Algebraic Cipher Types
+% DEFINES: ch:algebraic-types; sec:type-algebra, sec:product-types,
+%   sec:sum-impossibility, sec:granularity, sec:ch7-notes;
+%   prop:product-tradeoff, thm:sum-impossibility, ex:product-pair,
+%   rem:granularity, tab:constructors
+% REFERENCES (backward): sec:cipher-type, rem:values-are-maps, def:uniformity,
+%   def:cipher-map
+% REFERENCES (forward, part labels): part:confidentiality, part:constructions
+
+\chapter{Algebraic Cipher Types}
+\label{ch:algebraic-types}
+
+\Cref{sec:cipher-type} named the cipher type $\cipher{X}$ and promised an
+algebra. This chapter delivers it, and the delivery is uneven in a way that
+turns out to be the point. The type constructors of ordinary programming,
+products, sums, functions, do not all survive the passage through the
+trapdoor equally. Products pass, at a cost one can choose; functions are the
+cipher maps themselves; but sums hit a genuine impossibility, a wall no
+construction climbs. The chapter is organized around that asymmetry, because
+where a structure fails is more informative than where it succeeds.
+
+\section{Cipher Types as a Type Algebra}
+\label{sec:type-algebra}
+
+A cipher type $\cipher{X}$ is the type of cipher values over $X$, and by
+\Cref{rem:values-are-maps} its inhabitants are themselves cipher maps from a
+trivial domain. The question of this chapter is which constructions on
+types lift to cipher types: given $\cipher{A}$ and $\cipher{B}$, is there a
+sensible $\cipher{A \times B}$, a $\cipher{A + B}$, a $\cipher{A \to B}$, and
+what does each cost?
+
+The two trivial types set the floor. The void type $\mathbf{0}$ has no
+values, so a cipher map out of it is vacuously correct and carries nothing;
+to the untrusted machine it is a random function never validly queried. The
+unit type $\mathbf{1}$ has a single value, so a cipher value over it is a
+cipher constant, and totality keeps even that single value hidden among
+noise. Neither is interesting on its own, but they anchor the algebra.
+\Cref{tab:constructors} is the chapter's map: it states, for each
+constructor, how it lifts and what the lift costs, and the sections below
+fill it in.
+
+\begin{table}[t]
+\centering
+\caption{The type constructors and how they lift to cipher types.}
+\label{tab:constructors}
+\begin{tabular}{@{}lll@{}}
+\toprule
+Constructor & Lifts to a cipher type? & Cost or obstruction \\
+\midrule
+Void $\mathbf{0}$ & yes, vacuously & none \\
+Unit $\mathbf{1}$ & yes, a cipher constant & none \\
+Product $A \times B$ & yes & projections need a cipher map, or the joint leaks \\
+Sum $A + B$ & not fully & tag-hiding and untrusted dispatch are exclusive \\
+Function $A \to B$ & yes, it is a cipher map & the framework itself \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The function type is already in hand: a cipher map for $f : A \to B$
+\emph{is} the cipher exponential $\cipher{A \to B}$, the trapdoor object the
+whole book studies. That leaves the two data constructors, product and sum,
+and they are where the algebra becomes informative.
+
+\section{Product Types Pass}
+\label{sec:product-types}
+
+A product can be encoded two ways, and the choice is a confidentiality knob
+rather than a wall.
+
+Encode the pair $(a, b)$ \emph{jointly}, as one cipher value over
+$A \times B$, and the untrusted machine sees a single opaque token: it
+cannot read $a$ or $b$, and it cannot even detect a correlation between
+them, since the correlation is buried inside one encoding. The price is
+that the projections are gone. Recovering $a$ from a joint encoding of
+$(a, b)$ is itself a function on tokens, hence a cipher map the trusted
+machine must build; the product hides its components by making them
+inaccessible without a constructed projector. Encode the pair
+\emph{component-wise} instead, as a token for $a$ beside a token for $b$,
+and the projections are free, just take one side, but the joint distribution
+is no longer hidden: each component is a deterministic function of its
+value, so an adversary who watches enough pairs reconstructs how $a$ and $b$
+covary, even when each component alone is near-uniform.
+
+\begin{proposition}[Product confidentiality trade-off]
+\label{prop:product-tradeoff}
+For finite types $A$ and $B$:
+\begin{enumerate}
+\item Under joint encoding $\cipher{A \times B}$, the untrusted machine
+  cannot distinguish $(a_1, b_1)$ from $(a_2, b_2)$ beyond the
+  representation-uniformity advantage $\delta$, but each projection requires
+  a cipher map the trusted machine constructs.
+\item Under component-wise encoding $\cipher{A} \times \cipher{B}$,
+  projections are free, but an adversary observing $N$ pairs can estimate
+  the joint distribution of $(A, B)$ to total-variation accuracy $\xi$ once
+  $N = O(\lvert A\rvert\,\lvert B\rvert / \xi^2)$.
+\end{enumerate}
+\end{proposition}
+
+The proof of part~(1) is the observation that a projection is a token-to-token
+map, hence a cipher map; part~(2) is a counting argument on the empirical
+joint distribution of cipher pairs, given in \cite{towell2026algebraic}. The
+point for the algebra is that the product \emph{passes}: a usable
+$\cipher{A \times B}$ exists either way, and the two encodings are the two
+ends of a dial between hidden correlations and free projections. Nothing is
+impossible here; one only chooses.
+
+\begin{example}[A pair, two ways]
+\label{ex:product-pair}
+Let $A = \{a_1, a_2\}$ and $B = \{b_1, b_2\}$, and suppose the latent pairs
+are perfectly correlated, $a_1$ always with $b_1$ and $a_2$ with $b_2$.
+Encoded jointly, the four-token cipher type $\cipher{A \times B}$ shows the
+untrusted machine only that some pair occurred; the correlation $a_i
+\leftrightarrow b_i$ is invisible, sealed inside each token. Encoded
+component-wise, the same correlation is laid bare: token-for-$a$ and
+token-for-$b$ co-occur in exactly two combinations out of the four possible,
+and an adversary counting $N = O(\lvert A\rvert\,\lvert B\rvert/\xi^2)$ pairs
+reads off the perfect correlation. Same data, same per-component uniformity,
+opposite joint confidentiality, the granularity dial of
+\Cref{sec:granularity}.
+\end{example}
+
+\section{The Sum-Type Impossibility}
+\label{sec:sum-impossibility}
+
+The sum type is where the algebra breaks, and the break is structural, not a
+missing construction. A value of type $A + B$ carries a tag, left or right,
+and ordinary pattern matching reads the tag to choose a handler. Two things
+one would want from a cipher sum turn out to be mutually exclusive.
+
+\begin{theorem}[Sum-type impossibility]
+\label{thm:sum-impossibility}
+For non-empty finite types $A$ and $B$, these two properties cannot both
+hold of a cipher type for $A + B$:
+\begin{enumerate}
+\item \textbf{Tag hiding}: from a cipher value alone, the untrusted machine
+  cannot tell whether it encodes an $A$-value or a $B$-value, beyond the
+  uniformity advantage $\delta$.
+\item \textbf{Untrusted dispatch}: holding the two handlers separately, the
+  untrusted machine can apply exactly one of them to a cipher value,
+  choosing which as a function of that value, with no per-query help from the
+  trusted machine.
+\end{enumerate}
+\end{theorem}
+
+The obstruction is clean once seen. Suppose both held. Untrusted dispatch
+means a selector $s$ that reads a token and returns left or right, correctly
+routing $A$-encodings to the $A$-handler and $B$-encodings to the
+$B$-handler. But such an $s$ is exactly a test that separates $A$-encodings
+from $B$-encodings, which is to say a tag distinguisher; if it routes
+correctly it reads the tag, and tag hiding fails. The two requirements are
+the same capability viewed from two sides: dispatching on the tag and
+reading the tag are one act. Joint encoding takes the first horn, it hides
+the tag and forgoes untrusted dispatch (the case analysis can still be
+performed, by a fused eliminator that evaluates to a tagged-hidden result,
+but the untrusted machine never forms the selector); component-wise encoding
+takes the second, it exposes the tag in the clear and dispatches freely. No
+encoding sits between.\footnote{The full proof, including the fused-eliminator
+escape that produces the case result without forming the selector, is in
+\cite{towell2026algebraic}.}
+
+This is the chapter's sharpest contrast. The product (\Cref{sec:product-types})
+offered a dial: both encodings give a working type, trading projections
+against joint hiding. The sum offers a wall: the two things one wants are
+provably incompatible, and a designer must give one up. The reason traces
+to totality. Because every token decodes to something, a hidden tag leaves
+the untrusted machine no handle to branch on, and any handle it could branch
+on is a leak of the tag.
+
+\section{Encoding Granularity and Entanglement}
+\label{sec:granularity}
+
+The product dial and the sum wall are two readings of one underlying
+parameter: how much is encoded together. This is the place to pay off the
+limitation \Cref{def:uniformity} flagged, that $\delta$ bounds only the
+marginal distribution of a token and says nothing about joint distributions
+across tokens.
+
+Call the number of components encoded as a single unit the
+\emph{entanglement} $p$. At $p = 1$, each value is encoded on its own; every
+token can be made marginally near-uniform ($\delta \approx 0$), but
+correlations between separately encoded values pass straight through, since
+each token is a deterministic function of its value and an adversary can
+build the joint empirical distribution. At the other extreme, $p = k$
+encodes a $k$-tuple as one token, and the joint distribution of all $k$
+components is hidden inside that single uniform-looking value, at a cost: the
+token space must cover $\lvert Y\rvert^{k}$ possibilities, so space grows
+exponentially in $p$. Between the extremes, $p$ is a dial from
+marginal-only confidentiality to joint confidentiality, paid for in space.
+
+\begin{remark}[The granularity principle]
+\label{rem:granularity}
+Coarser encoding (larger $p$) hides more correlations but blocks more
+operations and costs more space; finer encoding (smaller $p$) frees
+operations and saves space but leaks correlations. Property~2's $\delta$
+lives entirely at the marginal scale, $p = 1$ per token; it is silent about
+what \Cref{ex:product-pair} exposed. The joint distribution of two
+separately encoded values is recoverable at total-variation accuracy $\xi$
+from $O(\lvert Y_1\rvert\,\lvert Y_2\rvert / \xi^2)$ observations, a rate no
+choice of $\delta$ changes. That rate, and its matching lower bound, is the
+compositional confidentiality scale, governed by quantities $\delta$ does
+not touch; \Cref{part:confidentiality} develops it, and \Cref{ch:orbit-closure}
+gives its active-adversary face. The ideal of one giant joint encoding ($p$
+maximal) is exactly the impractical extreme that composition exists to
+avoid: one composes smaller cipher maps and accepts that intermediate
+correlations may leak.
+\end{remark}
+
+\section{Notes and Provenance}
+\label{sec:ch7-notes}
+
+The type-constructor analysis, the product trade-off, and the sum-type
+impossibility are the algebraic-cipher-types paper's, restated here with the
+proofs sketched and pointed to the paper, per this part's proof-depth
+decision. The granularity principle and the entanglement parameter $p$ are
+the spine's (its encoding-granularity section), and the
+$O(\lvert Y_1\rvert\lvert Y_2\rvert/\xi^2)$ joint-recovery rate is the bridge
+to the compositional confidentiality of \Cref{part:confidentiality}, where it
+acquires a matching lower bound. The sum-type impossibility is the structural
+heart: it is the algebraic shadow of totality, the same property that bought
+privacy in \Cref{ch:four-properties} now forbidding a hidden tag from being
+branched on. The summary table (\Cref{tab:constructors}) is a candidate to
+promote into the spine as the shared statement of which constructors lift.
