@@ -36,8 +36,8 @@ quantitative information flow, an explicit leakage quantity a designer can
 compute and trade against space, bandwidth, and accuracy, rather than assumed
 \emph{negligible} in the sense of a cryptographic reduction. This paper states
 the paradigm, draws its boundary against the cryptographic tools it is not,
-and maps the body of work, an abstraction, an algebra, a confidentiality
-theory, and concrete constructions, that develops it.
+and maps the body of work that develops it: an abstraction, an algebra, a
+confidentiality theory, and concrete constructions.
 \end{abstract}
 
 \section{The Oblivious Service}
@@ -121,7 +121,7 @@ framework. \Cref{tab:not} draws the boundary.
 \caption{Trapdoor computing against its neighbors, by the difference in threat
 model, not a claim of superiority.}
 \label{tab:not}
-\begin{tabular}{@{}lll@{}}
+\begin{tabular}{@{}l p{3.4cm} p{4.7cm}@{}}
 \toprule
 Tool & Hides by & Trapdoor computing instead \\
 \midrule
@@ -150,10 +150,11 @@ alvim2020science}: what the adversary learns is a \emph{measured} quantity, a
 number a designer can compute and trade.
 
 Concretely, the leakage of a single token is captured by an entropy ratio
-$e = H(Q)/H^{*}$, the entropy of the observed token distribution $Q$ as a
-fraction of the maximum on the populated support, and the representation-%
-uniformity parameter $\delta$ lower-bounds it through a Fannes--Audenaert
-continuity inequality, linear in $\delta$~\cite{towell2026maxconf}. Small
+$e = H(Q)/H^{*}$, where $H^{*} = \log_2|\mathrm{im}(\enc)|$ is the maximum
+entropy on the populated support (the usable bits of a token) and $H(Q)$ the
+entropy actually observed; the representation-uniformity parameter $\delta$
+lower-bounds it through a Fannes--Audenaert continuity inequality, image-relative
+and linear in $\delta$~\cite{towell2026maxconf}. Small
 $\delta$ buys proportional confidentiality, at a known cost in space or
 bandwidth. This is the sense in which the paradigm's privacy is engineering: not
 a guarantee of nothing learned, but an explicit budget of how much, traded

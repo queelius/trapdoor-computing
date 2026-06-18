@@ -121,11 +121,16 @@ much $\mathsf{view}_U$ reveals, not whether a bounded $U$ can extract it.
 
 Two modeling choices deserve comment. First, $\fhat$ is \emph{public to $U$}: the
 untrusted machine holds the whole table, so the model grants the adversary the
-construction itself and asks what the construction still hides. Second, a
-\emph{malicious} $U$ that deviates from the protocol gains nothing the model
-does not already grant, because totality makes every token, honest or not,
-produce an answer; there is no error channel to probe. The honest-but-curious
-$U$ of \Cref{def:view} is therefore the worst case for leakage.
+construction itself and asks what the construction still hides. Second, totality
+closes one adversarial channel: because every token, honest or not, produces an
+answer, $U$ gains nothing from an out-of-band error or exception signal, as there
+is none to probe. This does not make $U$ passive. The operations $F$ in its view
+already let it form and probe self-generated tokens, the active capability that
+clause~(A) measures, so the model grants the active power; totality removes only
+the error channel. (The marginal bound below additionally assumes the membership
+set is unstructured; an adversary exploiting algebraic structure in the key
+universe, for example $S = \{x : x \equiv 0 \bmod 7\}$, is out of scope and is
+handled separately~\cite{towell2026maxconf}.)
 
 The latent quantities $U$ would learn, and that the model must bound, are the
 inputs $X = (x_i)$, the function $f$, the distribution $D$, and quantities
@@ -148,28 +153,39 @@ Let $(\fhat, \enc, \dec, s)$ be a cipher map with representation uniformity
 $\delta = \TV(Q, U_{\im})$ on its populated support, where $Q$ is the induced
 token distribution and $U_{\im}$ is uniform on $\im(\enc)$, and let $H^{*} =
 \log_2|\im(\enc)|$. The cipher map is \emph{$(\delta, R, F)$-confidential}
-against the adversary of \Cref{def:view} if all three of the following hold.
+against the adversary of \Cref{def:view} if all three of the following hold,
+where $\delta$ is the marginal parameter of~(M), $R$ the recovery-rate function
+of~(C), and $F$ the operation set of~(A); the cipher map's confidentiality is
+the triple, not any one of them.
 \begin{description}
-\item[\textmd{(M) Marginal.}] For a single token $c = \enc(x, k)$ with
-  $x \sim D$, the leakage of $x$ is bounded by the entropy ratio:
+\item[\textmd{(M) Marginal.}] The observed single-token distribution $Q$ is
+  $\delta$-close to uniform on the support, so its entropy ratio is high,
   \[
-    \frac{I(x; c)}{H^{*}} \;\le\; 1 - e, \qquad
-    e = \frac{H(Q)}{H^{*}} \;\ge\; 1 - \delta - \frac{h_2(\delta)}{H^{*}},
+    e \;=\; \frac{H(Q)}{H^{*}} \;\ge\; 1 - \delta - \frac{h_2(\delta)}{H^{*}},
   \]
-  the lower bound on $e$ being the Fannes--Audenaert inequality, linear in
-  $\delta$. Small $\delta$ bounds the marginal leakage.
+  the Fannes--Audenaert lower bound~\cite{fannes1973continuity,audenaert2007sharp},
+  linear in $\delta$; and a single-guess
+  membership-inference adversary observing one decoded output distinguishes a
+  real query from filler with advantage at most $\delta/2$ (Le Cam's two-point
+  method). Small $\delta$ bounds both the stream's non-uniformity, $1 - e =
+  D_{\mathrm{KL}}(Q \,\|\, U_{\im})/H^{*}$, and the single-guess advantage.
 \item[\textmd{(C) Compositional.}] For two cipher maps $\fhat_1, \fhat_2$ for
-  $f_1 : X \to Y_1$, $f_2 : X \to Y_2$ observed on shared tokens, mutual
-  information is preserved, $I(\fhat_1(C); \fhat_2(C)) = I(f_1(X); f_2(X))$, and
-  the latent joint distribution on $Y_1 \times Y_2$ is recoverable to
-  total-variation accuracy $\xi$ from $N = R(\xi)$ observations with
-  $R(\xi) = \Theta(|Y_1|\,|Y_2| / \xi^2)$.
+  $f_1 : X \to Y_1$, $f_2 : X \to Y_2$ observed on shared tokens, the latent
+  joint distribution on $Y_1 \times Y_2$ leaks: it is recoverable to
+  total-variation accuracy $\xi$ once $N = R(\xi) = \Theta(|Y_1|\,|Y_2|/\xi^2)$
+  shared observations are taken, and no construction parameter lowers this rate.
+  The maps preserve the latent dependence, with mutual information preserved
+  exactly, $I(\fhat_1(C); \fhat_2(C)) = I(f_1(X); f_2(X))$, when the outputs are
+  canonical ($K_{\mathrm{out}} = 1$) and $\ge$ in general. This is the Dalenius
+  (correlated-secrets) leakage, here with an explicit rate.
 \item[\textmd{(A) Active.}] For an adversary applying the operations $F$ to a
-  token $c$, the residual entropy of the latent value $X$ behind $c$ is
+  token $c$, with orbit-resolved observation $\mathcal{V}_F(c)$ supported on the
+  reachable set $\orbitF(c)$, the residual entropy of the latent value $X$ is
   \[
-    H(X \mid \mathsf{view}_U) \;\ge\; H(X) - \log_2|\orbitF(c)|,
+    H(X \mid \mathcal{V}_F(c)) \;\ge\; H(X) - \log_2|\orbitF(c)|,
   \]
-  where $\orbitF(c)$ is the set of tokens reachable from $c$ under $F$.
+  equivalently $\mathrm{conf} \ge 1 - |\orbitF(c)|/|X|$ in set form, the
+  denominator being the latent space $|X|$, not $2^n$.
 \end{description}
 \end{definition}
 
@@ -251,20 +267,23 @@ the parts:
 \item correctness composes, $\eta_{\mathrm{total}} \le 1 - \prod_i (1 - \eta_i)$;
 \item the marginal leakage of the chain's observable token stream is bounded by
   the entropy ratio of that stream, which the per-stage $\delta_i$ bound;
-\item the compositional rate and the active orbit of the chain grow predictably,
-  the orbit by at most the product of the per-step frontiers and the recovery
-  rate by the latent cardinalities the chain exposes.
+\item the active orbit of a typed chain is bounded \emph{additively},
+  $|\mathrm{orbit}| \le \sum_i N_i$ with $N_{i+1} = N_i^{a_i}$ for per-step arity
+  $a_i$~\cite{towell2026algebraic}, and the compositional rate by the latent
+  cardinalities the chain exposes.
 \end{enumerate}
 \end{proposition}
 
 The correctness bound is the elementary observation that a chain is correct when
 every stage is, an inequality rather than an equality because a stage error can
-be masked downstream~\cite{towell2026cipher}. The marginal and active parts
-inherit their composition from the entropy-ratio and orbit-closure machinery the
-framework already proves. The point for the model is structural: because each
-clause composes, a system assembled from cipher maps has a security tuple a
-designer can compute from a parts list, which is the property that lets the
-definition support construction and not only analysis.
+be masked downstream~\cite{towell2026cipher}. Parts~2 and~3 follow from the
+entropy-ratio and typed-orbit bounds of the cited papers; a full composition
+theorem for the whole tuple, accounting for the collateral leakage that
+composition can introduce in quantitative information flow generally, is left
+open. The point for the model is nonetheless structural: each clause composes
+through quantities the parts already carry, so a system assembled from cipher
+maps has a security tuple a designer can estimate from a parts list, the property
+that lets the definition support construction and not only analysis.
 
 \section{Relation to Cryptographic Security}
 \label{sec:crypto}
@@ -273,14 +292,17 @@ The natural objection to \Cref{def:confidentiality} is that it is not a
 cryptographic security definition. It is not, and the difference is the point.
 
 \paragraph{Against simulation-based security.}
-Searchable encryption and oblivious RAM are proved secure by exhibiting a
-simulator that reproduces the adversary's view from a \emph{leakage function}~%
-\cite{curtmola2006searchable,goldreich1996software}: security means the real
-view is indistinguishable from a simulation that depends only on what the
-leakage function reveals. Trapdoor computing's leakage is not a function to be
-fed to a simulator; it is a family of \emph{bounds}, and the constructions do
-not claim that the residual is simulatable, only that it is small in the
-measured sense. One could define a leakage function and seek a simulator, but
+Searchable encryption is proved secure by exhibiting a simulator that reproduces
+the adversary's view from a \emph{leakage function}~\cite{curtmola2006searchable}:
+security means the real view is indistinguishable from a simulation depending
+only on what the leakage function reveals, and the leakage-abuse literature then
+studies what that documented function lets an attacker recover~%
+\cite{naveed2015inference,cash2015leakage}. Oblivious RAM takes a different route,
+proving access-pattern indistinguishability rather than exhibiting a leakage
+function~\cite{goldreich1996software}. Trapdoor computing's leakage is not a
+function to be fed to a simulator; it is a family of \emph{bounds}, and the
+constructions do not claim the residual is simulatable, only that it is small in
+the measured sense. One could define a leakage function and seek a simulator, but
 the resulting statement would say less than \Cref{def:confidentiality}: a
 simulator with a large leakage function certifies indistinguishability while
 hiding how much leaks, whereas the quantitative bound says exactly how much.
@@ -292,6 +314,20 @@ forced to claim one would either fail, because its compositional leakage is not
 negligible, or mislead. The honest statement is the quantitative one: the
 advantage is a measured quantity, often not negligible, and useful precisely
 because it is known.
+
+\paragraph{Against prior quantitative treatments of encrypted search.}
+Quantitative information flow has been brought to encrypted search before. The
+q-leakage analysis of~\cite{falzon2024understanding} replaces the
+leakage-function-and-simulator paradigm with a measured leakage quantity, exactly
+the move this paper makes for trapdoor computing, and the broader QIF programme~%
+\cite{smith2009foundations,alvim2020science,alvim2012gleakage} established
+security-as-a-bound, the irreducibility of leakage measures across operational
+scenarios, and the correlated-secrets (Dalenius) leakage that clause~(C)
+instantiates. The contribution here is therefore not the quantitative stance but
+its specialization to the opaque-table adversary: the three-clause tuple tied to
+one adversary's three access levels, and in particular the active orbit-closure
+clause~(A), which passive access-pattern leakage models do not capture, since
+their adversary observes rather than \emph{operates}.
 
 \paragraph{Why quantitative information flow is the right model.}
 The leakage trapdoor computing incurs is operationally meaningful (its bounds
