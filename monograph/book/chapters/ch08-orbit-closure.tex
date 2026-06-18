@@ -152,10 +152,10 @@ Orbit closure is the active face of a single cipher value; the compositional
 scale appears when typed cipher maps are chained. Feeding the output of one
 typed map into the next, the reachable set grows along the chain: a step
 that combines $a$ prior values into one expands the frontier by the step's
-arity, and the count of reachable tokens compounds through the chain rather
-than merely adding. The total an adversary can reach is bounded by the sum
-of these per-step frontiers, a quantity that grows with both the chain's
-length and the arity of its operations.
+arity, so the reachable set can grow super-linearly along the chain. A loose
+upper bound on the total an adversary can reach is the sum of the per-step
+frontiers, a quantity that grows with both the chain's length and the arity
+of its operations.
 
 What the orbit bound previews here, the full confidentiality theory
 delivers. When two cipher maps share an input, or a chain exposes the joint

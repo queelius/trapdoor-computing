@@ -92,10 +92,12 @@ $\varnothing$ & $0^n$ & exact \\
 
 \begin{example}[Combining two watchlists]
 \label{ex:boolean-watchlist}
-Take $n = 8$ and the watchlist $S = \{\mathrm{alice}, \mathrm{carol}\}$ of
-\Cref{ex:watchlist-numbers} beside a second list
-$V = \{\mathrm{carol}, \mathrm{dave}\}$. Suppose $h$ places alice at bit
-$1$, carol at bit $6$, and dave at bit $2$, so
+Take $n = 8$ (here the bit-image width, distinct from the $12$-bit token
+space of \Cref{ex:watchlist-numbers}) and the watchlist
+$S = \{\mathrm{alice}, \mathrm{carol}\}$ beside a second list
+$V = \{\mathrm{carol}, \mathrm{dave}\}$. Numbering bit positions from the
+right ($0$ least significant), suppose $h$ places alice at bit $1$, carol at
+bit $6$, and dave at bit $2$, so
 \[
   F(S) = \mathtt{0100\,0010}, \qquad F(V) = \mathtt{0100\,0100} .
 \]
@@ -226,5 +228,7 @@ construction, the price the online algebra pays for exact operations, and it
 is the concrete motivation for the multiple-representation machinery of
 \Cref{def:uniformity}. The full Boolean cipher type, its noise behavior, and
 the experimental validation of the asymmetry are developed in
-\Cref{part:constructions}; the confidentiality of what the equality channel
-leaks is taken up at the active-adversary scale later in this part.
+\Cref{part:constructions}; what the equality channel leaks is the cost of
+determinism, and the multiple representations of \Cref{def:uniformity} are
+what buy it back, while at the multi-instance scale it reappears as the
+coincidence leakage that \Cref{part:confidentiality} measures.

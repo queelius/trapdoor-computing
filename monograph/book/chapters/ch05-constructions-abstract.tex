@@ -224,11 +224,13 @@ hash-function space analysis, which converge on the same two terms; the book
 takes the duality as the abstract law and defers the tight lower bound and
 its achievability to \Cref{part:constructions} and the companion paper. The
 acceptance partition returns in \Cref{part:confidentiality}, where the
-\emph{shape} of the regions, concentrated versus spread, controls how well a
-multi-instance adversary can align independent cipher maps for the same
-function; the choice that is space-optimal here and the choice that is
-confidentiality-optimal there are not the same, a tension the confidentiality
-part takes up. With this chapter the keystone is complete: the cipher map is
+\emph{shape} of the regions controls confidentiality, and the surprise is
+that there is no single best shape. The allocation that is space-optimal
+here, sized to the value distribution, is not the one that flattens token
+frequency, and neither is the one that best resists a multi-instance
+adversary aligning independent cipher maps for the same function; the three
+pull in different directions, a frontier rather than an optimum, which
+\Cref{part:confidentiality} and \Cref{ch:gf2-retrieval} develop. With this chapter the keystone is complete: the cipher map is
 defined, its four properties are fixed with their parameters, and its
 abstract construction and cost are in hand, enough for the algebra of
 \Cref{part:algebra} to build on.

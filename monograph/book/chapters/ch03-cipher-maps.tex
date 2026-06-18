@@ -248,13 +248,19 @@ slice of the token space. To check alice the trusted machine picks one of
 her four tokens, say $\enc(\mathrm{alice}, 1) = \mathtt{0x2A7}$ (the string
 $0010\,1010\,0111$); the server returns $\fhat(\mathtt{0x2A7})$, say
 $\mathtt{0x6B4}$; the trusted machine decodes $\mathtt{0x6B4}$ to $1$, on
-the list. Hand $\dec$ a uniformly random $12$-bit string instead and it
-returns a $0$ or $1$ rather than $\bot$ only with probability $\varepsilon$:
-if the construction reserves, say, four of the $4096$ codewords as valid
-answers, then $\varepsilon \approx 4/4096 \approx 10^{-3}$, and an
-out-of-domain probe is rejected about $999$ times in $1000$. Those ten real
-tokens, and the $0.24\%$ support they form, are what the next chapter's
-$\delta$ measures uniformity against; the $4096$ ambient strings are not.
+the list. Two small sets live inside the $4096$, at the two ends of the
+pipeline $\dec(\fhat(\enc(x,k)))$, and they play different roles. The
+\emph{input} support is the ten tokens just counted, the ones that
+\emph{encode} the names; it is what the next chapter's $\delta$ measures
+uniformity against, and it fixes $H^* = \log_2 10$. The \emph{output}
+acceptance set is separate: hand $\dec$ a uniformly random $12$-bit string
+and it returns a $0$ or $1$ rather than $\bot$ only with probability
+$\varepsilon$, the fraction of strings that \emph{decode} to an answer; if
+the construction reserves four of the $4096$ codewords as valid answers,
+then $\varepsilon \approx 4/4096 \approx 10^{-3}$ and an out-of-domain probe
+is rejected about $999$ times in $1000$. The ten input tokens govern
+$\delta$; the four output codewords govern $\varepsilon$; they are different
+sets, and neither is the $4096$ ambient strings.
 \end{example}
 
 Totality also makes filler queries free. Because every string produces

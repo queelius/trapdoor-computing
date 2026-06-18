@@ -24,7 +24,12 @@ queried with an element, answers ``in'' or ``out'' correctly most of the
 time. Two error rates characterize it. The \emph{false-positive rate}
 $\alpha$ is the probability that a non-member is reported as a member; the
 \emph{false-negative rate} $\beta$ is the probability that a member is
-reported as a non-member. Together they are a $2 \times 2$ confusion matrix,
+reported as a non-member. (This $\alpha$ is the Bernoulli false-positive
+rate, a different quantity from the acceptance probability $\alpha(y) =
+\lvert A(y)\rvert/2^n$ of \Cref{def:acceptance}; for a HashSet the two are
+related, the false-positive rate being close to the noise-decode probability
+$\varepsilon = \sum_y \alpha(y)$.) Together they are a $2 \times 2$ confusion
+matrix,
 a noisy channel from the latent membership bit to the reported one:
 \[
   \begin{array}{c|cc}
