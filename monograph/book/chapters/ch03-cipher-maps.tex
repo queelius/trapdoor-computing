@@ -29,7 +29,27 @@ only party that can move between values and their encodings. The
 strings and evaluates it on whatever it is given. To evaluate $f$ at $x$,
 the trusted machine encodes $x$ as a token $c = \enc(x)$, the untrusted
 machine returns $\fhat(c)$, and the trusted machine decodes the result as
-$\dec(\fhat(c))$.
+$\dec(\fhat(c))$ (\Cref{fig:two-machines}).
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[
+  box/.style={draw, rounded corners, align=center, minimum height=1.3cm,
+              minimum width=3.6cm, font=\small},
+  >={Stealth[]}]
+\node[box] (T) {Trusted machine $T$\\[2pt]{\footnotesize holds $\enc,\dec,s$}};
+\node[box] (U) at (7.2,0) {Untrusted machine $U$\\[2pt]{\footnotesize holds $\fhat$}};
+\draw[->] ([yshift=3mm]T.east) -- node[above,font=\footnotesize]{$c=\enc(x)$}
+          ([yshift=3mm]U.west);
+\draw[->] ([yshift=-3mm]U.west) -- node[below,font=\footnotesize]{$\fhat(c)$}
+          ([yshift=-3mm]T.east);
+\end{tikzpicture}
+\caption{The two machines. The trusted machine encodes an input and decodes
+the returned token; the untrusted machine evaluates the total function
+$\fhat$ on the token it is given. The secret $s$ never leaves $T$, and the
+result the trusted machine reads is $\dec(\fhat(c))$.}
+\label{fig:two-machines}
+\end{figure}
 
 The division of labor is the whole point, so it is worth stating what each
 machine can and cannot do. The trusted machine is small and holds the
@@ -145,6 +165,23 @@ has. Start with an ordinary function $f : X \to Y$ and apply, in turn:
   uniformity.
 \end{description}
 
+\Cref{tab:transformations} collects the three.
+
+\begin{table}[t]
+\centering
+\caption{The three transformations and what each produces.}
+\label{tab:transformations}
+\begin{tabular}{@{}lll@{}}
+\toprule
+Transformation & Operation & Produces \\
+\midrule
+Undefined injection & extend $X$ with $N$ undefined elements & $\varepsilon$ (noise-decode prob.) \\
+Noise closure & undefined inputs $\mapsto$ hash outputs & totality \\
+Multiple representations & each value $\mapsto K(x)$ tokens & representation uniformity \\
+\bottomrule
+\end{tabular}
+\end{table}
+
 The four properties of the next chapter are then not a list to be
 memorized but consequences of this construction: totality comes from noise
 closure, representation uniformity from the multiple-representation step,
@@ -200,6 +237,25 @@ this support}, and measuring against the uniform distribution on all of
 $\B^n$ instead would make every sparse construction look maximally leaky and
 the measure say nothing. Getting the support right is the difference between
 a meaningful confidentiality measure and a vacuous one.
+
+\begin{example}[The watchlist, in numbers]
+\label{ex:watchlist-numbers}
+Take $n = 12$, so a token is one of $2^{12} = 4096$ bit strings. Suppose
+alice is queried often enough to warrant $K(\mathrm{alice}) = 4$
+representations and the other three names two each, so the populated
+support $\mathrm{im}(\enc)$ holds $4 + 2 + 2 + 2 = 10$ tokens, a $0.24\%$
+slice of the token space. To check alice the trusted machine picks one of
+her four tokens, say $\enc(\mathrm{alice}, 1) = \mathtt{0x2A7}$ (the string
+$0010\,1010\,0111$); the server returns $\fhat(\mathtt{0x2A7})$, say
+$\mathtt{0x6B4}$; the trusted machine decodes $\mathtt{0x6B4}$ to $1$, on
+the list. Hand $\dec$ a uniformly random $12$-bit string instead and it
+returns a $0$ or $1$ rather than $\bot$ only with probability $\varepsilon$:
+if the construction reserves, say, four of the $4096$ codewords as valid
+answers, then $\varepsilon \approx 4/4096 \approx 10^{-3}$, and an
+out-of-domain probe is rejected about $999$ times in $1000$. Those ten real
+tokens, and the $0.24\%$ support they form, are what the next chapter's
+$\delta$ measures uniformity against; the $4096$ ambient strings are not.
+\end{example}
 
 Totality also makes filler queries free. Because every string produces
 output, the trusted machine can interleave random tokens among the real
