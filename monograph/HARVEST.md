@@ -30,9 +30,10 @@ Update rule: when a part is drafted, fill its section below before moving on.
 
 | ID | Finding | Surfaced | Target | Cross-ref | Status |
 |---|---|---|---|---|---|
-| BP-1 | Image-relative delta (`delta = TV(Q, U_im)`, `H* = log2\|im(enc)\|`) must replace the ambient-`B^n` definition still in cipher-maps and the spine Property 2. | round-2 Entropy Ratio review; will be **forced** when Part IV (Ch 9) reconciles three deltas into one. | cipher-maps revision; spine Property 2 edit | `cross-paper-consistency.md` C-11 | open |
-| BP-2 | The four "cannots" (decode / distinguish real-filler / determine domain / tell correct-from-noise) should have one canonical statement the papers cite back to; today it is scattered across cipher-maps sec 1 and the spine. | Part I design (Ch 1.2, Ch 2). | spine (promote a canonical list); cipher-maps + papers cite it | (new) | open, drafting Ch 1-2 will produce the canonical form |
+| BP-1 | Image-relative delta (`delta = TV(Q, U_im)`, `H* = log2\|im(enc)\|`) must replace the ambient-`B^n` definition still in the spine Property 2 headline (line ~95) and cipher-maps. | round-2 Entropy Ratio review; **forced in Ch 4.2** (`def:uniformity` defines delta for the whole book). | spine Property 2 headline edit; cipher-maps Property 2 | `cross-paper-consistency.md` C-11 | **landed in book (Ch 4.2)**; back-port pending |
+| BP-2 | The four "cannots" (decode / distinguish real-filler / determine domain / tell correct-from-noise) should have one canonical statement the papers cite back to; today it is scattered across cipher-maps sec 1 and the spine. | Part I design (Ch 1.2, Ch 2). | spine (promote a canonical list); cipher-maps + papers cite it | (new) | open, drafting Ch 1-2 produced the canonical form |
 | BP-3 | The "what trapdoor computing is not" comparison table (Ch 2.5) is the canonical positioning; consider promoting it into the spine as a shared figure the papers reuse. | Part I design (Ch 2). | spine (shared figure) | (new) | open, produced by drafting Ch 2 |
+| BP-4 | Composition is `eta_total <= 1 - prod(1-eta_i)` (**inequality**: a stage error can be masked downstream), not `=`. | cipher-maps R3 review (equality/inequality flag); **landed in Ch 4.4** (`thm:composition`, full proof). The spine's FORMAL Property 4 (line ~125) is already `<=`; its headline (line ~122) and a cipher-maps draft write `=`. | spine Property 4 headline; cipher-maps headline wherever `=` | (new; consider a C-item) | **landed in book (Ch 4.4)**; back-port pending |
 
 ## Per-part harvest
 
@@ -45,8 +46,14 @@ Update rule: when a part is drafted, fill its section below before moving on.
   - The access-pattern-drift correction (the no-ORAM guardrail) is now in the book, ch2 sec 2.1 and 2.3, with the rule "any argument resting on access-pattern indistinguishability has drifted" stated for the whole book.
 - Fairness held: all ch2 contrasts are about threat-model difference, not "ours is better"; the homophonic mention uses `K(x) propto D(x)`, never `1/D(x)`.
 
-### Part II: The Cipher Map Abstraction
-_(to fill when designed/drafted)_
+### Part II: The Cipher Map Abstraction (ch3-4 DRAFTED 2026-06-18; ch3 ~5pp, ch4 ~5pp; ch5 pending)
+- **Harvest is back-port; extraction N/A** (Part II consolidates the cipher-maps paper, the PoPETs target).
+- **Back-port findings, status:**
+  - **BP-1 (image-relative delta): LANDED** in ch4 sec 4.2 (`def:uniformity`): `delta = TV(Q, U_im)`, `U_im = Uniform(im(enc))`, `H* = log2|im(enc)|`, with the worked `ex:delta-watchlist` (0.15 -> 0 under `K propto D`) and the homophonic identity `delta = TV(D, K/N) <= (|X|-1)/N`. ch3 sec `sec:totality-support` + `ex:watchlist-numbers` set up the populated-support distinction the definition rests on. The spine's Property 2 headline (line ~95) still carries the ambient `Uniform({0,1}^n)` form. **ACTION:** edit spine Property 2 + cipher-maps Property 2 to image-relative (C-11).
+  - **BP-4 (composition `<=` not `=`): LANDED** in ch4 sec 4.4 (`thm:composition`) with a full short proof; stated as an inequality because a stage error can be masked by a downstream stage. The spine's formal box (line ~125) already has `<=`; its headline (line ~122) writes `=`. **ACTION:** align the spine headline and any cipher-maps `=` to `<=`.
+  - **Cleaner-statement candidates:** the four properties as one numbered set (`def:totality`/`def:uniformity`/`def:correctness`/`def:composability`) and the parameter-tuple table (`tab:parameters`, canonical order `(eta, eps, mu, delta)`). If sharper than the paper, note for the next cipher-maps revision.
+- **Enrichment pattern (per 2026-06-18 density calibration: figures + worked examples):** ch3 = protocol figure (`fig:two-machines`) + transformations table (`tab:transformations`) + worked numeric example (`ex:watchlist-numbers`); ch4 = two worked examples (`ex:delta-watchlist`, `ex:composition`) + two tables (`tab:compounding`, `tab:parameters`) + theorem/proof. Density ~5pp/chapter (dense prose; the rich elements are present; all numbers Python-verified).
+- Landmines held: `delta` image-relative (0 ambient leak); composition `<=`; `K propto D` not `1/D`; `eta` = Bernoulli FNR -> appendix; no em-dash / banned phrase.
 
 ### Part III: Algebra and Types
 _(to fill)_
