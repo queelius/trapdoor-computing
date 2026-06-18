@@ -86,15 +86,16 @@ and for $c$ chosen uniformly at random from $\{0,1\}^n \setminus \mathrm{Im}(\ma
 
 #### Property 2: Representation Uniformity ($\delta$-bounded)
 
-For each $x \in X$, there are $K(x) \geq 1$ valid encodings. The marginal distribution of a random encoding, taken over a random $x \sim D$ and random representation index $k$, is $\delta$-close to uniform.
+For each $x \in X$, there are $K(x) \geq 1$ valid encodings. The marginal distribution of a random encoding, taken over a random $x \sim D$ and random representation index $k$, is $\delta$-close to uniform on the populated support $\mathrm{Im}(\mathrm{enc})$.
 
 **Formally.** Let $D$ be a distribution on $X$. Define the induced distribution on cipher values:
 $$Q(c) = \sum_{x \in X} D(x) \cdot \frac{|\{k : \mathrm{enc}(x,k) = c\}|}{K(x)}$$
 
 Representation uniformity requires:
-$$d_{\mathrm{TV}}(Q, \mathrm{Uniform}(\{0,1\}^n)) \leq \delta$$
+$$d_{\mathrm{TV}}(Q, \mathrm{Uniform}(\mathrm{Im}(\mathrm{enc}))) \leq \delta,
+\qquad H^* = \log_2 \lvert \mathrm{Im}(\mathrm{enc}) \rvert$$
 
-where $d_{\mathrm{TV}}$ denotes total variation distance.
+where $d_{\mathrm{TV}}$ denotes total variation distance, and the reference is the uniform distribution on the **populated support** $\mathrm{Im}(\mathrm{enc})$, with maximum entropy $H^* = \log_2\lvert\mathrm{Im}(\mathrm{enc})\rvert$, *not* the ambient $\{0,1\}^n$. (See `cross-paper-consistency.md`, item C-11: an ambient reference is unsatisfiable for sparse images, since any realizable $Q$ then sits at total variation $\approx 1$ from uniform over all of $\{0,1\}^n$. The construction principle below, the confidentiality paper, and the monograph use the image-relative form; this document now matches.)
 
 **Construction principle.** To achieve small $\delta$, assign $K(x) \propto D(x)$ encodings per value, so that frequent values get *more* representations (classical homophonic substitution; Simmons 1979). Setting $K(x) = \lceil c \cdot D(x) \rceil$ for a normalizing constant $c$ flattens the per-cipher-value probability $D(x)/K(x)$ toward a constant. The homophonic-allocation identity (Cipher Maps Prop. 4.1) gives the exact $d_{\mathrm{TV}}(Q, \mathrm{Uniform}(\mathrm{Im}(\mathrm{enc}))) = d_{\mathrm{TV}}(D, K/N)$ with $N = \sum_x K(x)$, bounded by the tight $(|X|-1)/N$. The total budget is $\sum_x K(x) \approx c$, so concentrating multiplicity on the heavy part of $D$ is far cheaper than spreading it over the tail. (See `cross-paper-consistency.md`, item C-1: an earlier version of this document, and the trapdoor-boolean-algebra appendix it quoted, stated the prescription as $K(x) \propto 1/D(x)$, which is inverted and self-contradictory. The papers carry the corrected $K(x) \propto D(x)$; this document now matches.)
 
@@ -119,7 +120,7 @@ $$\Pr_{x, k}\bigl[\mathrm{dec}(\hat{f}(\mathrm{enc}(x, k))) \neq f(x)\bigr] \leq
 #### Property 4: Composability
 
 For cipher maps $\hat{f}$ and $\hat{g}$ with correctness parameters $\eta_f$ and $\eta_g$ respectively, the composition $\hat{g} \circ \hat{f}$ has correctness parameter:
-$$\eta_{g \circ f} = 1 - (1 - \eta_f)(1 - \eta_g) = \eta_f + \eta_g - \eta_f \cdot \eta_g$$
+$$\eta_{g \circ f} \leq 1 - (1 - \eta_f)(1 - \eta_g) = \eta_f + \eta_g - \eta_f \cdot \eta_g$$
 
 **Formally.** Let $\hat{f}$ be a cipher map for $f : X \to Y$ with parameter $\eta_f$, and $\hat{g}$ a cipher map for $g : Y \to Z$ with parameter $\eta_g$. Define $\hat{g} \circ \hat{f} : \{0,1\}^n \to \{0,1\}^n$ by $(\hat{g} \circ \hat{f})(c) = \hat{g}(\hat{f}(c))$. Then $\hat{g} \circ \hat{f}$ is a cipher map for $g \circ f$ with:
 $$\Pr_{x,k}\bigl[\mathrm{dec}_{g \circ f}((\hat{g} \circ \hat{f})(\mathrm{enc}(x,k))) \neq g(f(x))\bigr] \leq \eta_f + \eta_g - \eta_f \eta_g$$
@@ -449,13 +450,15 @@ $\square$
 ### 3.3 Composition Chains
 
 For a chain of $m$ cipher maps $\hat{f}_1, \ldots, \hat{f}_m$:
-$$\eta_{\text{total}} = 1 - \prod_{i=1}^{m} (1 - \eta_i)$$
+$$\eta_{\text{total}} \leq 1 - \prod_{i=1}^{m} (1 - \eta_i)$$
+
+The relation is an **upper bound**, not an equality: "every stage correct" is sufficient but not necessary for the chain to be correct, since a stage error can be masked by a later stage mapping the corrupted token back to a correct value (cf. the cancellation noted in §3.2 and the noise behavior under Property 4). Equality holds only under the assumption that any stage error propagates to the output. (See `cross-paper-consistency.md`, item C-12.)
 
 If all $\eta_i = \eta$:
-$$\eta_{\text{total}} = 1 - (1 - \eta)^m \approx m\eta \quad \text{for small } \eta$$
+$$\eta_{\text{total}} \leq 1 - (1 - \eta)^m \approx m\eta \quad \text{for small } \eta$$
 
 **Example.** A circuit of 100 cipher maps each with $\eta = 10^{-6}$:
-$$\eta_{\text{total}} = 1 - (1 - 10^{-6})^{100} \approx 10^{-4}$$
+$$\eta_{\text{total}} \leq 1 - (1 - 10^{-6})^{100} \approx 10^{-4}$$
 
 **Interval refinement.** For tighter bounds on specific circuits, use the case-by-case analysis from §3.1 with interval arithmetic, tracking $[\eta_{\min}, \eta_{\max}]$ through each gate. This gives input-dependent bounds rather than worst-case.
 
@@ -468,12 +471,12 @@ The AND gate analysis in §3.1 is not merely an illustrative example. It reveals
 
 **NOT is approximate, and this is structural.** The complement ${\sim}F(A)$ flips the bits of $F(A)$, but $F(A^\complement)$ is the OR of hashes of all elements *not* in $A$. By the pigeonhole principle, for any universe larger than $2^n$, every bit position has some element hashing to it, so $F(A^\complement) = 1^n$ while ${\sim}F(A) \neq 1^n$ in general. This is not an implementation deficiency; it is a consequence of compressing an infinite (or large) universe into $n$ bits. No finite-width bitwise construction can make NOT exact.
 
-**Consequence.** Any system that composes cipher maps through Boolean operations inherits the asymmetry: AND/OR chains accumulate error only through the composition theorem ($\eta_{\text{total}} = 1 - \prod(1-\eta_i)$), while NOT introduces additional structural error that depends on the ratio $|A|/2^n$. Circuits with many NOT operations degrade faster than circuits with only AND/OR.
+**Consequence.** Any system that composes cipher maps through Boolean operations inherits the asymmetry: AND/OR chains accumulate error only through the composition theorem ($\eta_{\text{total}} \le 1 - \prod(1-\eta_i)$), while NOT introduces additional structural error that depends on the ratio $|A|/2^n$. Circuits with many NOT operations degrade faster than circuits with only AND/OR.
 
 
 ### 3.5 Convergence of the Composition Formula
 
-The formula $\eta_{\text{total}} = 1 - \prod_{i=1}^{m}(1 - \eta_i)$ appears independently in four places across the two ecosystems:
+The composition bound $\eta_{\text{total}} \le 1 - \prod_{i=1}^{m}(1 - \eta_i)$, with its multiplicative survival core $\prod_i (1-\eta_i)$, appears independently in four places across the two ecosystems:
 
 1. **`noisy-gates.md` (foundations).** Derived from the AND gate case analysis: $\Pr[\text{both correct}] = p_1 \cdot p_2$, giving $\eta = 1 - (1-\eta_1)(1-\eta_2)$ (§3.1 above).
 

@@ -521,7 +521,7 @@ Q(c) = \sum_{x \in X} D(x) \cdot \frac{|\{k : \enc(x,k) = c\}|}{K(x)}.
 \end{equation}
 The cipher map has \emph{$\delta$-representation uniformity} if
 \begin{equation}
-\TV(Q,\, \Uniform(\{0,1\}^n)) \leq \delta,
+\TV(Q,\, \Uniform(\im(\enc))) \leq \delta,
 \end{equation}
 where $\TV$ is the total variation distance between probability
 distributions on $\{0,1\}^n$, given by
@@ -531,7 +531,9 @@ distributions on $\{0,1\}^n$, given by
 \end{equation}
 \end{definition}
 
-Total variation distance has the operational interpretation that no
+The reference is the uniform distribution on the populated support
+$\im(\enc)$, not the ambient $\{0,1\}^n$, which is unsatisfiable for sparse
+images.  Total variation distance has the operational interpretation that no
 statistical test can distinguish $Q$ from uniform with advantage
 exceeding $\delta$.  To achieve small $\delta$, assign
 $K(x) \propto D(x)$ encodings per value (the classical Simmons

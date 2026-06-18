@@ -131,3 +131,26 @@ three items here:
   reference for the corrected form. (Also fixed in this round, not a
   cross-paper item: Thm 4.1 part 1 mixture entropy $H(C)$ vs $H(C,B)$,
   Entropy Ratio CLAUDE.md Landmine 5.)
+
+## 2026-06-18 update (monograph Part II keystone back-port)
+
+Drafting the monograph keystone (Part II, ch3-5) forced two corrections into
+the spine and `cipher-maps`, both now applied:
+
+- **C-11 RESOLVED (spine + Cipher Maps).** Spine Property 2 and `cipher-maps`
+  Def. (representation uniformity) now read
+  $\delta = \mathrm{TV}(Q, \mathrm{Uniform}(\mathrm{Im}(\mathrm{enc})))$ with
+  $H^* = \log_2|\mathrm{Im}(\mathrm{enc})|$, the image-relative form, *not*
+  ambient $\{0,1\}^n$. All three (spine, Cipher Maps, Entropy Ratio) now
+  agree; the monograph (`monograph/book/chapters/ch04`, `def:uniformity`) is
+  the book-side definition of record.
+- **C-12 (NEW; RESOLVED in spine, Cipher Maps already $\le$): composition is
+  an inequality.** $\eta_{\mathrm{total}} \le 1 - \prod_i (1-\eta_i)$, not
+  $=$: "every stage correct" is sufficient but not necessary (a stage error
+  can be masked by a downstream stage). The spine headline (Property 4) and
+  the §3.3-3.5 displays said $=$; now $\le$, with a masking note at §3.3.
+  `cipher-maps` Theorem 7.1 (and Theorem 4.1) already state $\le$; the $=$
+  that remains there is the algebraic identity
+  $1-(1-\eta_f)(1-\eta_g) = \eta_f+\eta_g-\eta_f\eta_g$, which is correct.
+  This closes the spine side of the paper's review item M4. Monograph `ch04`
+  `thm:composition` carries the canonical $\le$ form with a full short proof.
