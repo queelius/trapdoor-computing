@@ -1,0 +1,150 @@
+% Chapter 12: GF(2)-Linear Retrieval
+% DEFINES: ch:gf2-retrieval; sec:retrieval-no-gate, sec:designable-junk,
+%   sec:rank-threshold, sec:structural-hiding, sec:ch12-notes;
+%   thm:span-output, rem:rank-threshold, rem:freq-hiding, tab:hiding
+% REFERENCES (backward): def:totality, sec:acceptance, tab:levers,
+%   sec:compositional-measures, def:uniformity
+% REFERENCES (forward, part labels): part:frontiers
+
+\chapter{GF(2)-Linear Retrieval}
+\label{ch:gf2-retrieval}
+
+The hash-based construction of \Cref{ch:hash-constructions} hides frequency
+the way \Cref{ch:marginal-scale} prescribed: by spending tokens, more
+representations for frequent values, a cost paid per element. This chapter is
+a construction of a different character, where the frequency-hiding is not
+bought but \emph{structural}, a property of a linear system that holds at
+zero per-query cost. It is summarized from the codec paper, a standalone
+submission; the constructions and the threshold theorem are stated with their
+intuition and pointed to the paper for proof.\footnote{The construction, the
+rank threshold, and the frequency-hiding game are \cite{towell2026codec},
+which also carries the header-only C++23 implementation and the at-scale
+empirical checks; this chapter states and motivates them.}
+
+\section{Retrieval Without a Membership Gate}
+\label{sec:retrieval-no-gate}
+
+A retrieval data structure, a ribbon, XOR, or Bloomier filter, returns a
+value for \emph{every} key, with no membership test: the stored value for a
+member, and for a non-member some value the literature dismisses as junk, a
+don't-care. This is totality (\Cref{def:totality}) in a new guise: every
+input produces output, and there is no out-of-band signal that a key was
+never stored. The structures of interest here are linear. In a homogeneous
+ribbon retrieval over a key set $S$, a query is answered by a GF(2)-linear
+combination of the structure's stored rows, so the value returned is an XOR
+of solution vectors selected by the key's hash. The whole machinery is a
+linear system over $\mathrm{GF}(2)$, and that linearity is what makes the junk
+analyzable.
+
+\section{Junk Is Designable}
+\label{sec:designable-junk}
+
+The dismissed value, the junk, is the chapter's object, and the result is
+that it is not arbitrary at all.
+
+\begin{theorem}[Non-member output, summarized]
+\label{thm:span-output}
+For homogeneous ribbon retrieval, the value returned for a non-member key is
+uniform on the GF(2) span $W$ of the stored codewords. Its distribution is
+therefore fixed by a \emph{public} value codec, the map from values to
+codewords, and is provably independent of how often each value was stored.
+\end{theorem}
+
+The consequence is that junk is a \emph{designable} object. The non-member
+output distribution does not leak the stored frequencies, because it depends
+only on the span $W$ and the public codec, not on the private data; a
+designer chooses the codec and thereby chooses what non-members reveal,
+which can be nothing about frequency at all. This is the acceptance predicate
+of \Cref{sec:acceptance} realized at the level of a linear code: the codec
+plays the role of the acceptance partition, and the span plays the role of
+the populated support.
+
+\section{The Rank Threshold}
+\label{sec:rank-threshold}
+
+Whether the codec achieves full control over the non-member distribution is
+not a matter of degree but of a sharp threshold.
+
+\begin{remark}[The rank threshold]
+\label{rem:rank-threshold}
+For a balanced codec with $K$ classes, full control holds if and only if the
+stored codewords are transversal to the codec's class partition, equivalently
+\[
+  \rank\bigl(\proj|_{W}\bigr) \;=\; \log_2 K,
+\]
+the projection of the stored span onto the codec's class coordinates having
+full rank. This is a \emph{step} in an integer rank, with no graded middle:
+above the threshold the codec controls every class, and below it whole codec
+classes receive exactly zero probability. A second invariant, the matroid
+cogirth $d^{*}$ of the stored column system, is the exact adversarial erasure
+budget before control collapses, at least $\tfrac{K}{2}\,m_{\min}$ under full
+support. Rank governs whether control holds; cogirth governs how robust that
+control is to erasures.
+\end{remark}
+
+The step is worth dwelling on, because it is unlike the smooth $\delta$ of
+\Cref{def:uniformity}. There is no codec that ``mostly'' controls the
+output: either the rank condition holds and the public codec fixes the
+distribution exactly, or it fails and a hard zero appears in some class. The
+designer's task is a discrete one, ensure the rank, then choose the codec,
+rather than a continuous tuning.
+
+\section{Frequency-Hiding at Zero Per-Query Cost}
+\label{sec:structural-hiding}
+
+The payoff is a confidentiality property the hash-based construction cannot
+match in kind. Consider a distinguishing game in which an adversary, with
+oracle access to non-member outputs, tries to tell a high-frequency stored
+value from a low-frequency one. In the idealized model the two non-member
+laws are \emph{identical}, both uniform on the span, so the adversary's
+advantage is exactly zero, for any number of adaptive queries; there is
+nothing to learn because the output law does not depend on frequency at all.
+In the real construction the two laws lie within total variation
+$\delta(p_0) + \delta(p_1)$, a small, scale-independent, redundancy-governed
+term, so a single observation distinguishes them by at most that distance and
+more queries only sharpen an estimate of two fixed laws whose separation does
+not grow with the frequency gap.
+
+The decisive word is structural. The hiding here is a property of the linear
+system, established once when the structure is built, and it costs
+\emph{nothing per query} (\Cref{tab:hiding}). This is the contrast with the
+homophonic multiplicity of \Cref{tab:levers}, which hides frequency by
+spending tokens and which an online defense pays for on every access. The two
+are genuinely different mechanisms for the same end, and they pull in
+different directions under a second adversary. The multi-instance coincidence
+oracle of \Cref{sec:compositional-measures} is blunted not by a flat codec
+but by a \emph{concentrated} one, the opposite of what the frequency-hiding
+game wants, so there is no single optimal codec, only a public tunable
+frontier between the two defenses.
+
+\begin{table}[t]
+\centering
+\caption{Two ways to hide frequency.}
+\label{tab:hiding}
+\begin{tabular}{@{}lll@{}}
+\toprule
+Mechanism & How & Cost \\
+\midrule
+Homophonic multiplicity (\Cref{tab:levers}) & spread frequent values over tokens & space; per-query for online defenses \\
+GF(2) codec (\Cref{thm:span-output}) & non-member law fixed on the span & one-time build; rank condition; zero per-query \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Notes and Provenance}
+\label{sec:ch12-notes}
+
+The linear-retrieval view, the non-member-output-on-the-span theorem, the
+rank threshold and cogirth robustness, and the frequency-hiding game are the
+codec paper's \cite{towell2026codec}, summarized here with the proofs left to
+it. Two threads of the book meet in this chapter. The frequency-hiding is a
+structural alternative to the marginal-scale homophonic lever of
+\Cref{ch:marginal-scale}, achieving at build time, and at zero per-query
+cost, what multiplicity achieves by spending tokens; and the opposite-pull
+between the frequency game and the coincidence oracle of
+\Cref{ch:compositional-scale} is the same two-scale tension the
+confidentiality part drew, now appearing as a design frontier for a single
+public codec. The construction is online in the sense of
+\Cref{sec:strategies}, read off a linear structure rather than seed-searched,
+and it is the cleanest evidence that the framework's confidentiality knobs
+are not tied to any one construction strategy.

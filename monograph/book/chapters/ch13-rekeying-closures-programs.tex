@@ -1,0 +1,167 @@
+% Chapter 13: Rekeying, Closures, and Programs
+% DEFINES: ch:rekeying-closures; sec:cipher-closure, sec:code-data-duality,
+%   sec:rekeying, sec:programs, sec:ch13-notes;
+%   def:cipher-closure, rem:designed-orbit, rem:rekeying-functor,
+%   rem:control-flow
+% REFERENCES (backward): rem:values-are-maps, sec:cipher-type, thm:orbit-bound,
+%   thm:sum-impossibility, thm:composition
+% REFERENCES (forward, part labels): part:frontiers
+
+\chapter{Rekeying, Closures, and Programs}
+\label{ch:rekeying-closures}
+
+The two preceding chapters built cipher maps. This one builds \emph{with}
+them: it shows that a single abstraction, the cipher closure, carries not
+only values and functions but data structures, the secret itself, and whole
+programs. The chapter folds three strands of the program, rekeying, cipher
+data structures, and program realization, around that one idea, and where
+each meets a limit, the limit is one the book has already proved. Control
+flow runs into the sum-type impossibility of \Cref{thm:sum-impossibility};
+sequential data leaks through the orbit closure of \Cref{thm:orbit-bound}.
+The constructions are summarized from three companion drafts.
+
+\section{The Cipher Closure}
+\label{sec:cipher-closure}
+
+Everything the untrusted machine handles in this framework has the same
+shape: it carries a hidden secret and exposes an interface that operates on
+bit strings. That shape has a name.
+
+\begin{definition}[Cipher closure]
+\label{def:cipher-closure}
+A \emph{cipher closure} is a procedure that captures a trapdoor secret and
+exposes an operation interface over bit strings, with the secret accessible
+only through that interface. A cipher value (\Cref{rem:values-are-maps}), a
+cipher map, and a cipher data structure are all cipher closures, differing
+only in which interface they expose.
+\end{definition}
+
+The view is the closures-as-data-structures lens of structured programming,
+applied to trapdoor computing: a closure is data that carries behavior, and
+in this setting the captured datum is the secret. It unifies the objects of
+the book. A cipher value is a closure whose interface is ``decode me'' (under
+the trapdoor); a cipher map is a closure whose interface is ``apply me to a
+token''; a cipher data structure, as the next section shows, is a closure
+whose interface is a set of operations folded into one map. The secret is
+captured in every case, and operated on, in the case of rekeying, by yet
+another closure.
+
+\section{Code Is Data, Data Is Code}
+\label{sec:code-data-duality}
+
+The closure makes precise a duality between cipher code and cipher data that
+runs throughout the framework.
+
+Data is code. A cipher data structure, a pair, a list, a map, is realized as
+a \emph{single} cipher map. Its operation interface, the projections of a
+pair, the head and tail of a list, is folded into a query tag: the untrusted
+machine presents a tag naming the operation alongside the structure, and the
+one cipher map dispatches on the tag to the right behavior. This is the
+\emph{dispatch pattern}, and it turns a data structure into a function,
+realizing data as code. Sequential structure is carried a second way, by a
+\emph{designed orbit}: a list is encoded so that applying a hash-chain map
+repeatedly walks from one element to the next, the structure living in the
+shape of an orbit under that map.
+
+\begin{remark}[Designed orbits leak length]
+\label{rem:designed-orbit}
+A structure encoded as an orbit pays the price \Cref{thm:orbit-bound} named.
+The untrusted machine traverses a designed-orbit list by applying the
+hash-chain map until the orbit closes, and the number of steps is the orbit
+size, which is the list's length. So a designed-orbit data structure leaks
+its length through exactly the orbit-closure channel of \Cref{ch:orbit-closure}:
+the active adversary that walks the structure learns how big it is, even
+though it never reads an element. Length is the residual the orbit bound
+predicted.
+\end{remark}
+
+Code is data, in turn, because a cipher map is itself a point of a cipher
+type, the cipher exponential $\cipher{A \to B}$ of \Cref{sec:cipher-type}. A
+function is a value of a function type, so cipher code is cipher data, carried
+like any other by a cipher map. The closure is the carrier that makes the
+duality symmetric: values, functions, and data structures are all cipher
+closures, and the cipher map is the universal vehicle for all of them.
+
+\section{Rekeying}
+\label{sec:rekeying}
+
+If the secret is just another captured datum, it can be operated on, and the
+operation that matters in practice is rotating it. Real systems change keys,
+share data across trust boundaries, and retire old secrets; doing so naively
+would mean decoding to plaintext and re-encoding under the new secret, which
+defeats the point.
+
+\begin{remark}[Rekeying is a cipher map]
+\label{rem:rekeying-functor}
+\emph{Cipher rekeying} maps a cipher value encoded under one secret to a
+cipher value encoded under another, preserving the latent value, without
+decoding. When the trusted machine knows both secrets it constructs the
+rekeying transformation as a cipher map; once built, the \emph{untrusted}
+machine applies it to any cipher value, rotating the key blindly. The
+transformation is natural in the categorical sense: rekeying commutes with
+the cipher operations, so a re-keyed value behaves under the algebra exactly
+as the original did. Rekeying is then one instance of the closure principle,
+a closure that transforms the captured secret of another closure.
+\end{remark}
+
+The information-theoretic cost of rekeying, and the conditions under which it
+composes cleanly, are the rekeying paper's \cite{towell2026rekeying}; the
+point for this part is structural: the secret is cipher data like any other,
+and rotating it is a cipher map like any other.
+
+\section{Programs as Cipher-Map Compositions}
+\label{sec:programs}
+
+The most ambitious use of the closure is to realize an entire program as a
+composition of cipher maps the untrusted machine runs blindly. Two
+difficulties shape what is possible, and both are limits the book has
+already established.
+
+The first is that ciphering is \emph{infectious}. Cutting a program at one
+node, deciding to cipher that node's output, forces every node that consumes
+the output to be ciphered too, since it now receives a cipher value, and
+every sibling input that must be combined with it as well. The ciphered
+region is therefore upward-closed toward the root, and a single cut can
+cipher an entire single-rooted program. There is no local ciphering; the
+decision propagates.
+
+\begin{remark}[Control flow is sum-type dispatch]
+\label{rem:control-flow}
+The second difficulty is control flow, and it is the sum-type impossibility
+of \Cref{thm:sum-impossibility} wearing operational clothes. Branching on a
+cipher Boolean is untrusted dispatch on a sum type: the conditional must
+choose a handler as a function of a hidden tag. By
+\Cref{thm:sum-impossibility} it cannot both hide the tag and dispatch, so a
+ciphered conditional faces exactly two options. It can \emph{expose} which
+branch ran, letting the untrusted machine read the tag and run only the taken
+branch, cheap but leaking the test; or it can \emph{hide} which branch ran,
+evaluating both branches and combining them by a fused eliminator so the
+untrusted machine never learns the tag, private but paying for both branches.
+There is no third option, because the theorem forbids it. The cost of
+oblivious control flow is the price of the sum-type wall.
+\end{remark}
+
+The full account of where to cut, how the ciphered region propagates, and how
+control flow is compiled is the program-construction paper's
+\cite{towell2026cipherprog}; here the realization closes the arc of the book.
+The abstract composition theorem of \Cref{thm:composition} promised that
+cipher maps chain; this chapter shows what chaining a whole program costs,
+and that its two hard costs, infectious ciphering and oblivious branching,
+are consequences of properties, totality and the sum-type impossibility, that
+the earlier parts proved.
+
+\section{Notes and Provenance}
+\label{sec:ch13-notes}
+
+The cipher closure and the code-data duality are the closures paper's
+\cite{towell2026closures}; rekeying is \cite{towell2026rekeying}; the program
+realization is \cite{towell2026cipherprog}. The chapter's contribution as a
+chapter is to show the three as one: the cipher closure subsumes values,
+maps, data structures, and the secret, and the limits the program
+realization meets are not new obstructions but the orbit-closure leakage of
+\Cref{ch:orbit-closure} and the sum-type impossibility of
+\Cref{ch:algebraic-types}, now read operationally. With this chapter the
+constructions of Part~V are complete: a hash-based batch construction, a
+GF(2)-linear retrieval structure, and the closure machinery that carries data
+structures, keys, and programs. What remains is the frontier, the problems
+these constructions leave open, which is the book's final part.

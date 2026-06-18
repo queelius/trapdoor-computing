@@ -77,8 +77,14 @@ Update rule: when a part is drafted, fill its section below before moving on.
 - **Back-ports surfaced: BP-5 (spine §4A.1 normalizer `n -> H*`), BP-6 (spine §4A.2 line 626 Le Cam -> Assouad).** Logged in the table above; spine edits pending.
 - Part IV complete: p39-45 (~7pp, summary part). Next: Part V (Constructions).
 
-### Part V: Constructions
-_(to fill)_
+### Part V: Constructions (DRAFTED 2026-06-18; ch11-13; PART V COMPLETE)
+- **Three construction families realizing the abstract framework.** Mixed posture: ch11 consolidates cipher-maps §6 (realizes Ch 5), ch12 SUMMARIZES the codec paper (live TOPS submission), ch13 folds three drafts via the cipher closure.
+- **ch11 (hash-based), DRAFTED:** the PHF batch backend realizing `f-hat` (`sec:phf-backend`); HashSet (`eta=0`, FPR `eps`) + entropy map (`eta` tunable, `mu=H(Y)`) (`tab:instantiations`); the watchlist as a HashSet (`ex:watchlist-hashset`, closes the toy from abstraction to running code); `eta` = Bernoulli FNR, space hits `prop:space-duality` `-log2(eps)+H(Y)`. The `trapdoor_maps` library as the implementation of record.
+- **ch12 (GF(2)-linear codec), DRAFTED (SUMMARIZE):** retrieval without a membership gate (totality, linear); `thm:span-output` (junk is designable -- non-member output uniform on the GF(2) span `W`, fixed by a public codec, frequency-independent); `rem:rank-threshold` (`rank(proj|_W)=log2 K`, a step, no graded middle; cogirth robustness); `rem:freq-hiding` + `tab:hiding` (STRUCTURAL frequency-hiding at ZERO per-query cost vs Ch 9's homophonic per-query lever; the coincidence-oracle opposite-pull, Ch 10 C2, a tunable frontier).
+- **ch13 (rekeying/closures/programs), DRAFTED:** `def:cipher-closure` (the unifying abstraction -- values/maps/data-structures/secret all cipher closures); code-data duality (dispatch pattern = data-is-code; cipher exponential = code-is-data); `rem:designed-orbit` (data structures leak LENGTH via the orbit, callback `thm:orbit-bound`); `rem:rekeying-functor` (rekeying = a cipher map, a natural transformation); `rem:control-flow` (control flow IS untrusted dispatch on a sum -- callback `thm:sum-impossibility`: a conditional leaks the test or evaluates both branches). The two hard program costs are consequences of earlier-proved properties.
+- **Cross-cut / back-port candidates:** the two-ways-to-hide-frequency contrast (ch12 `tab:hiding`: structural codec vs homophonic) across codec + Entropy Ratio; the cipher closure (ch13.1) as a unifying abstraction for the spine; control-flow-is-sum-dispatch ties `cipher-program-construction` to `thm:sum-impossibility` (cross-paper link).
+- **New bibkeys added:** `towell2026codec`, `towell2026rekeying` (DOI), `towell2026closures`, `towell2026cipherprog`. `notation.sty` gained `\rank`, `\proj` (codec construction).
+- Part V complete: p48-55 (~8pp). Build clean (62pp). Next: Part VI (Frontiers), the last part.
 
 ### Part VI: Frontiers
 _(to fill; EC-2 lives here)_
