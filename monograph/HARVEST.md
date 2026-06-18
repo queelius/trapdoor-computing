@@ -24,7 +24,7 @@ Update rule: when a part is drafted, fill its section below before moving on.
 | ID | Candidate | From | Kind | Status |
 |---|---|---|---|---|
 | EC-1 | "Trapdoor Computing: Computing on Opaque Encodings" (the paradigm paper) | Part I | position / overview, ~8-12 pp | Part I is being written **lift-ready** (2026-06-16 part1 design). The program has no standalone paradigm paper today; this is the gap. Candidate venues: a security-magazine / CACM-style position piece, or an arXiv overview. |
-| EC-2 | A frontiers / research-agenda paper | Part VI | SoK-adjacent / research agenda | Pending Part VI; seeded by `.papermill/prior-art/2026-06-09-ecosystem-survey.md`. |
+| EC-2 | A frontiers / research-agenda paper | Part VI | SoK-adjacent / research agenda | **ch14 DRAFTED**: `sec:next-program` (`tab:directions` ranked directions + the zero-per-query USP) and `sec:field-arrives` (2024 landscape) are the lift-ready spine. Lift with a contributions framing + the survey's citation batch. Seeded by `.papermill/prior-art/2026-06-09-ecosystem-survey.md`. |
 
 ## Back-port findings (monograph-driven)
 
@@ -86,5 +86,13 @@ Update rule: when a part is drafted, fill its section below before moving on.
 - **New bibkeys added:** `towell2026codec`, `towell2026rekeying` (DOI), `towell2026closures`, `towell2026cipherprog`. `notation.sty` gained `\rank`, `\proj` (codec construction).
 - Part V complete: p48-55 (~8pp). Build clean (62pp). Next: Part VI (Frontiers), the last part.
 
-### Part VI: Frontiers
-_(to fill; EC-2 lives here)_
+### Part VI: Frontiers (DRAFTED 2026-06-18; ch14; PART VI COMPLETE -- BOOK BODY COMPLETE)
+- **Roadmap, not new results** (per master spec). Synthesized from the 2026-06-09 ecosystem survey.
+- **ch14 (Open Problems and the Next Program), DRAFTED:**
+  - `sec:internal-frontiers`: the open problems the framework raises (orbit-bound tightening for specific operation sets; noise-to-signal through shared-structure chains; intersection-FPR and NOT-error closed forms; the oblivious control-flow decision space). Each was flagged in place in earlier chapters.
+  - `sec:field-arrives`: the 2024 field pivot (quantify-then-mitigate SSE; the tunable-measurable-leakage middle ground; adversarial PDS / Filic; approximate-inference-as-privacy). The program's bet validated; the honest claim-scoping note from the survey's taste assessment.
+  - `sec:next-program`: the USP (structural frequency-hiding at ZERO per-query cost, ch12) + `tab:directions` (ranked salient directions: Filic FP-law axiom, the zero-per-query frontier point, PML re-expression, adaptive-trapdoor under drift, codec membership for private RAG / vector search).
+  - `sec:closing`: the book's argument in six movements; the narrower-but-honest promise; the foundation for the next program.
+- **EC-2 produced:** `sec:next-program` + `sec:field-arrives` ARE the lift-ready spine of the frontiers/research-agenda paper. See the extraction table.
+- External landscape work pointed to by name+venue (prose), not `\cite` -- a citation pass folds them in later (consistent with the SUMMARIZE/roadmap posture).
+- Part VI complete: p57-60 (~4pp). **BOOK BODY COMPLETE: 14 chapters, 6 parts, ~58pp body, 65pp total, builds clean.**
