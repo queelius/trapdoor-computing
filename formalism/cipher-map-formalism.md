@@ -597,10 +597,10 @@ A single cipher map, observed on a stream of cipher values, leaks only through t
 
 **Measure M1: the entropy ratio.** Let $Q$ be the induced cipher-value distribution (Property 2) and let $U = \mathrm{Uniform}(\{0,1\}^n)$. The per-query **entropy ratio** is
 $$e \;=\; \frac{H(Q)}{H^*}, \qquad H^* = n,$$
-the observed entropy of one cipher value normalized by its maximum $n$ bits. Equivalently $e = 1 - D_{\mathrm{KL}}(Q \,\|\, U)/n$. It satisfies $e \in [0,1]$, with $e = 1$ iff $Q = U$ (perfect uniformity, $\delta = 0$).
+the observed entropy of one cipher value normalized by its maximum $H^* = \log_2|\mathrm{Im}(\mathrm{enc})|$ bits (image-relative, matching Property 2; cf. C-11/BP-5). Equivalently $e = 1 - D_{\mathrm{KL}}(Q \,\|\, U_{\mathrm{im}})/H^*$, with $U_{\mathrm{im}}$ uniform on $\mathrm{Im}(\mathrm{enc})$. It satisfies $e \in [0,1]$, with $e = 1$ iff $Q = U_{\mathrm{im}}$ (perfect uniformity, $\delta = 0$).
 
 **Bridge to $\delta$ (Fannes--Audenaert).** For $\delta \leq 1/2$,
-$$e \;\geq\; 1 - \delta - \frac{h_2(\delta)}{n}, \qquad h_2(\delta) = -\delta\log_2\delta - (1-\delta)\log_2(1-\delta).$$
+$$e \;\geq\; 1 - \delta - \frac{h_2(\delta)}{H^*}, \qquad h_2(\delta) = -\delta\log_2\delta - (1-\delta)\log_2(1-\delta), \quad H^* = \log_2|\mathrm{Im}(\mathrm{enc})|.$$
 This is *linear* in $\delta$. (Pinsker runs the wrong way here: it lower-bounds KL given TV, not the reverse. Fannes--Audenaert is the correct continuity direction.) This bound is proven as Theorem 3.1 in the Entropy Ratio paper and restated as Proposition 5.1 in the Cipher Maps paper; the two agree.
 
 **Measure M2: single-guess distinguishing accuracy (Le Cam, marginal).** A membership-inference attacker who observes a decoded output $\mathrm{dec}(\hat{f}(c))$ and guesses real-vs-filler is limited, at balanced prior, to accuracy
@@ -623,16 +623,16 @@ This is Theorem 8.2 of the Cipher Maps paper. Concentrated (Huffman-style) accep
 
 **Measure C3: shared-variable joint recovery (different $f$, shared cipher value).** If the untrusted machine observes pairs $(\hat{f}_1(c_i), \hat{f}_2(c_i))$ for $f_1 : X \to Y_1$, $f_2 : X \to Y_2$ on shared in-domain cipher values, mutual information is preserved exactly,
 $$I(\hat{f}_1(C); \hat{f}_2(C)) = I(f_1(X); f_2(X)),$$
-and the joint distribution on $Y_1 \times Y_2$ is recoverable at the minimax-optimal rate $\Theta(|Y_1|\,|Y_2|/\xi^2)$ in TV accuracy $\xi$ (upper bound by plug-in estimation, matching lower bound by **Le Cam's two-point method**). This is the main result of the Entropy Ratio paper (its Theorems 5.1 and 5.2). **No per-cipher-map $\delta$ changes this rate.** The defenses are system-level: reduce observations, encode jointly (raise the entanglement $p$, Section 4.3), or inject noise.
+and the joint distribution on $Y_1 \times Y_2$ is recoverable at the minimax-optimal rate $\Theta(|Y_1|\,|Y_2|/\xi^2)$ in TV accuracy $\xi$ (upper bound by plug-in estimation, matching lower bound by **Assouad's lemma** over a $2^{m/2}$ hypercube packing). This is the main result of the Entropy Ratio paper (its Theorems 5.1 and 5.2; the lower bound is Assouad, not Le Cam's two-point method, which cannot give a dimension-dependent rate, see §4A.3 and C-4/BP-6). **No per-cipher-map $\delta$ changes this rate.** The defenses are system-level: reduce observations, encode jointly (raise the entanglement $p$, Section 4.3), or inject noise.
 
-### 4A.3 "Le Cam" Names Two Different Things
+### 4A.3 Marginal Le Cam vs Compositional Assouad (Do Not Conflate)
 
-The two-point method appears at both scales with opposite roles, and the papers use the bare phrase "Le Cam" for each. Do not conflate:
+Two different minimax tools appear at the two scales, and an earlier framing wrongly filed both under the bare phrase "Le Cam". The marginal single-guess bound is Le Cam's two-point method (two hypotheses). The compositional minimax lower bound is **Assouad's lemma** (a $2^{m/2}$ hypercube packing summed over coordinates), which a two-hypothesis argument cannot reproduce, since the rate is dimension-dependent. Do not conflate:
 
-| Use | Scale | Role | Bound | Owner |
-|---|---|---|---|---|
-| M2 | marginal | upper bound on a single-guess attacker | accuracy $\leq \tfrac12 + \tfrac\delta2$ | Cipher Maps Section 5.3 |
-| C3 | compositional | lower bound on the joint-estimation minimax rate | $\mathbb{E}[\mathrm{TV}] \geq c\sqrt{|Y_1||Y_2|/N}$ | Entropy Ratio Theorem 5.2 |
+| Use | Scale | Method | Role | Bound | Owner |
+|---|---|---|---|---|---|
+| M2 | marginal | Le Cam two-point | upper bound on a single-guess attacker | accuracy $\leq \tfrac12 + \tfrac\delta2$ | Cipher Maps Section 5.3 |
+| C3 | compositional | **Assouad's lemma** | lower bound on the joint-estimation minimax rate | $\mathbb{E}[\mathrm{TV}] \geq c\sqrt{|Y_1||Y_2|/N}$ | Entropy Ratio Theorem 5.2 |
 
 ### 4A.4 Summary of Measures
 

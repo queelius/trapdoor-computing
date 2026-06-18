@@ -154,3 +154,17 @@ the spine and `cipher-maps`, both now applied:
   $1-(1-\eta_f)(1-\eta_g) = \eta_f+\eta_g-\eta_f\eta_g$, which is correct.
   This closes the spine side of the paper's review item M4. Monograph `ch04`
   `thm:composition` carries the canonical $\le$ form with a full short proof.
+- **BP-5 RESOLVED (spine §4A.1).** The entropy-ratio normalizer is now
+  $H^* = \log_2|\mathrm{Im}(\mathrm{enc})|$ (image-relative), not the ambient
+  $n$: line ~600 ($e = 1 - D_{\mathrm{KL}}(Q\|U_{\mathrm{im}})/H^*$) and the
+  Fannes bridge line ~603 ($/H^*$). Matches Property 2 (BP-1) and the Entropy
+  Ratio paper; the C-11 image-relative family is now uniform across the spine.
+- **BP-6 RESOLVED + C-4 SUPERSEDED (spine §4A.2/§4A.3).** The C3
+  joint-recovery lower bound is **Assouad's lemma** ($2^{m/2}$ packing), not
+  "Le Cam's two-point method": line ~626 is fixed, and §4A.3 is retitled and
+  corrected (Le Cam two-point is the MARGINAL M2 tool; Assouad is the
+  COMPOSITIONAL C3 tool; they are different methods, not one method in two
+  roles, and the table now has a Method column). C-4's "the two-point method
+  appears at both scales" framing was stale, predating the Entropy Ratio
+  round-2 Assouad fix, and is superseded by the corrected §4A.3. Monograph
+  `ch10` `rem:assouad-not-lecam` carries the canonical distinction.
