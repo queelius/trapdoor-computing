@@ -1,0 +1,213 @@
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb}
+\usepackage{microtype}
+\usepackage[letterpaper,margin=1.1in]{geometry}
+\usepackage{booktabs}
+\usepackage[hidelinks]{hyperref}
+\usepackage{cleveref}
+
+\newcommand{\fhat}{\hat{f}}
+\newcommand{\enc}{\operatorname{enc}}
+\newcommand{\dec}{\operatorname{dec}}
+\newcommand{\B}{\{0,1\}}
+
+\title{Trapdoor Computing:\\[0.2em]\large Computing on Opaque Encodings}
+\author{Alexander Towell\\\texttt{lex@metafunctor.com}}
+\date{2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Imagine a service that cannot read your queries and cannot read its own
+answers, yet returns the right ones. We make that precise. \emph{Trapdoor
+computing} is a paradigm in which a \emph{trusted} machine holds an encoder
+and a decoder while an \emph{untrusted} machine sees only total functions on
+opaque bit strings flowing through opaque lookup tables. The untrusted machine
+cannot tell a real query from filler, one encoding from another, or a correct
+result from noise; its privacy comes from a one-way hash and a uniform
+representation, not from hiding access patterns. This is deliberately not
+oblivious RAM, not fully homomorphic encryption, and not a simulation-based
+security game. Confidentiality here is \emph{measured} in the sense of
+quantitative information flow, an explicit leakage quantity a designer can
+compute and trade against space, bandwidth, and accuracy, rather than assumed
+\emph{negligible} in the sense of a cryptographic reduction. This paper states
+the paradigm, draws its boundary against the cryptographic tools it is not,
+and maps the body of work, an abstraction, an algebra, a confidentiality
+theory, and concrete constructions, that develops it.
+\end{abstract}
+
+\section{The Oblivious Service}
+\label{sec:service}
+
+Consider a server that answers membership queries against a private set: a
+watchlist, a revocation list, an index. We want it to answer correctly while
+learning nothing it could turn against us, not which name was asked, not which
+names are on the list, not even how often a given name is asked. The standard
+cryptographic tools can do versions of this at a price: oblivious RAM hides the
+access pattern at a polylogarithmic bandwidth cost per access; fully
+homomorphic encryption computes on ciphertexts at a large constant and circuit-%
+depth cost; searchable symmetric encryption is fast but leaks a documented
+profile that inference attacks exploit. Each makes a different trade, and each
+is the right tool for some regime.
+
+Trapdoor computing occupies a different point. A \emph{trusted} machine $T$
+holds a secret and the operations to encode an input and decode an output. An
+\emph{untrusted} machine $U$ holds a single object, a total function $\fhat$ on
+bit strings, and evaluates it on whatever it is given. To answer a query, $T$
+encodes the input as a token $c$, $U$ returns $\fhat(c)$, and $T$ decodes the
+result. The untrusted machine never holds the secret, never decodes, and never
+sees a value, only opaque tokens flowing through an opaque table. The privacy
+is not access-pattern hiding; it is that the tokens carry no readable signal.
+
+\section{The Paradigm}
+\label{sec:paradigm}
+
+The organizing object is the \emph{cipher map}: a total function $\fhat : \B^n
+\to \B^n$ that implements a trapdoor approximation of a latent function
+$f : X \to Y$, paired with an encoder $\enc$, a decoder $\dec$, and a secret
+$s$ from which all three derive~\cite{towell2026cipher}. The trusted machine
+computes $\dec(\fhat(\enc(x)))$ and reads $f(x)$; the untrusted machine
+computes $\fhat$ on tokens and reads nothing. Four features of the definition
+do the work.
+
+\paragraph{Totality.} $\fhat$ is defined on \emph{all} of $\B^n$, not only on
+the tokens that encode real inputs. Hand it a string that encodes nothing and
+it still returns an $n$-bit answer. There is no ``not found,'' no exception, no
+out-of-band signal. This is the first privacy guarantee: with no special case
+to observe, the untrusted machine cannot separate meaningful queries from
+filler.
+
+\paragraph{Representation uniformity.} A value may be encoded as any of several
+tokens, and the encoding is chosen so that the stream of tokens the untrusted
+machine sees is close, in total variation, to uniform on the populated support.
+Frequent values are spread across more representations, classical homophonic
+substitution, so that no token is queried often and the traffic betrays nothing
+about which value was asked.
+
+\paragraph{Correctness.} The map is correct up to an error budget $\eta$: it
+computes $f$ on in-domain inputs with probability at least $1 - \eta$. A nonzero
+$\eta$ is not only a construction cost. It is also privacy: a reported result
+may be a true answer or a cipher-map error, and the ambiguity is deniability
+the untrusted machine cannot resolve.
+
+\paragraph{Composability.} Cipher maps chain. The output token of one is a well-%
+formed input to the next, and the error of a chain is bounded predictably by
+the errors of its links. This is what makes trapdoor computing a calculus
+rather than a collection of isolated lookups.
+
+\paragraph{The four cannots.} Against the untrusted machine, these properties
+guarantee four things it cannot do, each blocked by a named property: it cannot
+\emph{decode} a token to its value (one-way hash); it cannot \emph{distinguish
+a real query from filler} (totality); it cannot \emph{determine the domain} or
+read which value a token carries (representation uniformity); and it cannot
+\emph{be sure a result is correct} (nonzero $\eta$). These are the paradigm's
+promises, and the rest of the program makes each one quantitative.
+
+\section{What Trapdoor Computing Is Not}
+\label{sec:not}
+
+The paradigm is easy to mistake for a neighbor, and the mistakes matter because
+they import the wrong threat model. Privacy here comes from one-way hashing and
+uniform representation, \emph{not} from hiding access patterns; any argument
+that rests on access-pattern indistinguishability has drifted into the wrong
+framework. \Cref{tab:not} draws the boundary.
+
+\begin{table}[t]
+\centering
+\caption{Trapdoor computing against its neighbors, by the difference in threat
+model, not a claim of superiority.}
+\label{tab:not}
+\begin{tabular}{@{}lll@{}}
+\toprule
+Tool & Hides by & Trapdoor computing instead \\
+\midrule
+Oblivious RAM~\cite{goldreich1996software} & access-pattern indistinguishability & opaque tokens; access pattern not the secret \\
+Fully homomorphic enc.~\cite{gentry2009fully} & computing on ciphertext & a hash table, not a circuit; bounded error \\
+Garbled circuits & per-evaluation garbling & a reusable total function on tokens \\
+SSE / PPE~\cite{curtmola2006searchable,naveed2015inference} & a negligible-or-documented leakage profile & a \emph{measured}, tunable leakage \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The framework is also not a simulation-based or game-based cryptographic
+construction. It makes no claim that an adversary's advantage is negligible in
+a security parameter. Its guarantees are leakage quantities, which is the next
+point and the heart of the paradigm.
+
+\section{Measured, Not Negligible}
+\label{sec:measured}
+
+Cryptography's strongest tools promise that what an adversary learns is
+\emph{negligible}: a function vanishing faster than any inverse polynomial in a
+security parameter. That promise is the right one when it can be kept at an
+affordable cost. Trapdoor computing makes a different and more modest promise,
+borrowed from quantitative information flow~\cite{smith2009foundations,%
+alvim2020science}: what the adversary learns is a \emph{measured} quantity, a
+number a designer can compute and trade.
+
+Concretely, the leakage of a single token is captured by an entropy ratio
+$e = H(Q)/H^{*}$, the entropy of the observed token distribution $Q$ as a
+fraction of the maximum on the populated support, and the representation-%
+uniformity parameter $\delta$ lower-bounds it through a Fannes--Audenaert
+continuity inequality, linear in $\delta$~\cite{towell2026maxconf}. Small
+$\delta$ buys proportional confidentiality, at a known cost in space or
+bandwidth. This is the sense in which the paradigm's privacy is engineering: not
+a guarantee of nothing learned, but an explicit budget of how much, traded
+against the resources a system can spend.
+
+The honesty cuts both ways. A measured guarantee is weaker than a negligible
+one, and a reviewer schooled in simulation-based definitions will note its
+absence. But for the systems that cannot afford oblivious RAM or homomorphic
+encryption, a service that cannot read its queries or answers, returns the
+right ones, and leaks an amount you can write down is a real and useful
+guarantee, and a more honest one than a negligibility claim a construction
+cannot actually support.
+
+\section{The Program}
+\label{sec:program}
+
+The paradigm has been developed into a body of work, of which this paper is the
+front door. The \emph{abstraction} fixes the cipher map and its four measurable
+properties, and shows that a single device, the acceptance predicate, unifies
+the constructions and traces a space-accuracy duality~\cite{towell2026cipher}.
+The \emph{algebra and types} ask which type constructors survive the trapdoor:
+products pass, sums hit a genuine impossibility (tag-hiding and untrusted
+dispatch are exclusive), and an orbit-closure bound measures what an active
+adversary learns by operating on tokens~\cite{towell2026algebraic}. The
+\emph{confidentiality theory} measures leakage at two scales that do not reduce
+to each other, a marginal scale governed by $\delta$ and a compositional scale,
+the joint distribution recoverable from shared-token observations, that no per-%
+map parameter can improve~\cite{towell2026maxconf}. And the \emph{constructions}
+realize cipher maps concretely, including a linear-algebraic retrieval structure
+whose frequency-hiding is structural, holding at zero per-query cost where every
+online defense pays per access~\cite{towell2026codec}.
+
+The synthesis of these into one treatment, with the open problems they raise, is
+a monograph in preparation. This paper's contribution is the paradigm itself:
+the trusted/untrusted model, the cipher map and its four cannots, the boundary
+against the cryptographic neighbors, and the stance that confidentiality is
+measured rather than negligible.
+
+\section{Conclusion}
+
+Trapdoor computing is a narrow and honest idea: compute on values sealed behind
+a one-way trapdoor, let an untrusted machine evaluate opaque tokens through an
+opaque table, and measure, rather than assume away, what leaks. It is not the
+strongest privacy tool, and it does not try to be. It is the tool for the
+middle ground between plaintext and the heavy cryptographic machinery, where a
+designer wants a guarantee that is real, composable, and affordable, and is
+willing to read the number that says how much.
+
+\paragraph{Provenance.} The framework was begun in 2017 and developed through
+2020, then set aside and recovered, re-derived, and carried further in 2024. It
+builds on the Bernoulli model of approximate data structures developed
+alongside it.
+
+\bibliographystyle{plain}
+\bibliography{references}
+
+\end{document}

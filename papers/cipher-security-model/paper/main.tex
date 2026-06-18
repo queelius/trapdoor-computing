@@ -1,0 +1,326 @@
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{microtype}
+\usepackage[letterpaper,margin=1.1in]{geometry}
+\usepackage{booktabs}
+\usepackage[hidelinks]{hyperref}
+\usepackage{cleveref}
+
+\newcommand{\fhat}{\hat{f}}
+\newcommand{\ghat}{\hat{g}}
+\newcommand{\enc}{\operatorname{enc}}
+\newcommand{\dec}{\operatorname{dec}}
+\newcommand{\B}{\{0,1\}}
+\newcommand{\TV}{\operatorname{TV}}
+\newcommand{\im}{\operatorname{im}}
+\newcommand{\orbitF}{\operatorname{orbit}_F}
+
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+\theoremstyle{plain}
+\newtheorem{proposition}{Proposition}
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}
+
+\crefname{definition}{Definition}{Definitions}
+
+\title{A Quantitative Security Model for Trapdoor Computing}
+\author{Alexander Towell\\\texttt{lex@metafunctor.com}}
+\date{2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Trapdoor computing lets an untrusted machine evaluate opaque bit strings
+through an opaque lookup table while only a trusted machine encodes and
+decodes. Its central claim is that confidentiality is \emph{measured}, an
+explicit leakage quantity a designer can trade, rather than \emph{negligible}
+in a security parameter. That claim has so far rested on an informal model: the
+constructions come with leakage \emph{measures}, but not with a security
+\emph{definition} tying an adversary's power to what is provably guaranteed.
+This paper supplies the missing model. We formalize the trusted/untrusted
+adversary and its view, and define the confidentiality of a cipher map in the
+language of quantitative information flow, as a tuple of bounded, composable
+leakage quantities rather than a negligible advantage. We show that the
+framework's three leakage measures, the marginal entropy ratio, the
+compositional joint-recovery rate, and the active orbit-closure bound, are
+three aspects of one adversary with three kinds of access, and that the
+resulting security tuple composes under cipher-map composition. We close by
+relating the definition to simulation-based and game-based cryptographic
+security, arguing that quantitative information flow, not indistinguishability,
+is the right model for the measurable-leakage regime trapdoor computing
+occupies.
+\end{abstract}
+
+\section{Introduction}
+\label{sec:intro}
+
+A security definition does two things: it says what an adversary may do, and it
+says what is guaranteed against an adversary who does it. Trapdoor computing has
+a clear adversary, the untrusted machine, and a clear collection of guarantees,
+the leakage bounds its constructions satisfy, but it has not had a definition
+that joins the two. The cipher-maps abstraction states informally that the
+untrusted machine ``cannot decode, cannot distinguish a real query from filler,
+cannot determine the domain, cannot be sure a result is correct''~%
+\cite{towell2026cipher}; the confidentiality theory gives an entropy-ratio
+bound on a single token and a recovery-rate bound on a chain~%
+\cite{towell2026maxconf}; the type theory gives an orbit-closure bound on an
+active adversary~\cite{towell2026algebraic}. These are measures in search of a
+model.
+
+The gap is not cosmetic. A reviewer trained on simulation-based security asks,
+reasonably, for a definition: an adversary, a security experiment, and a
+statement of what the experiment guarantees. Absent one, ``measured, not
+negligible'' reads as a slogan rather than a claim. This paper makes it a claim.
+We give the formal trusted/untrusted model and the adversary's view
+(\Cref{sec:model}); define a cipher map's confidentiality as a tuple of bounded
+leakage quantities in the sense of quantitative information flow~%
+\cite{smith2009foundations,alvim2020science} (\Cref{sec:definition}); show the
+framework's three leakage measures are one adversary at three access levels
+(\Cref{sec:scales}); prove the security tuple composes (\Cref{sec:composition});
+and defend the choice of a quantitative rather than a simulation-based or
+game-based definition (\Cref{sec:crypto}).
+
+The contribution is the definition itself, and the demonstration that the
+framework's existing, separately-proven bounds are instances of it. We prove no
+new leakage bound here; we give the model the bounds were always bounds in.
+
+\section{The Trusted/Untrusted Model}
+\label{sec:model}
+
+Fix a latent function $f : X \to Y$ known only to a trusted party.
+
+\begin{definition}[Cipher map; from~\cite{towell2026cipher}]
+\label{def:cipher-map}
+A \emph{cipher map} for $f$ is a tuple $(\fhat, \enc, \dec, s)$ with
+$\fhat : \B^n \to \B^n$ a total function, $\enc : X \times \{0, \ldots,
+K(x)-1\} \to \B^n$, $\dec : \B^n \to Y \cup \{\bot\}$, and $s$ a secret from
+which all three derive. The \emph{trusted machine} $T$ holds $(\enc, \dec, s)$;
+the \emph{untrusted machine} $U$ holds $\fhat$.
+\end{definition}
+
+The adversary is $U$. We make its power and its view explicit.
+
+\begin{definition}[Adversary view]
+\label{def:view}
+In a run with in-domain inputs $x_1, \ldots, x_N$ drawn i.i.d.\ from a query
+distribution $D$ on $X$, the untrusted machine's view is
+\[
+  \mathsf{view}_U \;=\; \bigl(\, \fhat,\; (c_i)_{i=1}^N,\; (\fhat(c_i))_{i=1}^N,\;
+  F \,\bigr),
+\]
+where $c_i = \enc(x_i, k_i)$ is the $i$-th query token, and $F$ is the set of
+cipher maps $U$ holds and may apply to any token to produce and observe further
+tokens. $U$ is unbounded for the purpose of the leakage analysis: we measure how
+much $\mathsf{view}_U$ reveals, not whether a bounded $U$ can extract it.
+\end{definition}
+
+Two modeling choices deserve comment. First, $\fhat$ is \emph{public to $U$}: the
+untrusted machine holds the whole table, so the model grants the adversary the
+construction itself and asks what the construction still hides. Second, a
+\emph{malicious} $U$ that deviates from the protocol gains nothing the model
+does not already grant, because totality makes every token, honest or not,
+produce an answer; there is no error channel to probe. The honest-but-curious
+$U$ of \Cref{def:view} is therefore the worst case for leakage.
+
+The latent quantities $U$ would learn, and that the model must bound, are the
+inputs $X = (x_i)$, the function $f$, the distribution $D$, and quantities
+derived from them: the domain, the equality structure of the queries, and the
+joint distribution of correlated values across several cipher maps.
+
+\section{Confidentiality as Bounded Leakage}
+\label{sec:definition}
+
+Quantitative information flow measures the leakage of a secret $S$ to a view
+$V$ by how much $V$ reduces uncertainty about $S$, for instance the Shannon
+leakage $I(S; V)$ or a min-entropy (Bayes-vulnerability) leakage. Security in
+this language is not the absence of leakage but a \emph{bound} on it. We define
+a cipher map's confidentiality as a tuple of such bounds, one per kind of
+access in \Cref{def:view}.
+
+\begin{definition}[Confidentiality of a cipher map]
+\label{def:confidentiality}
+Let $(\fhat, \enc, \dec, s)$ be a cipher map with representation uniformity
+$\delta = \TV(Q, U_{\im})$ on its populated support, where $Q$ is the induced
+token distribution and $U_{\im}$ is uniform on $\im(\enc)$, and let $H^{*} =
+\log_2|\im(\enc)|$. The cipher map is \emph{$(\delta, R, F)$-confidential}
+against the adversary of \Cref{def:view} if all three of the following hold.
+\begin{description}
+\item[\textmd{(M) Marginal.}] For a single token $c = \enc(x, k)$ with
+  $x \sim D$, the leakage of $x$ is bounded by the entropy ratio:
+  \[
+    \frac{I(x; c)}{H^{*}} \;\le\; 1 - e, \qquad
+    e = \frac{H(Q)}{H^{*}} \;\ge\; 1 - \delta - \frac{h_2(\delta)}{H^{*}},
+  \]
+  the lower bound on $e$ being the Fannes--Audenaert inequality, linear in
+  $\delta$. Small $\delta$ bounds the marginal leakage.
+\item[\textmd{(C) Compositional.}] For two cipher maps $\fhat_1, \fhat_2$ for
+  $f_1 : X \to Y_1$, $f_2 : X \to Y_2$ observed on shared tokens, mutual
+  information is preserved, $I(\fhat_1(C); \fhat_2(C)) = I(f_1(X); f_2(X))$, and
+  the latent joint distribution on $Y_1 \times Y_2$ is recoverable to
+  total-variation accuracy $\xi$ from $N = R(\xi)$ observations with
+  $R(\xi) = \Theta(|Y_1|\,|Y_2| / \xi^2)$.
+\item[\textmd{(A) Active.}] For an adversary applying the operations $F$ to a
+  token $c$, the residual entropy of the latent value $X$ behind $c$ is
+  \[
+    H(X \mid \mathsf{view}_U) \;\ge\; H(X) - \log_2|\orbitF(c)|,
+  \]
+  where $\orbitF(c)$ is the set of tokens reachable from $c$ under $F$.
+\end{description}
+\end{definition}
+
+The definition is parameterized two ways: by the \emph{construction} (through
+$\delta$ and the acceptance partition that shapes the orbit and the recovery
+constants) and by the \emph{adversary's access} (through the number of shared
+observations $N$ and the operation set $F$). A cipher map is not ``secure'' or
+``insecure'' absolutely; it is secure to these explicit, computable degrees, and
+the degrees are exactly the quantities a designer trades against space,
+bandwidth, and accuracy. This is the formal content of ``measured, not
+negligible.''
+
+\begin{remark}[Why a tuple, not a single number]
+\label{rem:tuple}
+The three clauses cannot be collapsed into one bound, because they are not
+comparable quantities. (M) is a normalized leakage of a single value, governed
+by a construction parameter. (C) is a \emph{rate} at which a joint distribution
+becomes estimable, governed by the latent cardinalities and unaffected by any
+construction parameter. (A) is an unnormalized residual entropy, governed by the
+exposed operations. A security model for trapdoor computing must carry all three
+because a cipher map can be strong on one and weak on another: near-perfect
+marginal confidentiality ($\delta \approx 0$) coexists with full compositional
+recovery given enough shared observations. The irreducibility of the scales is
+a feature of the model, not a defect of a construction.
+\end{remark}
+
+\section{Three Scales, One Adversary}
+\label{sec:scales}
+
+The three clauses of \Cref{def:confidentiality} are often read as three
+adversaries; they are one adversary at three levels of access (\Cref{tab:scales}).
+Clause (M) is the adversary of \Cref{def:view} restricted to a single token and
+passive. Clause (C) is the same adversary, still passive, but observing several
+cipher maps on shared tokens, the access that exposes joint structure. Clause
+(A) is the adversary using the last component of its view, the operations $F$,
+to probe actively. Nothing in the three requires different powers; they
+partition the single view of \Cref{def:view} by which part of it the adversary
+exploits.
+
+\begin{table}[t]
+\centering
+\caption{The three clauses are one adversary (\Cref{def:view}) at three access
+levels.}
+\label{tab:scales}
+\begin{tabular}{@{}llll@{}}
+\toprule
+Clause & Access used & Governed by & Bounded by $\delta$? \\
+\midrule
+(M) marginal & one token, passive & $\delta$ (entropy ratio) & yes \\
+(C) compositional & shared tokens, passive & $|Y_1||Y_2|$, $N$ & no \\
+(A) active & operations $F$ & $|\orbitF(c)|$ & no \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The table makes the model's sharpest statement visible. Only (M) is bought by a
+construction parameter. The compositional and active leakages are governed by
+quantities $\delta$ does not touch, the latent cardinalities and the number of
+observations for (C), the reachable orbit for (A). A designer who lowers
+$\delta$ to its floor has done everything the marginal scale allows and nothing
+for the other two; defending those is a matter of system design, limiting shared
+observations and exposed operations, not of tuning a parameter. The model thus
+predicts where engineering effort can and cannot help.
+
+\section{Composition}
+\label{sec:composition}
+
+A security definition is useful for building systems only if it composes: the
+security of a composite must be computable from the security of its parts. The
+tuple of \Cref{def:confidentiality} does.
+
+\begin{proposition}[Composition of the security tuple]
+\label{prop:composition}
+Let $\fhat_1, \ldots, \fhat_m$ be cipher maps chained so each consumes the
+previous output, with correctness parameters $\eta_i$ and marginal bounds from
+$\delta_i$. Then the chain is a cipher map whose security tuple is determined by
+the parts:
+\begin{enumerate}
+\item correctness composes, $\eta_{\mathrm{total}} \le 1 - \prod_i (1 - \eta_i)$;
+\item the marginal leakage of the chain's observable token stream is bounded by
+  the entropy ratio of that stream, which the per-stage $\delta_i$ bound;
+\item the compositional rate and the active orbit of the chain grow predictably,
+  the orbit by at most the product of the per-step frontiers and the recovery
+  rate by the latent cardinalities the chain exposes.
+\end{enumerate}
+\end{proposition}
+
+The correctness bound is the elementary observation that a chain is correct when
+every stage is, an inequality rather than an equality because a stage error can
+be masked downstream~\cite{towell2026cipher}. The marginal and active parts
+inherit their composition from the entropy-ratio and orbit-closure machinery the
+framework already proves. The point for the model is structural: because each
+clause composes, a system assembled from cipher maps has a security tuple a
+designer can compute from a parts list, which is the property that lets the
+definition support construction and not only analysis.
+
+\section{Relation to Cryptographic Security}
+\label{sec:crypto}
+
+The natural objection to \Cref{def:confidentiality} is that it is not a
+cryptographic security definition. It is not, and the difference is the point.
+
+\paragraph{Against simulation-based security.}
+Searchable encryption and oblivious RAM are proved secure by exhibiting a
+simulator that reproduces the adversary's view from a \emph{leakage function}~%
+\cite{curtmola2006searchable,goldreich1996software}: security means the real
+view is indistinguishable from a simulation that depends only on what the
+leakage function reveals. Trapdoor computing's leakage is not a function to be
+fed to a simulator; it is a family of \emph{bounds}, and the constructions do
+not claim that the residual is simulatable, only that it is small in the
+measured sense. One could define a leakage function and seek a simulator, but
+the resulting statement would say less than \Cref{def:confidentiality}: a
+simulator with a large leakage function certifies indistinguishability while
+hiding how much leaks, whereas the quantitative bound says exactly how much.
+
+\paragraph{Against game-based security.}
+Indistinguishability definitions promise a \emph{negligible} advantage in a
+security parameter. Trapdoor computing makes no such promise, and a construction
+forced to claim one would either fail, because its compositional leakage is not
+negligible, or mislead. The honest statement is the quantitative one: the
+advantage is a measured quantity, often not negligible, and useful precisely
+because it is known.
+
+\paragraph{Why quantitative information flow is the right model.}
+The leakage trapdoor computing incurs is operationally meaningful (its bounds
+are the quantities a designer trades), composable (\Cref{prop:composition}), and
+honest (it does not assert a negligibility it cannot support). These are exactly
+the virtues quantitative information flow was built to express. The cost is real:
+the guarantee is weaker than indistinguishability, and for an application that
+can afford the strong tools, the strong tools are correct. For the regime
+between plaintext and oblivious RAM, where leakage is unavoidable but bounded
+and tradeable, the quantitative definition is not a weaker substitute for the
+cryptographic one; it is the right definition.
+
+\section{Conclusion}
+
+We have given trapdoor computing the security model its measurable-leakage claim
+required: a formal adversary and view, a definition of confidentiality as a
+tuple of bounded leakage quantities in the sense of quantitative information
+flow, a demonstration that the framework's three leakage measures are one
+adversary at three access levels, and a proof that the tuple composes. The model
+proves no new bound; it gives the bounds the framework already had a definition
+to be bounds in, and in doing so answers the question a foundations reviewer asks
+first: what does it mean, here, to be secure? It means leaking a measured,
+composable, and computable amount, and no more.
+
+\paragraph{Provenance.} The trapdoor framework was begun in 2017 and developed
+through 2020, then recovered and extended in 2024; this model formalizes the
+security stance implicit in it throughout.
+
+\bibliographystyle{plain}
+\bibliography{references}
+
+\end{document}
