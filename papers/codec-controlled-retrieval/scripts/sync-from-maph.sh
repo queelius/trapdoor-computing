@@ -13,8 +13,10 @@
 #
 set -euo pipefail
 
-DEFAULT_PIN="660110a"
-MAPH="${MAPH_REPO:-$HOME/github/repos/maph}"
+DEFAULT_PIN="402c8ca"
+# The upstream "maph" repo. It now lives at bijou/lapidary (project rename in progress:
+# the GitHub remote and the C++ namespace are still "maph"; only the directory moved).
+MAPH="${MAPH_REPO:-$HOME/github/bijou/lapidary}"
 COMMIT="${1:-$DEFAULT_PIN}"
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
