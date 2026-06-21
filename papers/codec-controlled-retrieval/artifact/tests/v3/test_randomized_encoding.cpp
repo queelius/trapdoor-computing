@@ -46,10 +46,10 @@
 
 #include <catch2/catch_test_macros.hpp>
 
-#include <maph/codecs/prefix_codec.hpp>
-#include <maph/detail/gf2.hpp>
-#include <maph/retrieval/encoded_retrieval.hpp>
-#include <maph/retrieval/ribbon_retrieval.hpp>
+#include <lapidary/codecs/prefix_codec.hpp>
+#include <lapidary/detail/gf2.hpp>
+#include <lapidary/retrieval/encoded_retrieval.hpp>
+#include <lapidary/retrieval/ribbon_retrieval.hpp>
 
 #include <array>
 #include <cmath>
@@ -58,7 +58,7 @@
 #include <string>
 #include <vector>
 
-using namespace maph;
+using namespace lapidary;
 
 namespace {
 
@@ -72,8 +72,8 @@ namespace {
 template <typename Codec>
 std::pair<std::vector<uint64_t>, uint64_t>
 class_hits_and_W(const Codec& codec, const std::vector<uint64_t>& stored, unsigned M) {
-    const auto basis = maph::detail::gf2_basis(stored);
-    const auto span = maph::detail::gf2_span(basis);
+    const auto basis = lapidary::detail::gf2_basis(stored);
+    const auto span = lapidary::detail::gf2_span(basis);
 
     const auto& entries = codec.entries();
     std::vector<uint64_t> hits(entries.size(), 0);

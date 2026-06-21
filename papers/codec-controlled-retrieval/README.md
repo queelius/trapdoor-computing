@@ -46,7 +46,7 @@ earlier result was reversed).
 - `source/construction-note.md` -- the theorem-grade source-of-record note.
 - `source/results/` -- the E1 to E4 experiment data.
 - `artifact/` -- the self-contained, pinned reproducibility bundle (below).
-- `scripts/sync-from-maph.sh` -- regenerates the artifact from a maph commit.
+- `scripts/sync-from-maph.sh` -- regenerates the artifact from a lapidary commit.
 - `SUBMISSION-CHECKLIST.md` -- pre-submission and Zenodo-DOI steps.
 - `.papermill/` -- papermill project state.
 
@@ -72,7 +72,7 @@ See `artifact/PROVENANCE.md` for the pin and contents.
 
 maph is a research playground and its `master` moves. Do NOT cite maph `master` from
 the paper. The artifact is pinned to a specific commit and is the stable reference;
-to refresh it against a newer maph commit, run `scripts/sync-from-maph.sh <commit>`.
+to refresh it against a newer lapidary commit, run `scripts/sync-from-maph.sh <commit>`.
 At submission the artifact is archived to Zenodo for a DOI (see
 `SUBMISSION-CHECKLIST.md`), and the paper cites the DOI.
 

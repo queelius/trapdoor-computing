@@ -21,10 +21,10 @@
 
 #pragma once
 
-#include <maph/codecs/prefix_codec.hpp>
-#include <maph/detail/gf2.hpp>
-#include <maph/retrieval/encoded_retrieval.hpp>
-#include <maph/retrieval/ribbon_retrieval.hpp>
+#include <lapidary/codecs/prefix_codec.hpp>
+#include <lapidary/detail/gf2.hpp>
+#include <lapidary/retrieval/encoded_retrieval.hpp>
+#include <lapidary/retrieval/ribbon_retrieval.hpp>
 
 #include <cassert>
 #include <cmath>
@@ -37,7 +37,7 @@
 #include <unordered_set>
 #include <vector>
 
-namespace maph::bench {
+namespace lapidary::bench {
 
 // Mean and a normal-approximation confidence interval over a sample.
 //
@@ -101,7 +101,7 @@ size_t stored_rank(const prefix_codec<V, M>& codec, const std::vector<V>& stored
         distinct_patterns.insert(codec.encode(v));
     }
     std::vector<uint64_t> patterns(distinct_patterns.begin(), distinct_patterns.end());
-    return maph::detail::gf2_rank(patterns);
+    return lapidary::detail::gf2_rank(patterns);
 }
 
 // Build encoded_retrieval<ribbon_retrieval<M>, prefix_codec<V, M>> from
@@ -208,4 +208,4 @@ inline sample_stats replicate(size_t n_reps, const std::function<double(uint64_t
     return mean_ci(samples);
 }
 
-}  // namespace maph::bench
+}  // namespace lapidary::bench

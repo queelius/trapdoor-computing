@@ -41,7 +41,7 @@ Hand-authored files (safe to edit here):
 - `artifact/python/verification/`: INDEPENDENT pure-Python cross-checks (`fractions.Fraction`, exact rational arithmetic). These produced the manuscript's counterexamples and are deliberately not synced.
 - `artifact/CMakeLists.txt`, the `*.md` ledgers (`CLAIMS.md`, `FINDINGS.md`, `README.md`, `SUBMISSION-CHECKLIST.md`), `scripts/`, `.papermill/`.
 
-To repin against a newer maph commit: `scripts/sync-from-maph.sh <sha>`. It
+To repin against a newer lapidary commit: `scripts/sync-from-maph.sh <sha>`. It
 rewrites the synced trees, refreshes `source/construction-note.md` and
 `artifact/PROVENANCE.md`, and leaves hand-authored files untouched. Do **not**
 cite maph `master` from the paper; cite the pinned bundle (its Zenodo DOI at

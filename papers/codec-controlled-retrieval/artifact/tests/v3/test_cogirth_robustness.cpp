@@ -63,10 +63,10 @@
 
 #include "../../benchmarks/codec_experiment.hpp"
 
-#include <maph/codecs/prefix_codec.hpp>
-#include <maph/detail/gf2.hpp>
-#include <maph/retrieval/encoded_retrieval.hpp>
-#include <maph/retrieval/ribbon_retrieval.hpp>
+#include <lapidary/codecs/prefix_codec.hpp>
+#include <lapidary/detail/gf2.hpp>
+#include <lapidary/retrieval/encoded_retrieval.hpp>
+#include <lapidary/retrieval/ribbon_retrieval.hpp>
 
 #include <algorithm>
 #include <array>
@@ -79,7 +79,7 @@
 #include <unordered_set>
 #include <vector>
 
-using namespace maph;
+using namespace lapidary;
 
 namespace {
 

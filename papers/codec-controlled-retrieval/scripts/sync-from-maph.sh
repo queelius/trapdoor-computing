@@ -13,9 +13,9 @@
 #
 set -euo pipefail
 
-DEFAULT_PIN="402c8ca"
-# The upstream "maph" repo. It now lives at bijou/lapidary (project rename in progress:
-# the GitHub remote and the C++ namespace are still "maph"; only the directory moved).
+DEFAULT_PIN="be92fa6"
+# The upstream repo: lapidary (renamed from "maph"; remote queelius/lapidary, namespace
+# lapidary::, header tree include/lapidary/). It lives at bijou/lapidary.
 MAPH="${MAPH_REPO:-$HOME/github/bijou/lapidary}"
 COMMIT="${1:-$DEFAULT_PIN}"
 
@@ -31,7 +31,7 @@ FULLSHA="$(git -C "$MAPH" rev-parse "$COMMIT")"
 CDATE="$(git -C "$MAPH" show -s --format=%ci "$COMMIT")"
 SUBJECT="$(git -C "$MAPH" show -s --format=%s "$COMMIT")"
 
-echo "syncing artifact from maph@$COMMIT ($FULLSHA)"
+echo "syncing artifact from lapidary@$COMMIT ($FULLSHA)"
 
 # The theorem-gate tests the paper depends on. Vendored under tests/v3/ to mirror
 # maph's layout, so the tests' relative includes (e.g. ../../benchmarks/...) resolve
@@ -51,7 +51,7 @@ mkdir -p "$ART/tests/v3" "$ART/benchmarks" "$ART/python/maph" "$ART/note"
 # 1. the header-only library (whole tree, pinned). maph is header-only, so this
 #    is the clean dependency boundary; the codec/, retrieval/, detail/ headers are
 #    what the gates exercise (see PROVENANCE.md).
-git -C "$MAPH" archive "$COMMIT" include/maph | tar -x -C "$ART/"
+git -C "$MAPH" archive "$COMMIT" include/lapidary | tar -x -C "$ART/"
 
 # 2. the gates (mirroring tests/v3/) and the benchmark headers they include.
 for t in $TESTS; do
@@ -74,7 +74,7 @@ git -C "$MAPH" show "$COMMIT:docs/codec_controlled_retrieval.md" \
 {
     printf '<!--\n'
     printf 'PROVENANCE (snapshot, do not edit here; edit the upstream note and re-sync).\n'
-    printf 'Source of record: maph/docs/codec_controlled_retrieval.md\n'
+    printf 'Source of record: lapidary/docs/codec_controlled_retrieval.md\n'
     printf 'Pinned commit: %s (%s)\n' "$FULLSHA" "$CDATE"
     printf 'Regenerate: scripts/sync-from-maph.sh %s\n' "$COMMIT"
     printf 'This file is a verbatim copy of the upstream note.\n'
@@ -86,27 +86,27 @@ git -C "$MAPH" show "$COMMIT:docs/codec_controlled_retrieval.md" \
 cat > "$ART/PROVENANCE.md" <<EOF
 # Artifact provenance
 
-This artifact is a self-contained, pinned extract of the maph research repository.
-It reproduces the computational gates behind every theorem in the manuscript
-without requiring a maph checkout. Regenerate it with:
+This artifact is a self-contained, pinned extract of the lapidary research repository
+(formerly maph). It reproduces the computational gates behind every theorem in the
+manuscript without requiring a lapidary checkout. Regenerate it with:
 
     scripts/sync-from-maph.sh $COMMIT
 
 ## Pin
 
-- Upstream: maph (https://github.com/queelius/maph), the C++23 perfect-hashing
-  research playground.
+- Upstream: lapidary (https://github.com/queelius/lapidary; formerly maph), the
+  C++23 perfect-hashing research playground.
 - Commit: \`$FULLSHA\`
   ($CDATE)
 - Subject: $SUBJECT
 
-maph is a research playground and its \`master\` moves; this artifact is pinned to
-the commit above and is the stable reference for the manuscript. Do not cite maph
+lapidary is a research playground and its \`master\` moves; this artifact is pinned to
+the commit above and is the stable reference for the manuscript. Do not cite lapidary
 \`master\`; cite this pinned bundle (and, at submission, its archived DOI).
 
 ## Contents
 
-- \`include/maph/\` -- the header-only library at the pinned commit. The gates
+- \`include/lapidary/\` -- the header-only library at the pinned commit. The gates
   exercise \`codecs/prefix_codec.hpp\`, \`detail/gf2.hpp\`, and (for the empirical
   ribbon checks) \`retrieval/\`. The remaining algorithm headers are carried for a
   clean, self-contained build and are not exercised by the gates.
@@ -128,4 +128,4 @@ the commit above and is the stable reference for the manuscript. Do not cite map
     cd python/verification && python3 item2.py && python3 item1_general.py
 EOF
 
-echo "done. artifact synced to $ART (maph@$FULLSHA)"
+echo "done. artifact synced to $ART (lapidary@$FULLSHA)"

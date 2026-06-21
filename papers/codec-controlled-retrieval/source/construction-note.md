@@ -1,8 +1,8 @@
 <!--
 PROVENANCE (snapshot, do not edit here; edit the upstream note and re-sync).
-Source of record: maph/docs/codec_controlled_retrieval.md
-Pinned commit: 402c8cadd431093264e7d25090e5b08c3f430ab1 (2026-06-10 00:01:28 -0500)
-Regenerate: scripts/sync-from-maph.sh 402c8ca
+Source of record: lapidary/docs/codec_controlled_retrieval.md
+Pinned commit: be92fa6f1ea982f0758851e830e3a9aee94ee357 (2026-06-21 02:02:43 -0500)
+Regenerate: scripts/sync-from-maph.sh be92fa6
 This file is a verbatim copy of the upstream note.
 -->
 
@@ -44,8 +44,8 @@ intersection, and |A| for cardinality.
 
 We fix a single solvable instance of `ribbon_retrieval<M>` built over a
 key set S with a value codec `prefix_codec<V, M>`. The following facts are
-read directly from `include/maph/retrieval/ribbon_retrieval.hpp` and
-`include/maph/retrieval/encoded_retrieval.hpp`.
+read directly from `include/lapidary/retrieval/ribbon_retrieval.hpp` and
+`include/lapidary/retrieval/encoded_retrieval.hpp`.
 
 - The retrieval holds a solution vector `solution_` of `num_rows` entries,
   each an M-bit `value_type`. Write `num_rows = m` and stack the entries
@@ -809,7 +809,7 @@ ladder whose extreme point is the designed Kraft distribution itself.
 Computational confirmation. The witness, the flag formula, the non-increasing ladder, the full-span
 punchline, and the uniform-unreachable corollary are checked exactly (dyadic rationals over |W|) in
 `tests/v3/test_skewed_realizability.cpp` (tag `[skewed][realizability]`), which enumerates W with
-`gf2_span`, computes q(v) by decoding through the real `maph::prefix_codec`, and compares against the
+`gf2_span`, computes q(v) by decoding through the real `lapidary::prefix_codec`, and compares against the
 formula computed via `gf2_rank` (using dim(W intersect C) = dim W + dim C - dim(W + C)). The companion
 `analysis/skewed_realizability.py` enumerates EVERY GF(2) subspace for M = 4 and M = 6 (subspace counts
 matched against the Galois numbers 67 and 2825), confirms graded-exists, balanced-stays-sharp, the

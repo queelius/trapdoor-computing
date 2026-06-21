@@ -36,8 +36,8 @@ intersection, and |A| for cardinality.
 
 We fix a single solvable instance of `ribbon_retrieval<M>` built over a
 key set S with a value codec `prefix_codec<V, M>`. The following facts are
-read directly from `include/maph/retrieval/ribbon_retrieval.hpp` and
-`include/maph/retrieval/encoded_retrieval.hpp`.
+read directly from `include/lapidary/retrieval/ribbon_retrieval.hpp` and
+`include/lapidary/retrieval/encoded_retrieval.hpp`.
 
 - The retrieval holds a solution vector `solution_` of `num_rows` entries,
   each an M-bit `value_type`. Write `num_rows = m` and stack the entries
@@ -801,7 +801,7 @@ ladder whose extreme point is the designed Kraft distribution itself.
 Computational confirmation. The witness, the flag formula, the non-increasing ladder, the full-span
 punchline, and the uniform-unreachable corollary are checked exactly (dyadic rationals over |W|) in
 `tests/v3/test_skewed_realizability.cpp` (tag `[skewed][realizability]`), which enumerates W with
-`gf2_span`, computes q(v) by decoding through the real `maph::prefix_codec`, and compares against the
+`gf2_span`, computes q(v) by decoding through the real `lapidary::prefix_codec`, and compares against the
 formula computed via `gf2_rank` (using dim(W intersect C) = dim W + dim C - dim(W + C)). The companion
 `analysis/skewed_realizability.py` enumerates EVERY GF(2) subspace for M = 4 and M = 6 (subspace counts
 matched against the Galois numbers 67 and 2825), confirms graded-exists, balanced-stays-sharp, the

@@ -42,8 +42,8 @@
 
 #include <catch2/catch_test_macros.hpp>
 
-#include <maph/codecs/prefix_codec.hpp>
-#include <maph/detail/gf2.hpp>
+#include <lapidary/codecs/prefix_codec.hpp>
+#include <lapidary/detail/gf2.hpp>
 
 #include <array>
 #include <cstdint>
@@ -51,7 +51,7 @@
 #include <set>
 #include <vector>
 
-using namespace maph;
+using namespace lapidary;
 
 namespace {
 
@@ -73,8 +73,8 @@ using Law = std::array<std::pair<uint64_t, uint64_t>, 4>;
 // q(v) = |class(v) intersect W| / |W| for every value, by enumerating W and
 // decoding, returned as reduced fractions.
 Law law_of(const Codec& cdc, const std::vector<uint64_t>& stored) {
-    const auto basis = maph::detail::gf2_basis(stored);
-    const auto span = maph::detail::gf2_span(basis);
+    const auto basis = lapidary::detail::gf2_basis(stored);
+    const auto span = lapidary::detail::gf2_span(basis);
     std::array<uint64_t, 4> hits{0, 0, 0, 0};
     for (uint64_t p : span) hits[idx(cdc.decode(p))] += 1;
     const uint64_t W = span.size();
@@ -104,12 +104,12 @@ std::size_t proj_rank(const std::vector<uint64_t>& W_basis, unsigned l) {
     std::vector<uint64_t> img;
     img.reserve(W_basis.size());
     for (uint64_t w : W_basis) img.push_back(w & mask);
-    return maph::detail::gf2_rank(img);
+    return lapidary::detail::gf2_rank(img);
 }
 
 // Saturated iff every code length's projection pi_l(W) is full (dim l).
 bool saturated(const Codec& cdc, const std::vector<uint64_t>& stored) {
-    const auto basis = maph::detail::gf2_basis(stored);
+    const auto basis = lapidary::detail::gf2_basis(stored);
     std::set<unsigned> lengths;
     for (const auto& e : cdc.entries()) lengths.insert(e.length);
     for (unsigned l : lengths)
@@ -245,7 +245,7 @@ TEST_CASE("randomized boundary: SATURATION is not sufficient ({2,2,2,3,3} store 
     // Exact law over 5 values: reduced (num, den) per class, by enumerating W.
     using Law5 = std::array<std::pair<uint64_t, uint64_t>, 5>;
     auto law5 = [&](const std::vector<uint64_t>& stored) {
-        const auto span = maph::detail::gf2_span(maph::detail::gf2_basis(stored));
+        const auto span = lapidary::detail::gf2_span(lapidary::detail::gf2_basis(stored));
         std::array<uint64_t, 5> hits{0, 0, 0, 0, 0};
         for (uint64_t p : span) hits[static_cast<std::size_t>(cdc.decode(p))] += 1;
         Law5 q;
@@ -258,8 +258,8 @@ TEST_CASE("randomized boundary: SATURATION is not sufficient ({2,2,2,3,3} store 
     auto proj_rank5 = [&](const std::vector<uint64_t>& stored, unsigned l) {
         const uint64_t mask = (((uint64_t{1} << M5) - 1) >> (M5 - l)) << (M5 - l);
         std::vector<uint64_t> img;
-        for (uint64_t b : maph::detail::gf2_basis(stored)) img.push_back(b & mask);
-        return maph::detail::gf2_rank(img);
+        for (uint64_t b : lapidary::detail::gf2_basis(stored)) img.push_back(b & mask);
+        return lapidary::detail::gf2_rank(img);
     };
     auto members5 = [&](V5 v) {
         auto [base, count] = cdc.class_for(v);

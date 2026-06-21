@@ -36,14 +36,14 @@
 
 #include <catch2/catch_test_macros.hpp>
 
-#include <maph/codecs/prefix_codec.hpp>
-#include <maph/detail/gf2.hpp>
+#include <lapidary/codecs/prefix_codec.hpp>
+#include <lapidary/detail/gf2.hpp>
 
 #include <array>
 #include <cstdint>
 #include <vector>
 
-using namespace maph;
+using namespace lapidary;
 
 namespace {
 
@@ -74,7 +74,7 @@ std::size_t intersection_dim(const std::vector<uint64_t>& W_basis,
     uni.reserve(W_basis.size() + C_basis.size());
     uni.insert(uni.end(), W_basis.begin(), W_basis.end());
     uni.insert(uni.end(), C_basis.begin(), C_basis.end());
-    const std::size_t dim_sum = maph::detail::gf2_rank(uni);
+    const std::size_t dim_sum = lapidary::detail::gf2_rank(uni);
     return W_basis.size() + C_basis.size() - dim_sum;
 }
 
@@ -83,8 +83,8 @@ std::size_t intersection_dim(const std::vector<uint64_t>& W_basis,
 // dyadic rationals over |W|, so they compare exactly (tolerance 1e-9).
 std::array<double, 4> mass_by_enumeration(const prefix_codec<V, 4>& cdc,
                                           const std::vector<uint64_t>& stored) {
-    const auto basis = maph::detail::gf2_basis(stored);
-    const auto span = maph::detail::gf2_span(basis);
+    const auto basis = lapidary::detail::gf2_basis(stored);
+    const auto span = lapidary::detail::gf2_span(basis);
     std::array<double, 4> q{0.0, 0.0, 0.0, 0.0};
     for (uint64_t p : span) {
         q[static_cast<std::size_t>(cdc.decode(p))] += 1.0;
@@ -97,7 +97,7 @@ std::array<double, 4> mass_by_enumeration(const prefix_codec<V, 4>& cdc,
 std::array<double, 4> mass_by_formula(const prefix_codec<V, 4>& cdc,
                                       const std::vector<uint64_t>& stored) {
     constexpr unsigned M = 4;
-    const auto W_basis = maph::detail::gf2_basis(stored);
+    const auto W_basis = lapidary::detail::gf2_basis(stored);
     const std::size_t dimW = W_basis.size();
 
     std::array<double, 4> q{0.0, 0.0, 0.0, 0.0};
@@ -107,9 +107,9 @@ std::array<double, 4> mass_by_formula(const prefix_codec<V, 4>& cdc,
         // union span iff adding it does not raise the rank of (W basis + C basis).
         std::vector<uint64_t> uni = W_basis;
         uni.insert(uni.end(), C_basis.begin(), C_basis.end());
-        const std::size_t base_rank = maph::detail::gf2_rank(uni);
+        const std::size_t base_rank = lapidary::detail::gf2_rank(uni);
         uni.push_back(e.prefix_left_aligned);
-        const bool hit = maph::detail::gf2_rank(uni) == base_rank;
+        const bool hit = lapidary::detail::gf2_rank(uni) == base_rank;
 
         if (!hit) continue;
         const std::size_t d = intersection_dim(W_basis, C_basis);
@@ -152,9 +152,9 @@ TEST_CASE("T4b: skewed codec is GRADED (W = span of all four stored codewords)",
     // gf2_basis reduces this to {1000, 0100, 0010}, dim W = 3, |W| = 8.
     std::vector<uint64_t> stored{cdc.encode(V::A), cdc.encode(V::B),
                                  cdc.encode(V::C), cdc.encode(V::D)};
-    const auto basis = maph::detail::gf2_basis(stored);
+    const auto basis = lapidary::detail::gf2_basis(stored);
     REQUIRE(basis.size() == 3u);                 // dim W = 3
-    REQUIRE(maph::detail::gf2_span(basis).size() == 8u);  // |W| = 8
+    REQUIRE(lapidary::detail::gf2_span(basis).size() == 8u);  // |W| = 8
 
     auto q = mass_by_enumeration(cdc, stored);
 
@@ -236,7 +236,7 @@ TEST_CASE("T4b: full-span W = GF(2)^4 gives q(v) = 2^(-len(v)) (designed Kraft s
 
     // W = all of GF(2)^4: take the four standard basis vectors as the span.
     std::vector<uint64_t> full_basis{0b0001u, 0b0010u, 0b0100u, 0b1000u};
-    REQUIRE(maph::detail::gf2_rank(full_basis) == 4u);
+    REQUIRE(lapidary::detail::gf2_rank(full_basis) == 4u);
 
     auto q = mass_by_enumeration(cdc, full_basis);
 

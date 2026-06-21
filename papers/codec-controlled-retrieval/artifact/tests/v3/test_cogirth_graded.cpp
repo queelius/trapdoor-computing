@@ -61,8 +61,8 @@
 
 #include <catch2/catch_test_macros.hpp>
 
-#include <maph/codecs/prefix_codec.hpp>
-#include <maph/detail/gf2.hpp>
+#include <lapidary/codecs/prefix_codec.hpp>
+#include <lapidary/detail/gf2.hpp>
 
 #include <array>
 #include <cmath>
@@ -70,7 +70,7 @@
 #include <limits>
 #include <vector>
 
-using namespace maph;
+using namespace lapidary;
 
 namespace {
 

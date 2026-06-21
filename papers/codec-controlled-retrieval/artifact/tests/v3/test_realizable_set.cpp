@@ -33,8 +33,8 @@
 
 #include <catch2/catch_test_macros.hpp>
 
-#include <maph/codecs/prefix_codec.hpp>
-#include <maph/detail/gf2.hpp>
+#include <lapidary/codecs/prefix_codec.hpp>
+#include <lapidary/detail/gf2.hpp>
 
 #include <algorithm>
 #include <array>
@@ -43,7 +43,7 @@
 #include <set>
 #include <vector>
 
-using namespace maph;
+using namespace lapidary;
 
 namespace {
 
@@ -76,7 +76,7 @@ std::vector<std::vector<uint64_t>> all_subspaces() {
         std::vector<uint64_t> gens;
         for (uint32_t i = 0; i < N; ++i)
             if (sub & (1u << i)) gens.push_back(i);
-        auto span = maph::detail::gf2_span(maph::detail::gf2_basis(gens));
+        auto span = lapidary::detail::gf2_span(lapidary::detail::gf2_basis(gens));
         std::sort(span.begin(), span.end());
         seen.insert(std::move(span));
     }

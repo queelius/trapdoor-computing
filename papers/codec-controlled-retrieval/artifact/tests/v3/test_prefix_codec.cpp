@@ -13,11 +13,11 @@
 
 #include <catch2/catch_test_macros.hpp>
 
-#include <maph/codecs/prefix_codec.hpp>
-#include <maph/concepts/codec.hpp>
-#include <maph/detail/gf2.hpp>
-#include <maph/retrieval/encoded_retrieval.hpp>
-#include <maph/retrieval/ribbon_retrieval.hpp>
+#include <lapidary/codecs/prefix_codec.hpp>
+#include <lapidary/concepts/codec.hpp>
+#include <lapidary/detail/gf2.hpp>
+#include <lapidary/retrieval/encoded_retrieval.hpp>
+#include <lapidary/retrieval/ribbon_retrieval.hpp>
 
 #include <algorithm>
 #include <array>
@@ -27,7 +27,7 @@
 #include <string>
 #include <vector>
 
-using namespace maph;
+using namespace lapidary;
 
 namespace {
 
@@ -311,7 +311,7 @@ TEST_CASE("non-member distribution: same codec, different storage frequencies",
 
     // W from the SHARED support, computed once (multiplicities irrelevant).
     std::vector<uint64_t> stored{cdc.encode(V::A), cdc.encode(V::B), cdc.encode(V::C)};
-    auto basis = maph::detail::gf2_basis(stored);
+    auto basis = lapidary::detail::gf2_basis(stored);
 
     // Both structures' non-member outputs must re-encode into this same W,
     // independent of which storage frequencies produced each build.
@@ -319,8 +319,8 @@ TEST_CASE("non-member distribution: same codec, different storage frequencies",
     for (size_t i = 0; i < N_span; ++i) {
         V out_a = built_a->lookup("SPAN_A_" + std::to_string(i));
         V out_b = built_b->lookup("SPAN_B_" + std::to_string(i));
-        REQUIRE(maph::detail::gf2_in_span(cdc.encode(out_a), basis));
-        REQUIRE(maph::detail::gf2_in_span(cdc.encode(out_b), basis));
+        REQUIRE(lapidary::detail::gf2_in_span(cdc.encode(out_a), basis));
+        REQUIRE(lapidary::detail::gf2_in_span(cdc.encode(out_b), basis));
     }
 
     // Independence: the two non-member distributions agree to sampling-noise
@@ -383,8 +383,8 @@ TEST_CASE("non-member outputs land exactly in the stored-pattern span (T2)",
 
     // W from the stored canonical patterns A,B,C.
     std::vector<uint64_t> stored{ cdc.encode(V::A), cdc.encode(V::B), cdc.encode(V::C) };
-    auto basis = maph::detail::gf2_basis(stored);
-    auto span  = maph::detail::gf2_span(basis);
+    auto basis = lapidary::detail::gf2_basis(stored);
+    auto span  = lapidary::detail::gf2_span(basis);
 
     // (a) Every non-member output re-encodes into W.
     const size_t N = 30000;
@@ -392,7 +392,7 @@ TEST_CASE("non-member outputs land exactly in the stored-pattern span (T2)",
     for (size_t i = 0; i < N; ++i) {
         V out = built->lookup("SPANCHK_" + std::to_string(i));
         uint64_t pat = cdc.encode(out);
-        REQUIRE(maph::detail::gf2_in_span(pat, basis));
+        REQUIRE(lapidary::detail::gf2_in_span(pat, basis));
         counts[static_cast<size_t>(out)]++;
     }
 
@@ -460,8 +460,8 @@ TEST_CASE("T4: sharp codec-control threshold at rank == log2 K (transversality)"
     // This is the exact rational mass over the enumerated span (T1's formula),
     // so it can be compared with exact equality up to a tiny tolerance.
     auto predicted_mass = [&](const std::vector<uint64_t>& stored) {
-        auto basis = maph::detail::gf2_basis(stored);
-        auto span = maph::detail::gf2_span(basis);
+        auto basis = lapidary::detail::gf2_basis(stored);
+        auto span = lapidary::detail::gf2_span(basis);
         std::array<double, 4> q{0.0, 0.0, 0.0, 0.0};
         for (uint64_t p : span) {
             q[static_cast<size_t>(cdc.decode(p))] += 1.0;
@@ -479,7 +479,7 @@ TEST_CASE("T4: sharp codec-control threshold at rank == log2 K (transversality)"
         std::vector<uint64_t> stored{cdc.encode(V::A), cdc.encode(V::B)};
 
         // rank pi|_W = gf2_rank(stored) = 1, strictly below log2 K = 2.
-        REQUIRE(maph::detail::gf2_rank(stored) == 1u);
+        REQUIRE(lapidary::detail::gf2_rank(stored) == 1u);
 
         auto q = predicted_mass(stored);
         // K' = |pi(W)| = 2^1 = 2 hit classes (A, B); each gets 1/K' = 1/2,
@@ -499,7 +499,7 @@ TEST_CASE("T4: sharp codec-control threshold at rank == log2 K (transversality)"
         std::vector<uint64_t> stored{cdc.encode(V::A), cdc.encode(V::B), cdc.encode(V::C)};
 
         // rank pi|_W = gf2_rank(stored) = 2 = log2 K: pi(W) = Q (surjective).
-        REQUIRE(maph::detail::gf2_rank(stored) == 2u);
+        REQUIRE(lapidary::detail::gf2_rank(stored) == 2u);
 
         auto q = predicted_mass(stored);
         // FULL control: every class hit, each mass = alpha = 1/K = 1/4. Note D
@@ -558,8 +558,8 @@ TEST_CASE("T2 raw containment: undecoded non-member outputs lie in W",
     // W = span{enc(A), enc(B), enc(C)}; the gate is NON-VACUOUS: |W| = 4 < 16,
     // so 12 of the 16 possible raw outputs would fail the containment check.
     std::vector<uint64_t> stored{cdc.encode(V::A), cdc.encode(V::B), cdc.encode(V::C)};
-    auto basis = maph::detail::gf2_basis(stored);
-    REQUIRE(maph::detail::gf2_span(basis).size() == 4u);
+    auto basis = lapidary::detail::gf2_basis(stored);
+    REQUIRE(lapidary::detail::gf2_span(basis).size() == 4u);
 
     // (a) member RAW lookups reproduce the exact stored canonical patterns.
     for (size_t i = 0; i < keys.size(); ++i) {
@@ -570,7 +570,7 @@ TEST_CASE("T2 raw containment: undecoded non-member outputs lie in W",
     for (size_t i = 0; i < 30000; ++i) {
         const uint64_t raw =
             static_cast<uint64_t>(rib->lookup("RAWSPAN_" + std::to_string(i)));
-        REQUIRE(maph::detail::gf2_in_span(raw, basis));
+        REQUIRE(lapidary::detail::gf2_in_span(raw, basis));
     }
 
     // --- Sub-threshold instance: store only A, B (rank 1 < log2 K = 2). ---
@@ -591,13 +591,13 @@ TEST_CASE("T2 raw containment: undecoded non-member outputs lie in W",
     REQUIRE(rib2.has_value());
 
     std::vector<uint64_t> stored2{cdc.encode(V::A), cdc.encode(V::B)};
-    auto basis2 = maph::detail::gf2_basis(stored2);
-    REQUIRE(maph::detail::gf2_span(basis2).size() == 2u);
+    auto basis2 = lapidary::detail::gf2_basis(stored2);
+    REQUIRE(lapidary::detail::gf2_span(basis2).size() == 2u);
 
     for (size_t i = 0; i < 15000; ++i) {
         const uint64_t raw =
             static_cast<uint64_t>(rib2->lookup("RAWSUB_" + std::to_string(i)));
-        REQUIRE(maph::detail::gf2_in_span(raw, basis2));
+        REQUIRE(lapidary::detail::gf2_in_span(raw, basis2));
         const V out = cdc.decode(raw);
         // T4 step at rank 1: only the two hit classes can appear.
         REQUIRE((out == V::A || out == V::B));

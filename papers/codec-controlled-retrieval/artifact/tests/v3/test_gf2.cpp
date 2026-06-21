@@ -1,9 +1,9 @@
 #include <catch2/catch_test_macros.hpp>
-#include <maph/detail/gf2.hpp>
+#include <lapidary/detail/gf2.hpp>
 #include <cstdint>
 #include <vector>
 
-using namespace maph::detail;
+using namespace lapidary::detail;
 
 TEST_CASE("gf2 rank of independent patterns", "[gf2]") {
     // {0001, 0010, 0100} are three nonzero, pairwise-independent vectors: rank 3.

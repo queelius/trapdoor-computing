@@ -1,26 +1,26 @@
 # Artifact provenance
 
-This artifact is a self-contained, pinned extract of the maph research repository.
-It reproduces the computational gates behind every theorem in the manuscript
-without requiring a maph checkout. Regenerate it with:
+This artifact is a self-contained, pinned extract of the lapidary research repository
+(formerly maph). It reproduces the computational gates behind every theorem in the
+manuscript without requiring a lapidary checkout. Regenerate it with:
 
-    scripts/sync-from-maph.sh 402c8ca
+    scripts/sync-from-maph.sh be92fa6
 
 ## Pin
 
-- Upstream: maph (https://github.com/queelius/maph), the C++23 perfect-hashing
-  research playground.
-- Commit: `402c8cadd431093264e7d25090e5b08c3f430ab1`
-  (2026-06-10 00:01:28 -0500)
-- Subject: fix: fresh-audit corrections to the randomized section, T5, T5b, T5c
+- Upstream: lapidary (https://github.com/queelius/lapidary; formerly maph), the
+  C++23 perfect-hashing research playground.
+- Commit: `be92fa6f1ea982f0758851e830e3a9aee94ee357`
+  (2026-06-21 02:02:43 -0500)
+- Subject: refactor!: rename project maph -> lapidary (namespace, includes, CMake, docs)
 
-maph is a research playground and its `master` moves; this artifact is pinned to
-the commit above and is the stable reference for the manuscript. Do not cite maph
+lapidary is a research playground and its `master` moves; this artifact is pinned to
+the commit above and is the stable reference for the manuscript. Do not cite lapidary
 `master`; cite this pinned bundle (and, at submission, its archived DOI).
 
 ## Contents
 
-- `include/maph/` -- the header-only library at the pinned commit. The gates
+- `include/lapidary/` -- the header-only library at the pinned commit. The gates
   exercise `codecs/prefix_codec.hpp`, `detail/gf2.hpp`, and (for the empirical
   ribbon checks) `retrieval/`. The remaining algorithm headers are carried for a
   clean, self-contained build and are not exercised by the gates.

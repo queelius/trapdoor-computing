@@ -2,7 +2,7 @@
 #
 # Self-contained: depends only on a C++23 compiler and network access at configure
 # time (FetchContent pulls Catch2 v3). No maph checkout required; the pinned
-# header-only library is vendored under include/maph (see PROVENANCE.md).
+# header-only library is vendored under include/lapidary (see PROVENANCE.md).
 #
 #   cmake -S . -B build && cmake --build build -j && ctest --test-dir build
 #
