@@ -66,5 +66,11 @@ design_decisions:   # settled 2026-06-10 via /bookwright:design master
   exercises: none
 master_spec: "docs/superpowers/specs/2026-06-10-master-design.md"
 
-status: designed   # scaffolded -> designed -> drafting -> review -> done
+status: done   # scaffolded -> designed -> drafting -> review -> done
 created: 2026-06-10
+drafted: 2026-06-18      # first full draft: 14 chapters + 3 appendices, 76pp, builds clean
+reviewed: 2026-06-18     # full-book pass (docs/superpowers/reviews/2026-06-18-book-review.md)
+frontmatter: 2026-06-18  # copyright/colophon, list of figures+tables, preface
+integrated: 2026-06-21   # full-book integration pass (docs/superpowers/plans/2026-06-21-book-integration-pass.md)
+# Actual length ~76pp, denser than the 150-220pp target (proof-sketch + pointer
+# discipline and dense prose); a complete, reviewed first draft.
