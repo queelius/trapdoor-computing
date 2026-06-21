@@ -142,7 +142,8 @@ joint distribution of correlated values across several cipher maps.
 
 Quantitative information flow measures the leakage of a secret $S$ to a view
 $V$ by how much $V$ reduces uncertainty about $S$, for instance the Shannon
-leakage $I(S; V)$ or a min-entropy (Bayes-vulnerability) leakage. Security in
+leakage $I(S; V)$, a min-entropy (Bayes-vulnerability) leakage, or maximal
+leakage~\cite{issa2020maximal}. Security in
 this language is not the absence of leakage but a \emph{bound} on it. We define
 a cipher map's confidentiality as a tuple of such bounds, one per kind of
 access in \Cref{def:view}.
@@ -209,7 +210,12 @@ exposed operations. A security model for trapdoor computing must carry all three
 because a cipher map can be strong on one and weak on another: near-perfect
 marginal confidentiality ($\delta \approx 0$) coexists with full compositional
 recovery given enough shared observations. The irreducibility of the scales is
-a feature of the model, not a defect of a construction.
+a feature of the model, not a defect of a construction. In the language of
+generalized gain functions~\cite{alvim2012gleakage}, the three clauses are three
+gain functions on the one adversary view of \Cref{def:view}, each scoring a
+different operational goal, guessing one value, recovering a joint distribution,
+or narrowing a value by operating, and the model's content is that no single
+gain function dominates the three.
 \end{remark}
 
 \section{Three Scales, One Adversary}
@@ -259,31 +265,60 @@ tuple of \Cref{def:confidentiality} does.
 
 \begin{proposition}[Composition of the security tuple]
 \label{prop:composition}
-Let $\fhat_1, \ldots, \fhat_m$ be cipher maps chained so each consumes the
-previous output, with correctness parameters $\eta_i$ and marginal bounds from
-$\delta_i$. Then the chain is a cipher map whose security tuple is determined by
-the parts:
+Let $\fhat_m \circ \cdots \circ \fhat_1$ be a chain of cipher maps, stage $i$
+with correctness $\eta_i$ and marginal parameter $\delta_i$, forming a cipher map
+for the composite latent function. Three of the four components of its security
+tuple are bounded by the parts:
 \begin{enumerate}
-\item correctness composes, $\eta_{\mathrm{total}} \le 1 - \prod_i (1 - \eta_i)$;
-\item the marginal leakage of the chain's observable token stream is bounded by
-  the entropy ratio of that stream, which the per-stage $\delta_i$ bound;
-\item the active orbit of a typed chain is bounded \emph{additively},
-  $|\mathrm{orbit}| \le \sum_i N_i$ with $N_{i+1} = N_i^{a_i}$ for per-step arity
-  $a_i$~\cite{towell2026algebraic}, and the compositional rate by the latent
-  cardinalities the chain exposes.
+\item \emph{(correctness)} $\eta_{\mathrm{total}} \le 1 - \prod_{i=1}^m (1 - \eta_i)$;
+\item \emph{(marginal)} each token the untrusted machine observes, the query and
+  every intermediate output, is a single token whose marginal leakage clause~(M)
+  bounds at that token's own $\delta_i$, so composition does not amplify the
+  per-token marginal leakage;
+\item \emph{(active)} for a typed chain the reachable orbit is bounded
+  \emph{additively}, $|\orbitF| \le \sum_{i} N_i$ with $N_{i+1} = N_i^{a_i}$ for
+  per-step arity $a_i$~\cite{towell2026algebraic}, so clause~(A) holds at design
+  time, independent of the cipher-space sizes.
 \end{enumerate}
 \end{proposition}
 
-The correctness bound is the elementary observation that a chain is correct when
-every stage is, an inequality rather than an equality because a stage error can
-be masked downstream~\cite{towell2026cipher}. Parts~2 and~3 follow from the
-entropy-ratio and typed-orbit bounds of the cited papers; a full composition
-theorem for the whole tuple, accounting for the collateral leakage that
-composition can introduce in quantitative information flow generally, is left
-open. The point for the model is nonetheless structural: each clause composes
-through quantities the parts already carry, so a system assembled from cipher
-maps has a security tuple a designer can estimate from a parts list, the property
-that lets the definition support construction and not only analysis.
+\begin{proof}
+\emph{(1)} The chain is correct whenever every stage is, since a stage given a
+correct intermediate value answers correctly up to its own error. Writing $C_i$
+for the event that stage $i$ is correct given correct input, $\bigcap_i C_i$
+implies the chain is correct, so $\Pr[\text{chain correct}] \ge \prod_{i}
+\Pr[C_i \mid C_1, \ldots, C_{i-1}] \ge \prod_{i} (1 - \eta_i)$, the last step
+because, given correct upstream, stage $i$ errs with probability at most
+$\eta_i$. Complementing gives the bound; it is an inequality, not an equality,
+because a stage error can be undone by a later stage mapping the corrupted token
+to a correct value~\cite{towell2026cipher}. \emph{(2)} Clause~(M) bounds the
+leakage of a \emph{single} observed token by its representation-uniformity
+parameter, through the Fannes and single-guess bounds. Every token the chain
+exposes is one such token, governed by the $\delta_i$ of the map that produced
+it; since~(M) is a per-token bound, the chain's marginal leakage at any one
+observation is that token's bound, with no amplification. \emph{(3)} The
+typed-composition discipline of~\cite{towell2026algebraic} bounds the reachable
+set of a depth-$m$ typed chain by the sum of its per-step frontiers $N_i$, with
+the recurrence $N_{i+1} = N_i^{a_i}$; substituting into clause~(A) bounds the
+active residual entropy by a quantity the typed structure fixes, not by $2^n$.
+\end{proof}
+
+The proposition deliberately stops at three components. It does \emph{not} settle
+the compositional component~(C), and the gap is the one quantitative information
+flow calls \emph{collateral leakage}~\cite{mciver2016collateral,%
+kawamoto2016compositionality}: composing channels can leak jointly more than the
+sum of their marginal leakages, so whether a cipher-map chain exposes joint
+structure across its stages that no stage exposes alone is not decided by
+parts~(1)--(3). The negative half \emph{is} known: the chain's joint-recovery
+rate is governed by the latent cardinalities it exposes (clause~(C)), and no
+per-stage parameter lowers it, so the compositional component cannot be made to
+compose by tuning the parts. A full composition law for~(C), accounting for
+collateral leakage, is the principal formal work this model leaves open; until it
+exists, the compositional component must be controlled directly, by limiting the
+shared-token observations an adversary can make. The other three components
+compose through quantities the parts already carry, which is what lets a designer
+estimate them from a parts list and lets the definition support construction, not
+only analysis.
 
 \section{Relation to Cryptographic Security}
 \label{sec:crypto}
