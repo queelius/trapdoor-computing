@@ -1,0 +1,207 @@
+% Chapter 9: The Marginal Scale
+% DEFINES: ch:marginal-scale; sec:entropy-ratio, sec:fannes-bridge,
+%   sec:delta-levers, sec:case-study, sec:ch9-notes;
+%   def:entropy-ratio, prop:fannes, ex:entropy-ratio, rem:le-cam-marginal,
+%   tab:levers
+% REFERENCES (backward): sec:measured-not-negligible, def:uniformity,
+%   def:correctness, rem:granularity
+% REFERENCES (forward, part labels): part:constructions, part:frontiers
+
+\chapter{The Marginal Scale}
+\label{ch:marginal-scale}
+
+\Cref{sec:measured-not-negligible} promised that confidentiality in this
+framework would be \emph{measured}, a number on a scale, not a negligible
+function in a security parameter. This chapter delivers the number. For a
+single cipher value, the leakage is captured by one quantity, the entropy
+ratio, and the representation-uniformity parameter $\delta$ of
+\Cref{def:uniformity} turns out to lower-bound it through a clean continuity
+inequality. The chapter is a summary: the results are the Entropy Ratio
+paper's, and the proofs live there; here they are stated, motivated, and
+made concrete, with pointers to the standalone work for the full
+arguments.\footnote{The marginal-scale theorems, with proofs, are in the
+companion \cite{towell2026maxconf}; this chapter paraphrases and cites rather
+than reproducing them.}
+
+\section{The Entropy Ratio}
+\label{sec:entropy-ratio}
+
+The untrusted machine sees a stream of tokens drawn from the distribution
+$Q$ of \Cref{def:uniformity}, supported on the populated set
+$\mathrm{im}(\enc)$. The most it could carry, if $Q$ were perfectly flat, is
+$H^{*} = \log_2 \lvert \mathrm{im}(\enc)\rvert$ bits per token. How much of
+that ceiling the actual traffic reaches is the measure.
+
+\begin{definition}[Entropy ratio]
+\label{def:entropy-ratio}
+The \emph{entropy ratio} of a cipher map system is
+\[
+  e \;=\; \frac{H(Q)}{H^{*}},
+  \qquad H^{*} = \log_2 \lvert \mathrm{im}(\enc)\rvert,
+\]
+the observed token entropy as a fraction of the maximum entropy on the
+populated support. Equivalently $e = 1 - D_{\mathrm{KL}}(Q \,\|\,
+U_{\mathrm{im}})/H^{*}$, where $U_{\mathrm{im}}$ is uniform on
+$\mathrm{im}(\enc)$. It satisfies $e \in [0, 1]$, with $e = 1$ exactly when
+$Q = U_{\mathrm{im}}$, the perfectly uniform, $\delta = 0$ case.
+\end{definition}
+
+The normalizer is the log-size of the populated support, $H^{*} =
+\log_2\lvert\mathrm{im}(\enc)\rvert$, not the ambient $n$, for the reason
+\Cref{def:uniformity} already gave: the traffic lives on the support, and
+measuring it against the ambient $\B^n$ would call every sparse construction
+maximally leaky and distinguish nothing. The entropy ratio is the
+quantitative form of the measured-not-negligible thread: $e$ near $1$ is a
+cipher map whose token stream is near-uniform and so leaks almost nothing
+about which value each token carries; $e$ small is a stream whose
+non-uniformity an adversary can read.
+
+\section{The Fannes Bridge}
+\label{sec:fannes-bridge}
+
+The entropy ratio is an information-theoretic quantity; $\delta$ is a
+distance. The bridge between them is a continuity inequality, and getting
+the right inequality matters.
+
+\begin{proposition}[The Fannes bridge]
+\label{prop:fannes}
+For a cipher map with representation uniformity $\delta \le \tfrac12$,
+\[
+  e \;\geq\; 1 - \delta - \frac{h_2(\delta)}{H^{*}},
+  \qquad h_2(\delta) = -\delta\log_2\delta - (1-\delta)\log_2(1-\delta),
+\]
+which is \emph{linear} in $\delta$.
+\end{proposition}
+
+The inequality is the Fannes-Audenaert continuity bound, which controls how
+much the entropy of a distribution can change under a total-variation
+perturbation: two distributions within $\delta$ in total variation differ in
+entropy by at most a term linear in $\delta$ plus the binary-entropy
+correction $h_2(\delta)$. That is exactly what is needed to turn a bound on
+$\delta = \TV(Q, U_{\mathrm{im}})$ into a lower bound on $H(Q)$, hence on
+$e$. The tempting alternative, Pinsker's inequality, runs the wrong way: it
+lower-bounds Kullback-Leibler divergence given total variation, whereas the
+bridge needs an upper bound on the divergence to lower-bound the entropy.
+Pinsker would also give a bound quadratic in $\delta$; the correct
+Fannes-Audenaert bound is linear, and the linearity is what makes small
+$\delta$ buy proportional marginal confidentiality. This is the payoff of
+\Cref{def:uniformity}: the parameter that the homophonic machinery drives
+down is, through this bridge, a confidentiality guarantee.
+
+\begin{remark}[The marginal single-guess bound, and a warning about names]
+\label{rem:le-cam-marginal}
+The entropy ratio bounds aggregate leakage; a complementary bound limits a
+single guess. A membership-inference attacker who sees one decoded output
+and guesses real-versus-filler is held, at a balanced prior, to accuracy at
+most $\tfrac12 + \tfrac\delta2$, an advantage of at most $\delta/2$. This is
+Le Cam's two-point lemma applied to the cipher-value marginals. The name is
+worth flagging, because Le Cam's two-point method reappears at the
+compositional scale of \Cref{ch:compositional-scale} in a completely
+different role, and the two must not be conflated: here it is a
+\emph{marginal} bound and an \emph{upper} bound on a single attacker's
+accuracy; there the relevant tool is Assouad's lemma, a \emph{lower} bound
+on a minimax estimation rate.
+\end{remark}
+
+\section{Three Levers for Delta}
+\label{sec:delta-levers}
+
+If $\delta$ is the lever and $e$ the payoff, the question is how to drive
+$\delta$ down. There are three constructions, and each pays in a different
+currency (\Cref{tab:levers}).
+
+\begin{table}[t]
+\centering
+\caption{Three ways to reduce $\delta$, and what each costs.}
+\label{tab:levers}
+\begin{tabular}{@{}lll@{}}
+\toprule
+Lever & Mechanism & Cost \\
+\midrule
+Noise injection & mix in filler queries, fraction $1-\rho$ & bandwidth; signal diluted by $\rho^2$ \\
+Multiplicity & $K(x) \propto D(x)$ encodings per value & space, $\sum_x K(x)$ tokens \\
+Granularity & encode tuples jointly (entanglement $p$) & space $O(\lvert Y\rvert^{p})$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Noise injection.}
+Pad the query stream with filler drawn uniformly from $\mathrm{im}(\enc)$, so
+that a real query (from $D$) appears with probability $\rho$ and filler with
+probability $1 - \rho$. The observed token distribution is then the mixture
+$\rho D + (1 - \rho) U_{\mathrm{im}}$, and its entropy is the entropy of that
+mixture,
+\[
+  H_{\mathrm{mix}} = H\bigl(\rho D + (1 - \rho) U_{\mathrm{im}}\bigr),
+\]
+which rises toward $H^{*}$ as $\rho \to 0$. This is the quantity the
+untrusted machine actually sees, and it is \emph{not} the source-plus-label
+sum $h_2(\rho) + \rho H(D) + (1-\rho) H^{*}$ that one might write down: that
+sum is the joint entropy of the token \emph{with} the real-or-filler label,
+a label the untrusted machine never observes, so it over-counts the leakage
+by the entropy of the hidden label and is only an upper bound. The cost is
+that filler consumes bandwidth, and that injected noise dilutes any
+signal an adversary could estimate by a factor $\rho^{2}$ in Fisher
+information, slowing estimation rather than stopping it.
+
+\paragraph{Multiplicity.}
+Assign each value $K(x) \propto D(x)$ encodings, the homophonic prescription
+of \Cref{def:uniformity}: frequent values get \emph{more} representations, so
+the per-token frequency $D(x)/K(x)$ flattens and $Q$ approaches uniform on
+the enlarged support. The direction is the one the historical record
+inverted; more demand earns more tokens, not fewer. The cost is space, the
+$\sum_x K(x)$ tokens the support must hold.
+
+\paragraph{Granularity.}
+Encode several values as one unit, raising the entanglement $p$ of
+\Cref{rem:granularity}. This flattens the joint token distribution rather
+than the marginals, hiding correlations a component-wise encoding would leak,
+at a space cost exponential in $p$. It is the lever that reaches past the
+marginal scale, which is exactly why its full payoff is compositional, the
+subject of the next chapter.
+
+\section{A Worked Case Study}
+\label{sec:case-study}
+
+A small computation fixes the measure, and the paper's full case study fixes
+the magnitude.
+
+\begin{example}[Reading the entropy ratio]
+\label{ex:entropy-ratio}
+Take a populated support of four tokens, so $H^{*} = \log_2 4 = 2$ bits, and
+a skewed token distribution $Q = (0.5, 0.25, 0.15, 0.10)$. Its entropy is
+$H(Q) \approx 1.74$ bits, so the entropy ratio is $e \approx 1.74/2 \approx
+0.87$: the stream carries $87\%$ of the uniform ceiling, and the gap is what
+leaks. The total variation to uniform is $\delta = \TV(Q, U_{\mathrm{im}}) =
+0.25$, and \Cref{prop:fannes} guarantees $e \ge 1 - 0.25 - h_2(0.25)/2
+\approx 0.34$, a conservative floor the actual $0.87$ clears comfortably.
+Applying multiplicity, $K \propto D$, splits the heavy tokens and flattens
+$Q$ toward uniform, pushing $e$ toward $1$.
+\end{example}
+
+At scale the effect is substantial. On a $20$-newsgroups encrypted search
+workload, the Entropy Ratio paper drives $e$ from about $0.72$ on the raw
+construction to about $0.94$ under homophonic multiplicity combined with
+noise injection, at roughly $1.05\times$ the space and $1.5\times$ the
+bandwidth.\footnote{The case-study figures, computed with the mixture entropy
+$H(\rho D + (1-\rho)U_{\mathrm{im}})$ above and verified numerically, are
+Table 4 of \cite{towell2026maxconf}.} The marginal scale, in other words, is
+not only measurable but tunable: a designer can buy a known increase in
+entropy ratio for a known price in space and bandwidth.
+
+\section{Notes and Provenance}
+\label{sec:ch9-notes}
+
+The entropy ratio, the Fannes bridge, and the three reduction constructions
+are the Entropy Ratio paper's, summarized here under this part's
+state-and-point posture; the proofs are in \cite{towell2026maxconf}. Four of
+the book's mathematical landmines are carried in this chapter and are worth
+recording as such: the bridge is Fannes-Audenaert and \emph{linear} in
+$\delta$, not Pinsker and quadratic; the homophonic prescription is
+$K(x)\propto D(x)$, not its inverse; the noise-injection entropy is the
+mixture entropy $H(\rho D + (1-\rho)U_{\mathrm{im}})$, not the source-plus-label
+sum; and the entropy ratio is normalized by $H^{*} =
+\log_2\lvert\mathrm{im}(\enc)\rvert$, image-relative, not by the ambient $n$.
+The single-guess bound of \Cref{rem:le-cam-marginal} is Le Cam's, in its
+marginal role; the next chapter takes up the compositional scale, where a
+different tool governs a rate that none of these marginal levers can move.

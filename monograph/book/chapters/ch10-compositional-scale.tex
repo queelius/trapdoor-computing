@@ -1,0 +1,196 @@
+% Chapter 10: The Compositional Scale
+% DEFINES: ch:compositional-scale; sec:compositional-measures,
+%   sec:joint-recovery, sec:irreducibility, sec:defenses, sec:ch10-notes;
+%   thm:joint-recovery, rem:assouad-not-lecam, rem:irreducibility, tab:measures
+% REFERENCES (backward): thm:orbit-bound, rem:active-vs-marginal, def:acceptance,
+%   def:entropy-ratio, prop:fannes, rem:le-cam-marginal, def:totality,
+%   thm:composition, rem:granularity
+% REFERENCES (forward, part labels): part:constructions, part:frontiers
+
+\chapter{The Compositional Scale}
+\label{ch:compositional-scale}
+
+The marginal scale was governed by $\delta$, and a designer who drives
+$\delta$ down buys proportional confidentiality for a single cipher value.
+This chapter is about the scale where that purchase stops working. When the
+untrusted machine evaluates cipher maps, applying the operations it holds,
+or observing several maps on the same cipher value, it learns things that no
+value of $\delta$ prevents. The headline result is sharp: the latent joint
+distribution behind a shared cipher value is recoverable at a rate that no
+per-map parameter can move, and the lower bound that makes the rate sharp is
+the part's most easily misremembered piece of mathematics. As in
+\Cref{ch:marginal-scale}, the results are the Entropy Ratio paper's and are
+summarized here with pointers to the full proofs.\footnote{The compositional
+theorems and their proofs are \cite{towell2026maxconf}, Theorems 5.1 and 5.2;
+this chapter states and motivates, it does not reproduce them.}
+
+\section{Three Ways Operations Leak}
+\label{sec:compositional-measures}
+
+The compositional scale is a family of three measures, not one, distinguished
+by what the untrusted machine holds (\Cref{tab:measures}). The first is
+already in hand. \Cref{thm:orbit-bound} bounded what an \emph{active}
+adversary learns by applying its operations to a single token: the residual
+entropy $H(X \mid \text{view}) \ge H(X) - \log_2\lvert\orbitF(c)\rvert$,
+governed by orbit size, not by $\delta$ (\Cref{rem:active-vs-marginal}). That
+is the first member of the family.
+
+The second is the \emph{multi-instance coincidence oracle}. If the untrusted
+machine holds $t$ cipher maps for the \emph{same} latent function under
+independent secrets, with public acceptance partitions $\{\alpha_i(y)\}$
+(\Cref{def:acceptance}), it can look for coincidences, cases where several
+instances land in the same value region, and reach accuracy
+\[
+  \mathrm{accuracy}(t) \;=\; 1 - \tfrac12\sum_{y} \alpha(y)^{t}
+\]
+in the homogeneous case, growing with the number of instances $t$. The shape
+of the acceptance partition is the defense: concentrated partitions, mass on
+a few regions, blunt the oracle best, and where shared-function composition
+cannot be avoided the remedy is randomized encoding ($K(x) > 1$), not
+retuning the partition.\footnote{The coincidence oracle is Theorem 8.2 of
+\cite{towell2026cipher}.} The third measure, the shared-variable joint
+recovery, is the chapter's headline and the next section.
+
+\begin{table}[t]
+\centering
+\caption{The three compositional measures. None is controlled by $\delta$.}
+\label{tab:measures}
+\begin{tabular}{@{}lll@{}}
+\toprule
+Measure & The untrusted machine holds & Governed by \\
+\midrule
+Orbit closure & operations to apply to one token & orbit size $\lvert\orbitF(c)\rvert$ \\
+Coincidence oracle & $t$ maps for the same $f$ & acceptance-partition shape \\
+Joint recovery & maps for $f_1, f_2$ on shared $c$ & latent cardinalities $\lvert Y_1\rvert\lvert Y_2\rvert$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{The Joint-Recovery Rate}
+\label{sec:joint-recovery}
+
+Suppose the untrusted machine observes pairs $(\fhat_1(c), \fhat_2(c))$,
+two cipher maps for two latent functions $f_1 : X \to Y_1$ and
+$f_2 : X \to Y_2$, evaluated on the \emph{same} in-domain cipher values $c$.
+Two facts hold, and together they are the result.
+
+First, the cipher maps preserve mutual information exactly:
+\[
+  I\bigl(\fhat_1(C); \fhat_2(C)\bigr) \;=\; I\bigl(f_1(X); f_2(X)\bigr).
+\]
+The trapdoor hides the values, but it does not destroy the statistical
+dependence between them; whatever $f_1(X)$ and $f_2(X)$ shared, their cipher
+images still share. Second, an adversary collecting such pairs can estimate
+the latent joint distribution on $Y_1 \times Y_2$, and the number of
+observations it needs scales as the product of the latent cardinalities.
+
+\begin{theorem}[Joint recovery, summarized]
+\label{thm:joint-recovery}
+The latent joint distribution on $Y_1 \times Y_2$ is recoverable from shared-%
+cipher-value observations to total-variation accuracy $\xi$ at the rate
+\[
+  N \;=\; \Theta\!\left(\frac{\lvert Y_1\rvert\,\lvert Y_2\rvert}{\xi^{2}}\right),
+\]
+the upper bound attained by the empirical plug-in estimator and the matching
+lower bound by Assouad's lemma. No per-cipher-map parameter, $\delta$
+included, changes this rate.
+\end{theorem}
+
+The upper bound is unsurprising: the empirical joint distribution of the
+observed pairs converges to the latent joint at the usual parametric rate,
+and $\lvert Y_1\rvert\lvert Y_2\rvert$ cells take $\lvert Y_1\rvert\lvert
+Y_2\rvert/\xi^2$ samples to fill to precision $\xi$. The lower bound is the
+subtle half, and its proof technique is the landmine.
+
+\begin{remark}[Assouad, not Le Cam]
+\label{rem:assouad-not-lecam}
+The matching lower bound is \emph{Assouad's lemma}, not Le Cam's two-point
+method. The distinction is not pedantry. Le Cam's two-point method pits two
+hypotheses against each other and yields a bound that does not grow with
+dimension; it cannot produce the dimension-dependent rate
+$\sqrt{\lvert Y_1\rvert\lvert Y_2\rvert / N}$, because that rate comes from
+the \emph{many} coordinates of the joint distribution that must be estimated
+at once. Assouad's lemma is the right tool: it packs a hypercube of
+$2^{m/2}$ hypotheses, one per coordinate of the distribution, and sums the
+per-coordinate testing difficulty, yielding exactly the product-of-cardinalities
+rate. Le Cam's two-point method does appear in this framework, but at the
+marginal scale and as an \emph{upper} bound on a single guesser's accuracy
+(\Cref{rem:le-cam-marginal}); using it for this compositional lower bound
+would understate the leakage. The two are different theorems with the same
+famous name attached, and the compositional one is Assouad.
+\end{remark}
+
+To feel the magnitude: recovering the joint of two ten-valued outputs to
+total-variation accuracy $\xi = 0.1$ takes on the order of $\lvert
+Y_1\rvert\lvert Y_2\rvert/\xi^2 = 100/0.01 = 10^4$ shared-value observations,
+a modest number for a server that answers queries in volume.
+
+\section{Why No Parameter Helps}
+\label{sec:irreducibility}
+
+The clause that does the work in \Cref{thm:joint-recovery} is the last one:
+no per-cipher-map parameter changes the rate. The rate depends only on the
+latent cardinalities $\lvert Y_1\rvert$ and $\lvert Y_2\rvert$, on how many
+joint cells there are to estimate. It does not depend on $\delta$, on
+$\varepsilon$, on $\mu$, on the entropy ratio of \Cref{def:entropy-ratio}, or
+on any quantity the marginal scale controls.
+
+\begin{remark}[The two scales do not reduce]
+\label{rem:irreducibility}
+A small $\delta$ buys a high entropy ratio (\Cref{prop:fannes}) and so caps
+marginal leakage; it does \emph{nothing} to the joint-recovery rate. The two
+scales measure different things and neither bounds the other: a cipher map
+can be marginally near-perfect ($e \approx 1$, $\delta \approx 0$) and still
+surrender the full latent joint to an adversary who collects enough shared-%
+value pairs. Reducing $\delta$ is therefore necessary but not sufficient for
+confidentiality under composition.
+\end{remark}
+
+The reason is structural, and it indicts the framework's own virtues.
+Totality (\Cref{def:totality}) is what lets the untrusted machine evaluate
+any token blindly, and composability (\Cref{thm:composition}) is what lets it
+chain evaluations; those two properties are exactly what make a cipher map
+useful, and they are exactly what open the compositional channel. The
+property that hides a single query is the property that, applied repeatedly
+to shared inputs, exposes the joint. There is no setting of the marginal
+parameters that closes the channel without also closing off the composition
+that motivates the framework.
+
+\section{System-Level Defenses}
+\label{sec:defenses}
+
+If the marginal levers do not touch the compositional rate, what does? The
+defenses are system-level, acting on the adversary's access rather than on
+any single map's parameters. Three reduce the effective leakage. Limiting
+the number of shared-cipher-value observations $N$ keeps the adversary below
+the sample threshold its accuracy needs, since the rate is in $N$. Raising
+the entanglement $p$ of \Cref{rem:granularity}, encoding the outputs of
+$f_1$ and $f_2$ jointly rather than separately, hides the very correlation
+the joint-recovery attack reconstructs, at the exponential space cost
+granularity always carries. Injecting noise slows estimation by the Fisher
+factor $\rho^2$ of \Cref{sec:delta-levers}, raising the sample cost without
+changing the asymptotic rate. None of these is a marginal-parameter tweak;
+all act on the system around the cipher maps. Realizing them concretely,
+and weighing their costs, is the work of \Cref{part:constructions}, and the
+question of maintaining confidentiality as the query distribution drifts is
+among the open problems of \Cref{part:frontiers}.
+
+\section{Notes and Provenance}
+\label{sec:ch10-notes}
+
+The three compositional measures are the framework's, collected from the
+Algebraic Cipher Types paper (orbit closure), the Cipher Maps paper
+(coincidence oracle), and the Entropy Ratio paper (joint recovery); the
+headline joint-recovery rate and its bounds are the last paper's Theorems 5.1
+and 5.2, summarized here with the proofs left to \cite{towell2026maxconf}.
+The chapter carries two more of the book's landmines. The compositional lower
+bound is \emph{Assouad's lemma}, over a $2^{m/2}$ hypercube packing, not Le
+Cam's two-point method, and the two roles of the two-point method, the
+marginal upper bound of \Cref{rem:le-cam-marginal} and this compositional
+lower bound, must be kept apart. And the residual-entropy and joint-recovery
+quantities are unnormalized leakage measures, not the normalized entropy
+ratio of the marginal scale, and the two should never be equated. With this
+chapter the two-scale confidentiality theory the book has been building since
+\Cref{sec:measured-not-negligible} is complete: a marginal scale that
+$\delta$ governs, a compositional scale that it does not, and a clear account
+of which defenses act where.

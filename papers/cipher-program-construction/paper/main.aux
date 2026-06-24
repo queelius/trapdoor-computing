@@ -1,0 +1,84 @@
+\relax 
+\providecommand\hyper@newdestlabel[2]{}
+\providecommand\HyField@AuxAddToFields[1]{}
+\providecommand\HyField@AuxAddToCoFields[2]{}
+\citation{towell2026algebraic,towell2026cipher}
+\citation{towell2026cipher}
+\citation{towell2026cipher}
+\citation{towell2026algebraic}
+\@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{1}{section.1}\protected@file@percent }
+\newlabel{sec:intro}{{1}{1}{Introduction}{section.1}{}}
+\newlabel{sec:intro@cref}{{[section][1][]1}{[1][1][]1}}
+\citation{towell2026algebraic}
+\citation{towell2026cipher}
+\citation{towell2026cipher}
+\citation{towell2026algebraic}
+\citation{towell2026algebraic}
+\@writefile{toc}{\contentsline {section}{\numberline {2}Background}{2}{section.7}\protected@file@percent }
+\newlabel{sec:background}{{2}{2}{Background}{section.7}{}}
+\newlabel{sec:background@cref}{{[section][2][]2}{[1][2][]2}}
+\@writefile{toc}{\contentsline {section}{\numberline {3}Programs as Cipher-Map Compositions}{2}{section.8}\protected@file@percent }
+\newlabel{sec:realizing}{{3}{2}{Programs as Cipher-Map Compositions}{section.8}{}}
+\newlabel{sec:realizing@cref}{{[section][3][]3}{[1][2][]2}}
+\citation{towell2026algebraic}
+\citation{fredman1984storing}
+\citation{towell2026algebraic}
+\citation{towell2026cipher}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Expression-Tree Decomposition}{3}{subsection.9}\protected@file@percent }
+\newlabel{sec:cipher-programs}{{3.1}{3}{Expression-Tree Decomposition}{subsection.9}{}}
+\newlabel{sec:cipher-programs@cref}{{[subsection][1][3]3.1}{[1][3][]3}}
+\newlabel{def:cipher-node}{{3.1}{3}{Cipher node and cut-point placement}{definition.10}{}}
+\newlabel{def:cipher-node@cref}{{[definition][1][3]3.1}{[1][3][]3}}
+\newlabel{rem:cipher-propagation}{{3.1}{3}{Ciphering propagates upward through the tree}{remark.11}{}}
+\newlabel{rem:cipher-propagation@cref}{{[remark][1][3]3.1}{[1][3][]3}}
+\citation{towell2026algebraic}
+\citation{towell2026algebraic}
+\citation{towell2026algebraic}
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Ciphering propagates up an expression tree, here for \texttt  {if ($x+1 < y$) then $p$ else $q$}. (a)~The plaintext tree; cutting at $+$ rolls the subtree $x+1$ into a single cipher map. (b)~The cut subtree is now one opaque cipher map $M_1$ (rounded box); its cipher output forces $<$ into a cipher comparison, which pulls in the sibling $y$. The cipher Boolean then reaches \texttt  {if}, where a choice appears: the cheap default \emph  {exposes} which branch was taken (leaking the test), while \emph  {hiding} it---the case drawn here---turns \texttt  {if} into a cipher multiplexer that pulls in both branches $p$ and $q$, ciphering the entire tree above the cut (\Cref  {sec:branching}). Double-circled shaded nodes are cipher nodes.}}{4}{figure.12}\protected@file@percent }
+\newlabel{fig:cipher-tree}{{1}{4}{Ciphering propagates up an expression tree, here for \texttt {if ($x+1 < y$) then $p$ else $q$}. (a)~The plaintext tree; cutting at $+$ rolls the subtree $x+1$ into a single cipher map. (b)~The cut subtree is now one opaque cipher map $M_1$ (rounded box); its cipher output forces $<$ into a cipher comparison, which pulls in the sibling $y$. The cipher Boolean then reaches \texttt {if}, where a choice appears: the cheap default \emph {exposes} which branch was taken (leaking the test), while \emph {hiding} it---the case drawn here---turns \texttt {if} into a cipher multiplexer that pulls in both branches $p$ and $q$, ciphering the entire tree above the cut (\Cref {sec:branching}). Double-circled shaded nodes are cipher nodes}{figure.12}{}}
+\newlabel{fig:cipher-tree@cref}{{[figure][1][]1}{[1][3][]4}}
+\newlabel{rem:shared-vars}{{3.2}{4}{Shared variables and compositional leakage}{remark.13}{}}
+\newlabel{rem:shared-vars@cref}{{[remark][2][3]3.2}{[1][3][]4}}
+\@writefile{toc}{\contentsline {paragraph}{Manual composition.}{4}{section*.14}\protected@file@percent }
+\citation{towell2026algebraic}
+\citation{towell2026algebraic}
+\citation{towell2026algebraic}
+\citation{towell2026algebraic}
+\citation{towell2026algebraic}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Branching and the Limits of Oblivious Control}{5}{subsection.15}\protected@file@percent }
+\newlabel{sec:branching}{{3.2}{5}{Branching and the Limits of Oblivious Control}{subsection.15}{}}
+\newlabel{sec:branching@cref}{{[subsection][2][3]3.2}{[1][5][]5}}
+\newlabel{prop:no-short-circuit}{{3.1}{5}{No oblivious short-circuit}{theorem.16}{}}
+\newlabel{prop:no-short-circuit@cref}{{[proposition][1][3]3.1}{[1][5][]5}}
+\citation{towell2026algebraic}
+\citation{towell2026algebraic}
+\citation{towell2026algebraic}
+\citation{towell2026algebraic}
+\citation{towell2026algebraic}
+\newlabel{rem:mux-cost}{{3.3}{6}{The multiplexer is not free}{remark.17}{}}
+\newlabel{rem:mux-cost@cref}{{[remark][3][3]3.3}{[1][6][]6}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Cut-Point Structure}{6}{subsection.18}\protected@file@percent }
+\newlabel{sec:tm-vs-tree}{{3.3}{6}{Cut-Point Structure}{subsection.18}{}}
+\newlabel{sec:tm-vs-tree@cref}{{[subsection][3][3]3.3}{[1][6][]6}}
+\newlabel{def:cut-point}{{3.2}{6}{Cut point}{definition.19}{}}
+\newlabel{def:cut-point@cref}{{[definition][2][3]3.2}{[1][6][]6}}
+\@writefile{toc}{\contentsline {paragraph}{What leaks above the cut points.}{6}{section*.20}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{What bounds the orbit.}{6}{section*.21}\protected@file@percent }
+\newlabel{ex:regex-cut-points}{{3.1}{6}{Regex matching as a typed cut-point chain}{example.22}{}}
+\newlabel{ex:regex-cut-points@cref}{{[example][1][3]3.1}{[1][6][]6}}
+\citation{fredman1984storing}
+\@writefile{toc}{\contentsline {section}{\numberline {4}Automatic Rewriting and the Decision Space}{7}{section.23}\protected@file@percent }
+\newlabel{sec:auto}{{4}{7}{Automatic Rewriting and the Decision Space}{section.23}{}}
+\newlabel{sec:auto@cref}{{[section][4][]4}{[1][7][]7}}
+\@writefile{toc}{\contentsline {paragraph}{Tracing.}{7}{section*.24}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{The decision space.}{7}{section*.25}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Reference implementation.}{7}{section*.26}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {5}Open Problems}{7}{section.27}\protected@file@percent }
+\newlabel{sec:open}{{5}{7}{Open Problems}{section.27}{}}
+\newlabel{sec:open@cref}{{[section][5][]5}{[1][7][]7}}
+\bibstyle{plainnat}
+\bibdata{references}
+\bibcite{fredman1984storing}{{1}{1984}{{Fredman et~al.}}{{Fredman, Koml{\'o}s, and Szemer{\'e}di}}}
+\bibcite{towell2026algebraic}{{2}{2026{}}{{Towell}}{{}}}
+\bibcite{towell2026cipher}{{3}{2026{}}{{Towell}}{{}}}
+\gdef \@abspage@last{8}

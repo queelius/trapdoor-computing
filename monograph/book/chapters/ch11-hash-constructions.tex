@@ -1,0 +1,128 @@
+% Chapter 11: Hash-Based Constructions
+% DEFINES: ch:hash-constructions; sec:phf-backend, sec:instantiations,
+%   sec:realized-cost, sec:ch11-notes; ex:watchlist-hashset, tab:instantiations
+% REFERENCES (backward): sec:acceptance, sec:strategies, prop:space-duality,
+%   def:correctness, def:acceptance, ex:watchlist-numbers
+% REFERENCES (forward, part labels): part:frontiers
+
+\chapter{Hash-Based Constructions}
+\label{ch:hash-constructions}
+
+The abstract parts specified cipher maps without building one. This part
+builds them, three ways, and the first is the canonical one: a batch
+construction backed by a perfect hash function. It realizes the acceptance
+predicate of \Cref{sec:acceptance} directly, hits the space bound of
+\Cref{prop:space-duality}, and exists as running code, the
+\texttt{trapdoor\_maps} library that backs the experimental claims of the
+companion papers. This chapter shows the realization concretely and leans on
+Part~II for the abstraction it instantiates.
+
+\section{The Perfect-Hash Backend}
+\label{sec:phf-backend}
+
+The seed-searched batch strategy of \Cref{sec:strategies} has a natural
+realization in a \emph{minimal perfect hash function}. A minimal perfect
+hash for the in-domain set $X$ maps its $\lvert X\rvert$ keys to
+$\lvert X\rvert$ distinct slots with no collisions, and an array of those
+slots holds, for each key, the codeword of its value. The cipher map $\fhat$
+is then three concrete steps: hash the input token to a slot, read the
+codeword stored there, return it. Decoding inverts the codeword to a value;
+a token that hashes to a slot whose codeword it does not match decodes to
+$\bot$.
+
+The seed is the hash's parameter, and the batch search is the search for a
+seed under which every in-domain key lands in a slot holding a codeword in
+the correct acceptance region $A(f(x))$ of \Cref{def:acceptance}. When such a
+seed is found the construction is correct on all of $X$; tolerating a small
+error budget $\eta$ lets the search stop sooner, accepting that a few keys
+miss their region. The library realizes exactly this: a perfect-hash backend
+over the key set, the codeword array, and the seed search, with the value
+codec choosing how the slots partition into acceptance regions. It is the
+implementation of record for the constructions the book has been describing
+in the abstract.
+
+\section{HashSet and the Entropy Map}
+\label{sec:instantiations}
+
+One backend yields two instantiations, distinguished by their acceptance
+partition (\Cref{tab:instantiations}).
+
+The \emph{HashSet} is the membership construction, $f : X \to \{0, 1\}$. Its
+partition has a single accept region: a token decodes to ``member'' when it
+hashes to a slot holding the member codeword, and to $\bot$ otherwise. It is
+perfectly correct in one direction, $\eta = 0$, every true member is found,
+because the perfect hash places it; the only error is the false-positive rate
+$\varepsilon$, a non-member token that happens to hash into a member slot.
+
+\begin{example}[The watchlist as a HashSet]
+\label{ex:watchlist-hashset}
+The watchlist $S = \{\mathrm{alice}, \mathrm{carol}\}$ of
+\Cref{ex:watchlist-numbers} is built as a HashSet over the four names: the
+perfect hash places alice and carol in member slots, bob and dave in
+non-member slots, and the structure is the slot array. A query hashes a name
+to its slot and reads membership: alice resolves to ``yes'' with certainty
+($\eta = 0$), and a random $12$-bit probe lands in a member slot only with
+probability $\varepsilon \approx 10^{-3}$, the noise floor of
+\Cref{ex:watchlist-numbers}. The abstract membership map of Part~II is now an
+array and a hash.
+\end{example}
+
+The \emph{entropy map} is the general construction, $f : X \to Y$. Its
+partition has a region $A(y)$ per value, sized $\lvert A(y)\rvert \propto
+\Pr[f(X) = y]$ as \Cref{sec:acceptance} prescribed, so that common answers
+get large regions. It carries a tunable error budget $\eta > 0$, traded
+against build time, and its per-element value cost is the entropy $\mu =
+H(Y)$. Where the HashSet answers one bit, the entropy map answers an
+arbitrary value, at the Shannon-optimal space.
+
+\begin{table}[t]
+\centering
+\caption{Two instantiations of the perfect-hash backend.}
+\label{tab:instantiations}
+\begin{tabular}{@{}llll@{}}
+\toprule
+Construction & Latent $f$ & Acceptance partition & Parameters \\
+\midrule
+HashSet & $X \to \{0,1\}$ & one member region & $\eta = 0$, FPR $\varepsilon$, $\mu \le 1$ \\
+Entropy map & $X \to Y$ & $\lvert A(y)\rvert \propto \Pr[f(X)=y]$ & $\eta$ tunable, $\mu = H(Y)$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Correctness and Space, Realized}
+\label{sec:realized-cost}
+
+The abstract parameters become measured quantities in the backend. The
+correctness budget $\eta$ of \Cref{def:correctness} \emph{is} the Bernoulli
+false-negative rate of the underlying approximate-set model: the fraction of
+in-domain keys the seed search failed to place correctly, deterministic once
+the seed is fixed. The realized space per element meets the duality of
+\Cref{prop:space-duality}, $-\log_2\varepsilon + H(Y)$ bits, the hiding term
+set by how small a false-positive rate the slots enforce and the value term
+by the entropy of the output, and the Bernoulli hash construction is what
+achieves that information-theoretic floor rather than merely approaching it.
+
+The one cost the abstraction hid is the search itself. A stricter budget, a
+smaller $\eta$, demands a seed that satisfies more constraints, and the
+expected number of seeds tried grows accordingly; this is the price the batch
+strategy pays up front for its near-optimal space and its tunable accuracy.
+The library exposes the trade directly: ask for higher correctness and the
+build takes longer, ask for a looser budget and it finishes sooner with a
+slightly larger error set. The engineering knob is exactly the
+$\eta$-versus-build-time trade the abstract account named.
+
+\section{Notes and Provenance}
+\label{sec:ch11-notes}
+
+The perfect-hash batch construction, the HashSet and entropy-map
+instantiations, and the space-accuracy realization are the cipher-maps
+paper's §6 \cite{towell2026cipher}, made concrete here against the
+\texttt{trapdoor\_maps} library that implements them; the chapter realizes
+what \Cref{sec:acceptance} and \Cref{prop:space-duality} specified rather
+than re-deriving it. The identification of $\eta$ with the Bernoulli
+false-negative rate is the hinge to the error theory of the Bernoulli model,
+which supplies the false-positive and false-negative accounting the seed
+search trades against. The next chapter turns to a construction of a wholly
+different character, linear-algebraic rather than searched, where the
+frequency-hiding the entropy map buys with multiplicity comes instead from
+the structure of a GF(2) system.

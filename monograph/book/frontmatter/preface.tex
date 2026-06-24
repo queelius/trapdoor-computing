@@ -1,0 +1,85 @@
+\chapter*{Preface}
+\addcontentsline{toc}{chapter}{Preface}
+\markboth{Preface}{Preface}
+
+This book is one argument, told once and in full. Across a family of papers,
+a single idea has been developed in pieces: that one can compute on values
+whose meaning is sealed behind a one-way trapdoor, an untrusted machine
+evaluating opaque bit strings through opaque lookup tables, while only a
+trusted machine can encode and decode. Each paper carried a piece, the
+abstraction, its algebra, its confidentiality, a construction, and each had
+to re-establish the common ground before reaching its own result. This
+monograph sets the common ground once and follows the idea from its
+motivation to its frontier as a single line of reasoning.
+
+\paragraph{Who it is for.}
+The intended reader is a researcher or graduate student in security,
+cryptography, or information theory who wants the whole picture rather than
+one theorem. The mathematics it assumes is light and standard: elementary
+probability, the basic vocabulary of information theory (entropy, mutual
+information, total-variation distance), and a working familiarity with
+cryptographic hash functions. It does not assume prior expertise in oblivious
+RAM, fully homomorphic encryption, or simulation-based security; one of the
+book's first tasks, in fact, is to say carefully why this framework is none
+of those. Readers who know the searchable-encryption literature will find
+familiar problems approached from an unfamiliar angle; readers who do not
+will find the problems introduced from first principles.
+
+\paragraph{How it is organized.}
+The book is in six parts, meant to be read in order, though not at a uniform
+pace. Part~I is motivation: it states the paradigm in plain terms and draws
+the boundary against the cryptographic tools it is not. Part~II is the
+keystone, the cipher map and its four measurable properties, on which
+everything later rests. Parts~III and~IV are the theory: the algebra and
+type structure of cipher maps, and their confidentiality measured at two
+scales that do not reduce to each other. Part~V turns to construction: two ways to
+build a cipher map, hash-based and linear-algebraic, the second hiding query
+frequency at no per-query cost, and the closure machinery that carries data
+structures, keys, and whole programs. Part~VI is the frontier: the open problems the framework
+raises and the research program they define. Three appendices collect a
+primer on the Bernoulli error model the book leans on, a notation reference,
+and a map of where each result's proof lives.
+
+\paragraph{How to read it.}
+A reader who wants the argument entire should read straight through; the
+density rises deliberately from the motivational Part~I to the technical
+core, and relaxes again into the roadmap of Part~VI. A reader who wants the
+theory can take Parts~II through~IV and treat Part~V as reference; one who
+wants the engineering can read Parts~II and~V and consult the confidentiality
+theory as needed. A single small example, an encrypted watchlist, threads
+through the book, picking up each property and construction as it arrives, so
+that the abstraction always has something concrete attached to it.
+
+\paragraph{Relationship to the papers.}
+This is a consolidation, not a replacement. The standalone papers, on the
+cipher map abstraction, on its quantitative confidentiality, on its algebraic
+types, on the linear-algebraic construction, remain the home of the deeper
+proofs, and the book summarizes those results and points to them rather than
+reproducing them. What the book adds is the cross-cutting view: the place
+where the pieces become one treatment, where a construction's cost is shown
+to be a consequence of a property proved three parts earlier, and where the
+program's open questions can be seen as a whole.
+
+\paragraph{The thesis in one breath.}
+If the book has a single thesis it is this: confidentiality here is
+\emph{measured}, not assumed negligible. The framework does not promise that
+an adversary learns nothing; it promises that what an adversary learns is a
+quantity a designer can compute and trade against space, bandwidth, and
+accuracy. That is a narrower guarantee than cryptography's strongest tools
+make, and a more honest one for the systems that cannot afford them. The
+privacy comes from a one-way hash and a uniform representation, not from
+hiding access patterns, and keeping that distinction clear is a discipline
+the book holds to throughout.
+
+\paragraph{Acknowledgments.}
+The framework grew from work begun in 2017 and carried through 2020, then set
+aside, and recovered, re-derived, and carried further, in 2024; the Bernoulli
+model of approximate data structures, developed alongside it, supplies the
+error theory the trapdoor side builds on, and the debt to it runs through
+every part. This draft is a living manuscript, and the
+reader who finds an error, or a place where the argument could be made
+cleaner, is doing the book a service by saying so.
+
+\bigskip
+\noindent Alexander Towell\\
+\today

@@ -1,0 +1,366 @@
+% Chapter 4: The Four Properties
+% DEFINES: ch:four-properties; sec:totality-property, sec:uniformity,
+%   sec:correctness, sec:composability, sec:parameter-tuple, sec:ch4-notes;
+%   def:totality, def:uniformity, def:correctness, def:composability,
+%   thm:composition, ex:delta-watchlist, ex:composition, rem:deniability,
+%   tab:compounding, tab:parameters
+% REFERENCES (backward): sec:untrusted-sees, sec:measured-not-negligible (Part I);
+%   def:cipher-map, sec:totality-support, ex:watchlist-numbers (Ch 3)
+% REFERENCES (forward, part labels): part:confidentiality, part:algebra,
+%   part:constructions
+
+\chapter{The Four Properties}
+\label{ch:four-properties}
+
+\Cref{ch:cipher-maps} gave the cipher map as a tuple and named, in passing,
+the structural facts that make it useful: it is total, its tokens can be
+made to look alike, it is correct up to an error budget, and it composes.
+This chapter states those four as numbered definitions and attaches to each
+the parameter that measures it. Together they are the contract a
+construction must meet, and they are the book's definitions of record: the
+later parts measure, build, and compose against exactly these.
+
+The four properties also pay off a promise. \Cref{sec:untrusted-sees}
+listed four things the untrusted machine cannot do, decode a token,
+distinguish a real query from filler, recover the domain, or be sure a
+result is correct, and tied each to a property still to be defined. Each
+definition below supplies one of them, and the connection is drawn as it
+arrives. The parameters are introduced in the spine's canonical order
+$(\eta, \varepsilon, \mu, \delta)$, and where this chapter and the standalone
+papers differ on a definition, the chapter follows the reconciled spine and
+the divergence is logged for back-port.
+
+\section{Totality}
+\label{sec:totality-property}
+
+The first property is the one \Cref{sec:totality-support} already leaned on:
+$\fhat$ answers every string.
+
+\begin{definition}[Totality, Property 1]
+\label{def:totality}
+A cipher map $(\fhat, \enc, \dec, s)$ is \emph{total}: $\fhat$ is defined on
+all of $\B^n$, and for a token $c \notin \mathrm{im}(\enc)$, that is, a
+string encoding no input, the output $\fhat(c)$ is a uniform random element
+of $\B^n$ under the random oracle model. Equivalently, every $c \in \B^n$
+yields $\fhat(c) \in \B^n$, with no distinguished ``undefined'' result.
+\end{definition}
+
+Two consequences follow, one for each party. For the trusted machine,
+totality is what makes the noise-decode probability $\varepsilon$ of
+\Cref{sec:totality-support} a usable knob: a uniformly random token decodes
+to a value rather than to $\bot$ with probability $\varepsilon$, and the
+construction sets $\varepsilon$ by how much of the token space it treats as
+meaningful. For the untrusted machine, totality is the first privacy
+guarantee. Because a real query $\enc(x, k)$ and a random filler string both
+produce $n$-bit answers, and nothing distinguishes the two at evaluation
+time, the untrusted machine cannot tell which strings in a query stream
+carry meaning. This is the first of the four cannots of
+\Cref{sec:untrusted-sees}, now a structural feature of $\fhat$ rather than a
+hope: in the watchlist of \Cref{ex:watchlist-numbers}, the trusted machine
+may pad its lookups with uniformly random $12$-bit strings, and since each
+returns an answer, the server cannot subtract the filler back out.
+
+\section{Representation Uniformity}
+\label{sec:uniformity}
+
+The second property is the subtlest, and it is the one the rest of the book
+leans on hardest, so this section states it with care. It is also the
+chapter's first correction to the standalone formalism: the definition is
+\emph{image-relative}, measured against the populated support, not the
+ambient token space.
+
+Recall from \Cref{sec:tuple} that a value $x$ may be encoded as any of
+$K(x) \geq 1$ tokens. Fix a query distribution $D$ on $X$, the demand. A
+query draws $x \sim D$ and then a representation index $k$ uniformly from
+$x$'s $K(x)$ tokens, inducing a distribution on tokens
+\[
+  Q(c) \;=\; \sum_{x \in X} D(x) \cdot
+             \frac{\lvert \{k : \enc(x, k) = c\} \rvert}{K(x)},
+\]
+so that a token $c$ encoding $x$ carries probability $D(x)/K(x)$, the demand
+for $x$ spread across its representations. The observed token traffic is a
+sample from $Q$, supported on $\mathrm{im}(\enc)$.
+
+\begin{definition}[Representation uniformity, Property 2]
+\label{def:uniformity}
+A cipher map has \emph{representation uniformity $\delta$} if the induced
+token distribution $Q$ is $\delta$-close, in total variation, to the uniform
+distribution on the populated support:
+\[
+  \delta \;=\; \TV\!\bigl(Q,\; U_{\mathrm{im}}\bigr),
+  \qquad
+  U_{\mathrm{im}} = \mathrm{Uniform}\bigl(\mathrm{im}(\enc)\bigr),
+  \qquad
+  H^{*} = \log_2 \lvert \mathrm{im}(\enc) \rvert .
+\]
+The reference is the uniform distribution on $\mathrm{im}(\enc)$, the tokens
+that actually occur, and $H^{*}$ is the most entropy the token traffic can
+carry. The reference is \emph{not} the uniform distribution on the ambient
+space $\B^n$.
+\end{definition}
+
+The image-relative reference is the whole point of the definition, so it is
+worth saying why the ambient alternative fails. A cipher map's tokens
+occupy a vanishing fraction of $\B^n$, ten of $4096$ strings in
+\Cref{ex:watchlist-numbers}. Measured against uniform on all of $\B^n$, even
+a perfectly flattened $Q$ sits at total variation almost $1$ from the
+reference simply because it is supported on a sparse set, so an ambient
+$\delta$ would be near its maximum for every realizable construction and
+would distinguish nothing.\footnote{This is why \Cref{sec:totality-support}
+insisted on the distinction between the populated support and the ambient
+space: confidentiality is closeness to uniform \emph{on the support}.
+Measured ambiently the bound is unsatisfiable for any sparse image.}
+Confidentiality must be measured against the support the traffic actually
+lives on, and $\delta$ as defined is exactly that distance.
+
+\paragraph{The construction principle.}
+Small $\delta$ is bought by \emph{multiple representations}. Assign
+$K(x) \propto D(x)$, so that frequently queried values get \emph{more}
+tokens, classical homophonic substitution, and the per-token probability
+$D(x)/K(x)$ flattens toward a constant. The direction matters and is a place
+the historical record went wrong: more demand earns more representations, so
+that no single token is queried often. The inverted prescription
+$K(x) \propto 1/D(x)$, which would give the most-queried value the
+\emph{fewest} tokens and concentrate rather than spread its traffic, is
+wrong and was corrected in the formalism. With the right allocation the
+homophonic-allocation identity makes the bound exact:
+\[
+  \delta \;=\; \TV(Q, U_{\mathrm{im}}) \;=\; \TV(D, K/N),
+  \qquad N = \sum_x K(x),
+\]
+where $K/N$ is the fraction of the token budget each value receives; the
+right-hand side is bounded by the tight $(\lvert X \rvert - 1)/N$. When
+$K \propto D$ exactly, $K/N = D$ and $\delta = 0$.
+
+\begin{example}[Flattening the watchlist]
+\label{ex:delta-watchlist}
+Take the four names with demand $D = (0.4, 0.2, 0.2, 0.2)$, alice the
+frequent one. With a single representation each ($K = (1,1,1,1)$, $N = 4$),
+the token distribution is $Q = D$ and the support is four tokens, so
+\[
+  \delta = \TV\bigl((0.4,0.2,0.2,0.2),\,(\tfrac14,\tfrac14,\tfrac14,\tfrac14)\bigr)
+         = \tfrac12\bigl(0.15 + 3 \cdot 0.05\bigr) = 0.15 .
+\]
+Now allocate homophonically, $K = (4, 2, 2, 2)$ as in
+\Cref{ex:watchlist-numbers}, so $N = 10$ and $K/N = (0.4, 0.2, 0.2, 0.2) =
+D$. Each of alice's four tokens now carries $0.4/4 = 0.1$, each other token
+$0.2/2 = 0.1$: the ten-token distribution is exactly uniform and
+$\delta = \TV(D, K/N) = 0$. The most-queried value took the most tokens,
+the opposite of the inverted rule, and the traffic flattened completely.
+\end{example}
+
+This is the parameter the measurable-not-negligible thread of
+\Cref{sec:measured-not-negligible} becomes. Small $\delta$ is what lets the
+untrusted machine learn little about \emph{which} value a token encodes, and
+it is the lever the confidentiality theory turns into a quantitative leakage
+bound.\footnote{The bridge from $\delta$ to a confidentiality measure, the
+entropy ratio and its Fannes-type lower bound, is the subject of
+\Cref{part:confidentiality}.} It pays off the third of the four cannots: with
+$Q$ near uniform on the support, the token frequencies betray nothing about
+the domain. One honest limit, carried forward: $\delta$ bounds the
+\emph{marginal} distribution of tokens. It says nothing about joint
+distributions, so correlations between separately encoded values can still
+leak, a matter the encoding-granularity discussion of \Cref{part:algebra}
+takes up.
+
+\section{Correctness}
+\label{sec:correctness}
+
+The third property is the error budget, and it is where the approximation in
+``trapdoor approximation'' is quantified.
+
+\begin{definition}[Correctness, Property 3]
+\label{def:correctness}
+A cipher map is \emph{$\eta$-correct} if it computes the latent function
+correctly on in-domain inputs with probability at least $1 - \eta$: for
+$x$ drawn uniformly from $X$ and $k$ uniformly from $x$'s representations,
+\[
+  \Pr_{x, k}\bigl[\dec\bigl(\fhat(\enc(x, k))\bigr) \neq f(x)\bigr]
+  \;\leq\; \eta .
+\]
+\end{definition}
+
+The parameter $\eta$ is a construction cost, set by how many constraints the
+secret $s$ must satisfy: tolerating a larger $\eta$ makes the seed search
+faster and the resulting structure smaller, a trade made precise in
+\Cref{part:constructions}. Two features matter for the model. First, once a
+cipher map is built, its failures are deterministic; the same in-domain
+elements fail for a given $s$, so $\eta$ is a frequency over $X$, not a
+fresh coin on each call. Second, $\eta$ is a guarantee to the trusted
+machine only. The untrusted machine never decodes, so it never sees whether
+a result was right; correctness is the trusted party's concern, not a signal
+the server can read.\footnote{The error rate $\eta$ is the false-negative
+rate of the Bernoulli error model that the hash-based construction inherits;
+the model, and why per-element errors compose tractably, are summarized in
+\Cref{app:bernoulli}.}
+
+\begin{remark}[Approximation as privacy]
+\label{rem:deniability}
+A nonzero error rate is not only a cost; it also buys privacy, and this pays
+off the last of the four cannots of \Cref{sec:untrusted-sees}. When
+$\eta > 0$, an answer carries ambiguity: a reported membership might be a
+true hit or a cipher-map error, and nothing in the result distinguishes the
+two. With $\eta = 0$ the answer is exact and an adversary who learns it
+learns the truth; with $\eta > 0$ each answer is deniable. This is the dual
+of representation uniformity. Property 2 hides \emph{which} value was
+queried; a nonzero $\eta$ hides \emph{what the answer means}.
+\end{remark}
+
+\section{Composability and the Composition Theorem}
+\label{sec:composability}
+
+The fourth property is what makes cipher maps a calculus rather than a
+collection of isolated lookups: they chain, and the error of a chain is
+predictable from the errors of its links.
+
+\begin{definition}[Composability, Property 4]
+\label{def:composability}
+Cipher maps compose. If $\fhat$ is a cipher map for $f : X \to Y$ and $\ghat$
+is a cipher map for $g : Y \to Z$, sharing the token space $\B^n$, then
+$\ghat \circ \fhat$, defined by $(\ghat \circ \fhat)(c) = \ghat(\fhat(c))$,
+is a cipher map for $g \circ f$. Totality is what permits this: the output
+token of $\fhat$ is a well-formed input to $\ghat$, whether or not it is a
+codeword $\ghat$ recognizes.
+\end{definition}
+
+The reason composition is useful is that its error is not merely bounded but
+\emph{computable} from the parts.
+
+\begin{theorem}[Composition]
+\label{thm:composition}
+Let $\fhat_1, \ldots, \fhat_m$ be cipher maps with correctness parameters
+$\eta_1, \ldots, \eta_m$, chained so that each receives the previous one's
+output. The chain $\fhat_m \circ \cdots \circ \fhat_1$ is a cipher map for
+the composite latent function with correctness parameter
+\[
+  \eta_{\mathrm{total}} \;\leq\; 1 - \prod_{i=1}^{m} (1 - \eta_i) .
+\]
+\end{theorem}
+
+\begin{proof}
+Let $C_i$ be the event that stage $i$ produces the correct output given a
+correct input. The chain produces the correct final output whenever every
+stage does: if each stage receives a correct intermediate value and answers
+correctly, the composite is correct. So $\bigcap_{i} C_i$ implies the chain
+is correct, and therefore
+\[
+  \Pr[\text{chain correct}] \;\geq\; \Pr\Bigl[\bigcap_{i} C_i\Bigr]
+  \;=\; \prod_{i=1}^{m} \Pr\bigl[C_i \mid C_1, \ldots, C_{i-1}\bigr]
+  \;\geq\; \prod_{i=1}^{m} (1 - \eta_i),
+\]
+the equality by the chain rule and the last step because, conditioned on
+every upstream stage being correct, stage $i$ receives its intended input
+and so errs with probability at most $\eta_i$. Taking complements,
+$\eta_{\mathrm{total}} = \Pr[\text{chain incorrect}] \leq 1 - \prod_i (1 -
+\eta_i)$.
+\end{proof}
+
+The bound is an \emph{inequality}, and the gap is real, not slack in the
+argument. ``Every stage correct'' is sufficient for a correct chain but not
+necessary: a stage can err and a later stage can map the corrupted token
+back to a correct value, masking the error. The cipher map is a hash, and a
+valid-looking intermediate token does not certify a valid input, so
+cancellations occur and the true error can fall strictly below
+$1 - \prod_i(1 - \eta_i)$. Stating the relation as an equality, as a casual
+reading of the two-stage formula
+$\eta_{g \circ f} = \eta_f + \eta_g - \eta_f \eta_g$ invites, overcounts
+exactly these masked errors; the relation is $\leq$.
+
+For small per-stage rates the bound linearizes. Expanding the product,
+$1 - \prod_i(1 - \eta_i) \approx \sum_i \eta_i$ to first order, so a short
+chain of accurate maps accumulates error roughly additively, the same
+content as the union bound. The predictability is the message of the
+composition-predictability thread: a designer who knows the per-stage
+budgets knows the chain's budget, with no construction-specific surprises.
+
+\begin{example}[A three-stage chain]
+\label{ex:composition}
+Compose three cipher maps with $\eta = (0.01, 0.02, 0.01)$. The theorem
+gives
+\[
+  \eta_{\mathrm{total}} \leq 1 - (0.99)(0.98)(0.99) = 1 - 0.9605 = 0.0395,
+\]
+slightly below the naive sum $0.04$, the difference being the
+doubly-counted joint failures the product bound removes. The chain is at
+least $96\%$ correct, and a designer reads that off the three budgets
+directly.
+\end{example}
+
+Errors do compound as chains deepen, but slowly and predictably.
+\Cref{tab:compounding} traces a chain of identical $99\%$-correct maps:
+the chain stays above $90\%$ correct out to ten stages and is still right
+roughly a third of the time at a hundred. The growth is sub-linear in $m$
+until $m\eta$ approaches one, which is what makes deep cipher-map programs
+feasible at all.
+
+\begin{table}[t]
+\centering
+\caption{Compounded error $\eta_{\mathrm{total}} = 1 - (1-\eta)^m$ for a
+chain of $m$ identical maps with per-stage $\eta = 0.01$.}
+\label{tab:compounding}
+\begin{tabular}{@{}rcccccc@{}}
+\toprule
+$m$ & 1 & 2 & 5 & 10 & 50 & 100 \\
+\midrule
+$\eta_{\mathrm{total}}$ & 0.010 & 0.020 & 0.049 & 0.096 & 0.395 & 0.634 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{The Parameter Tuple}
+\label{sec:parameter-tuple}
+
+The four properties contribute four parameters, and collecting them gives
+the tuple $(\eta, \varepsilon, \mu, \delta)$ that characterizes a cipher map.
+Three have appeared; the fourth, $\mu$, is the cost of the values
+themselves. \Cref{tab:parameters} sets them side by side in the spine's
+canonical order.
+
+\begin{table}[t]
+\centering
+\caption{The parameter tuple, in canonical order.}
+\label{tab:parameters}
+\begin{tabular}{@{}clll@{}}
+\toprule
+Symbol & Name & Controls & Set by \\
+\midrule
+$\eta$ & Correctness & error rate on in-domain inputs & seed search / structure \\
+$\varepsilon$ & Noise decode & chance a random token decodes to a value & meaningful fraction of $\B^n$ \\
+$\mu$ & Value cost & bits to encode an output value, $H(Y)$ & the codomain $Y$ \\
+$\delta$ & Uniformity & TV of $Q$ from uniform on $\mathrm{im}(\enc)$ & representation multiplicity $K(x)$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The value cost $\mu = H(Y)$ is the entropy of the output distribution, the
+irreducible number of bits an answer must carry; a Boolean watchlist has
+$\mu \leq 1$, a richer codomain more. It joins $-\log_2 \varepsilon$, the
+cost of hiding values among noise, to set a cipher map's space, a duality
+that \Cref{part:constructions} derives. The four parameters are largely
+independent: a construction can hit one without the others, and the next
+chapter's HashSet, for instance, is perfectly correct ($\eta = 0$) yet has
+no representation uniformity at all ($K(x) = 1$, so $\delta$ does not apply).
+The properties are a contract with four separable terms, not a single dial.
+
+\section{Notes and Provenance}
+\label{sec:ch4-notes}
+
+The four properties and the tuple $(\eta, \varepsilon, \mu, \delta)$ are the
+spine's, in its order. Two definitions here correct the standalone
+formalism and are flagged for back-port. First, representation uniformity
+(\Cref{def:uniformity}) is stated \emph{image-relative}, against uniform on
+$\mathrm{im}(\enc)$ with $H^{*} = \log_2\lvert\mathrm{im}(\enc)\rvert$; the
+spine's Property 2 headline still measures against the ambient $\B^n$, which
+is unsatisfiable for sparse images, and the corrected form is the one the
+confidentiality paper and this book use. Second, the composition theorem
+(\Cref{thm:composition}) is stated and proved as an \emph{inequality}; an
+error in one stage can be masked by another, so the equality form that the
+spine's headline and an earlier paper draft carried overcounts. The proof is
+elementary, and the same bound is reached independently from the Bernoulli
+composition theorem, a noisy-gates analysis, and a probabilistic union
+bound, which is some assurance it is structural rather than an artifact of
+one derivation. The homophonic construction principle $K(x) \propto D(x)$,
+and the warning against its inverted form, are carried from the corrected
+spine; the deniability reading of nonzero $\eta$ (\Cref{rem:deniability}) is
+the spine's. The Bernoulli error model behind $\eta$ is summarized in
+\Cref{app:bernoulli}.

@@ -1,0 +1,109 @@
+% Appendix A: A Bernoulli Error-Theory Primer
+% DEFINES: app:bernoulli; sec:bernoulli-model, sec:bernoulli-axioms,
+%   sec:bernoulli-cipher-link
+% REFERENCES (backward): def:correctness, thm:composition, prop:space-duality
+% Referenced by: Ch 4 (eta = Bernoulli FNR), Ch 11 (FPR/FNR accounting).
+
+\chapter{A Bernoulli Error-Theory Primer}
+\label{app:bernoulli}
+
+The book uses, at several points, an error model it does not develop: the
+correctness parameter $\eta$ is identified with a false-negative rate, errors
+are asserted to compose multiplicatively, and the space bound
+$-\log_2\varepsilon + H(Y)$ is attributed to an information-theoretic
+argument. All three come from the Bernoulli model of approximate sets and
+maps, a separate family of papers. This appendix gives the minimum needed to
+make the book self-contained on those points and points to the papers for
+the rest.
+
+\section{The Approximate-Set Model}
+\label{sec:bernoulli-model}
+
+A \emph{Bernoulli set} is an approximate membership test: a structure that,
+queried with an element, answers ``in'' or ``out'' correctly most of the
+time. Two error rates characterize it. The \emph{false-positive rate}
+$\alpha$ is the probability that a non-member is reported as a member; the
+\emph{false-negative rate} $\beta$ is the probability that a member is
+reported as a non-member. (This $\alpha$ is the Bernoulli false-positive
+rate, a different quantity from the acceptance probability $\alpha(y) =
+\lvert A(y)\rvert/2^n$ of \Cref{def:acceptance}; for a HashSet the two are
+related, the false-positive rate being close to the noise-decode probability
+$\varepsilon = \sum_y \alpha(y)$.) Together they are a $2 \times 2$ confusion
+matrix,
+a noisy channel from the latent membership bit to the reported one:
+\[
+  \begin{array}{c|cc}
+     & \text{reported in} & \text{reported out} \\\hline
+    \text{truly in}  & 1 - \beta & \beta \\
+    \text{truly out} & \alpha    & 1 - \alpha
+  \end{array}
+\]
+A Bloom filter is the familiar instance, with $\beta = 0$ (no false
+negatives) and a tunable $\alpha$; the hash-based cipher map of
+\Cref{ch:hash-constructions} is another, and the two error rates are exactly
+the cipher map's parameters seen from the error side.
+
+\section{The Two Axioms}
+\label{sec:bernoulli-axioms}
+
+What makes the model tractable, and what the book's composition results rest
+on, is that the errors of different elements are independent. The Bernoulli
+model assumes two things: that each element's error is statistically
+independent of every other's (element-wise independence), and that the error
+rates do not depend on which other elements were queried (conditional
+independence of block error rates). Under these axioms the joint behavior of
+$m$ elements does not require an exponential joint confusion matrix; it
+factors.
+
+\begin{quote}
+\textbf{Kronecker factorization.} Under the two axioms, the joint confusion
+matrix for $m$ elements is the tensor (Kronecker) product of the $m$
+per-element channels.
+\end{quote}
+
+The consequence is the one the book uses repeatedly: a quantity that would
+otherwise need $\Theta(2^m)$ joint parameters needs only the $2$ per element.
+This is why composition is predictable rather than intractable, and it is the
+formal content behind the Bernoulli Axiom named among the book's core
+principles.
+
+\section{The Connection to Cipher Maps}
+\label{sec:bernoulli-cipher-link}
+
+Three of the book's results are Bernoulli results in cipher-map clothing.
+
+First, \emph{correctness is a false-negative rate}. For the batch hash
+construction of \Cref{ch:hash-constructions}, the correctness parameter
+$\eta$ of \Cref{def:correctness} is exactly the Bernoulli false-negative
+rate $\beta$: the fraction of in-domain elements whose hash does not land in
+the correct codeword region. The error budget the seed search trades against
+is the FNR of the underlying approximate set.
+
+Second, \emph{composition multiplies}. The composition theorem
+\Cref{thm:composition}, $\eta_{\mathrm{total}} \le 1 - \prod_i(1 - \eta_i)$,
+is the Bernoulli composition closure theorem: under element-wise
+independence, the probability that a chain of $m$ approximate tests all
+succeed is $\prod_i(1 - \eta_i)$, and the chain errs with the complementary
+probability. The inequality, rather than equality, is the book's own
+refinement (a stage error can be masked downstream); the multiplicative
+survival core is the Bernoulli model's.
+
+Third, \emph{space meets an entropy bound}. The duality
+\Cref{prop:space-duality}, $-\log_2\varepsilon + H(Y)$ bits per element, is
+derived in the Bernoulli entropy analysis as an information-theoretic lower
+bound and achieved by the Bernoulli hash-function construction: the
+$-\log_2\varepsilon$ term is the cost of separating signal from a noise floor
+of density $\varepsilon$, and the $H(Y)$ term is the source-coding cost of
+the value distribution.
+
+\section{Further Reading}
+\label{sec:bernoulli-further}
+
+The full theory, false-positive and false-negative accounting, the confusion
+matrix algebra, the composition closure theorem, the entropy and space
+bounds, and the extension to approximate maps and algebraic types, is
+developed in the Bernoulli paper family \cite{towell2026bernoulli}: the set
+model, the composition theorem for set operations, the approximate-map model,
+the space-optimal hash construction, and the entropy and space complexity of
+random approximate sets. This appendix has taken from it only the three
+results the book leans on; the rest stands on its own.

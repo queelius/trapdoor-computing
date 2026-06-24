@@ -1,0 +1,316 @@
+% Chapter 3: Cipher Maps
+% DEFINES: ch:cipher-maps; sec:machines, sec:tuple, sec:three-transformations,
+%   sec:totality-support, sec:cipher-type, sec:ch3-notes;
+%   def:cipher-map, ex:watchlist, rem:values-are-maps
+% REFERENCES (backward, Part I): sec:oblivious-service, sec:untrusted-sees
+% REFERENCES (forward, footnote part labels): part:algebra, part:confidentiality,
+%   part:constructions
+
+\chapter{Cipher Maps}
+\label{ch:cipher-maps}
+
+Part~I described, in words, a machine computing on encodings it cannot
+read. This chapter makes the object precise. By its end the cipher map is a
+formal tuple, totality is a stated property rather than a promise, the three
+transformations that produce a cipher map from an ordinary function are laid
+out, and the support against which the next chapter measures leakage is
+named. The definitions here are the book's definitions of record; the later
+parts add structure to them but do not change them.
+
+\section{The Trusted and Untrusted Machines}
+\label{sec:machines}
+
+Fix a \emph{latent function} $f : X \to Y$ whose domain, codomain, and rule
+are known only to a trusted party. The arrangement of
+\Cref{sec:oblivious-service} has two machines. The \emph{trusted machine},
+$T$, holds an encoder $\enc$, a decoder $\dec$, and a secret $s$; it is the
+only party that can move between values and their encodings. The
+\emph{untrusted machine}, $U$, holds a single function $\fhat$ on bit
+strings and evaluates it on whatever it is given. To evaluate $f$ at $x$,
+the trusted machine encodes $x$ as a token $c = \enc(x)$, the untrusted
+machine returns $\fhat(c)$, and the trusted machine decodes the result as
+$\dec(\fhat(c))$ (\Cref{fig:two-machines}).
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[
+  box/.style={draw, rounded corners, align=center, minimum height=1.3cm,
+              minimum width=3.6cm, font=\small},
+  >={Stealth[]}]
+\node[box] (T) {Trusted machine $T$\\[2pt]{\footnotesize holds $\enc,\dec,s$}};
+\node[box] (U) at (7.2,0) {Untrusted machine $U$\\[2pt]{\footnotesize holds $\fhat$}};
+\draw[->] ([yshift=3mm]T.east) -- node[above,font=\footnotesize]{$c=\enc(x)$}
+          ([yshift=3mm]U.west);
+\draw[->] ([yshift=-3mm]U.west) -- node[below,font=\footnotesize]{$\fhat(c)$}
+          ([yshift=-3mm]T.east);
+\end{tikzpicture}
+\caption{The two machines. The trusted machine encodes an input and decodes
+the returned token; the untrusted machine evaluates the total function
+$\fhat$ on the token it is given. The secret $s$ never leaves $T$, and the
+result the trusted machine reads is $\dec(\fhat(c))$.}
+\label{fig:two-machines}
+\end{figure}
+
+The division of labor is the whole point, so it is worth stating what each
+machine can and cannot do. The trusted machine is small and holds the
+secret; it does the encoding and decoding, which are cheap, and it never
+ships the secret anywhere. The untrusted machine is large and holds the
+table; it does the bulk computation, the lookup over a structure that may
+encode an entire corpus, and it does so on tokens whose meaning it has no
+way to recover. Nothing in the protocol asks the untrusted machine to be
+honest about anything except returning $\fhat$ of what it is given, and
+even a dishonest server that logs every token and studies them at leisure
+is the adversary the rest of the book quantifies against.
+
+\begin{example}[A watchlist]
+\label{ex:watchlist}
+A small running example will carry the abstraction through this part. Let
+the universe of names be $X = \{\mathrm{alice}, \mathrm{bob},
+\mathrm{carol}, \mathrm{dave}\}$ and let the latent function be membership
+in a watchlist $S = \{\mathrm{alice}, \mathrm{carol}\}$, so $f(x) = 1$ if
+$x \in S$ and $0$ otherwise. The trusted machine wants an untrusted server
+to answer ``is this name on the list?'' without learning the name, the
+list, or even how often a given name is queried. Concretely, to check
+alice the trusted machine computes a token $c = \enc(\mathrm{alice})$, an
+$n$-bit string that looks like a random draw; the server returns $\fhat(c)$,
+another $n$-bit string; and the trusted machine decodes it to $1$. The
+server has performed a membership test over an encrypted list and learned
+neither the query nor the answer. We return to this map as each property is
+added.
+\end{example}
+
+\section{The Cipher Map Tuple}
+\label{sec:tuple}
+
+\begin{definition}[Cipher map]
+\label{def:cipher-map}
+A \emph{cipher map} for a latent function $f : X \to Y$ is a tuple
+$(\fhat, \enc, \dec, s)$ where
+\begin{itemize}
+\item $\fhat : \B^n \to \B^n$ is a \emph{total} function on $n$-bit strings,
+\item $\enc : X \times \{0, \ldots, K(x) - 1\} \to \B^n$ encodes an input
+  $x$ as one of $K(x) \geq 1$ tokens,
+\item $\dec : \B^n \to Y \cup \{\bot\}$ decodes a token to an output value
+  or to the symbol $\bot$ (``no value''),
+\item $s$ is a secret, the trapdoor, from which $\fhat$, $\enc$, and $\dec$
+  are derived.
+\end{itemize}
+The untrusted machine holds $\fhat$; the trusted machine holds $\enc$,
+$\dec$, and $s$.
+\end{definition}
+
+Three features of the definition deserve a closer look, because each is
+load-bearing later. The first is the type of $\fhat$: it is a function from
+$\B^n$ to $\B^n$, bit strings to bit strings, with no mention of $X$ or
+$Y$. The untrusted machine never sees the latent types; it sees an endo
+function on tokens. The second is the second argument of $\enc$: a value
+$x$ may be encoded as any of $K(x)$ distinct tokens, and which one is used
+on a given call is the trusted machine's choice. This freedom is dead
+weight in an ordinary encoding, but here it is the raw material for hiding
+frequency, since a value that is queried often can be spread across many
+tokens so that no single token is queried often. The third is the $\bot$ in
+the range of $\dec$: not every token decodes to a value, and the fraction
+that do is a parameter the construction controls.
+
+The encodings are realized through a cryptographic hash $h : \B^{*} \to
+\B^n$, which we model as a random oracle when uniformity of the tokens is
+needed. The notation recurs throughout the book: $\B = \{0,1\}$, so $\B^n$
+is the token space; $\fhat$ and $\ghat$ are cipher-map approximations of
+latent functions $f$ and $g$; $\enc$ and $\dec$ are the trusted machine's
+private operations; and the secret $s$ keys all three. For the watchlist,
+$X$ is the four names, $Y = \{0,1\}$, and $\enc(\mathrm{alice}, k)$ is the
+$k$-th of $K(\mathrm{alice})$ tokens for alice.
+
+\begin{remark}[Values are constant maps]
+\label{rem:values-are-maps}
+A cipher value $\enc(v, k)$ is the same kind of object as a cipher map: it
+is a cipher map for the constant function $f_v(x) = v$. Under this view the
+untrusted machine deals with one kind of thing, total functions on bit
+strings, some of which happen to be constant. This collapse of values and
+functions is not a notational convenience only; it is what lets a cipher
+map's output be fed as another's input, and it is the seed of the algebra
+of \Cref{part:algebra}.\footnote{The cipher type $\cipher{X}$, the type of
+cipher values over $X$, and the typed composition of cipher maps are
+developed in \Cref{part:algebra}.}
+\end{remark}
+
+\section{Three Transformations}
+\label{sec:three-transformations}
+
+A cipher map is not built in one step, and seeing it as a composition of
+three independent transformations explains why it has the properties it
+has. Start with an ordinary function $f : X \to Y$ and apply, in turn:
+
+\begin{description}
+\item[Undefined injection.] Extend the domain $X$ to $X \cup \{\bot_1,
+  \ldots, \bot_N\}$ by adding $N$ undefined elements, lifting $f$ to a
+  partial function that is undefined on the $\bot_i$. The real inputs are
+  now a fraction $\lvert X \rvert / (\lvert X \rvert + N)$ of an enlarged
+  domain. This dilution is what gives filler queries somewhere to live: a
+  decoy is just a draw from the undefined part. The dilution ratio is the
+  parameter $\varepsilon$, the probability that an arbitrary token is
+  treated as meaningful.
+\item[Noise closure.] Lift the partial function to a \emph{total} one by
+  sending every undefined input to a hash-determined output rather than to
+  an error. After this step there are no undefined inputs to observe: every
+  token produces an answer. This is the transformation that yields
+  totality, and with it the indistinguishability of real and filler
+  queries.
+\item[Multiple representations.] Replace each value $x$ with $K(x) \geq 1$
+  distinct tokens, keyed by the secret. Representational equality implies
+  value equality, but not conversely: two tokens for the same value are
+  unlinkable without the secret. Choosing $K(x)$ in proportion to how often
+  $x$ is queried flattens the token distribution, so frequent values do not
+  betray themselves. This is the transformation behind representation
+  uniformity.
+\end{description}
+
+\Cref{tab:transformations} collects the three.
+
+\begin{table}[t]
+\centering
+\caption{The three transformations and what each produces.}
+\label{tab:transformations}
+\begin{tabular}{@{}lll@{}}
+\toprule
+Transformation & Operation & Produces \\
+\midrule
+Undefined injection & extend $X$ with $N$ undefined elements & $\varepsilon$ (noise-decode prob.) \\
+Noise closure & undefined inputs $\mapsto$ hash outputs & totality \\
+Multiple representations & each value $\mapsto K(x)$ tokens & representation uniformity \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The four properties of the next chapter are then not a list to be
+memorized but consequences of this construction: totality comes from noise
+closure, representation uniformity from the multiple-representation step,
+the noise-decode probability $\varepsilon$ from undefined injection, and the
+remaining two, correctness and composability, from how the secret is chosen
+and how cipher maps are chained. We present the three as conceptual layers,
+not as algebraic monads; whether they satisfy formal monad laws in the
+approximate setting is a question we neither need nor try to settle. The
+decomposition earns its place by explaining the origin of each property,
+and a reader who prefers to take \Cref{def:cipher-map} as given may do so
+and skip ahead.
+
+There are two ways to perform the construction, and the difference matters
+in Part~V. In a \emph{batch} construction the trusted machine searches for
+a secret $s$ that makes $\fhat$ correct on all of $X$ at once, paying
+computation up front in exchange for tunable error and near-optimal space;
+this requires knowing $X$ and $f$ at build time, as the HashSet and entropy
+map do. In an \emph{online} construction $\fhat$ is read directly off a
+hash structure with no search, the secret is just a hash key, and the
+operations are limited to those the structure supports algebraically, as in
+the trapdoor Boolean algebra. Both produce objects satisfying
+\Cref{def:cipher-map}; they differ in cost, in which operations they admit,
+and in how their parameters trade off.\footnote{The concrete batch and
+online constructions, and their space and accuracy, are the subject of
+\Cref{part:constructions}.}
+
+\section{Totality and the Populated Support}
+\label{sec:totality-support}
+
+Return to the word \emph{total} in \Cref{def:cipher-map}. The function
+$\fhat$ is defined on all $2^n$ bit strings, not only on the tokens that
+encode real inputs. Hand it a string that encodes nothing and it still
+returns an $n$-bit answer; there is no exception, no ``not found,'' no
+out-of-band signal that the input was meaningless. This is the structural
+fact from which the framework's first privacy guarantee follows: with no
+special case to observe, the untrusted machine has no way to separate
+inputs it should take seriously from inputs it should not.
+
+Two quantities organize what the untrusted machine sees. The first is the
+\emph{noise-decode probability} $\varepsilon$, already met as the dilution
+ratio of undefined injection: it is the probability that a uniformly random
+token decodes to a value rather than to $\bot$. A construction sets
+$\varepsilon$ by how much of the $2^n$ token space it treats as meaningful,
+and it pays for a small $\varepsilon$ in bits, roughly $-\log_2 \varepsilon$
+of them per element, because rejecting more strings as $\bot$ takes a
+sparser meaningful set. The second is the \emph{populated support}
+$\mathrm{im}(\enc) \subseteq \B^n$, the set of tokens that actually encode
+real inputs. Its size $\lvert \mathrm{im}(\enc) \rvert$ is small relative to
+$2^n$, and the observed token distribution lives on it, not on all of
+$\B^n$. This distinction looks pedantic and is not: the next chapter
+measures confidentiality as closeness to the uniform distribution \emph{on
+this support}, and measuring against the uniform distribution on all of
+$\B^n$ instead would make every sparse construction look maximally leaky and
+the measure say nothing. Getting the support right is the difference between
+a meaningful confidentiality measure and a vacuous one.
+
+\begin{example}[The watchlist, in numbers]
+\label{ex:watchlist-numbers}
+Take $n = 12$, so a token is one of $2^{12} = 4096$ bit strings. Suppose
+alice is queried often enough to warrant $K(\mathrm{alice}) = 4$
+representations and the other three names two each, so the populated
+support $\mathrm{im}(\enc)$ holds $4 + 2 + 2 + 2 = 10$ tokens, a $0.24\%$
+slice of the token space. To check alice the trusted machine picks one of
+her four tokens, say $\enc(\mathrm{alice}, 1) = \mathtt{0x2A7}$ (the string
+$0010\,1010\,0111$); the server returns $\fhat(\mathtt{0x2A7})$, say
+$\mathtt{0x6B4}$; the trusted machine decodes $\mathtt{0x6B4}$ to $1$, on
+the list. Two small sets live inside the $4096$, at the two ends of the
+pipeline $\dec(\fhat(\enc(x,k)))$, and they play different roles. The
+\emph{input} support is the ten tokens just counted, the ones that
+\emph{encode} the names; it is what the next chapter's $\delta$ measures
+uniformity against, and it fixes $H^* = \log_2 10$. The \emph{output}
+acceptance set is separate: hand $\dec$ a uniformly random $12$-bit string
+and it returns a $0$ or $1$ rather than $\bot$ only with probability
+$\varepsilon$, the fraction of strings that \emph{decode} to an answer; if
+the construction reserves four of the $4096$ codewords as valid answers,
+then $\varepsilon \approx 4/4096 \approx 10^{-3}$ and an out-of-domain probe
+is rejected about $999$ times in $1000$. The ten input tokens govern
+$\delta$; the four output codewords govern $\varepsilon$; they are different
+sets, and neither is the $4096$ ambient strings.
+\end{example}
+
+Totality also makes filler queries free. Because every string produces
+output, the trusted machine can interleave random tokens among the real
+ones, and the untrusted machine cannot tell which are which. In the
+watchlist, the trusted machine can issue a stream of lookups of which some
+fraction are decoys drawn from the undefined part of the domain, and the
+server, seeing only that each token yields an answer, cannot subtract the
+decoys back out. Totality is the property that the four cannots of
+\Cref{sec:untrusted-sees} called ``cannot distinguish a real query from
+filler,'' now stated as a structural feature of $\fhat$ rather than a hope,
+and the next chapter makes it the first of the four.
+
+\section{The Cipher Type}
+\label{sec:cipher-type}
+
+It will be useful, and it costs little here, to name the type-level view
+that \Cref{part:algebra} develops in full. Write $\cipher{X}$ for the
+\emph{cipher type} over $X$: the type whose values are tokens encoding
+elements of $X$. A cipher map for $f : X \to Y$ is then a morphism that
+sends $\cipher{X}$ to $\cipher{Y}$, an arrow at the level of cipher types
+rather than of plain values, and \Cref{rem:values-are-maps} is the
+statement that the objects and the morphisms of this picture are made of
+the same material: a cipher value in $\cipher{X}$ is a cipher map from a
+trivial domain.
+
+This is the vantage from which the algebra of cipher maps becomes visible.
+If cipher maps are arrows between cipher types, one can ask which type
+constructors, product, sum, function, survive the passage through the
+trapdoor and which do not, and the answer turns out to be sharply
+different for different constructors: product structure passes cleanly,
+sum structure runs into an impossibility. That is the subject of
+\Cref{part:algebra}; here it is enough to have the word $\cipher{X}$ and
+the picture of cipher maps as arrows, so that the four properties of the
+next chapter can be read as properties of those arrows.
+
+\section{Notes and Provenance}
+\label{sec:ch3-notes}
+
+\Cref{def:cipher-map} is the cipher map of the formal specification and of
+the cipher-maps paper; the tuple, the totality requirement, and the
+trusted/untrusted split are taken from there without change. The reading of
+the construction as three orthogonal transformations of a type
+(\Cref{sec:three-transformations}) comes from the algebraic-cipher-types
+design work; it is the conceptual reason each property exists and is not
+needed to use the definitions. The batch and online strategies, and the
+HashSet, entropy map, and trapdoor Boolean algebra named as their examples,
+are developed in \Cref{part:constructions}. The view of cipher values as
+constant cipher maps (\Cref{rem:values-are-maps}) is the hinge that
+\Cref{part:algebra} turns into a typed algebra, and the choice to measure
+confidentiality against the populated support rather than the ambient token
+space (\Cref{sec:totality-support}) is the point on which the confidentiality
+theory of \Cref{part:confidentiality} is built.

@@ -1,0 +1,76 @@
+# bookwright project config. Read by the drafting and review agents.
+project: trapdoor-computing-monograph
+title: "Trapdoor Computing: Computing on Opaque Encodings"
+author: "Alexander Towell <lex@metafunctor.com>"
+type: research-monograph
+audience: "researchers and graduate students in security, cryptography, information theory"
+
+notebook_stack: none           # minimal-notebook decision (2026-06-10): figures are
+                               # pre-generated from the trapdoor_maps library; the
+                               # notebook-author agent is NOT dispatched.
+notebook_dir: notebooks        # unused under the minimal-notebook decision
+notebook_library: "../../src/cipher-maps (package trapdoor_maps; source of pre-generated figures)"
+
+build_command: "cd book && make"
+canonical_source: "../../formalism/cipher-map-formalism.md"
+
+# Through-line: trapdoor computing as computing on opaque encodings, with
+# confidentiality that is measurable (QIF) not negligible (crypto), and
+# composition that is predictable. Consolidate the framework, then pivot
+# to a frontier of open problems.
+
+parts:
+  - id: part1
+    title: "The Paradigm"
+    folds: ["foundations/", "formalism/cipher-map-formalism.md (sec 1-3)"]
+  - id: part2
+    title: "The Cipher Map Abstraction"
+    folds: ["papers/cipher-maps", "formalism (sec 2-4)"]
+  - id: part3
+    title: "Algebra and Types"
+    folds: ["papers/algebraic-cipher-types", "foundations/trapdoor-boolean-algebra.md"]
+  - id: part4
+    title: "Confidentiality"
+    folds: ["papers/maximizing-confidentiality (SUMMARIZE only; standalone at CSF)", "formalism (sec 4A)"]
+  - id: part5
+    title: "Constructions"
+    folds:
+      - "papers/codec-controlled-retrieval"
+      - "papers/cipher-rekeying"
+      - "papers/cipher-closures"
+      - "papers/cipher-program-construction"
+      - "src/cipher-maps"
+  - id: part6
+    title: "Frontiers"
+    folds: [".papermill/prior-art/2026-06-09-ecosystem-survey.md"]
+
+provenance_constraint: >
+  Privacy comes from one-way hash + uniform representation, NOT
+  access-pattern hiding. Do NOT import ORAM / differential-privacy /
+  simulation-based / game-based crypto definitions. Confidentiality is
+  measurable (QIF), not negligible. Two scales (marginal delta; compositional
+  orbit/coincidence/joint-recovery) must not be conflated. Spine sec 4A is
+  the authority.
+
+landmines:
+  - "Fannes (linear in delta), not Pinsker (quadratic)"
+  - "homophonic K(x) proportional to D(x), not 1/D(x)"
+  - "orbit set-form denominator |X|, not 2^n"
+  - "compositional lower bound is Assouad, not Le Cam"
+
+design_decisions:   # settled 2026-06-10 via /bookwright:design master
+  length: "concise synthesis, ~150-220pp; theorems stated with proof sketches + pointers to the standalone papers"
+  notebooks: "minimal; pre-generated figures from trapdoor_maps, no paired notebooks"
+  frontiers: "research-agenda roadmap (Part VI); new results land in future papers, not here"
+  bernoulli: "appendix primer (Appendix A); main text cites the Bernoulli papers"
+  exercises: none
+master_spec: "docs/superpowers/specs/2026-06-10-master-design.md"
+
+status: done   # scaffolded -> designed -> drafting -> review -> done
+created: 2026-06-10
+drafted: 2026-06-18      # first full draft: 14 chapters + 3 appendices, 76pp, builds clean
+reviewed: 2026-06-18     # full-book pass (docs/superpowers/reviews/2026-06-18-book-review.md)
+frontmatter: 2026-06-18  # copyright/colophon, list of figures+tables, preface
+integrated: 2026-06-21   # full-book integration pass (docs/superpowers/plans/2026-06-21-book-integration-pass.md)
+# Actual length ~76pp, denser than the 150-220pp target (proof-sketch + pointer
+# discipline and dense prose); a complete, reviewed first draft.

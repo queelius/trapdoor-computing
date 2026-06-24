@@ -1,0 +1,168 @@
+% Chapter 2: What Trapdoor Computing Is Not
+% DEFINES: ch:what-it-is-not; sec:privacy-source, sec:not-oram, sec:not-fhe,
+%   sec:not-sse, sec:comparison-guardrail, sec:ch2-notes; tab:not
+% REFERENCES (forward, part labels only): part:abstraction,
+%   part:confidentiality, part:constructions
+
+\chapter{What Trapdoor Computing Is Not}
+\label{ch:what-it-is-not}
+
+The previous chapter described a service that computes on encodings it
+cannot read. That description is close enough to several well-known ideas,
+oblivious RAM, homomorphic encryption, garbled circuits, searchable
+encryption, that a reader could reasonably assume trapdoor computing is one
+of them, or a repackaging of them. It is not, and the differences are not
+cosmetic. This chapter draws the lines, and in doing so fixes the
+guardrail that the rest of the book leans on: a precise statement of where
+the privacy comes from, against which every later claim can be checked.
+
+\section{Where the Privacy Comes From}
+\label{sec:privacy-source}
+
+The single most important sentence in this book is about a negative.
+Trapdoor computing's confidentiality comes from \emph{one-way hashing and
+uniform representation}, and not from hiding the pattern of access, and not
+from a reduction to a hard problem. The untrusted machine is allowed to see
+which entries of its table it touches, in what order, and how often. What
+it is denied is the \emph{meaning} of those entries: a token is the image
+of a value under a keyed one-way encoding, and many values are spread
+across uniform-looking tokens, so the access it observes is access to
+opaque, frequency-flattened strings. Privacy is a property of the
+\emph{representation}, not of the protocol that moves it around.
+
+This is worth stating sharply because the neighboring approaches each hide
+something else, at a different cost, and conflating them imports the wrong
+intuitions. The rest of the chapter takes them one at a time, fairly: each
+solves a real problem that trapdoor computing does not, and the point is
+the difference in what is hidden, never that one is simply better.
+
+\section{Not Oblivious RAM}
+\label{sec:not-oram}
+
+Oblivious RAM hides the \emph{access pattern}: it guarantees that the
+sequence of memory locations a computation touches is independent of the
+data and the query, so an observer who sees the addresses learns nothing
+from them. It pays for this with polylogarithmic overhead per access and a
+stateful, interactive protocol. Trapdoor computing makes the opposite
+trade. It does \emph{not} hide the access pattern, the untrusted machine
+plainly sees which table entries are read, and it spends nothing to conceal
+them. What it hides is what those entries mean. An ORAM and a cipher map,
+pointed at the same encrypted store, defend against different observers: the
+ORAM defeats one who reads addresses, the cipher map defeats one who reads
+contents. Prior work in this framework occasionally drifted toward
+access-pattern language, and the result was confusion; this book does not,
+and a claim that ever rests on access-pattern indistinguishability has
+wandered off the framework.
+
+\section{Not Homomorphic Encryption, Not Garbled Circuits}
+\label{sec:not-fhe}
+
+Fully homomorphic encryption computes \emph{exactly} on ciphertexts: any
+function of the plaintexts can be evaluated under encryption, with a result
+that decrypts to the true value. Its guarantee is semantic security of the
+ciphertexts, and its cost, despite a decade of progress, remains large in
+both ciphertext size and per-operation compute. A cipher map is exact in
+neither sense and asks for neither cost. It \emph{approximates}: the
+decoded result equals the latent value only up to a bounded error rate, and
+that error is not a defect to be apologized for but, as the previous
+chapter noted, a source of deniability. Where homomorphic encryption buys
+exactness at high cost, trapdoor computing buys cheapness and a measured
+leak by giving exactness up on purpose.
+
+Garbled circuits sit closer in spirit, since they too let one party
+evaluate a function blindly, but they are built for a different shape of
+problem. A garbled circuit hides a function's inputs for a \emph{single}
+evaluation, paid for with cryptographic work at every gate, and is consumed
+in the using; a fresh garbling is needed for the next input. A cipher map
+is a \emph{static, total lookup table}, built once and reused across as
+many queries as the deployment runs, with no per-query cryptography beyond
+the encode and decode at the trusted end. The garbled circuit is a
+one-shot interactive object; the cipher map is a durable artifact you can
+ship to an untrusted server and query indefinitely.
+
+\section{Not (Just) Searchable or Property-Preserving Encryption}
+\label{sec:not-sse}
+
+The nearest neighbor is encrypted search. Searchable symmetric encryption
+and property-preserving encryption let a server answer queries over
+encrypted data, and like trapdoor computing they accept that the server
+learns \emph{something}. The difference is in how that something is
+governed. In the searchable-encryption tradition, the leakage is a
+structural side effect, an encrypted index whose shape, or an
+order-preserving ciphertext whose comparisons, the server can read, and a
+long line of leakage-abuse attacks has shown how much those side effects
+give away in practice. Here, leakage is not a side effect to be bounded
+after the fact but the \emph{design variable}: it is the entropy ratio of
+the previous chapter, a measured quantity the constructions are built to
+drive down.\footnote{The measure and the constructions that move it are
+developed in \Cref{part:confidentiality} and realized in
+\Cref{part:constructions}.}
+
+Frequency hiding sharpens the contrast. Frequency-smoothing encryption
+defends a deterministic scheme against frequency analysis by giving common
+values several ciphertexts, so the observable distribution flattens; this
+is the right idea, and it is the same idea trapdoor computing uses, more
+frequent values get more representations, with the allocation $K(x)$ grown
+in proportion to a value's frequency $D(x)$. The difference is mechanism.
+In frequency-smoothing encryption the flattening is enacted by an online
+protocol that injects or rewrites ciphertexts as data arrives; here it is a
+static property of a total function, present in the table the untrusted
+machine holds, with no protocol to run and no traffic to shape. The lever
+is the same; the place it is pulled is not.
+
+\section{The Comparison, and the Guardrail}
+\label{sec:comparison-guardrail}
+
+\Cref{tab:not} collects the distinctions. Read down the ``hides'' column:
+each approach conceals a different thing, and the costs differ accordingly.
+Trapdoor computing's row is the one that hides \emph{meaning} via a total
+map, pays in the space it takes to separate signal from noise and to encode
+values, and reports its residual leak as a number rather than a promise.
+
+\begin{table}[t]
+\centering
+\caption{Trapdoor computing against neighboring approaches. Each hides
+something different; none is uniformly stronger.}
+\label{tab:not}
+\begin{tabular}{@{}p{2.4cm}p{2.8cm}p{3.0cm}p{3.4cm}@{}}
+\toprule
+Approach & Hides & Cost & Different here \\
+\midrule
+Oblivious RAM & the access pattern & polylog overhead per access; interactive & access is not hidden, meaning is \\
+Homomorphic encryption & the plaintext & large ciphertexts and compute & we approximate, measurably; FHE is exact \\
+Garbled circuits & inputs, one evaluation & per-gate cryptography, one-shot & one static table, reused across queries \\
+Searchable / property-preserving encryption & data and queries, partially & structured index or order leakage & leakage is the design variable, measured \\
+\midrule
+Trapdoor computing & meaning, via a total map & space, $-\log_2 \varepsilon + \mu$ bits per element & privacy from hash and uniformity, leak is the entropy ratio \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+This table is also the book's guardrail. The framework's privacy rests on
+one-way hashing and uniform representation, and on nothing else; in
+particular this book imports no notion of access-pattern
+indistinguishability, no differential-privacy mechanism, no
+simulation-based or game-based security definition. Those are the right
+tools for the problems in the table's other rows, and reaching for them
+here is the standing way the framework gets misstated. The reader, and the
+author, should treat any later argument that quietly depends on one of them
+as a drift to be corrected, not a result to be kept.
+
+\section{Notes and Provenance}
+\label{sec:ch2-notes}
+
+Oblivious RAM is due to Goldreich and Ostrovsky~\cite{goldreich1996software},
+with Path ORAM~\cite{stefanov2013path} the now-standard efficient
+construction; fully homomorphic encryption to Gentry~\cite{gentry2009fully};
+garbled circuits to Yao~\cite{yao1986generate}. Searchable symmetric
+encryption begins with Song, Wagner, and Perrig~\cite{song2000practical} and
+the definitions of Curtmola et
+al.~\cite{curtmola2006searchable}; the leakage-abuse line that motivates
+treating leakage as a first-class quantity runs through Islam et
+al.~\cite{islam2012access}, Naveed et al.~\cite{naveed2015inference}, and
+Cash et al.~\cite{cash2015leakage}; frequency-smoothing encryption is
+Lacharit\'e and Paterson~\cite{lacharite2018frequency}. The classification
+of which sources in this framework are authentic and which were expanded by
+later drafting is maintained in the project's ecosystem triage; the
+correction of the access-pattern drift named in
+\Cref{sec:not-oram} is one of its recorded items.

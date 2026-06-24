@@ -1,0 +1,32 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{notation}[2026/06/10 Trapdoor computing notation]
+% Canonical notation. Mirrors formalism/cipher-map-formalism.md section 8.
+% If you add a symbol, add it here, not inline in a chapter, so all five
+% drafting agents render it identically.
+
+% Cipher-map approximations of latent functions f, g
+\newcommand{\fhat}{\hat{f}}
+\newcommand{\ghat}{\hat{g}}
+
+% Encoding / decoding. Only the trusted machine holds these.
+\newcommand{\enc}{\operatorname{enc}}
+\newcommand{\dec}{\operatorname{dec}}
+
+% Bit strings and total-variation distance
+\newcommand{\B}{\{0,1\}}            % so \B^n is the set of n-bit strings
+\newcommand{\TV}{\operatorname{TV}}
+
+% Cipher type over X (renders as the sans-serif C(X))
+\newcommand{\cipher}[1]{\mathsf{C}(#1)}
+
+% Orbit operator from the algebraic-cipher-types development
+\newcommand{\orbitF}{\operatorname{orbit}_F}
+
+% The entropy ratio (marginal-scale confidentiality measure)
+\newcommand{\eratio}{e}
+
+% GF(2)-linear retrieval (codec construction, Ch 12): rank and projection
+\DeclareMathOperator{\rank}{rank}
+\newcommand{\proj}{\Pi}
+
+\endinput

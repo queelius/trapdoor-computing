@@ -1,0 +1,1033 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{mathtools}
+\usepackage[numbers,square]{natbib}
+\usepackage{booktabs}
+\usepackage{csquotes}
+\usepackage{hyperref}
+\hypersetup{hypertexnames=false}
+\usepackage{cleveref}
+
+% Theorem environments (matching the ecosystem preamble)
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{conjecture}[theorem]{Conjecture}
+\theoremstyle{definition}
+\newtheorem{assumption}{Assumption}[section]
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}[section]
+\newtheorem{example}{Example}[section]
+
+% Shared macros (ecosystem-canonical; see formalism/notation.md)
+\newcommand{\enc}{\mathrm{enc}}
+\newcommand{\dec}{\mathrm{dec}}
+\newcommand{\fhat}{\hat{f}}
+\newcommand{\ghat}{\hat{g}}
+\newcommand{\cipher}[1]{\mathsf{C}(#1)}
+\newcommand{\cipherS}[2]{\mathsf{C}_{#2}(#1)}
+\newcommand{\orbitF}{\mathrm{orbit}_F}
+\newcommand{\rekey}[2]{r_{#1 \to #2}}
+\newcommand{\B}{\{0,1\}}
+
+\title{Cipher Closures: Cipher Data Structures and the\\
+Code--Data Duality in Trapdoor Computing}
+\author{Alexander Towell\\\texttt{lex@metafunctor.com}}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+A cipher value is opaque data; a cipher map is opaque code. We show
+that in trapdoor computing the two are interchangeable, and that the
+cipher map is a universal carrier for both. A cipher data structure
+(a pair, a list, a map) is realized as a single cipher map: its
+operation interface is folded into a query tag (the \emph{dispatch
+pattern}), and sequential structure is encoded in the shape of an
+orbit under a hash chain (\emph{designed orbits}). Conversely, a
+cipher map is itself a point of a cipher type, the cipher exponential
+$\cipher{A \to B}$, so code is data. The abstraction that makes the
+duality precise is the \emph{cipher closure}: a procedure that
+captures a secret and exposes an operation interface, of which cipher
+values, cipher maps, and cipher data structures are special cases.
+Cipher rekeying, which transforms the captured secret, is then one
+instance of a general principle: in trapdoor computing, values,
+functions, data structures, and the secret itself are all cipher
+data, carried by cipher maps. We give the constructions, their
+information-theoretic leakage (orbit-encoded structures leak length
+and iteration order but bound per-element confidentiality by the
+orbit-closure bound), and the unification.
+\end{abstract}
+
+%% ====================================================================
+\section{Introduction}
+\label{sec:intro}
+%% ====================================================================
+
+In the Lisp tradition, code and data are made of the same stuff. A
+program is an S-expression, an S-expression is a list, and a list is a
+value the language can build, inspect, and run~\cite{mccarthy1960recursive}.
+The clearest small instance is the closure. In Abelson and Sussman's
+exposition~\cite{abelson1996sicp}, a pair needs no primitive storage:
+it is a procedure that has captured two values and dispatches on the
+operation asked of it,
+\[
+\mathrm{cons}(x, y) = \lambda m.\, m(x, y),\qquad
+\mathrm{car}(p) = p(\lambda x\, y.\, x),\qquad
+\mathrm{cdr}(p) = p(\lambda x\, y.\, y).
+\]
+The pair is data (it holds $x$ and $y$) and code (it is a procedure)
+at once. This is the move that lets one speak of a data structure as a
+function and a function as a value, the homoiconicity of the
+$\lambda$-calculus and its descendants~\cite{landin1964mechanical}.
+
+Trapdoor computing~\cite{towell2026cipher} supplies a single carrier
+that makes the same duality concrete over a secret. A \emph{cipher
+value} $c \in \B^n$ is an opaque bit string that encodes a latent
+value $x$ under a secret $s$, decodable only by a holder of $s$. A
+\emph{cipher map} $\fhat : \B^n \to \B^n$ is an opaque total function
+that realizes a latent function $f : X \to Y$: an untrusted machine
+can evaluate it without learning $x$, $f$, or $s$. The untrusted
+machine sees bit strings flowing through a lookup table; the trusted
+machine holds the encoder, the decoder, and the secret. Cipher values
+are opaque data; cipher maps are opaque code. The question of this
+paper is how far the boundary between the two dissolves, and what is
+gained when it does.
+
+We answer it in three directions, organized around one object, the
+\emph{cipher closure}: a procedure that captures a secret and exposes
+an operation interface, of which cipher values, cipher maps, and
+cipher data structures are special cases.
+
+\paragraph{Data is code.} A cipher data structure with several
+operations need not be a heap of storage with a protocol bolted on. It
+is a single cipher map. The operation interface folds into a query
+tag, so one tagged cipher map answers \texttt{is\_member} and
+\texttt{lookup} alike (\Cref{sec:dispatch}, the \emph{dispatch
+pattern}); and sequential structure folds into the shape of an orbit
+under a hash chain, so one cipher map and a starting key encode a list,
+a map, or a vector (\Cref{sec:designed-orbits}, \emph{designed
+orbits}). Algebraic cipher types~\cite{towell2026algebraic} reads an
+orbit as a leakage measure: the more cipher values an adversary can
+reach by composing the operations it holds, the more it can learn. We
+turn that reading around. Shape the orbit deliberately and it is no
+longer only a leakage budget to be bounded; it is a construction
+primitive, and the same bound that limited the adversary now measures
+exactly what an orbit-encoded data structure reveals
+(\Cref{sec:leakage}).
+
+\paragraph{Code is data.} The reverse direction is already a theorem
+of the type algebra. The cipher exponential $\cipher{A \to B}$ is
+\emph{precisely} the set of cipher maps $\cipher{A} \to
+\cipher{B}$~\cite[Prop.~4.3]{towell2026algebraic}. So a cipher map
+$\fhat$ is at once code (the realization of a latent function) and a
+point of a cipher type (an inhabitant of $\cipher{A \to B}$). Combined
+with the first direction, the cipher map carries both: a data
+structure becomes a cipher map, and a cipher map is a cipher value of
+function type (\Cref{sec:exponential}).
+
+\paragraph{The secret is data.} The captured secret is itself state in
+a closure, and transforming it is one more instance of the same move.
+Cipher rekeying~\cite{towell2026rekeying} re-parameterizes the secret
+a cipher object captured, taking a cipher value under one secret to a
+cipher value of the same latent value under another. It is the
+secret-as-data corner of the duality, and, with the cipher exponential,
+one of its two already-charted endpoints (\Cref{sec:duality}).
+
+\paragraph{Contributions.}
+\begin{enumerate}
+\item \textbf{The code--data duality for trapdoor computing}, made
+  precise through cipher closures (\Cref{sec:closures}): homoiconicity
+  over a secret, with cipher values, cipher maps, and cipher data
+  structures as the three subclasses of one object.
+\item \textbf{The dispatch pattern} (\Cref{sec:dispatch}): a
+  multi-operation cipher data structure realized as a single tagged
+  cipher map, the same boundary that
+  \cite{towell2026cipherprog,towell2026algebraic} cut through an
+  expression tree, drawn here from the data-structure side.
+\item \textbf{Designed orbits} (\Cref{sec:designed-orbits}): XOR-orbit
+  hash chains that encode lists, two-level maps, and indexed vectors
+  inside a single cipher map, inverting the orbit-as-leakage reading
+  of~\cite{towell2026algebraic} into an orbit-as-construction
+  primitive, with one cipher map yielding many data structures as the
+  starting key varies.
+\item \textbf{An information-theoretic leakage analysis} of
+  orbit-encoded data structures (\Cref{sec:leakage}): the list length
+  and the iteration order leak, while per-element confidentiality is
+  bounded by the orbit-closure bound; what is provable is proved, and
+  what is not is marked as a conjecture or open problem.
+\item \textbf{The unification} (\Cref{sec:duality}): values, functions,
+  data structures, and the secret are all cipher data carried by cipher
+  maps, with the cipher exponential and cipher rekeying as the two
+  known endpoints.
+\end{enumerate}
+
+\paragraph{Position.} The foundation
+paper~\cite{towell2026cipher} establishes the cipher map and treats it
+as code (a function $X \to Y$); it does not consider data structures.
+Algebraic cipher types~\cite{towell2026algebraic} supplies the
+exponential identity and the orbit-closure bound, but reads orbits only
+as a leakage measure. Cipher rekeying~\cite{towell2026rekeying}
+develops the secret-as-data instance and explicitly defers the
+general duality to this paper. A sibling
+paper~\cite{towell2026cipherprog} realizes whole \emph{programs} as
+cipher-map compositions by cutting an expression tree; this paper is
+about cipher \emph{data structures} and the code--data frame, an
+orthogonal concern that meets program construction only at the shared
+cut boundary of \Cref{sec:dispatch}.
+
+\paragraph{Scope.} The privacy model throughout is
+information-theoretic, resting on a one-way hash, uniform
+representation, and the finiteness of an orbit; we import no
+ORAM, simulation-based, or game-based cryptographic machinery. The
+categorical language (functor, exponential object) is an organizing
+device that makes the notation regular; it is not load-bearing in any
+proof, and we flag where it is doing only bookkeeping.
+
+%% ====================================================================
+\section{Preliminaries}
+\label{sec:prelim}
+%% ====================================================================
+
+We recall the cipher map abstraction and the two results from the
+type algebra that this paper builds on, then fix the closure notation.
+Throughout, cipher values are $n$-bit strings over $\B = \{0,1\}$. We
+use entropy, conditional entropy, mutual information, and total
+variation distance in their standard senses without redefining them.
+
+\subsection{Cipher maps and cipher spaces}
+
+\begin{definition}[Cipher map~{\cite[Def.~3.1]{towell2026cipher}}]
+\label{def:cipher-map}
+Let $f : X \to Y$ be a \emph{latent function}. A \emph{cipher map} for
+$f$ is a tuple $(\fhat, \enc, \dec, s)$ where
+$\fhat : \B^n \to \B^n$ is a total function on $n$-bit strings;
+$\enc : X \times \{0, \ldots, K(x){-}1\} \to \B^n$ is an encoding
+function, with $K(x) \geq 1$ the number of encodings of $x$;
+$\dec : \B^n \to Y \cup \{\bot\}$ is a decoding function; and $s$ is
+the secret (the trapdoor) from which $\fhat$, $\enc$, and $\dec$ are
+derived. The untrusted machine holds $\fhat$; the trusted machine
+holds $\enc$, $\dec$, and $s$.
+\end{definition}
+
+A cipher map satisfies four properties parameterized by
+$(\eta, \varepsilon, \mu, \delta)$~\cite[Sec.~4]{towell2026cipher},
+which we use but do not re-derive:
+\emph{totality} ($\fhat$ is defined on all of $\B^n$, and on inputs
+outside the encoded domain its output is uniform under the
+random-oracle model, so the untrusted machine cannot tell a real query
+from filler); \emph{representation uniformity} (the distribution of
+cipher values the untrusted machine observes is within total variation
+$\delta$ of uniform); \emph{correctness} ($\dec(\fhat(\enc(x,k))) =
+f(x)$ except with probability at most $\eta$); and \emph{composability}
+(the composition $\ghat \circ \fhat$ is a cipher map for $g \circ f$,
+with errors combining as $\eta_{g\circ f} = 1 - (1-\eta_f)(1-\eta_g)$).
+
+We write $\cipherS{\cdot}{s}$ for the \emph{cipher functor} at secret
+$s$, dropping the subscript to $\cipher{\cdot}$ when $s$ is fixed. On a
+latent type $X$ it returns the \emph{cipher space} $\cipherS{X}{s}
+\subseteq \B^n$, the set of bit strings encoding elements of $X$ under
+$s$; on a latent function $f$ it returns the cipher map $\fhat$, so
+$\cipherS{f}{s} = \fhat$. A cipher value of $x$ is $\enc_s(x, k)$ for
+some representation index $k$; the hat marks a cipher \emph{map}
+(the only approximate object), never a value or a secret.
+
+\subsection{The orbit-closure bound}
+
+The single tool we borrow from the type algebra is a bound on what an
+active untrusted machine can learn by composing the cipher maps it
+holds.
+
+\begin{definition}[Orbit closure~{\cite[Def.~5.1]{towell2026algebraic}}]
+\label{def:orbit}
+Let $F = \{\fhat_1, \ldots, \fhat_k\}$ be cipher maps available to the
+untrusted machine and $c \in \B^n$ a cipher value. The \emph{orbit
+closure} $\orbitF(c) \subseteq \B^n$ is the smallest set containing
+$c$ and closed under every $\fhat_i \in F$: the set of all bit strings
+reachable from $c$ by composing operations in $F$ in any order. Since
+$\B^n$ is finite, $\orbitF(c)$ is finite, and it depends only on $F$
+and $c$, not on the latent function or the trapdoor.
+\end{definition}
+
+\begin{theorem}[Orbit-closure bound~{\cite[Thm.~5.3]{towell2026algebraic}}]
+\label{thm:orbit-bound}
+Let $X$ be the latent value encoded by $c$, drawn from the trusted
+machine's input distribution, and let the untrusted machine's
+observation after probing $c$ with $F$ be a random variable supported
+on $\orbitF(c)$. Then
+\[
+H(X \mid \mathcal{V}_F(c)) \;\geq\; H(X) - \log_2 |\orbitF(c)|.
+\]
+\end{theorem}
+
+The proof is a one-line counting bound: the observation takes at most
+$|\orbitF(c)|$ values, so it carries at most $\log_2 |\orbitF(c)|$ bits
+about $X$. The content is in identifying the orbit as the support of
+what the adversary sees. The bound is an \emph{active}-adversary
+statement on a different axis from the marginal parameter $\delta$:
+$\delta$ governs the leakage of a single cipher value at rest, the
+orbit governs the leakage of an operation interface under repeated
+use, and neither bounds the other. It is loose (it ignores the
+functional relations among orbit elements) and is approached with
+equality when the cipher maps behave as independent random
+oracles~\cite{bellare1993random}. These are exactly the properties we
+will need in \Cref{sec:leakage}.
+
+\subsection{Cipher closures}
+
+A closure, in the SICP sense~\cite{abelson1996sicp}, is a procedure
+that has captured values from its environment. We work throughout with
+closures that capture a secret and expose an operation interface.
+
+\begin{definition}[Cipher closure]
+\label{def:cipher-closure}
+A \emph{cipher closure} over secret $s$ is a function $\kappa_s :
+\mathcal{O} \to \mathcal{R}$ where $\mathcal{O}$ is a set of operations
+and $\mathcal{R}$ the union of their result types. The closure has
+access to $s$ and to any auxiliary state captured at construction time;
+each operation $o \in \mathcal{O}$ has its own input and output types,
+which the abstract signature suppresses.
+\end{definition}
+
+%% ====================================================================
+\section{Cipher Closures}
+\label{sec:closures}
+%% ====================================================================
+
+The cipher closure is the homoiconic object of trapdoor computing: it
+is data (the state it captured, including the secret) and code (the
+procedure it is) at the same time. The three primitives of the
+framework are its three subclasses, distinguished by what they expose
+and, crucially, by who can run them.
+
+\begin{description}
+\item[Cipher value closures.] A cipher value $\enc_s(x, k)$ is the
+  closure that captured the bit string and the secret and exposes a
+  single operation, $\texttt{decode}$, which returns the latent value.
+  Decoding requires the secret, so this operation is invocable only by
+  the trusted machine; to the untrusted machine a cipher value is inert
+  data, a bit string with no working interface. In the cipher functor
+  view it is a point of a cipher space, $\enc_s(x,k) \in \cipherS{X}{s}$.
+
+\item[Cipher map closures.] A cipher map $\fhat$ is the closure that
+  captured the secret and exposes a single operation,
+  \emph{evaluation}: apply $\fhat$ to a cipher value to get a cipher
+  value. This is the one subclass the untrusted machine can run, and
+  it is exactly what the untrusted machine holds
+  (\Cref{def:cipher-map}). Evaluation reveals nothing about the secret
+  because totality makes every input admissible and every output
+  $n$ bits wide. A cipher map closure is at once code (it realizes a
+  latent function) and, by the cipher exponential
+  identity~\cite[Prop.~4.3]{towell2026algebraic}, a point of the cipher
+  type $\cipher{A \to B}$; \Cref{sec:exponential} returns to this.
+
+\item[Cipher data structure closures.] A cipher data structure
+  captures internal state, possibly mutable, and exposes several
+  operations, each realized by a cipher map (so each is runnable by the
+  untrusted machine) or by a captured-value return (so it is
+  operationally free but visible). This is the subclass the rest of the
+  paper develops: \Cref{sec:dispatch} collapses its several operations
+  into one tagged cipher map, and \Cref{sec:designed-orbits} encodes
+  its sequential structure in an orbit.
+\end{description}
+
+The boundary between the subclasses is the boundary between data and
+code, and the closure straddles it. The next three examples are the
+classical data structures realized as cipher closures. We state each
+construction self-contained, and after each we state honestly what it
+leaks; the leakage caveats are not afterthoughts but the substance of
+\Cref{sec:leakage}.
+
+\begin{example}[Cipher Boolean]
+\label{ex:cipher-bool}
+The cipher Boolean type partitions $\B^n$ into True, False, and Noise
+regions fixed by the secret~\cite[Sec.~7.1]{towell2026algebraic}. A
+cipher Boolean value is the closure that captures the secret and a bit
+string and exposes $\texttt{decode}() \to \mathrm{Bool}$ (trusted-only,
+it reads the partition), $\texttt{and}(b') \to \cipher{\mathrm{Bool}}$,
+and $\texttt{not}() \to \cipher{\mathrm{Bool}}$. The latter two are
+realized by cipher maps and are exposed to the untrusted machine. They
+are not free of consequence: an adversary that computes
+$\texttt{and}(b, \texttt{not}(b))$ obtains an (approximate) cipher
+encoding of False, which it can use to sort other cipher Booleans by
+value~\cite[Ex.~5.1]{towell2026algebraic}. This is orbit-closure
+leakage of the operation interface, bounded by \Cref{thm:orbit-bound}.
+\end{example}
+
+\begin{example}[Cipher pair via cons/car/cdr]
+\label{ex:cipher-pair}
+Following Abelson and Sussman, a cipher pair of cipher values $a \in
+\cipher{A}$ and $b \in \cipher{B}$ is the closure
+\[
+\mathrm{cipher\_cons}(a, b) = \lambda m.\, m(a, b),\qquad
+\mathrm{cipher\_first}(p) = p(\lambda a\, b.\, a),\qquad
+\mathrm{cipher\_second}(p) = p(\lambda a\, b.\, b).
+\]
+This realizes the \emph{componentwise} product $\cipher{A} \times
+\cipher{B}$ of~\cite[Sec.~4.2]{towell2026algebraic}: projection is
+operationally free, since the closure returns its captured component
+and no cipher map is invoked. It is not leakage-free. The adversary
+now holds both cipher values from one closure, and the empirical joint
+distribution of cipher pairs across many closures converges to the
+joint distribution of the latent pairs
+$(a, b)$~\cite[Prop.~4.1]{towell2026algebraic}. The alternative, the
+\emph{joint} product $\cipher{A \times B}$, encodes the pair as a
+single cipher value and hides the correlation, at the cost of
+cipher-map-mediated projections rather than free ones. This is the
+encoding-granularity trade-off of~\cite[Sec.~8.1]{towell2026cipher},
+made visible in closure form: componentwise captures two cipher
+values, joint captures one plus the projection maps.
+\end{example}
+
+\begin{example}[Mutable cipher counter]
+\label{ex:cipher-counter}
+A closure can capture mutable state. A cipher counter at $0$ is
+\[
+\mathrm{cipher\_counter}() = \texttt{let}\; c = \enc(0, 0)\;
+\texttt{in}\; \lambda \texttt{op}.\,
+\begin{cases}
+c & \texttt{op} = \texttt{read},\\
+c \leftarrow \widehat{\mathrm{succ}}(c);\, c & \texttt{op} = \texttt{increment},
+\end{cases}
+\]
+with $\widehat{\mathrm{succ}}$ the cipher successor map. The closure
+mutates the captured cipher value in place, so closures are not
+restricted to pure functions: with captured mutable state they realize
+mutable cipher data structures. The counter leaks its orbit. An
+adversary with active access to the operations and a known starting
+state (zero is plaintext) calls $\texttt{increment}$ from the known
+$c_0$ and recovers $\{c_0, \widehat{\mathrm{succ}}(c_0),
+\widehat{\mathrm{succ}}^2(c_0), \ldots\}$, pairing each cipher value
+with its plaintext index. This is precisely the successor leakage
+of~\cite[Ex.~5.2]{towell2026algebraic}, bounded by
+\Cref{thm:orbit-bound}; the closure neither weakens nor strengthens
+it, only packages the operations through which the orbit is reached.
+Standard mitigations apply (randomize the start, use multiple
+representations so $\widehat{\mathrm{succ}}$ fans out, or cap the orbit
+with typed composition chains); none affects mutability.
+\end{example}
+
+These examples make the same point at three difficulties: a cipher
+value, a cipher map, and a cipher data structure are all cipher
+closures over a secret, and each is data and code at once. What
+remains is to show how a data structure becomes a single cipher map
+(the two directions of \enquote{data is code},
+\Cref{sec:dispatch,sec:designed-orbits}), to read off what those
+constructions leak (\Cref{sec:leakage}), and to recall the reverse
+direction (\enquote{code is data}, \Cref{sec:exponential}).
+
+%% ====================================================================
+\section{Data is Code: The Dispatch Pattern}
+\label{sec:dispatch}
+%% ====================================================================
+
+A cipher data structure with several operations is realizable as a
+single cipher map whose first input is an operation tag. Take a cipher
+list, with a query type $\mathcal{Q}$ tagging the requested operation:
+\[
+\fhat : \mathcal{Q} \times \cipher{X} \to \cipher{Y \cup \mathrm{Bool}},
+\qquad
+\fhat(\texttt{key\_query}, k) = \begin{cases}
+\cipher{\mathrm{True}} & k \in \mathrm{keys}(\fhat)\\
+\cipher{\mathrm{False}} & \text{otherwise}
+\end{cases},
+\]
+\[
+\fhat(\texttt{map\_query}, k) = \cipher{\mathrm{value}\;\mathrm{at}\;k}.
+\]
+One cipher map realizes both \texttt{is\_member} and \texttt{lookup}
+semantics; the trusted machine constructs one cipher map per closure
+rather than one per operation, and the operations dispatch on the tag
+at evaluation time.
+
+The construction generalizes. A cipher data structure closure exposing
+operations $o_1, \ldots, o_m$, each $o_j$ realized by a cipher map
+$\fhat_j : \cipher{A_j} \to \cipher{B_j}$, is realized by the single
+cipher map
+\[
+\fhat : \mathcal{Q} \times \cipher{A} \to \cipher{B},
+\qquad
+\fhat(\langle j \rangle, c) = \fhat_j(c),
+\]
+where $\mathcal{Q}$ is a tag type with one tag $\langle j \rangle$ per
+operation, $\cipher{A} = \bigcup_j \cipher{A_j}$ is the union of the
+operand spaces, and $\cipher{B} = \bigcup_j \cipher{B_j}$ the union of
+the result spaces. The tag is the first coordinate of the input; the
+trusted machine builds one cipher map for the whole closure rather
+than one per operation, and the operations dispatch on the tag at
+evaluation time. Two qualifications matter. First, the tag is data the
+untrusted machine supplies and therefore sees: dispatch hides
+\emph{which latent value} an operation is applied to, not \emph{which
+operation} is being asked, exactly as a method name is visible in an
+ordinary object. Hiding the choice of operation is a separate problem
+(it is a cipher \emph{sum} over the operations, and the cipher Boolean
+that selects among branches is itself a value to be encoded), which we
+do not solve here. Second, folding many operations into one cipher map
+enlarges that map's domain and hence the orbit an active adversary can
+explore; the dispatch pattern trades a smaller construction (one
+object instead of $m$) against a larger reachable set, and
+\Cref{thm:orbit-bound} prices the trade.
+
+\paragraph{The same boundary, drawn from the other side.} The
+tag-folding here is the data-structure-side view of a boundary that a
+companion line of work approaches from the program side. Realizing a
+\emph{program} as cipher maps cuts its expression tree at chosen nodes:
+each \enquote{cut point} marks a subtree replaced by a cipher map, with
+plaintext above the cut on the trusted machine and cipher values
+below~\cite{towell2026cipherprog}. A cipher data structure is the
+limiting case where the whole interface is below a single cut: its
+operations are the subtrees, and the dispatch tag is the selector that
+chooses which subtree to run. The two papers therefore meet at one
+construct seen two ways. \cite{towell2026cipherprog} asks, given a
+fixed program, where to place cuts so that what stays plaintext leaks
+little and what becomes cipher costs little; we ask, given a data
+structure, how to present its operations as one cipher map. The
+control-flow obliviousness analysis there (branching is untrusted
+dispatch on a sum type, with no oblivious short-circuit) is precisely
+the first qualification above, transported to programs.
+
+\paragraph{Properties carry over.} Because $\fhat$ is built by the
+same trusted-machine construction as any cipher map, the four
+properties of \Cref{def:cipher-map} hold of the dispatched map
+uniformly. Totality holds because $\fhat$ is total on $\mathcal{Q}
+\times \B^n$ (out-of-domain tag/value pairs map to noise like any other
+filler). Representation uniformity and correctness are inherited
+per-operation from the $\fhat_j$, with $\delta = \max_j \delta_j$ and
+$\eta = \max_j \eta_j$ over the operand distributions, since an
+adversary query lands in exactly one operation's region. Composability
+is unaffected: a dispatched map composes with another cipher map on the
+result coordinate exactly as its constituents would. The dispatch
+pattern thus costs nothing in the property budget; it only relocates
+$m$ separate maps into one, which is what makes \enquote{a data
+structure is a cipher map} literally true and not merely a slogan.
+
+%% ====================================================================
+\section{Designed Orbits: Data Structures via Hash Chains}
+\label{sec:designed-orbits}
+%% ====================================================================
+
+Where algebraic-cipher-types reads an orbit as a \emph{leakage}
+measure, here we read it as a \emph{constructive} primitive: shape the
+orbit and you have encoded a data structure inside a single cipher
+map. A list $[y_0, y_1, y_2, \ldots]$ is encoded by one cipher map
+$\fhat$ and a starting key $k$ via an XOR hash chain,
+\[
+y_0 = \fhat(k), \quad
+y_1 = \fhat\!\big(k \oplus h(y_0)\big), \quad
+y_2 = \fhat\!\big(k \oplus h(y_0) \oplus h(y_1)\big), \quad \ldots
+\]
+terminating at a sentinel. The iterator advance is
+$h \mathrel{\oplus}= h(y); \; y = \fhat(h)$: the accumulator $h$
+depends on the entire history of values seen so far, so the untrusted
+machine sees a cipher map applied to a sequence of keys that appear
+unrelated, with no visible iteration order.
+
+Let us state the list construction precisely. Fix a cryptographic hash
+$h : \B^n \to \B^n$ and a cipher map $\fhat : \B^n \to \B^n$. A list
+$[y_0, y_1, \ldots, y_{L-1}]$ of cipher values is represented by a
+starting key $k_0 = k$ and the recurrence
+\[
+k_{i+1} = k_i \oplus h(y_i),
+\qquad
+y_i = \fhat(k_i),
+\qquad i = 0, 1, 2, \ldots
+\]
+The iterator is the pair $(\,\text{current key } k_i,\ \fhat\,)$; its
+two-line advance is \enquote{$y \leftarrow \fhat(k);\; k \leftarrow k
+\oplus h(y)$.} Unrolling the recurrence, the $i$-th key is
+\[
+k_i \;=\; k \,\oplus\, \bigoplus_{j<i} h(y_j),
+\]
+an accumulator over the entire history of values produced so far. Two
+consequences follow. First, the keys $k_0, k_1, k_2, \ldots$ are a
+sequence of $n$-bit strings with no visible relation to one another:
+each is the previous key XORed with the hash of an opaque value, so
+under the random-oracle model on $h$ they are computationally
+unlinkable, and the untrusted machine evaluating $\fhat$ sees it
+applied to what looks like fresh, unrelated keys. Second, the chain is
+genuinely sequential: $k_{i+1}$ cannot be formed without $y_i =
+\fhat(k_i)$, so the untrusted machine cannot skip ahead, jump to the
+middle, or reorder the traversal. It can only walk forward from a key
+it has been handed.
+
+\paragraph{Termination by sentinel.} The chain needs an end. Reserve a
+distinguished latent value $\bot_{\mathrm{end}}$ and arrange that the
+trusted machine's construction places it as $y_{L}$: when the iterator
+decodes its current value to the sentinel, the list is exhausted. The
+sentinel does double duty. It marks length without a separate length
+field (the structure does not announce $L$ up front), and it absorbs
+the failure mode of the hash chain: if a collision in $h$ or a cycle
+in the induced key sequence would otherwise make the orbit branch or
+loop, the trusted machine can detect this at construction time and
+reposition the sentinel so that traversal halts cleanly before any
+ambiguity. We make the random-oracle assumption that drives the
+unlinkability, and the sentinel handling that tames its failure modes,
+explicit in \Cref{sec:leakage}.
+
+The essential point is the inversion of reading. \Cref{def:orbit}
+calls $\{k_0, k_1, \ldots\}$ (equivalently $\{y_0, y_1, \ldots\}$) an
+orbit and \Cref{thm:orbit-bound} treats its size as a leakage budget.
+Here we have not measured an orbit; we have \emph{designed} one. The
+shape of the orbit, a single forward chain of length $L$, is the shape
+of the data structure, a list of length $L$. One cipher map and one
+key encode the whole list.
+
+\paragraph{Two-level orbits give maps.} A map is a list whose entries
+are themselves iterable. Let the value space of $\fhat$ be (cipher
+encodings of) key/list pairs: walking the outer orbit visits map keys
+$\kappa_0, \kappa_1, \ldots$, and at each the decoded value carries the
+starting key of an inner orbit encoding the list of values stored
+under $\kappa_i$. The same $\fhat$ and the same advance rule serve both
+levels; only the starting keys differ. The construction is uniform:
+nest the orbit and you have nested the structure. A map is two levels,
+a map of maps is three, and the recursion bottoms out at the list of
+\Cref{def:orbit}.
+
+\paragraph{Indexed access gives vectors.} A vector is a list whose
+$i$-th element is reachable by a known offset. With the forward chain
+above, reaching index $i$ costs $i$ advances: the structure is a
+singly linked list, not a random-access array. One can shorten this by
+storing, at selected stride points, the accumulated key $k_{i}$ as a
+checkpoint (a skip list over the orbit), trading space for traversal
+length; but the access remains sequential between checkpoints. Genuine
+$O(1)$ random access is not available from a forward hash chain alone,
+for the same structural reason the chain is unlinkable: forming $k_i$
+requires the values before it. We return to this as the construction's
+main open problem below.
+
+\paragraph{Single cipher map, many data structures.} Across all of the
+above, the cipher map $\fhat$ is fixed; what varies is the starting
+key. Two lists $[y_0, y_1, \ldots]$ and $[y'_0, y'_1, \ldots]$ are the
+orbits of $\fhat$ from two different keys $k$ and $k'$, and a map is a
+family of such orbits indexed by an outer orbit, again all under the
+same $\fhat$. The trusted machine therefore constructs \emph{one}
+cipher map and obtains an unbounded supply of cipher data structures by
+choosing where to start. This is the orbit analogue of the dispatch
+pattern's economy: dispatch put many operations in one map by tagging
+the input; designed orbits put many structures in one map by seeding
+the iteration. In both, \enquote{data is code} is realized as a single
+cipher map.
+
+\begin{remark}[Open problem: random access]
+\label{rem:random-access}
+The natural completion of the vector construction is to make the index
+a first-class cipher value. One would like a cipher map that takes a
+cipher index $\enc(i, \cdot)$ together with the structure's starting
+key directly to the $i$-th orbit element, with no $i$-step walk. This
+is the dispatch pattern again, with the index in the role of the
+operation tag: $\fhat(\enc(i,\cdot),\, k) = y_i$. The obstruction is
+that the forward chain defines $y_i$ only through the values $y_0,
+\ldots, y_{i-1}$, so a one-shot map from $i$ to $y_i$ must internalize
+that dependence at construction time, which costs space growing with
+the vector length and reintroduces, through the index's own orbit, the
+leakage the chain was hiding. Whether a hash-chain-based cipher vector
+admits oblivious random access within a useful space and leakage budget
+is open. We state it as a problem, not a construction.
+\end{remark}
+
+%% ====================================================================
+\section{Leakage of Orbit-Encoded Data Structures}
+\label{sec:leakage}
+%% ====================================================================
+
+We now state precisely what an orbit-encoded list reveals to an
+untrusted machine that holds $\fhat$ and $h$ and is given a starting
+key, and is then free to walk the chain. We separate three quantities:
+the length, the iteration order, and the per-element latent meanings.
+The first two leak; the third is bounded by \Cref{thm:orbit-bound}. We
+work under one assumption, stated once and used throughout.
+
+\begin{assumption}[Random oracle]
+\label{ass:ro}
+The hash $h : \B^n \to \B^n$ is modeled as a random
+oracle~\cite{bellare1993random}: its outputs are uniform and
+independent across distinct inputs, and the untrusted machine learns
+$h(y)$ only by querying $y$.
+\end{assumption}
+
+\paragraph{Length leaks, and how much.} As the untrusted machine walks
+the chain it observes one new key per step until it decodes the
+sentinel, so after a full traversal it knows $L$ exactly. The
+\emph{a priori} leakage, before traversal, is the information the
+length carries; we bound it in the natural way.
+
+\begin{proposition}[Length leakage]
+\label{prop:length-leak}
+Let the list length $L$ be a random variable supported on $\{0, 1,
+\ldots, n_{\max}\}$ with distribution induced by the trusted machine's
+inputs. The length information an untrusted machine obtains by
+traversing the orbit is
+\[
+I(L; \text{traversal}) \;=\; H(L) \;\leq\; \log_2 (n_{\max} + 1).
+\]
+In particular, for a list of length $n$ drawn from any distribution on
+lengths up to $n$, the orbit leaks at most $\log_2 n + O(1)$ bits of
+length information.
+\end{proposition}
+
+\begin{proof}
+A complete traversal determines $L$, so the observation includes $L$
+and $H(L \mid \text{traversal}) = 0$, whence $I(L; \text{traversal}) =
+H(L)$. A random variable supported on a set of size $n_{\max}+1$ has
+entropy at most $\log_2(n_{\max}+1)$, with equality for the uniform
+distribution. The stated $\log_2 n + O(1)$ is this bound at $n_{\max} =
+n$.
+\end{proof}
+
+This is a real cost and we do not hide it: an orbit-encoded list
+announces its length to anyone who walks it. It is, however, a small
+and structural cost, $O(\log n)$ bits regardless of what the $n$
+elements mean, and it is the same length information a plaintext linked
+list reveals through its node count. If even the length must be hidden,
+the trusted machine pads with sentinel-suppressed decoy elements; we do
+not develop padding here.
+
+\paragraph{Order leaks.} The chain is sequential by construction
+(\Cref{sec:designed-orbits}): $k_{i+1}$ requires $y_i$, so the
+untrusted machine necessarily learns the iteration order, that element
+$y_i$ precedes $y_{i+1}$. What it does \emph{not} learn from the key
+sequence is any relation among the keys beyond \enquote{next}: under
+\Cref{ass:ro} the keys $k_i = k \oplus \bigoplus_{j<i} h(y_j)$ are,
+conditioned on the values being opaque, a sequence of strings each
+offset from the previous by a uniform independent hash output, so the
+key sequence alone is computationally unlinkable, revealing succession
+but not, for instance, whether two different lists share a tail.
+Iteration order is thus the exact order information leaked: a total
+order on positions, and nothing finer.
+
+\paragraph{Per-element meanings are bounded by the orbit.} The values
+$y_0, \ldots, y_{L-1}$ are cipher values; their latent meanings are
+what the data structure is for, and what its confidentiality must
+protect. The traversal makes the orbit $\orbitF(k) = \{k_0, \ldots,
+k_{L}\}$ (or equivalently the reached cipher values) available to the
+untrusted machine, so each element's latent value $X_i$ is exactly in
+the position of \Cref{thm:orbit-bound} with the operation set $F =
+\{\text{advance}\}$ generating a chain of length $L+1$.
+
+\begin{proposition}[Per-element confidentiality of an orbit list]
+\label{prop:per-element}
+Let $X_i$ be the latent value of the $i$-th element, drawn from the
+trusted machine's per-element input distribution, and let the
+untrusted machine's observation be the reached orbit of size $L+1$.
+Then for each $i$,
+\[
+H(X_i \mid \mathcal{V}) \;\geq\; H(X_i) - \log_2 (L+1).
+\]
+\end{proposition}
+
+\begin{proof}
+The reached orbit has $L+1$ elements, so the untrusted machine's
+observation of where element $i$'s computation resolves is supported on
+a set of size $L+1$. \Cref{thm:orbit-bound} with $|\orbitF(k)| = L+1$
+gives the bound directly.
+\end{proof}
+
+Two honest caveats accompany this bound, both inherited from
+\Cref{thm:orbit-bound}. It is loose: it counts orbit elements and
+ignores the functional ties among them (knowing $y_{i+1} =
+\fhat(k_i \oplus h(y_i))$ constrains compatible latent values beyond
+mere set size), so the true residual uncertainty is at least this
+large and may be larger. And it degrades as the list grows: for $L$
+comparable to $2^{H(X_i)}$ the per-element bound becomes vacuous, which
+says that a long enough orbit, fully traversed, can in principle pin
+down its elements. The construction's confidentiality is therefore
+strongest for short-to-moderate lists and for elements drawn from
+high-entropy domains, and the trusted machine controls it by the same
+levers as any orbit: multiple representations per element fan the chain
+out and shorten the effective per-step leakage, and capping $L$ caps
+the bound.
+
+\paragraph{What we do not claim.} It is tempting to assert that the
+untrusted machine learns \emph{nothing} about the per-element meanings
+beyond the orbit-size bound, i.e.\ that the chain hides the values up
+to that bound. We do not prove this, and we flag it as a conjecture.
+
+\begin{conjecture}[Per-element hiding]
+\label{conj:hiding}
+Under \Cref{ass:ro}, an untrusted machine that traverses an
+orbit-encoded list of length $L$ learns the length and the iteration
+order, and learns no more about the multiset of per-element latent
+values $\{X_0, \ldots, X_{L-1}\}$ than is permitted by
+\Cref{prop:per-element} applied per element, up to negligible
+advantage.
+\end{conjecture}
+
+The conjecture is plausible because the keys are unlinkable and the
+values are cipher values, but a proof would have to rule out
+cross-element correlations introduced by the shared $\fhat$ and the
+accumulator, which \Cref{thm:orbit-bound} explicitly does not control.
+We leave it open rather than overclaim.
+
+\paragraph{Collisions and cycles.} \Cref{ass:ro} makes a collision $h(y)
+= h(y')$ for $y \neq y'$ occur with probability $\approx 2^{-n}$ per
+pair, so over a list of length $L$ the chance any two advance steps
+collide is $O(L^2 2^{-n})$, negligible for $n$ at cryptographic widths
+and $L$ polynomial. When a collision does occur it can make the key
+sequence revisit a previous key, turning the forward chain into a
+\enquote{$\rho$}-shape with a cycle. The sentinel resolves this
+without a runtime check on the untrusted side: the trusted machine,
+which knows the values at construction time, detects any premature key
+repetition and places the sentinel before it, so a well-formed
+orbit-encoded list is collision-free by construction along its used
+prefix. This converts a probabilistic hazard into a construction-time
+obligation, and it is why the leakage statements above can speak of a
+clean chain of length $L$.
+
+\paragraph{The duality of orbits.} The same object that
+\Cref{thm:orbit-bound} introduced as a leakage measure is here a
+construction, and the bound it came with is exactly the tool that
+quantifies the construction's leakage. The destructive reading (an
+adversary explores an orbit and learns) and the constructive reading
+(a designer shapes an orbit and stores) are two views of one
+structure, and \Cref{prop:length-leak,prop:per-element} are the
+constructive reading saying, in the designer's voice, what the
+destructive reading always meant.
+
+%% ====================================================================
+\section{Code is Data: The Cipher Exponential}
+\label{sec:exponential}
+%% ====================================================================
+
+The previous three sections realized data as code: a cipher data
+structure is a cipher map, whether by dispatch or by designed orbit.
+The reverse direction is already a theorem of the type algebra, and we
+recall it to close the duality.
+
+\begin{proposition}[Cipher exponential is the cipher map abstraction
+{\cite[Prop.~4.3]{towell2026algebraic}}]
+\label{prop:exponential}
+For finite types $A$ and $B$, the cipher exponential $\cipher{A \to B}$
+is precisely the set of cipher maps for functions $f : A \to B$. A
+total function $\fhat : \B^n \to \B^n$ is a well-formed element of
+$\cipher{A \to B}$ if and only if it satisfies the four cipher-map
+properties of \Cref{def:cipher-map}.
+\end{proposition}
+
+The statement is small and its proof is a definitional unfolding (the
+well-formedness conditions for membership in $\cipher{A \to B}$ are
+exactly the four properties), so we do not reprove it. Its force here
+is interpretive. A cipher map $\fhat$ wears two hats at once. As the
+cipher functor's action on a morphism, $\fhat = \cipherS{f}{s}$ is
+\emph{code}: the realization of the latent function $f$. As an element
+of the cipher space $\cipherS{A \to B}{s}$, the very same bit-string
+function $\fhat$ is a \emph{cipher value} of function type, a point of
+a cipher type that some other cipher map could in turn take as input or
+produce as output. Code is data, and the data in question is a cipher
+value like any other, decodable (to the latent function) only by a
+holder of the secret.
+
+\paragraph{One carrier, both directions.} Put the two halves together.
+\Cref{sec:dispatch,sec:designed-orbits} send a data structure to a
+cipher map; \Cref{prop:exponential} identifies a cipher map with a
+cipher value of function type. The cipher map is therefore the carrier
+of both directions of the duality. A list is a cipher map (its iterator
+is $\fhat$ seeded at a key); that cipher map is a cipher value of type
+$\cipher{\B^n \to \B^n}$; and that cipher value could be stored as an
+element of another orbit-encoded list, whose iterator is again a cipher
+map. The regress does not bottom out in a separate notion of storage or
+a separate notion of procedure, because in trapdoor computing there is
+only one kind of thing flowing through the untrusted machine: bit
+strings, carried by cipher maps. That is the precise sense in which the
+cipher map is homoiconic. The categorical packaging, $\cipherS{X}{s}$ a
+functor and $\cipherS{A \to B}{s}$ its exponential object, is the
+bookkeeping that keeps the two readings of $\fhat$ consistent; it
+labels the duality but does no work in establishing it, which rests
+only on \Cref{prop:exponential} and the constructions of
+\Cref{sec:dispatch,sec:designed-orbits}.
+
+%% ====================================================================
+\section{The Duality, Unified}
+\label{sec:duality}
+%% ====================================================================
+
+Collecting the threads, the duality has three corners, and all three
+are the same statement: in trapdoor computing, values, functions, data
+structures, and the secret are cipher data carried by cipher maps.
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+direction & construction & home \\
+\midrule
+data $\to$ code & data structure as a tagged cipher map / designed orbit & \Cref{sec:dispatch},~\ref{sec:designed-orbits} \\
+code $\to$ data & cipher map as a point of $\cipher{A \to B}$ & \Cref{sec:exponential} \\
+secret $\to$ data & cipher rekeying transforms the captured secret & \cite{towell2026rekeying} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\paragraph{Two charted endpoints.} The code-to-data and
+secret-to-data corners are already developed in the literature, and
+they anchor the frame. The cipher exponential
+(\Cref{prop:exponential}) is the code-to-data endpoint: it is settled,
+a definitional identity. Cipher rekeying~\cite{towell2026rekeying} is
+the secret-to-data endpoint, and it is the cleanest demonstration that
+the secret is just captured state. A cipher object closed over a secret
+$s_1$ is re-parameterized to one closed over $s_2$ by a rekeying map
+$\rekey{s_1}{s_2} : \cipherS{X}{s_1} \to \cipherS{X}{s_2}$, which is
+itself a cipher map the untrusted machine can apply, and which commutes
+with every cipher operation (rekeying before, after, or between
+operations gives the same result). Treating the secret as data is not a
+metaphor: the operation that transforms it is an ordinary cipher map,
+constructed by the trusted machine and run blindly by the untrusted
+one, exactly like the operations of any cipher data structure. The
+data-to-code corner, the dispatch pattern and designed orbits, is this
+paper's contribution and completes the triangle: with all three corners
+realized by cipher maps, the carrier is uniform across the entire
+duality.
+
+\paragraph{Mutability is captured cells.} A closure that captures a
+mutable cell realizes a mutable data structure
+(\Cref{ex:cipher-counter}); nothing in the framework forbids it. It is
+worth being precise about what mutability costs in confidentiality, and
+the answer is: nothing beyond the immutable version. A mutable
+orbit-encoded structure that is advanced through states $c_0, c_1,
+\ldots, c_t$ exposes, to an active untrusted machine, exactly the orbit
+$\{c_0, c_1, \ldots, c_t\}$. The immutable \enquote{replay} of the same
+history, the list $[c_0, c_1, \ldots, c_t]$ built once and traversed,
+exposes the same set under the same advance map. So the orbit-closure
+profile of a mutable closure equals that of its immutable replay, and
+\Cref{thm:orbit-bound} and \Cref{prop:per-element} bound both
+identically. In
+trapdoor computing, mutation does not leak more than recording the
+sequence of states would; it is the orbit that leaks, not the
+mutability. This is what licenses treating mutable and immutable cipher
+data structures within one leakage theory.
+
+\paragraph{The thesis, in one line.} There is one carrier. A cipher
+value is a point of a cipher space; a cipher map is both code and a
+point of a cipher exponential; a cipher data structure is a cipher map
+by dispatch or designed orbit; and the secret is captured state that
+rekeying moves. All four are cipher data, and the cipher map carries
+them all.
+
+%% ====================================================================
+\section{Related Work}
+\label{sec:related}
+%% ====================================================================
+
+\paragraph{Homoiconicity and closures as data.} That code and data can
+be the same object is as old as Lisp~\cite{mccarthy1960recursive}, and
+the closure as the device that fuses them is the lesson of Landin's
+SECD machine~\cite{landin1964mechanical} and of Abelson and Sussman's
+data-as-procedures
+exposition~\cite{abelson1996sicp}, whose $\mathrm{cons}/\mathrm{car}/
+\mathrm{cdr}$ we used throughout. Our contribution is not to rediscover
+homoiconicity but to instantiate it over a secret: the cipher closure
+is the homoiconic object of trapdoor computing, and the cipher map is
+the single carrier in which the duality is realized. Where SICP's pair
+is an arbitrary procedure, ours must be a cipher map (a total function
+with the four properties), and that constraint is what makes the
+information-theoretic leakage analysis both necessary and possible.
+
+\paragraph{Oblivious data structures and ORAM.} Oblivious
+RAM~\cite{goldreich1996software} and modern constructions such as Path
+ORAM~\cite{stefanov2013path}, and the oblivious data structures built
+on them~\cite{wang2014oblivious}, address a different problem on a
+different axis. They assume the data lives in untrusted storage and
+hide the \emph{access pattern}: which location is touched, in what
+order, so that two access sequences of the same length are
+indistinguishable. The data structure is conventional; the protocol
+that reaches into it is what is made oblivious, typically at
+polylogarithmic bandwidth overhead per access. Designed orbits make a
+different move. The data structure is not stored and accessed; it
+\emph{is} a cipher map, and there is no access pattern over storage to
+hide because there is no storage, only the evaluation of a total
+function on bit strings. What we analyze instead is what the cipher
+map's operation interface leaks information-theoretically, the length
+and iteration order of \Cref{sec:leakage}, bounded by orbit closure.
+The two approaches are orthogonal and composable: one could run an
+orbit-encoded cipher data structure's iterator over ORAM-protected
+storage to hide both the access pattern and the latent values, but
+neither subsumes the other, and our guarantees are information-theoretic
+where ORAM's are typically computational.
+
+\paragraph{Functional data structures.} The persistent, purely
+functional data structures catalogued by Okasaki~\cite{okasaki1998purely}
+share our reliance on immutable structure and on representing data as
+the closures that build it, and the orbit-encoded list is, in shape, a
+functional cons-list whose tail is reached by advancing the hash chain.
+The concerns differ: Okasaki optimizes amortized and worst-case time
+under persistence, whereas we are concerned with what the structure
+reveals to an untrusted evaluator. The connection is suggestive (a
+persistent structure's sharing of tails is exactly the cross-list tail
+correlation that \Cref{sec:leakage} notes the unlinkable key sequence
+hides), and a confidentiality-aware account of standard functional data
+structures over cipher maps is natural future work.
+
+\paragraph{Quantitative information flow.} Our leakage statements are
+in the QIF idiom: confidentiality measured as residual uncertainty
+about a secret given an observation, with mutual information and
+conditional entropy as the currency~\cite{shannon1948mathematical}, and
+with the now-standard refinements (min-entropy and $g$-leakage) that
+sharpen Shannon leakage into operational
+guarantees~\cite{smith2009foundations}. The orbit-closure
+bound~\cite{towell2026algebraic} we use is a counting bound in exactly
+this tradition. We have not pursued the min-entropy or $g$-leakage
+forms of the orbit bound for designed orbits; doing so, and tightening
+the loose counting bound of \Cref{thm:orbit-bound} for the specific
+advance operation of a hash chain, is open (and connects to
+\Cref{conj:hiding}).
+
+%% ====================================================================
+\section{Conclusion}
+\label{sec:conclusion}
+%% ====================================================================
+
+In trapdoor computing there is one kind of object on the untrusted
+machine: a total function on bit strings, the cipher map, applied to
+opaque cipher values. We have argued that this single carrier is enough
+to realize the code--data duality of the Lisp tradition, with the
+cipher closure as its homoiconic object. Three results make the
+duality precise. A cipher data structure is a cipher map, either by the
+dispatch pattern, which folds an operation interface into a query tag,
+or by a designed orbit, which folds sequential structure into the shape
+of a hash chain so that one cipher map and a starting key encode a
+list, a map, or a vector (\enquote{data is code}). A cipher map is, by
+the cipher exponential identity, a cipher value of function type
+(\enquote{code is data}). And the captured secret is itself state that
+cipher rekeying transforms by an ordinary cipher map (\enquote{secret
+is data}). The same orbit that the type algebra introduced as a leakage
+budget is here a construction primitive, and the bound that limited the
+adversary is the bound that measures, honestly, what an orbit-encoded
+data structure reveals: its length, its iteration order, and per-element
+meanings only up to the orbit-size bound.
+
+We have been careful to separate what is proved from what is not. The
+length and order leakage are established (\Cref{prop:length-leak} and
+the sequentiality of the chain); the per-element bound follows directly
+from orbit closure (\Cref{prop:per-element}); but the stronger claim
+that the construction hides everything else up to that bound is a
+conjecture (\Cref{conj:hiding}), because the shared cipher map and the
+accumulator introduce cross-element correlations the counting bound
+does not control. The orbit bound itself is loose, and tightening it
+for the hash-chain advance is open.
+
+Three directions stand out for future work. The first is oblivious
+random access for the cipher vector (\Cref{rem:random-access}): making
+the index a cipher value and dispatching on it without an $i$-step walk,
+within a useful space and leakage budget, or proving it cannot be done.
+The second is mutable orbit reshaping: \Cref{sec:duality} showed that a
+mutable closure's leakage equals its immutable replay's, but structural
+edits that re-shape an orbit in place (insertion, deletion, splicing)
+deserve their own leakage account. The third, and the most
+far-reaching, is the limit of \enquote{data is code}: a cipher Turing
+machine, in which the structure encoded by an orbit is a computation
+rather than a list, would make code a fully general cipher data
+structure and close the loop with the program-realization line of
+work~\cite{towell2026cipherprog}. In each case the discipline is the
+same one this paper has tried to keep: build the construction as
+mathematics over a one-way hash and a uniform representation, measure
+its leakage information-theoretically, and claim no more than the orbit
+allows.
+
+\bibliographystyle{plainnat}
+\bibliography{references}
+
+\end{document}

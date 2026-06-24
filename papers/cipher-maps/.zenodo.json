@@ -1,6 +1,6 @@
 {
-  "title": "Cipher Maps: A Unified Framework for Oblivious Function Approximation Through Algebraic Structures and Bernoulli Models",
-  "description": "A theoretical framework unifying oblivious function approximation, algebraic cipher types, and Bernoulli data models for privacy-preserving computation. Formalizes cipher functors as proper functors on monoids, develops encoding set theory, introduces the space-optimal Singular Hash Map, and proves composition theorems for layered security.",
+  "title": "Cipher Maps: Total Functions as Trapdoor Approximations",
+  "description": "Proposes the cipher map abstraction as a unifying framework for parameterized-leakage outsourced function evaluation in the quantitative information flow (QIF) tradition. Characterizes value-side security through four measurable properties (totality, representation-uniformity delta, correctness eta, composability) parameterized by (eta, epsilon, delta, mu). The acceptance-predicate apparatus exposes a Pareto frontier between expected codeword length L and TV-leakage: under integer codeword constraints, the Shannon-optimal corner (L = -log_2 epsilon + H(Y)) and the TV-optimal corner are distinct (42x TV reduction at 17% length overhead on heavy-tailed value distributions). A multi-instance composition theorem (the coincidence oracle: accuracy(t) = 1 - 1/2 sum_y alpha(y)^t) gives a closed form for shared-f multi-instance leakage; randomized encoding (multiplicity K(x) > 1) is the deployment-side defense. The framework subsumes Bloom filters, frequency-hiding encryption, and encrypted Boolean search as instances. Empirical validation on the 20 Newsgroups corpus plus a controlled membership-inference study. Quantitative confidentiality grounded in the entropy ratio framework developed in companion work (towell2026maxconf).",
   "creators": [
     {
       "name": "Towell, Alexander",
@@ -9,19 +9,29 @@
     }
   ],
   "keywords": [
-    "oblivious computation",
-    "Bernoulli approximation",
-    "cipher types",
-    "cipher functor",
-    "category theory",
-    "privacy-preserving computation",
-    "probabilistic data structures",
-    "homomorphic encryption",
+    "trapdoor computing",
+    "cipher maps",
+    "quantitative information flow",
+    "parameterized leakage",
+    "acceptance predicate",
+    "Shannon-frequency duality",
+    "Le Cam bound",
+    "coincidence oracle",
+    "homophonic substitution",
     "encrypted search",
-    "secure multi-party computation"
+    "Bloom filter",
+    "perfect hash function",
+    "privacy-preserving computation"
   ],
   "license": "CC-BY-4.0",
   "upload_type": "publication",
-  "publication_type": "article",
-  "access_right": "open"
+  "publication_type": "preprint",
+  "access_right": "open",
+  "related_identifiers": [
+    {
+      "relation": "isPartOf",
+      "identifier": "https://github.com/queelius/trapdoor-computing",
+      "resource_type": "software"
+    }
+  ]
 }

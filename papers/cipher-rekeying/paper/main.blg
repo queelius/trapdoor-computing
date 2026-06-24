@@ -1,0 +1,49 @@
+This is BibTeX, Version 0.99d (TeX Live 2023/Debian)
+Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
+The top-level auxiliary file: main.aux
+The style file: plainnat.bst
+Database file #1: references.bib
+Warning--empty booktitle in ateniese2006improved
+Warning--can't use both volume and number fields in ateniese2006improved
+You've used 14 entries,
+            2773 wiz_defined-function locations,
+            666 strings with 7111 characters,
+and the built_in function-call counts, 6384 in all, are:
+= -- 578
+> -- 280
+< -- 16
++ -- 101
+- -- 84
+* -- 442
+:= -- 916
+add.period$ -- 44
+call.type$ -- 14
+change.case$ -- 70
+chr.to.int$ -- 11
+cite$ -- 30
+duplicate$ -- 332
+empty$ -- 586
+format.name$ -- 102
+if$ -- 1396
+int.to.chr$ -- 4
+int.to.str$ -- 1
+missing$ -- 12
+newline$ -- 80
+num.names$ -- 56
+pop$ -- 176
+preamble$ -- 1
+purify$ -- 56
+quote$ -- 0
+skip$ -- 267
+stack$ -- 0
+substring$ -- 248
+swap$ -- 75
+text.length$ -- 7
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 144
+warning$ -- 2
+while$ -- 64
+width$ -- 0
+write$ -- 189
+(There were 2 warnings)

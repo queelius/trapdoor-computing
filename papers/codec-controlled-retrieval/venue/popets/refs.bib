@@ -1,0 +1,302 @@
+% bijou shared bibliography. Seed entries from the codec-controlled-retrieval
+% literature ledger (spec 2026-06-04, section 1.2). Verify all fields before use
+% in a submission.
+
+@misc{dillinger2021ribbon,
+  author    = {Dillinger, Peter C. and Walzer, Stefan},
+  title     = {Ribbon filter: practically smaller than Bloom and Xor},
+  year      = {2021},
+  eprint    = {2103.02515},
+  archivePrefix = {arXiv},
+  howpublished = {arXiv:2103.02515}
+}
+
+@inproceedings{dillinger2022burr,
+  author    = {Dillinger, Peter C. and H{\"u}bschle-Schneider, Lorenz and Sanders, Peter and Walzer, Stefan},
+  title     = {Fast Succinct Retrieval and Approximate Membership using Ribbon},
+  booktitle = {Symposium on Experimental Algorithms (SEA)},
+  year      = {2022},
+  eprint    = {2109.01892},
+  archivePrefix = {arXiv}
+}
+
+@inproceedings{dietzfelbinger2008succinct,
+  author    = {Dietzfelbinger, Martin and Pagh, Rasmus},
+  title     = {Succinct Data Structures for Retrieval and Approximate Membership},
+  booktitle = {ICALP},
+  year      = {2008}
+}
+
+@inproceedings{dietzfelbinger2019gauss,
+  author    = {Dietzfelbinger, Martin and Walzer, Stefan},
+  title     = {Efficient Gauss Elimination for Near-Quadratic Matrices with One Short Random Block per Row},
+  booktitle = {European Symposium on Algorithms (ESA)},
+  series    = {LIPIcs},
+  volume    = {144},
+  pages     = {39:1--39:18},
+  year      = {2019},
+  eprint    = {1907.04750},
+  archivePrefix = {arXiv}
+}
+
+@article{graf2020xor,
+  author  = {Graf, Thomas Mueller and Lemire, Daniel},
+  title   = {Xor Filters: Faster and Smaller Than Bloom and Cuckoo Filters},
+  journal = {ACM Journal of Experimental Algorithmics},
+  year    = {2020}
+}
+
+@article{graf2022binaryfuse,
+  author  = {Graf, Thomas Mueller and Lemire, Daniel},
+  title   = {Binary Fuse Filters: Fast and Smaller Than Xor Filters},
+  journal = {ACM Journal of Experimental Algorithmics},
+  year    = {2022},
+  eprint  = {2201.01174},
+  archivePrefix = {arXiv}
+}
+
+@inproceedings{chazelle2004bloomier,
+  author    = {Chazelle, Bernard and Kilian, Joe and Rubinfeld, Ronitt and Tal, Ayellet},
+  title     = {The Bloomier Filter: An Efficient Data Structure for Static Support Lookup Tables},
+  booktitle = {SODA},
+  year      = {2004}
+}
+
+@inproceedings{juels2014honey,
+  author    = {Juels, Ari and Ristenpart, Thomas},
+  title     = {Honey Encryption: Security Beyond the Brute-Force Bound},
+  booktitle = {EUROCRYPT},
+  year      = {2014}
+}
+
+@inproceedings{cheng2019pmte,
+  author    = {Cheng, Haibo and Zheng, Zhixiong and Li, Wenting and Wang, Ping and Chu, Chao-Hsien},
+  title     = {Probability Model Transforming Encoders Against Encoding Attacks},
+  booktitle = {USENIX Security},
+  year      = {2019}
+}
+
+@inproceedings{grubbs2020pancake,
+  author    = {Grubbs, Paul and Khandelwal, Anurag and Lacharit{\'e}, Marie-Sarah and Brown, Lloyd and Li, Lucy and Agarwal, Rachit and Ristenpart, Thomas},
+  title     = {PANCAKE: Frequency Smoothing for Encrypted Data Stores},
+  booktitle = {USENIX Security},
+  year      = {2020}
+}
+
+@inproceedings{lacharite2018fse,
+  author    = {Lacharit{\'e}, Marie-Sarah and Paterson, Kenneth G.},
+  title     = {Frequency-smoothing encryption: preventing snapshot attacks on deterministically encrypted data},
+  booktitle = {IACR Transactions on Symmetric Cryptology (ToSC/FSE)},
+  year      = {2018}
+}
+
+@inproceedings{naveed2015inference,
+  author    = {Naveed, Muhammad and Kamara, Seny and Wright, Charles V.},
+  title     = {Inference Attacks on Property-Preserving Encrypted Databases},
+  booktitle = {CCS},
+  year      = {2015}
+}
+
+% In-house prior theory (must cite; differentiate the construction from these):
+
+@unpublished{towell_bernoulli_maps,
+  author = {Anonymous},
+  title  = {The algebra of the random approximate map model (singular hash map)},
+  year   = {2026},
+  note   = {Authors' prior work; details omitted for double-blind review}
+}
+
+@unpublished{towell2026ciphermaps,
+  author = {Anonymous},
+  title  = {Cipher maps: total functions as trapdoor approximations},
+  year   = {2026},
+  note   = {Companion manuscript; details omitted for double-blind review}
+}
+
+% Gap citations added for the related-work section (SP3 outline):
+
+@inproceedings{filic2022adversarial,
+  author    = {Filic, Mia and Paterson, Kenneth G. and Unnikrishnan, Anupama and Virdia, Fernando},
+  title     = {Adversarial Correctness and Privacy for Probabilistic Data Structures},
+  booktitle = {ACM SIGSAC Conference on Computer and Communications Security (CCS)},
+  year      = {2022}
+}
+
+@inproceedings{patel2019volumehiding,
+  author    = {Patel, Sarvar and Persiano, Giuseppe and Yeo, Kevin and Yung, Moti},
+  title     = {Mitigating Leakage in Secure Cloud-Hosted Data Structures: Volume-Hiding for Multi-Maps via Hashing},
+  booktitle = {ACM SIGSAC Conference on Computer and Communications Security (CCS)},
+  year      = {2019}
+}
+
+@inproceedings{hu2025retrieval,
+  author    = {Hu, Yang and Kuszmaul, William and Liang, Jingxun and Yu, Huacheng and Zhang, Junkai and Zhou, Renfei},
+  title     = {Static Retrieval Revisited: To Optimality and Beyond},
+  booktitle = {IEEE Symposium on Foundations of Computer Science (FOCS)},
+  year      = {2025},
+  eprint    = {2510.18237},
+  archivePrefix = {arXiv}
+}
+
+% Coding-theory reference for the coset weight distribution / coset-counting
+% folklore behind the subspace-meets-coset lemma:
+
+@book{macwilliams1977,
+  author    = {MacWilliams, F. J. and Sloane, N. J. A.},
+  title     = {The Theory of Error-Correcting Codes},
+  publisher = {North-Holland},
+  year      = {1977}
+}
+
+% Encrypted-search leakage-abuse and leakage-suppression lineage (PoPETs context):
+
+@inproceedings{cash2015leakage,
+  author    = {Cash, David and Grubbs, Paul and Perry, Jason and Ristenpart, Thomas},
+  title     = {Leakage-Abuse Attacks Against Searchable Encryption},
+  booktitle = {ACM SIGSAC Conference on Computer and Communications Security (CCS)},
+  pages     = {668--679},
+  year      = {2015}
+}
+
+@inproceedings{islam2012access,
+  author    = {Islam, Mohammad Saiful and Kuzu, Mehmet and Kantarcioglu, Murat},
+  title     = {Access Pattern Disclosure on Searchable Encryption: Ramification, Attack and Mitigation},
+  booktitle = {Network and Distributed System Security Symposium (NDSS)},
+  year      = {2012}
+}
+
+@inproceedings{kamara2018structured,
+  author    = {Kamara, Seny and Moataz, Tarik and Ohrimenko, Olya},
+  title     = {Structured Encryption and Leakage Suppression},
+  booktitle = {Advances in Cryptology -- CRYPTO},
+  series    = {Lecture Notes in Computer Science},
+  volume    = {10991},
+  pages     = {339--370},
+  publisher = {Springer},
+  year      = {2018}
+}
+
+% Coding-theory / secret-sharing duality references for the cogirth robustness
+% theorem (T5b): minimal codewords as access structure, and Fourier-reflexive
+% partition / MacWilliams duality for additive codes. Cited-and-differentiated:
+% we transport the textbook erasure-correction = dual-distance fact through the
+% sharp rank threshold; we do not claim the duality transform as new.
+
+@article{massey1993minimal,
+  author    = {Massey, James L.},
+  title     = {Minimal Codewords and Secret Sharing},
+  journal   = {Proceedings of the 6th Joint Swedish-Russian International Workshop on Information Theory},
+  pages     = {276--279},
+  year      = {1993}
+}
+
+@article{gluesingluerssen2014fourier,
+  author    = {Gluesing-Luerssen, Heide},
+  title     = {Fourier-Reflexive Partitions and MacWilliams Identities for Additive Codes},
+  journal   = {Designs, Codes and Cryptography},
+  volume    = {75},
+  number    = {3},
+  pages     = {543--563},
+  year      = {2015},
+  doi       = {10.1007/s10623-014-9940-x},
+  eprint    = {1304.1207},
+  archivePrefix = {arXiv},
+  primaryClass = {cs.IT}
+}
+
+% Wiretap coset coding lineage: the randomized-encoding invariance lemma
+% transplants in-coset randomization (Wyner; Ozarow-Wyner II) to the stored
+% right-hand side of a static GF(2) retrieval structure.
+
+@article{wyner1975wiretap,
+  author    = {Wyner, Aaron D.},
+  title     = {The Wire-Tap Channel},
+  journal   = {Bell System Technical Journal},
+  volume    = {54},
+  number    = {8},
+  pages     = {1355--1387},
+  year      = {1975},
+  doi       = {10.1002/j.1538-7305.1975.tb02040.x}
+}
+
+@article{ozarowwyner1984wiretap,
+  author    = {Ozarow, Lawrence H. and Wyner, Aaron D.},
+  title     = {Wire-Tap Channel {II}},
+  journal   = {AT\&T Bell Laboratories Technical Journal},
+  volume    = {63},
+  number    = {10},
+  pages     = {2135--2157},
+  year      = {1984},
+  doi       = {10.1002/j.1538-7305.1984.tb00072.x}
+}
+
+% Settled dynamic / incremental retrieval bounds, for the dynamic-insertion
+% obstruction discussion (why the construction stays static):
+
+@inproceedings{kuszmaulwalzer2024dynamic,
+  author    = {Kuszmaul, William and Walzer, Stefan},
+  title     = {Space Lower Bounds for Dynamic Filters and Value-Dynamic Retrieval},
+  booktitle = {ACM Symposium on Theory of Computing (STOC)},
+  pages     = {1153--1164},
+  year      = {2024},
+  doi       = {10.1145/3618260.3649649}
+}
+
+@inproceedings{kuszmaulputterman2025incremental,
+  author    = {Kuszmaul, William and Putterman, Aaron and Xu, Tingqiang and Zhou, Hangrui and Zhou, Renfei},
+  title     = {Tight Bounds and Phase Transitions for Incremental and Dynamic Retrieval},
+  booktitle = {Proceedings of the 2025 Annual ACM-SIAM Symposium on Discrete Algorithms (SODA)},
+  pages     = {3974--3997},
+  year      = {2025},
+  eprint    = {2410.10002},
+  archivePrefix = {arXiv},
+  primaryClass = {cs.DS}
+}
+
+@inproceedings{berceaeven2022extendable,
+  author    = {Bercea, Ioana O. and Even, Guy},
+  title     = {An Extendable Data Structure for Incremental Stable Perfect Hashing},
+  booktitle = {ACM Symposium on Theory of Computing (STOC)},
+  pages     = {1298--1310},
+  year      = {2022},
+  doi       = {10.1145/3519935.3520070}
+}
+
+@article{reviriego2024ixor,
+  author    = {Mart{\'i}nez, Roberto and Reviriego, Pedro and Larrabeiti, David},
+  title     = {Supporting Dynamic Insertions in xor and Binary Fuse Filters With the Integrated xor/{BIF}-Bloom Filter},
+  journal   = {IEEE Transactions on Network and Service Management},
+  volume    = {21},
+  number    = {3},
+  pages     = {3068--3079},
+  year      = {2024},
+  doi       = {10.1109/TNSM.2024.3362380}
+}
+
+@inproceedings{oya2022ihop,
+  author    = {Oya, Simon and Kerschbaum, Florian},
+  title     = {{IHOP}: Improved Statistical Query Recovery against Searchable Symmetric Encryption through Quadratic Optimization},
+  booktitle = {USENIX Security},
+  year      = {2022}
+}
+
+% SWAT author list abbreviated (lead author Zheng); verify full list before submission.
+@article{zheng2024swat,
+  author    = {Zheng, Leqian and others},
+  title     = {{SWAT}: A System-Wide Approach to Tunable Leakage Mitigation in Encrypted Data Stores},
+  journal   = {Proceedings of the VLDB Endowment},
+  volume    = {17},
+  number    = {10},
+  pages     = {2445--2458},
+  year      = {2024},
+  eprint    = {2306.16851},
+  archivePrefix = {arXiv}
+}
+
+@misc{hermann2025learned,
+  author    = {Hermann, Stefan and Lehmann, Hans-Peter and Vinciguerra, Giorgio and Walzer, Stefan},
+  title     = {Learned Static Function Data Structures},
+  year      = {2025},
+  eprint    = {2510.27588},
+  archivePrefix = {arXiv}
+}

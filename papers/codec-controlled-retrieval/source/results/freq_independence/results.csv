@@ -1,0 +1,11 @@
+comparison,profile_a,profile_b,mean_adv,ci_lo,ci_hi
+baseline,uniform,uniform,0.002919,0.00205017,0.00378783
+baseline,skew_a,skew_a,0.018966,0.0133233,0.0246087
+baseline,mid,mid,0.003597,0.00280109,0.00439291
+baseline,skew_b,skew_b,0.003809,0.00278421,0.00483379
+cross,uniform,skew_a,0.013361,0.00886229,0.0178597
+cross,uniform,mid,0.003244,0.00246731,0.00402069
+cross,uniform,skew_b,0.003641,0.00305083,0.00423117
+cross,skew_a,mid,0.014332,0.00763289,0.0210311
+cross,skew_a,skew_b,0.014579,0.00738026,0.0217777
+cross,mid,skew_b,0.004015,0.00323614,0.00479386

@@ -1,0 +1,167 @@
+% Chapter 14: Open Problems and the Next Program
+% DEFINES: ch:open-problems; sec:internal-frontiers, sec:field-arrives,
+%   sec:next-program, sec:closing, sec:ch14-notes; tab:directions
+% REFERENCES (backward): thm:orbit-bound, rem:active-vs-marginal,
+%   thm:not-approximate, rem:control-flow, thm:joint-recovery, tab:hiding,
+%   sec:measured-not-negligible
+% This is the book's closing chapter: a roadmap, not new results.
+
+\chapter{Open Problems and the Next Program}
+\label{ch:open-problems}
+
+A book that builds a framework owes a closing account of what the framework
+does not yet do. This chapter is that account, and it is deliberately a
+roadmap rather than a results chapter: it collects the problems the
+preceding parts left open, places the framework in the field that has grown
+up around it, and sketches the next program of original research. The thread
+that started in \Cref{sec:measured-not-negligible}, that confidentiality
+should be measured rather than assumed negligible, ends here as a research
+agenda.
+
+\section{The Internal Frontiers}
+\label{sec:internal-frontiers}
+
+The sharpest open problems are the ones the framework raises about itself.
+Several were flagged in place as the chapters passed them.
+
+The active-adversary bound of \Cref{thm:orbit-bound} is loose by design: it
+counts the size of the orbit but ignores the functional relations among its
+elements, which constrain the latent value further than mere cardinality
+does. Tightening it for specific operation sets, deriving the residual
+entropy an adversary actually faces when the operations are, say, the Boolean
+algebra of \Cref{ch:boolean-algebra} rather than an abstract set, is open, and
+\Cref{rem:active-vs-marginal} named it so. A related question concerns noise
+under composition: garbage fed through a chain of cipher maps has some
+probability of landing on a valid codeword at the end, and characterizing
+that noise-to-signal probability when the maps share structure, a common hash
+family or overlapping codeword spaces, is unresolved; it bears directly on
+the trusted machine's ability to tell a real result from an artifact. The
+Boolean construction leaves its own residuals: the exact false-positive rate
+of an intersection as a function of the operand sizes and bit width, and the
+error rate of the approximate complement of \Cref{thm:not-approximate} as a
+function of the fill factor, are both open in closed form. And the cost of
+oblivious control flow, the choice \Cref{rem:control-flow} forced between
+leaking a test and evaluating both branches, has a decision space, which cuts
+to make, how the ciphered region propagates, that the program-realization
+work only begins to map.
+
+These are not gaps that threaten the framework; they are the questions a
+working theory generates. Each is a concrete, well-posed problem with a clear
+success criterion, which is the mark of a frontier worth working.
+
+\section{The Field Arrives}
+\label{sec:field-arrives}
+
+When this program began, its central bet, that a measurable, tunable leakage
+sitting between plaintext and the heavy machinery of oblivious RAM or fully
+homomorphic encryption is a legitimate design point, was contrarian. The
+field has since moved toward it. The searchable-encryption literature, long
+dominated by leakage-abuse attacks, pivoted around 2024 toward
+quantify-then-mitigate, with systems that name and bound leakage rather than
+hoping it is negligible; the ``tunable measurable leakage'' middle ground
+crystallized into a recognized design space in the same window. The
+quantitative-information-flow community matured a family of operational
+leakage measures, maximal leakage and its relatives, whose live threads,
+composition and correlated secrets, are exactly the questions the
+compositional scale of \Cref{ch:compositional-scale} addresses. A subfield on
+adversarially-robust probabilistic data structures consolidated, and the
+cipher map is a native citizen of it with a privacy notion the subfield has
+not yet named. And in private machine-learning inference, the idea that
+approximation itself can be privacy, the dual reading of the error budget
+$\eta$, is being rediscovered independently.
+
+The lesson is not that the program was right in every claim. The honest
+assessment, recorded in the program's own survey, is that its strongest
+theorems are sound but that several papers reached for a broader qualitative
+``first'' that an adjacent vocabulary, sampling theory, distribution
+matching, wire-tap coding, had anticipated. The lesson is rather that the
+program's taste in \emph{problems} was good, and is now externally
+validated: being early to a space the field later judged important is the
+position to be in.
+
+\section{The Next Program}
+\label{sec:next-program}
+
+What the framework should do next follows from one observation about where it
+is uniquely strong. Every neighboring system in the tunable-leakage space
+pays for its hiding \emph{per query}, in bandwidth, rounds, or injected
+noise. The codec construction of \Cref{ch:gf2-retrieval} does not: its
+frequency-hiding is structural, built once and paid for in a rank condition,
+at zero marginal cost per access (\Cref{tab:hiding}). That single property,
+structural frequency-hiding at zero per-query cost in a static data
+structure, is the program's clearest contribution to the field, and most of
+the salient directions extend it (\Cref{tab:directions}).
+
+\begin{table}[t]
+\centering
+\caption{Salient directions for the next program.}
+\label{tab:directions}
+\begin{tabular}{@{}p{0.40\textwidth}p{0.52\textwidth}@{}}
+\toprule
+Direction & The gap it fills \\
+\midrule
+The non-member output law as a privacy axiom for probabilistic data structures
+  & PDS correctness models do not treat the false-positive answer law as a controllable, frequency-independent design object \\
+The zero-per-query point on the tunable-leakage frontier
+  & every system in the 2024 tunable-leakage space pays per query; this one does not \\
+Re-expressing the leakage knob in maximal- / alpha-leakage currency
+  & operational-leakage composition with correlated secrets is the active QIF thread \\
+Adaptive multiplicity retuning under distributional drift
+  & nobody owns maintaining a quantified leakage bound while the query distribution drifts \\
+A codec-controlled membership layer for private retrieval and vector search
+  & semantic-search systems pay oblivious-RAM or homomorphic costs; embedding inversion is a recognized top risk \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The directions are not equally ripe. The first two are framing-level: they
+convert results already proved in this book into conversations the field is
+actively having, and cost a table and a careful positioning rather than a new
+theorem. The third buys insurance against the simulation-based reviewer, by
+speaking the leakage measure in the currency that community has standardized.
+The fourth, maintaining a leakage bound as the distribution drifts, is the
+natural next paper and the cleanest open lane, since no one yet owns
+quantified-leakage-under-drift. The fifth is the largest audience and the
+largest lift: a private-retrieval substrate for the machine-learning systems
+that have made encrypted semantic search urgent.
+
+\section{A Closing Word}
+\label{sec:closing}
+
+The argument of this book has been a single one, developed in six movements.
+A cipher map is a total function on bit strings that an untrusted machine
+evaluates blindly; its four properties make it measurable rather than
+magical; its algebra and types say what can and cannot be computed through
+the trapdoor; its confidentiality is a quantity, governed by $\delta$ at the
+margin and by something $\delta$ cannot touch under composition; it is
+realized by concrete constructions, one of which hides frequency for free;
+and it opens onto a research program the field has begun to converge on
+independently.
+
+The framework's privacy does not come from hiding access patterns, and it is
+not oblivious RAM, homomorphic encryption, or a simulation-based security
+game. It comes from a one-way hash and a uniform representation, and its
+guarantees are numbers a designer can read and trade. That is a narrower
+promise than cryptography's strongest tools make, and a more honest one for
+the systems that cannot afford them: a service that cannot read its queries
+or its answers, returns the right ones anyway, and leaks an amount you can
+write down. The next program is to make that promise sharper, to speak it in
+the field's own measures, and to build it into the systems that need it. The
+foundation is here.
+
+\section{Notes and Provenance}
+\label{sec:ch14-notes}
+
+This chapter is a roadmap, not a results chapter, and claims no new theorems.
+The internal open problems are collected from the points where the earlier
+chapters flagged them and from the open-problems sections of the construction
+papers. The field landscape and the ranked directions are drawn from the
+program's 2026 ecosystem survey, which mapped the searchable-encryption,
+quantitative-information-flow, adversarial-data-structure, and
+private-inference literatures against the program and assessed its standing
+frankly; the external systems and threads named here are pointed to by name
+and venue rather than cited formally, pending the citation pass that will
+fold them into the bibliography. The unifying observation, structural
+frequency-hiding at zero per-query cost as the program's distinctive
+contribution, is that survey's, and it is the thread the next program should
+pull.

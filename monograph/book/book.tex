@@ -1,0 +1,40 @@
+% Trapdoor Computing: Computing on Opaque Encodings
+% Master file.  Build: cd book && make
+\documentclass[11pt,oneside]{book}
+
+\input{preamble}
+\usepackage{notation}
+
+\addbibresource{references.bib}
+
+\title{Trapdoor Computing\\[0.3em]\large Computing on Opaque Encodings}
+\author{Alexander Towell}
+\date{}
+
+\begin{document}
+
+\frontmatter
+\input{frontmatter/titlepage}
+\input{frontmatter/copyright}
+\tableofcontents
+\listoffigures
+\listoftables
+\input{frontmatter/preface}
+
+\mainmatter
+\input{parts/part1}
+\input{parts/part2}
+\input{parts/part3}
+\input{parts/part4}
+\input{parts/part5}
+\input{parts/part6}
+
+\appendix
+\input{appendices/app-a-bernoulli}
+\input{appendices/app-b-notation}
+\input{appendices/app-c-proof-locations}
+
+\backmatter
+\printbibliography[heading=bibintoc]
+
+\end{document}

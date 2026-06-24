@@ -1,0 +1,94 @@
+\begin{thebibliography}{14}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Abelson et~al.(1996)Abelson, Sussman, and Sussman]{abelson1996sicp}
+Harold Abelson, Gerald~Jay Sussman, and Julie Sussman.
+\newblock \emph{Structure and Interpretation of Computer Programs}.
+\newblock MIT Press, 2 edition, 1996.
+
+\bibitem[Ateniese et~al.(2006)Ateniese, Fu, Green, and
+  Hohenberger]{ateniese2006improved}
+Giuseppe Ateniese, Kevin Fu, Matthew Green, and Susan Hohenberger.
+\newblock Improved proxy re-encryption schemes with applications to secure
+  distributed storage.
+\newblock volume~9, pages 1--30, 2006.
+
+\bibitem[Blaze et~al.(1998)Blaze, Bleumer, and Strauss]{blaze1998divertible}
+Matt Blaze, Gerrit Bleumer, and Martin Strauss.
+\newblock Divertible protocols and atomic proxy cryptography.
+\newblock In \emph{International Conference on the Theory and Applications of
+  Cryptographic Techniques (EUROCRYPT)}, pages 127--144, 1998.
+
+\bibitem[Boneh et~al.(2011)Boneh, Sahai, and Waters]{boneh2011functional}
+Dan Boneh, Amit Sahai, and Brent Waters.
+\newblock Functional encryption: Definitions and challenges.
+\newblock In \emph{Theory of Cryptography Conference (TCC)}, pages 253--273,
+  2011.
+
+\bibitem[Boneh et~al.(2013)Boneh, Lewi, Montgomery, and
+  Raghunathan]{boneh2017key}
+Dan Boneh, Kevin Lewi, Hart Montgomery, and Ananth Raghunathan.
+\newblock Key homomorphic {PRFs} and their applications.
+\newblock In \emph{Annual International Cryptology Conference (CRYPTO)}, pages
+  410--428, 2013.
+
+\bibitem[Gentry(2009)]{gentry2009fully}
+Craig Gentry.
+\newblock Fully homomorphic encryption using ideal lattices.
+\newblock In \emph{Proceedings of the 41st Annual ACM Symposium on Theory of
+  Computing}, pages 169--178, 2009.
+
+\bibitem[Goldreich and Ostrovsky(1996)]{goldreich1996software}
+Oded Goldreich and Rafail Ostrovsky.
+\newblock Software protection and simulation on oblivious {RAMs}.
+\newblock \emph{Journal of the ACM}, 43\penalty0 (3):\penalty0 431--473, 1996.
+
+\bibitem[Mac~Lane(1978)]{maclane1978categories}
+Saunders Mac~Lane.
+\newblock \emph{Categories for the Working Mathematician}.
+\newblock Springer, 2 edition, 1978.
+
+\bibitem[Sabelfeld and Myers(2003)]{sabelfeld2003language}
+Andrei Sabelfeld and Andrew~C. Myers.
+\newblock Language-based information-flow security.
+\newblock \emph{IEEE Journal on Selected Areas in Communications}, 21\penalty0
+  (1):\penalty0 5--19, 2003.
+
+\bibitem[Smith(2009)]{smith2009foundations}
+Geoffrey Smith.
+\newblock On the foundations of quantitative information flow.
+\newblock In \emph{Proceedings of the 12th International Conference on
+  Foundations of Software Science and Computational Structures (FoSSaCS)},
+  pages 288--302, 2009.
+
+\bibitem[Towell(2026{\natexlab{a}})]{towell2026algebraic}
+Alexander Towell.
+\newblock Algebraic cipher types: Confidentiality trade-offs in type
+  constructors over trapdoor computing.
+\newblock Zenodo, 2026{\natexlab{a}}.
+\newblock URL \url{https://doi.org/10.5281/zenodo.20607285}.
+
+\bibitem[Towell(2026{\natexlab{b}})]{towell2026cipher}
+Alexander Towell.
+\newblock Cipher maps: Total functions as trapdoor approximations,
+  2026{\natexlab{b}}.
+\newblock Manuscript in preparation.
+
+\bibitem[Towell(2026{\natexlab{c}})]{towell2026closures}
+Alexander Towell.
+\newblock Cipher closures: Cipher data structures and the code-data duality in
+  trapdoor computing, 2026{\natexlab{c}}.
+\newblock Manuscript in preparation.
+
+\bibitem[Towell(2026{\natexlab{d}})]{towell2026maxconf}
+Alexander Towell.
+\newblock Maximizing confidentiality under trapdoor computing: Encoding
+  granularity and optimal space.
+\newblock Zenodo, 2026{\natexlab{d}}.
+\newblock URL \url{https://doi.org/10.5281/zenodo.20607278}.
+
+\end{thebibliography}

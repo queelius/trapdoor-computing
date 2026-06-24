@@ -1,0 +1,34 @@
+{
+  "title": "Cipher Rekeying via Closures",
+  "description": "Unifies cipher values, cipher maps, and cipher data structures under a single SICP-style closure-over-a-secret abstraction. Introduces the rekeying functor as a natural transformation between cipher spaces with different secrets, implemented as a cipher map (constructed by the trusted machine, applied by the untrusted machine). Proves an information-theoretic chain bound H(X | view) >= H(X) - log_2(n+1) for n-step rekeying chains, with no reliance on computational hardness assumptions. Frames the resulting bounded composition depth as a sub-Turing security feature: chain length is the explicit expressivity budget; log_2(n+1) is the explicit confidentiality cost.",
+  "creators": [
+    {
+      "name": "Towell, Alexander",
+      "affiliation": "Southern Illinois University Edwardsville",
+      "orcid": "0000-0001-6443-9897"
+    }
+  ],
+  "keywords": [
+    "trapdoor computing",
+    "cipher rekeying",
+    "proxy re-encryption",
+    "cipher closures",
+    "SICP closures",
+    "natural transformation",
+    "sub-Turing computation",
+    "quantitative information flow",
+    "key rotation",
+    "privacy-preserving computation"
+  ],
+  "license": "CC-BY-4.0",
+  "upload_type": "publication",
+  "publication_type": "preprint",
+  "access_right": "open",
+  "related_identifiers": [
+    {
+      "relation": "isPartOf",
+      "identifier": "https://github.com/queelius/trapdoor-computing",
+      "resource_type": "software"
+    }
+  ]
+}
